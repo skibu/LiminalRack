@@ -12,7 +12,7 @@ So what if we created something that was right at the border of a synth module a
 Therefore the idea is to hide a general purpose computer in a Eurorack module, limit it to performing just a single task of creating patches, and have an immediate UI of a touch screen, knobs, and jacks. 
 
 ### Relevant Liminal docs:
-- [Change Log](https://github.com/docs/liminalChangelog.md)
+- [Change Log](docs/liminalChangelog.md)
 
 ### Contributions
 
