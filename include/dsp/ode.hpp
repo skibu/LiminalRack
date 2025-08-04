@@ -1,5 +1,6 @@
 #pragma once
 #include <dsp/common.hpp>
+#include <vector>
 
 
 namespace rack {
@@ -28,9 +29,9 @@ For example, the following solves the system x''(t) = -x(t) using a fixed timest
 /** Solves an ODE system using the 1st order Euler method */
 template <typename T, typename F>
 void stepEuler(T t, T dt, T x[], int len, F f) {
-	T k[len];
+	std::vector<T> k(len);
 
-	f(t, x, k);
+	f(t, x, k.data());
 	for (int i = 0; i < len; i++) {
 		x[i] += dt * k[i];
 	}
@@ -39,16 +40,16 @@ void stepEuler(T t, T dt, T x[], int len, F f) {
 /** Solves an ODE system using the 2nd order Runge-Kutta method */
 template <typename T, typename F>
 void stepRK2(T t, T dt, T x[], int len, F f) {
-	T k1[len];
-	T k2[len];
-	T yi[len];
+	std::vector<T> k1(len);
+	std::vector<T> k2(len);
+	std::vector<T> yi(len);
 
-	f(t, x, k1);
+	f(t, x, k1.data());
 
 	for (int i = 0; i < len; i++) {
 		yi[i] = x[i] + k1[i] * dt / T(2);
 	}
-	f(t + dt / T(2), yi, k2);
+	f(t + dt / T(2), yi.data(), k2.data());
 
 	for (int i = 0; i < len; i++) {
 		x[i] += dt * k2[i];
@@ -58,28 +59,28 @@ void stepRK2(T t, T dt, T x[], int len, F f) {
 /** Solves an ODE system using the 4th order Runge-Kutta method */
 template <typename T, typename F>
 void stepRK4(T t, T dt, T x[], int len, F f) {
-	T k1[len];
-	T k2[len];
-	T k3[len];
-	T k4[len];
-	T yi[len];
+	std::vector<T> k1(len);
+	std::vector<T> k2(len);
+	std::vector<T> k3(len);
+	std::vector<T> k4(len);
+	std::vector<T> yi(len);
 
-	f(t, x, k1);
+	f(t, x, k1.data());
 
 	for (int i = 0; i < len; i++) {
 		yi[i] = x[i] + k1[i] * dt / T(2);
 	}
-	f(t + dt / T(2), yi, k2);
+	f(t + dt / T(2), yi.data(), k2.data());
 
 	for (int i = 0; i < len; i++) {
 		yi[i] = x[i] + k2[i] * dt / T(2);
 	}
-	f(t + dt / T(2), yi, k3);
+	f(t + dt / T(2), yi.data(), k3.data());
 
 	for (int i = 0; i < len; i++) {
 		yi[i] = x[i] + k3[i] * dt;
 	}
-	f(t + dt, yi, k4);
+	f(t + dt, yi.data(), k4.data());
 
 	for (int i = 0; i < len; i++) {
 		x[i] += dt * (k1[i] + T(2) * k2[i] + T(2) * k3[i] + k4[i]) / T(6);
