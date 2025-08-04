@@ -22,10 +22,10 @@ static bool fileEndsWith(FILE* file, std::string str) {
 	// Seek to last `len` characters
 	size_t len = str.size();
 	std::fseek(file, -long(len), SEEK_END);
-	char actual[len];
-	if (std::fread(actual, 1, len, file) != len)
+	std::vector<char> actual(len);
+	if (std::fread(actual.data(), 1, len, file) != len)
 		return false;
-	return std::string(actual, len) == str;
+	return std::string(actual.data(), len) == str;
 }
 
 static bool isTruncated() {
