@@ -533,10 +533,10 @@ void Window::step() {
 static void flipBitmap(uint8_t* pixels, int width, int height, int depth) {
 	for (int y = 0; y < height / 2; y++) {
 		int flipY = height - y - 1;
-		uint8_t tmp[width * depth];
-		std::memcpy(tmp, &pixels[y * width * depth], width * depth);
+		std::vector<uint8_t> tmp(width * depth);
+		std::memcpy(tmp.data(), &pixels[y * width * depth], width * depth);
 		std::memcpy(&pixels[y * width * depth], &pixels[flipY * width * depth], width * depth);
-		std::memcpy(&pixels[flipY * width * depth], tmp, width * depth);
+		std::memcpy(&pixels[flipY * width * depth], tmp.data(), width * depth);
 	}
 }
 

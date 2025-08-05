@@ -12,7 +12,7 @@
 	ignore = untracked
 [submodule "dep/oui-blendish"]
 	path = dep/oui-blendish
-	url = https://github.com/VCVRack/oui-blendish.git
+	url = https://github.com/skibu/oui-blendish.git
 	ignore = untracked
 [submodule "dep/rtaudio"]
 	path = dep/rtaudio
