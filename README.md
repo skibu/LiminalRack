@@ -1,4 +1,24 @@
-# VCV Rack
+# Liminal Rack
+
+Liminal Rack is a fork of VCV Rack, with changes intended to significantly improve the UI and to make Rack easy to use on an 8" touch screen that can be embedded as a module in a Eurorack. 
+
+### "Liminal"???
+The name *Liminal* refers to that nebulous space right on a boundary. In this case the boundary is the dividing line between a Eurorack module as a musical instrument and a general purpose computer. You see, computers are part of a different wavelength. They simpily don't make for a good musical instrument, at least for a good number musicians. The physical interactions via a mouse and keyboard are good for word processing or programming, but they lack the human element of tweaking knobs. And there simply isn't much soul there. 
+
+Yet most Eurorack modules are also problematic with cryptic menuss, impossible to read fonts, and confusing layouts. Sure, they can be beautiful, like a musical instrument, but still quite a nuisance. 
+
+So what if we created something that was right at the border of a synth module and a general purpose computer? We could ideally use the best of both worlds while dropping the problematic parts.
+
+Therefore the idea is to hide a general purpose computer in a Eurorack module, limit it to performing just a single task of creating patches, and have an immediate UI of a touch screen, knobs, and jacks. 
+
+### Relevant Liminal docs:
+- [Change Log](docs/liminalChangelog.md)
+
+### Contributions
+
+While VCV cannot accept free contributions to Rack itself, contributions can be accepted to the Liminal Rack fork.
+
+# Rack
 
 *Rack* is the host application for the VCV virtual Eurorack modular synthesizer platform.
 
@@ -50,10 +70,6 @@
 - [Fuzzy Search Database](https://bitbucket.org/j_norberg/fuzzysearchdatabase) (written by Nils Jonas Norberg for VCV Rack's module browser)
 - [TinyExpr](https://codeplea.com/tinyexpr) (for math evaluation in parameter context menu)
 
-## Contributions
 
-VCV cannot accept free contributions to Rack itself, but we encourage you to
 
-- Send us feature requests and bug reports.
-- Create a plugin that extends Rack's functionality. Most of Rack's functionality is exposed in its public plugin API.
-- Work at VCV! Check job openings at <https://vcvrack.com/jobs>
+
