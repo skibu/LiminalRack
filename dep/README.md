@@ -17,3 +17,16 @@ If you need to make modifications to any of the submodules you should fork the
 project into your own github site, make the modifications to your forked version,
 and then use `git submodule update path` and check in the changes for your changes to 
 take effect.
+
+## Example of making change
+If need to make a change in one of the submodules one can fork the submodule and then point 
+Liminal Rack to repo to the fork. For example:
+
+```
+# Make the change
+git submodule set-url -- dep/oui-blendish https://github.com/skibu/oui-blendish.git
+# Commit the change
+git add .gitmodules
+git commit
+git push
+```
