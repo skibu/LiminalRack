@@ -1,4 +1,4 @@
-# dep directory README
+# dep/ directory README
 
 Though this directory is called dep for dependencies it should be noted that
 it actually consists of git "submodules". These submodules are separate projects
