@@ -17,14 +17,23 @@ void Quantity::setDisplayValue(float displayValue) {
 }
 
 int Quantity::getDisplayPrecision() {
-	return 5;
+	// Default to 0 decimal places so that most percentages displayed as integer
+	return 0;
 }
 
 std::string Quantity::getDisplayValueString() {
 	float v = getDisplayValue();
 	if (std::isnan(v))
 		return "NaN";
-	return string::f("%.*g", getDisplayPrecision(), math::normalizeZero(v));
+
+	if (getDisplayPrecision() == 0) {
+		// If no precision, return integer value
+		return string::f("%d", (int) std::round(v));
+	} else {
+		// Otherwise return float value with desired precision
+		// Use normalizeZero to avoid -0.0
+		return string::f("%.*f", getDisplayPrecision(), math::normalizeZero(v));
+	}
 }
 
 /** Build-in variables for tinyexpr

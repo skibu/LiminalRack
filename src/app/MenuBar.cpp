@@ -306,9 +306,6 @@ struct RackBrightnessQuantity : Quantity {
 	std::string getLabel() override {
 		return string::translate("MenuBar.view.roomBrightness");
 	}
-	int getDisplayPrecision() override {
-		return 3;
-	}
 };
 struct RackBrightnessSlider : ui::Slider {
 	RackBrightnessSlider() {
@@ -341,9 +338,6 @@ struct HaloBrightnessQuantity : Quantity {
 	}
 	std::string getLabel() override {
 		return string::translate("MenuBar.view.lightBloom");
-	}
-	int getDisplayPrecision() override {
-		return 3;
 	}
 };
 struct HaloBrightnessSlider : ui::Slider {
