@@ -15,9 +15,9 @@ FILE* fopen_u8(const char* filename, const char* mode) {
 namespace rack {
 
 
-const std::string APP_NAME = "VCV Rack";
+const std::string APP_NAME = "Liminal Rack";
 const std::string APP_EDITION = "Free";
-const std::string APP_EDITION_NAME = "Free";
+const std::string APP_EDITION_NAME = "";
 const std::string APP_VERSION_MAJOR = "2";
 const std::string APP_VERSION = TOSTRING(_RACK_VERSION);
 #if defined ARCH_WIN
