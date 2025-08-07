@@ -37,6 +37,14 @@ extern bool safeMode;
 extern std::string token;
 /** Whether the window is maximized */
 extern bool windowMaximized;
+/** Whether this is Liminal version of Rack */
+extern bool isLiminal;
+/** Whether touchscreen being used */
+extern bool hasTouchscreen;
+/** Whether keyboard being used */
+extern bool hasKeyboard;
+/** Font size to use for blendish */
+extern int bndLabelFontSize;
 /** Size of window in pixels */
 extern math::Vec windowSize;
 /** Position in window in pixels */
@@ -135,7 +143,7 @@ PRIVATE json_t* toJson();
 PRIVATE void fromJson(json_t* rootJ);
 PRIVATE void save(std::string path = "");
 PRIVATE void load(std::string path = "");
-
+PRIVATE void initBlendish();
 
 } // namespace settings
 } // namespace rack

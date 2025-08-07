@@ -1,13 +1,12 @@
 #include <ui/Label.hpp>
-
-
+#include <settings.hpp>
 namespace rack {
 namespace ui {
 
 
 Label::Label() {
-	box.size.y = BND_WIDGET_HEIGHT;
-	fontSize = BND_LABEL_FONT_SIZE;
+	fontSize = rack::settings::bndLabelFontSize;
+	box.size.y = fontSize + 12;
 	lineHeight = 1.2;
 	color = color::BLACK_TRANSPARENT;
 }

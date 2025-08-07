@@ -1,6 +1,6 @@
 #include <ui/MenuItem.hpp>
 #include <ui/MenuOverlay.hpp>
-
+#include <settings.hpp>
 
 namespace rack {
 namespace ui {
@@ -34,18 +34,19 @@ void MenuItem::drawOffset(NVGcontext* vg, float offset) {
 		}
 		bndIconLabelValue(vg, offset + 0.0, 0.0, box.size.x - offset, box.size.y, -1,
 			bndTextColor(&theme->menuItemTheme, state), BND_LEFT,
-			BND_LABEL_FONT_SIZE, text.c_str(), NULL);
+			rack::settings::bndLabelFontSize, text.c_str(), NULL);
 	}
 	else {
 		// bndMenuLabel(vg, 0.0, 0.0, box.size.x, box.size.y, -1, text.c_str());
 		// From bndMenuLabel() implementation
-		bndIconLabelValue(vg, offset + 0.0, 0.0, box.size.x, box.size.y, -1, theme->menuTheme.textColor, BND_LEFT, BND_LABEL_FONT_SIZE, text.c_str(), NULL);
+		bndIconLabelValue(vg, offset + 0.0, 0.0, box.size.x, box.size.y, -1, theme->menuTheme.textColor, BND_LEFT, rack::settings::bndLabelFontSize, text.c_str(), NULL);
 	}
 
 	// Right text
 	float x = box.size.x - bndLabelWidth(vg, -1, rightText.c_str());
 	NVGcolor rightColor = (state == BND_DEFAULT && !disabled) ? bndGetTheme()->menuTheme.textColor : bndGetTheme()->menuTheme.textSelectedColor;
-	bndIconLabelValue(vg, x, 0.0, box.size.x, box.size.y, -1, rightColor, BND_LEFT, BND_LABEL_FONT_SIZE, rightText.c_str(), NULL);
+        bndIconLabelValue(vg, x, 0.0, box.size.x, box.size.y, -1, rightColor, BND_LEFT,
+                          rack::settings::bndLabelFontSize, rightText.c_str(), NULL);
 }
 
 void MenuItem::step() {

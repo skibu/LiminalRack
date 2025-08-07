@@ -21,6 +21,16 @@ bool headless = false;
 bool isPlugin = false;
 bool restart = false;
 
+// Whether this is Liminal version of Rack
+bool isLiminal = false;
+// When touch screen used need to increase size of widgets
+// to make them easier to touch.
+bool hasTouchscreen = false;
+// When keyboard not used then don't display keyboard shortcuts in menus
+bool hasKeyboard = true;
+// Font size to use for blendish
+int bndLabelFontSize = BND_LABEL_FONT_SIZE;
+
 std::string language = "en";
 bool safeMode = false;
 std::string token;
@@ -137,9 +147,14 @@ json_t* toJson() {
 
 	json_object_set_new(rootJ, "token", json_string(token.c_str()));
 
+	json_object_set_new(rootJ, "isLiminal", json_boolean(isLiminal));
+	json_object_set_new(rootJ, "hasTouchscreen", json_boolean(hasTouchscreen));
+	json_object_set_new(rootJ, "hasKeyboard", json_boolean(hasKeyboard));
+	json_object_set_new(rootJ, "bndLabelFontSize", json_integer(bndLabelFontSize));
+
 	json_object_set_new(rootJ, "windowMaximized", json_boolean(windowMaximized));
 
-	json_t* windowSizeJ = json_pack("[f, f]", windowSize.x, windowSize.y);
+    json_t* windowSizeJ = json_pack("[f, f]", windowSize.x, windowSize.y);
 	json_object_set_new(rootJ, "windowSize", windowSizeJ);
 
 	json_t* windowPosJ = json_pack("[f, f]", windowPos.x, windowPos.y);
@@ -305,12 +320,24 @@ void fromJson(json_t* rootJ) {
 	json_t* tokenJ = json_object_get(rootJ, "token");
 	if (tokenJ)
 		token = json_string_value(tokenJ);
+	
+	json_t* isLiminalJ = json_object_get(rootJ, "isLiminal");
+	if (isLiminalJ) isLiminal = json_boolean_value(isLiminalJ);
+
+	json_t* hasTouchscreenJ = json_object_get(rootJ, "hasTouchscreen");
+	if (hasTouchscreenJ) hasTouchscreen = json_boolean_value(hasTouchscreenJ);
+
+	json_t* hasKeyboardJ = json_object_get(rootJ, "hasKeyboard");
+	if (hasKeyboardJ) hasKeyboard = json_boolean_value(hasKeyboardJ);
+
+	json_t* bndLabelFontSizeJ = json_object_get(rootJ, "bndLabelFontSize");
+	if (bndLabelFontSizeJ)
+		bndLabelFontSize = json_integer_value(bndLabelFontSizeJ);
 
 	json_t* windowMaximizedJ = json_object_get(rootJ, "windowMaximized");
-	if (windowMaximizedJ)
-		windowMaximized = json_boolean_value(windowMaximizedJ);
+	if (windowMaximizedJ) windowMaximized = json_boolean_value(windowMaximizedJ);
 
-	json_t* windowSizeJ = json_object_get(rootJ, "windowSize");
+    json_t* windowSizeJ = json_object_get(rootJ, "windowSize");
 	if (windowSizeJ) {
 		double x, y;
 		json_unpack(windowSizeJ, "[F, F]", &x, &y);
@@ -605,6 +632,11 @@ void load(std::string path) {
 	DEFER({json_decref(rootJ);});
 
 	fromJson(rootJ);
+}
+
+void initBlendish() {
+    if (isLiminal)
+		bndSetLabelFontSize(bndLabelFontSize);
 }
 
 

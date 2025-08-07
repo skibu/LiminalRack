@@ -7,6 +7,8 @@ namespace ui {
 
 
 void init() {
+	settings::initBlendish();
+
 	refreshTheme();
 }
 
