@@ -14,11 +14,13 @@ FLAGS += -MMD -MP
 # Debugger symbols. These are removed with `strip`.
 FLAGS += -g
 # Optimization
-FLAGS += -O3 -funsafe-math-optimizations -fno-omit-frame-pointer
+FLAGS += -O0 -funsafe-math-optimizations -fno-omit-frame-pointer
 # Warnings
 FLAGS += -Wall -Wextra -Wno-unused-parameter
+# Needed because of hack at dep/include/nanovg_gl_utils.h:46:11
+FLAGS += -Wmacro-redefined
 # C++ standard
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++17
 
 # Define compiler/linker target if cross-compiling
 ifdef CROSS_COMPILE
