@@ -3,6 +3,7 @@
 #include <context.hpp>
 #include <window/Window.hpp>
 #include <system.hpp>
+#include <settings.hpp>
 #include <string.hpp>
 
 
@@ -52,6 +53,10 @@ std::string getKeyName(int key) {
 
 
 std::string getKeyCommandName(int key, int mods) {
+	// If no keyboard then just return empty string
+	if (!rack::settings::hasKeyboard)
+		return "";
+
 	std::string modsName;
 	if (mods & RACK_MOD_CTRL) {
 #if defined ARCH_MAC
