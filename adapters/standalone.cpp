@@ -1,3 +1,5 @@
+#include <ui/liminal.hpp>
+
 #include <common.hpp>
 #include <random.hpp>
 #include <asset.hpp>
@@ -71,13 +73,14 @@ int main(int argc, char* argv[]) {
 	std::string patchPath;
 	bool screenshot = false;
 	float screenshotZoom = 1.f;
-	const std::string appInfo = APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION + " " + APP_OS_NAME + " " + APP_CPU_NAME;
+	const std::string appInfo = APP_NAME + " " + APP_EDITION_NAME + APP_OS_NAME + " " + APP_CPU_NAME;
 
 	// Parse command line arguments
 	static const struct option longOptions[] = {
 		{"safe", no_argument, NULL, 'a'},
 		{"dev", no_argument, NULL, 'd'},
 		{"headless", no_argument, NULL, 'h'},
+		{"liminal", no_argument, NULL, 'l'},
 		{"screenshot", required_argument, NULL, 't'},
 		{"system", required_argument, NULL, 's'},
 		{"user", required_argument, NULL, 'u'},
@@ -88,7 +91,7 @@ int main(int argc, char* argv[]) {
 	int c;
 	opterr = 0;
 
-	while ((c = getopt_long(argc, argv, "adht:s:u:vp:", longOptions, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "adhlt:s:u:vp:", longOptions, NULL)) != -1) {
 		switch (c) {
 			case 'a': {
 				settings::safeMode = true;
@@ -99,6 +102,9 @@ int main(int argc, char* argv[]) {
 			case 'h': {
 				settings::headless = true;
 			} break;
+			case 'l': {
+                rack::ui::Liminal::configAsLiminal();
+            } break;			
 			case 't': {
 				screenshot = true;
 				std::sscanf(optarg, "%f", &screenshotZoom);
