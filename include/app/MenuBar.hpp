@@ -7,8 +7,9 @@
 namespace rack {
 namespace app {
 
-
+/** Creates system menu bar and all of the associated menus. */
 PRIVATE widget::Widget* createMenuBar();
+
 PRIVATE void appendLanguageMenu(ui::Menu* menu);
 
 

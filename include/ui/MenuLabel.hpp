@@ -6,7 +6,7 @@
 namespace rack {
 namespace ui {
 
-
+/** A non-selectable label that can be an item in a menu */
 struct MenuLabel : MenuEntry {
 	std::string text;
 
