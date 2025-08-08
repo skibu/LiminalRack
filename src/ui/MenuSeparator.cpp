@@ -14,7 +14,7 @@ void MenuSeparator::draw(const DrawArgs& args) {
 	const float margin = 8.0;
 	nvgMoveTo(args.vg, margin, box.size.y / 2.0);
 	nvgLineTo(args.vg, box.size.x - margin, box.size.y / 2.0);
-	nvgStrokeWidth(args.vg, 1.0);
+	nvgStrokeWidth(args.vg, 3.0);
 	nvgStrokeColor(args.vg, color::alpha(bndGetTheme()->menuTheme.textColor, 0.25));
 	nvgStroke(args.vg);
 }
