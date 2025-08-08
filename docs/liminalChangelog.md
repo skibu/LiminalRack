@@ -5,6 +5,7 @@
   - Greatly pruned down sample rate choices because there were so many of them
   - Changed oui-blendish so that text for slider menu items is left justified instead of centered so that the menus with sliders look better and aligned.
   - Pruned down unnecessary menu items so that users aren't overwhelmed
+  - Increased width of menu separators so that they are more visible
 - 8/6/25
   - Can use larger font for menus
   - Got rid of keyboard shortcuts in menus for when no keyboard being used (touch screen)
