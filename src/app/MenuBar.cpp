@@ -73,6 +73,8 @@ struct FileButton : MenuButton {
 		menu->cornerFlags = BND_CORNER_TOP;
 		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 
+		menu->addChild(new ui::MenuSeparator);
+
 		menu->addChild(createMenuItem(string::translate("MenuBar.file.new"), widget::getKeyCommandName(GLFW_KEY_N, RACK_MOD_CTRL), []() {
 			APP->patch->loadTemplateDialog();
 		}));
@@ -136,6 +138,8 @@ struct EditButton : MenuButton {
 		ui::Menu* menu = createMenu();
 		menu->cornerFlags = BND_CORNER_TOP;
 		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+
+		menu->addChild(new ui::MenuSeparator);
 
 		struct UndoItem : ui::MenuItem {
 			void step() override {
@@ -396,6 +400,7 @@ struct ViewButton : MenuButton {
 		menu->cornerFlags = BND_CORNER_TOP;
 		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 
+		menu->addChild(new ui::MenuSeparator);
 		menu->addChild(createMenuLabel(string::translate("MenuBar.view.window")));
 
 		bool fullscreen = APP->window->isFullScreen();
@@ -406,31 +411,35 @@ struct ViewButton : MenuButton {
 			APP->window->setFullScreen(!fullscreen);
 		}));
 
-		menu->addChild(createSubmenuItem(string::translate("MenuBar.view.frameRate"), string::f("%.0f Hz", settings::frameRateLimit), [=](ui::Menu* menu) {
-			for (int i = 1; i <= 6; i++) {
-				double frameRate = APP->window->getMonitorRefreshRate() / i;
-				menu->addChild(createCheckMenuItem(string::f("%.0f Hz", frameRate), "",
-					[=]() {return settings::frameRateLimit == frameRate;},
-					[=]() {settings::frameRateLimit = frameRate;}
-				));
-			}
-		}));
-
-		static const std::vector<float> pixelRatios = {0, 1, 1.5, 2, 2.5, 3};
-		std::vector<std::string> pixelRatioLabels;
-		for (float pixelRatio : pixelRatios) {
-			pixelRatioLabels.push_back(pixelRatio == 0.f ? string::translate("MenuBar.view.pixelRatio.auto") : string::f("%0.f%%", pixelRatio * 100.f));
+		if (!settings::isLiminal) {
+			menu->addChild(createSubmenuItem(string::translate("MenuBar.view.frameRate"), string::f("%.0f Hz", settings::frameRateLimit), [=](ui::Menu* menu) {
+				for (int i = 1; i <= 6; i++) {
+					double frameRate = APP->window->getMonitorRefreshRate() / i;
+					menu->addChild(createCheckMenuItem(string::f("%.0f Hz", frameRate), "",
+						[=]() {return settings::frameRateLimit == frameRate;},
+						[=]() {settings::frameRateLimit = frameRate;}
+					));
+				}
+			}));
 		}
-		menu->addChild(createIndexSubmenuItem(string::translate("MenuBar.view.pixelRatio"), pixelRatioLabels, [=]() -> size_t {
-			auto it = std::find(pixelRatios.begin(), pixelRatios.end(), settings::pixelRatio);
-			if (it == pixelRatios.end())
-				return -1;
-			return it - pixelRatios.begin();
-		}, [=](size_t i) {
-			settings::pixelRatio = pixelRatios[i];
-		}));
 
-		ZoomSlider* zoomSlider = new ZoomSlider;
+		if (!settings::isLiminal) {
+			static const std::vector<float> pixelRatios = {0, 1, 1.5, 2, 2.5, 3};
+			std::vector<std::string> pixelRatioLabels;
+			for (float pixelRatio : pixelRatios) {
+				pixelRatioLabels.push_back(pixelRatio == 0.f ? string::translate("MenuBar.view.pixelRatio.auto") : string::f("%0.f%%", pixelRatio * 100.f));
+			}
+			menu->addChild(createIndexSubmenuItem(string::translate("MenuBar.view.pixelRatio"), pixelRatioLabels, [=]() -> size_t {
+				auto it = std::find(pixelRatios.begin(), pixelRatios.end(), settings::pixelRatio);
+				if (it == pixelRatios.end())
+					return -1;
+				return it - pixelRatios.begin();
+			}, [=](size_t i) {
+				settings::pixelRatio = pixelRatios[i];
+			}));
+        }
+
+        ZoomSlider* zoomSlider = new ZoomSlider;
 		zoomSlider->box.size.x = 250.0;
 		menu->addChild(zoomSlider);
 
@@ -438,28 +447,32 @@ struct ViewButton : MenuButton {
 			APP->scene->rackScroll->zoomToModules();
 		}));
 
-		menu->addChild(createIndexPtrSubmenuItem(string::translate("MenuBar.view.mouseWheelZoom"), {
-			string::f(string::translate("MenuBar.view.mouseWheelZoom.scroll"), RACK_MOD_CTRL_NAME),
-			string::f(string::translate("MenuBar.view.mouseWheelZoom.zoom"), RACK_MOD_CTRL_NAME)
-		}, &settings::mouseWheelZoom));
+		if (!settings::isLiminal) {
+			menu->addChild(createIndexPtrSubmenuItem(string::translate("MenuBar.view.mouseWheelZoom"), {
+				string::f(string::translate("MenuBar.view.mouseWheelZoom.scroll"), RACK_MOD_CTRL_NAME),
+				string::f(string::translate("MenuBar.view.mouseWheelZoom.zoom"), RACK_MOD_CTRL_NAME)
+			}, &settings::mouseWheelZoom));
+		}
 
 		menu->addChild(new ui::MenuSeparator);
 		menu->addChild(createMenuLabel(string::translate("MenuBar.view.appearance")));
 
-		static const std::vector<std::string> uiThemes = {"dark", "light", "hcdark"};
-		menu->addChild(createIndexSubmenuItem(string::translate("MenuBar.view.uiTheme"), {
-			string::translate("MenuBar.view.appearance.dark"),
-			string::translate("MenuBar.view.appearance.light"),
-			string::translate("MenuBar.view.appearance.hcdark")
-		}, [=]() -> size_t {
-			auto it = std::find(uiThemes.begin(), uiThemes.end(), settings::uiTheme);
-			if (it == uiThemes.end())
-				return -1;
-			return it - uiThemes.begin();
-		}, [=](size_t i) {
-			settings::uiTheme = uiThemes[i];
-			ui::refreshTheme();
-		}));
+		if (!settings::isLiminal) {
+			static const std::vector<std::string> uiThemes = {"dark", "light", "hcdark"};
+			menu->addChild(createIndexSubmenuItem(string::translate("MenuBar.view.uiTheme"), {
+				string::translate("MenuBar.view.appearance.dark"),
+				string::translate("MenuBar.view.appearance.light"),
+				string::translate("MenuBar.view.appearance.hcdark")
+			}, [=]() -> size_t {
+				auto it = std::find(uiThemes.begin(), uiThemes.end(), settings::uiTheme);
+				if (it == uiThemes.end())
+					return -1;
+				return it - uiThemes.begin();
+			}, [=](size_t i) {
+				settings::uiTheme = uiThemes[i];
+				ui::refreshTheme();
+			}));
+		}
 
 		menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.showTooltips"), "", &settings::tooltips));
 
@@ -611,20 +624,24 @@ struct ViewButton : MenuButton {
 			}
 		}));
 
-		menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.knobScroll"), "", &settings::knobScroll));
+		if (!settings::isLiminal) {
+			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.knobScroll"), "", &settings::knobScroll));
 
-		KnobScrollSensitivitySlider* knobScrollSensitivitySlider = new KnobScrollSensitivitySlider;
-		knobScrollSensitivitySlider->box.size.x = 250.0;
-		menu->addChild(knobScrollSensitivitySlider);
+			KnobScrollSensitivitySlider* knobScrollSensitivitySlider = new KnobScrollSensitivitySlider;
+			knobScrollSensitivitySlider->box.size.x = 250.0;
+			menu->addChild(knobScrollSensitivitySlider);
+		}
 
 		menu->addChild(new ui::MenuSeparator);
 		menu->addChild(createMenuLabel(string::translate("MenuBar.view.modules")));
 
 		menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.lockModules"), "", &settings::lockModules));
 
-		menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.squeezeModules"), "", &settings::squeezeModules));
+		if (!settings::isLiminal) {
+			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.squeezeModules"), "", &settings::squeezeModules));
 
-		menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.preferDarkPanels"), "", &settings::preferDarkPanels));
+			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.preferDarkPanels"), "", &settings::preferDarkPanels));
+		}
 	}
 };
 
@@ -650,8 +667,11 @@ struct SampleRateItem : ui::MenuItem {
 		));
 
 		// Power-of-2 oversample times 44.1kHz or 48kHz
-		for (int i = -2; i <= 4; i++) {
-			for (int j = 0; j < 2; j++) {
+		for (int i = -1; i <= 2; i++) {
+			// Originally would do both relative to 44.1kHz and 48kHz, but this is too many options.
+			int minj = i == 0 ? 0 : 1;
+			int maxj = 2;
+			for (int j = minj; j < maxj; j++) {
 				float oversample = std::pow(2.f, i);
 				float sampleRate = (j == 0) ? 44100.f : 48000.f;
 				sampleRate *= oversample;
@@ -681,6 +701,8 @@ struct EngineButton : MenuButton {
 		menu->cornerFlags = BND_CORNER_TOP;
 		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 
+		menu->addChild(new ui::MenuSeparator);
+
 		std::string cpuMeterText = widget::getKeyCommandName(GLFW_KEY_F3, 0);
 		if (settings::cpuMeter)
 			cpuMeterText += " " CHECKMARK_STRING;
@@ -690,22 +712,24 @@ struct EngineButton : MenuButton {
 
 		menu->addChild(createMenuItem<SampleRateItem>(string::translate("MenuBar.engine.sampleRate"), RIGHT_ARROW));
 
-		menu->addChild(createSubmenuItem(string::translate("MenuBar.engine.threads"), string::f("%d", settings::threadCount), [=](ui::Menu* menu) {
-			// BUG This assumes SMT is enabled.
-			int cores = system::getLogicalCoreCount() / 2;
+		if (!settings::isLiminal) {
+			menu->addChild(createSubmenuItem(string::translate("MenuBar.engine.threads"), string::f("%d", settings::threadCount), [=](ui::Menu* menu) {
+				// BUG This assumes SMT is enabled.
+				int cores = system::getLogicalCoreCount() / 2;
 
-			for (int i = 1; i <= 2 * cores; i++) {
-				std::string rightText;
-				if (i == cores)
-					rightText += string::translate("MenuBar.engine.threads.most");
-				else if (i == 1)
-					rightText += string::translate("MenuBar.engine.threads.lowest");
-				menu->addChild(createCheckMenuItem(string::f("%d", i), rightText,
-					[=]() {return settings::threadCount == i;},
-					[=]() {settings::threadCount = i;}
-				));
-			}
-		}));
+				for (int i = 1; i <= 2 * cores; i++) {
+					std::string rightText;
+					if (i == cores)
+						rightText += string::translate("MenuBar.engine.threads.most");
+					else if (i == 1)
+						rightText += string::translate("MenuBar.engine.threads.lowest");
+					menu->addChild(createCheckMenuItem(string::f("%d", i), rightText,
+						[=]() {return settings::threadCount == i;},
+						[=]() {settings::threadCount = i;}
+					));
+				}
+			}));
+		}
 	}
 };
 
@@ -950,6 +974,8 @@ struct LibraryButton : MenuButton {
 		menu->cornerFlags = BND_CORNER_TOP;
 		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 
+		menu->addChild(new ui::MenuSeparator);
+
 		// Check for updates when menu is opened
 		if (!settings::devMode) {
 			std::thread t([&]() {
@@ -995,6 +1021,8 @@ struct HelpButton : MenuButton {
 		ui::Menu* menu = createMenu();
 		menu->cornerFlags = BND_CORNER_TOP;
 		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+
+		menu->addChild(new ui::MenuSeparator);
 
 		menu->addChild(createSubmenuItem("🌐 " + string::translate("MenuBar.help.language"), "", [=](ui::Menu* menu) {
 			appendLanguageMenu(menu);
