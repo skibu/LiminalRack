@@ -52,7 +52,7 @@ float knobLinearSensitivity = 0.001f;
 float knobScrollSensitivity = 0.001f;
 float sampleRate = 0;
 int threadCount = 4; // Default of 4 makes more sense than just 1
-bool tooltips = false;
+bool tooltips = true;
 bool cpuMeter = false;
 bool lockModules = false;
 bool squeezeModules = true;
@@ -73,7 +73,7 @@ std::vector<NVGcolor> cableColors;
 std::vector<std::string> cableLabels;
 bool autoCheckUpdates = true;
 bool verifyHttpsCerts = true;
-bool showTipsOnLaunch = true;
+bool showTipsOnLaunch = false;
 int tipIndex = -1;
 BrowserSort browserSort = BROWSER_SORT_UPDATED;
 float browserZoom = -1.f;
