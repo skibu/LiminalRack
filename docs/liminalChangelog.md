@@ -3,6 +3,7 @@
 - 8/7/25
   - Changed tooltips to only display 2 digit precision for floating point numbers
   - Greatly pruned down sample rate choices because there were so many of them
+  - CHanged oui-blendish so that text for slider menu items is left justified instead of centered so that the menus with sliders look better and aligned.
 - 8/6/25
   - Can use larger font for menus
   - Got rid of key shortcuts in menus for when no keyboard being used (touch screen)
