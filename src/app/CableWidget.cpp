@@ -353,8 +353,9 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 	nvgLineJoin(args.vg, NVG_ROUND);
 
 	if (layer == -1) {
-		// Draw cable shadow
-		math::Vec shadowSlump = slump.plus(math::Vec(0, 30));
+		// Draw cable shadow using a slump point below the cable
+		float shadowDeltaPxls = 15.f;
+		math::Vec shadowSlump = slump.plus(math::Vec(0, shadowDeltaPxls));
 		nvgBeginPath(args.vg);
 		nvgMoveTo(args.vg, VEC_ARGS(outputPos));
 		nvgQuadTo(args.vg, VEC_ARGS(shadowSlump), VEC_ARGS(inputPos));
