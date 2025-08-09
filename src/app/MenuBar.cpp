@@ -1090,7 +1090,7 @@ struct HelpButton : MenuButton {
 
 
 ////////////////////
-// MenuBar
+// InfoBar - displays frame rate, cpu, and app name/version info
 ////////////////////
 
 
@@ -1127,20 +1127,26 @@ struct InfoLabel : ui::Label {
 
 		text = "";
 
+		// If window wide enough display frame rate and CPU meter
 		if (box.size.x >= 460) {
 			double fps = std::isfinite(frameDurationAvg) ? 1.0 / frameDurationAvg : 0.0;
 			double meterAverage = APP->engine->getMeterAverage();
 			double meterMax = APP->engine->getMeterMax();
-			text += string::f(string::translate("MenuBar.infoLabel"), fps, meterAverage * 100, meterMax * 100);
-			text += "     ";
+            text += string::f(string::translate("MenuBar.infoLabel"), fps, meterAverage * 100, meterMax * 100);
+			text += "    ";
 		}
 
+		// Add in app and OS name
 		text += APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION + " " + APP_OS_NAME + " " + APP_CPU_NAME;
 
 		Label::step();
 	}
 };
 
+
+////////////////////
+// MenuBar
+////////////////////
 
 struct MenuBar : widget::OpaqueWidget {
 	InfoLabel* infoLabel;
