@@ -359,7 +359,7 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 		nvgBeginPath(args.vg);
 		nvgMoveTo(args.vg, VEC_ARGS(outputPos));
 		nvgQuadTo(args.vg, VEC_ARGS(shadowSlump), VEC_ARGS(inputPos));
-		NVGcolor shadowColor = nvgRGBAf(0, 0, 0, 0.10);
+		NVGcolor shadowColor = nvgRGBAf(0, 0, 0, 0.15);
 		nvgStrokeColor(args.vg, shadowColor);
 		nvgStrokeWidth(args.vg, thickness - 1.0);
 		nvgStroke(args.vg);
