@@ -1,5 +1,7 @@
 # Liminal Rack Change Log
 
+- 8/9/25
+  - Improved rendering of cables by having better default params and by reducing shadow droop so that shadow looks more associated with cable.
 - 8/8/25
   - Slight improvements to CPU display in menu bar.
   - Got changing of font size for touch screen fully working
