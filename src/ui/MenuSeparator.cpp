@@ -1,12 +1,12 @@
+#include <settings.hpp>
 #include <ui/MenuSeparator.hpp>
-
 
 namespace rack {
 namespace ui {
 
 
 MenuSeparator::MenuSeparator() {
-	box.size.y = BND_WIDGET_HEIGHT / 2;
+    box.size.y = rack::settings::bndWidgetHeight / 2;
 }
 
 void MenuSeparator::draw(const DrawArgs& args) {

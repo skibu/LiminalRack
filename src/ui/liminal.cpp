@@ -13,6 +13,7 @@ void Liminal::configAsLiminal() {
     rack::settings::hasKeyboard = false; 
     rack::settings::windowMaximized = true;
     rack::settings::bndLabelFontSize = 24; // Increase font size for touch screen
+    rack::settings::bndWidgetHeight = rack::settings::bndLabelFontSize + 8; // Increase widget height for touch screen
 }
 
 }  // namespace ui

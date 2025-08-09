@@ -45,6 +45,8 @@ extern bool hasTouchscreen;
 extern bool hasKeyboard;
 /** Font size to use for blendish */
 extern int bndLabelFontSize;
+/** Height of widgets in pixels */
+extern int bndWidgetHeight;
 /** Size of window in pixels */
 extern math::Vec windowSize;
 /** Position in window in pixels */

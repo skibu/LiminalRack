@@ -30,7 +30,8 @@ bool hasTouchscreen = false;
 bool hasKeyboard = true;
 // Font size to use for blendish
 int bndLabelFontSize = BND_LABEL_FONT_SIZE;
-
+// Size of widgets in pixels
+int bndWidgetHeight = BND_WIDGET_HEIGHT;
 std::string language = "en";
 bool safeMode = false;
 std::string token;
@@ -151,6 +152,7 @@ json_t* toJson() {
 	json_object_set_new(rootJ, "hasTouchscreen", json_boolean(hasTouchscreen));
 	json_object_set_new(rootJ, "hasKeyboard", json_boolean(hasKeyboard));
 	json_object_set_new(rootJ, "bndLabelFontSize", json_integer(bndLabelFontSize));
+	json_object_set_new(rootJ, "bndWidgetHeight", json_integer(bndWidgetHeight));
 
 	json_object_set_new(rootJ, "windowMaximized", json_boolean(windowMaximized));
 
@@ -333,6 +335,10 @@ void fromJson(json_t* rootJ) {
 	json_t* bndLabelFontSizeJ = json_object_get(rootJ, "bndLabelFontSize");
 	if (bndLabelFontSizeJ)
 		bndLabelFontSize = json_integer_value(bndLabelFontSizeJ);
+
+	json_t* bndWidgetHeightJ = json_object_get(rootJ, "bndWidgetHeight");
+	if (bndWidgetHeightJ)
+		bndWidgetHeight = json_integer_value(bndWidgetHeightJ);
 
 	json_t* windowMaximizedJ = json_object_get(rootJ, "windowMaximized");
 	if (windowMaximizedJ) windowMaximized = json_boolean_value(windowMaximizedJ);
@@ -635,8 +641,10 @@ void load(std::string path) {
 }
 
 void initBlendish() {
-    if (isLiminal)
+    if (isLiminal) {
 		bndSetLabelFontSize(bndLabelFontSize);
+        bndSetWidgetHeight(bndWidgetHeight);
+    }
 }
 
 

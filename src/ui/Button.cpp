@@ -1,13 +1,13 @@
 #include <ui/Button.hpp>
 #include <context.hpp>
-
+#include <settings.hpp>
 
 namespace rack {
 namespace ui {
 
 
 Button::Button() {
-	box.size.y = BND_WIDGET_HEIGHT;
+    box.size.y = rack::settings::bndWidgetHeight;
 }
 
 

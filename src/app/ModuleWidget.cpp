@@ -226,7 +226,7 @@ void ModuleWidget::draw(const DrawArgs& args) {
 		// nvgFill(args.vg);
 
 		// Draw time plot
-		const float plotHeight = box.size.y - BND_WIDGET_HEIGHT;
+		const float plotHeight = box.size.y - rack::settings::bndWidgetHeight;
 		nvgBeginPath(args.vg);
 		nvgMoveTo(args.vg, 0.0, plotHeight);
 		math::Vec p1;
@@ -258,7 +258,7 @@ void ModuleWidget::draw(const DrawArgs& args) {
 		nvgStroke(args.vg);
 
 		// Text background
-		bndMenuBackground(args.vg, 0.0, plotHeight, box.size.x, BND_WIDGET_HEIGHT, BND_CORNER_ALL);
+		bndMenuBackground(args.vg, 0.0, plotHeight, box.size.x, rack::settings::bndWidgetHeight, BND_CORNER_ALL);
 
 		// Text
 		float percent = meterBuffer[meterIndex] * sampleRate * 100.f;
@@ -270,7 +270,7 @@ void ModuleWidget::draw(const DrawArgs& args) {
 		math::Vec pt;
 		pt.x = box.size.x - bndLabelWidth(args.vg, -1, meterText.c_str()) + 3;
 		pt.y = plotHeight + 0.5;
-		bndMenuLabel(args.vg, VEC_ARGS(pt), INFINITY, BND_WIDGET_HEIGHT, -1, meterText.c_str());
+		bndMenuLabel(args.vg, VEC_ARGS(pt), INFINITY, rack::settings::bndWidgetHeight, -1, meterText.c_str());
 	}
 
 	// Selection

@@ -1135,7 +1135,7 @@ struct MenuBar : widget::OpaqueWidget {
 
 	MenuBar() {
 		const float margin = 5;
-		box.size.y = BND_WIDGET_HEIGHT + 2 * margin;
+		box.size.y = rack::settings::bndWidgetHeight + 2 * margin;
 
 		ui::SequentialLayout* layout = new ui::SequentialLayout;
 		layout->margin = math::Vec(margin, margin);

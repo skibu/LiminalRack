@@ -553,7 +553,7 @@ struct Browser : widget::OpaqueWidget {
 
 		// Model container
 		modelScroll = new ui::ScrollWidget;
-		modelScroll->box.pos.y = BND_WIDGET_HEIGHT;
+		modelScroll->box.pos.y = rack::settings::bndWidgetHeight;
 		addChild(modelScroll);
 
 		modelMargin = new widget::Widget;

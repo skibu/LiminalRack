@@ -52,7 +52,7 @@ struct TextFieldSelectAllItem : ui::MenuItem {
 
 
 TextField::TextField() {
-	box.size.y = BND_WIDGET_HEIGHT;
+    box.size.y = rack::settings::bndWidgetHeight;
 }
 
 void TextField::draw(const DrawArgs& args) {

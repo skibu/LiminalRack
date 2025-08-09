@@ -1,12 +1,12 @@
+#include <settings.hpp>
 #include <ui/ProgressBar.hpp>
-
 
 namespace rack {
 namespace ui {
 
 
 ProgressBar::ProgressBar() {
-	box.size.y = BND_WIDGET_HEIGHT;
+    box.size.y = rack::settings::bndWidgetHeight;
 }
 
 void ProgressBar::draw(const DrawArgs& args) {

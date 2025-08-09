@@ -1,6 +1,6 @@
-#include <ui/Slider.hpp>
+#include <settings.hpp>
 #include <ui/Menu.hpp>
-
+#include <ui/Slider.hpp>
 
 namespace rack {
 namespace ui {
@@ -10,7 +10,7 @@ static const float SENSITIVITY = 0.001f;
 
 
 Slider::Slider() {
-	box.size.y = BND_WIDGET_HEIGHT;
+    box.size.y = rack::settings::bndWidgetHeight;
 }
 
 void Slider::draw(const DrawArgs& args) {
