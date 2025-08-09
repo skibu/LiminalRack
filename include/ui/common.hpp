@@ -23,8 +23,18 @@ namespace ui {
 
 PRIVATE void init();
 PRIVATE void destroy();
-void setTheme(NVGcolor bg, NVGcolor fg);
-/** Sets theme from settings. */
+
+/**
+ * @brief Sets the theme using the colors specified by bg and fg params.
+ * 
+ * @param bg background color
+ * @param fg  foreground color
+ */
+PRIVATE void setTheme(NVGcolor bg, NVGcolor fg);
+
+/** Sets theme using value of settings::uiTheme which can be set to 
+ * "light", "dark", or "hcdark". Sets the colors associated with the
+ * theme. */
 void refreshTheme();
 
 
