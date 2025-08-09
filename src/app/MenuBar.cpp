@@ -903,6 +903,8 @@ struct LibraryMenu : ui::Menu {
 		setChildMenu(NULL);
 		clearChildren();
 
+		addChild(new ui::MenuSeparator);
+
 		if (settings::devMode) {
 			addChild(createMenuLabel(string::translate("MenuBar.library.devMode")));
 		}
@@ -1036,13 +1038,15 @@ struct HelpButton : MenuButton {
 			system::openBrowser("https://vcvrack.com/manual");
 		}));
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.help.support"), "", [=]() {
-			system::openBrowser("https://vcvrack.com/support");
-		}));
+		if (!settings::isLiminal) {
+			menu->addChild(createMenuItem(string::translate("MenuBar.help.support"), "", [=]() {
+				system::openBrowser("https://vcvrack.com/support");
+			}));
 
-		menu->addChild(createMenuItem("VCVRack.com", "", [=]() {
-			system::openBrowser("https://vcvrack.com/");
-		}));
+			menu->addChild(createMenuItem("VCVRack.com", "", [=]() {
+				system::openBrowser("https://vcvrack.com/");
+			}));
+		}
 
 		menu->addChild(new ui::MenuSeparator);
 
@@ -1050,9 +1054,17 @@ struct HelpButton : MenuButton {
 			system::openDirectory(asset::user(""));
 		}));
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.help.changelog"), "", [=]() {
-			system::openBrowser("https://github.com/VCVRack/Rack/blob/v2/CHANGELOG.md");
-		}));
+		if (settings::isLiminal) {
+			// Show Liminal Rack changelog
+			menu->addChild(createMenuItem(string::translate("MenuBar.help.changelog"), "", [=]() {
+				system::openBrowser("https://github.com/skibu/LiminalRack/blob/v2/docs/liminalChangelog.md");
+			}));		
+		} else {
+			// Show VCV Rack changelog
+			menu->addChild(createMenuItem(string::translate("MenuBar.help.changelog"), "", [=]() {
+				system::openBrowser("https://github.com/VCVRack/Rack/blob/v2/CHANGELOG.md");
+			}));
+		}
 
 		if (library::isAppUpdateAvailable()) {
 			menu->addChild(createMenuItem(string::f(string::translate("MenuBar.help.update"), APP_NAME), APP_VERSION + " → " + library::appVersion, [=]() {
