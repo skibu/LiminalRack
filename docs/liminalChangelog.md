@@ -1,6 +1,7 @@
 # Liminal Rack Change Log
 
 - 8/8/25
+  - Slight improvements to CPU display in menu bar.
   - Got changing of font size for touch screen fully working
 - 8/7/25
   - Changed tooltips to only display 2 digit precision for floating point numbers
