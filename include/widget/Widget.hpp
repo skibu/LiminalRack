@@ -139,6 +139,7 @@ struct Widget : WeakBase {
 	virtual void step();
 
 	struct DrawArgs {
+		// The Vector Graphics context to draw to
 		NVGcontext* vg = NULL;
 		/** Local box representing the visible viewport. */
 		math::Rect clipBox;

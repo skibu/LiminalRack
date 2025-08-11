@@ -16,7 +16,9 @@ struct PortWidget : widget::OpaqueWidget {
 	Internal* internal;
 
 	engine::Module* module = NULL;
+	// Whether this port is input or output
 	engine::Port::Type type = engine::Port::INPUT;
+
 	int portId = -1;
 
 	PortWidget();
@@ -30,6 +32,17 @@ struct PortWidget : widget::OpaqueWidget {
 	void deleteTopCableAction();
 
 	void step() override;
+
+	/**
+	 * @brief Called when need to draw port
+	 * 
+	 * Draws the port, but if cable being dragged then will deemphasize 
+	 * port types that cannot be connected to and emphasizes ports that
+	 * can be connected to. This way easy for user to see which ports can
+	 * connect to. Key thing is that outputs can only be connected to inputs
+	 * and inputs can only be connected to outputs.
+	 * @param args 
+	 */
 	void draw(const DrawArgs& args) override;
 
 	void onButton(const ButtonEvent& e) override;

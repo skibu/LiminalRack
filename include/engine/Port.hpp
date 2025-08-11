@@ -11,6 +11,7 @@ namespace engine {
 static const int PORT_MAX_CHANNELS = 16;
 
 
+/** Describes state of a port/jack */
 struct Port {
 	/** Voltage of the port. */
 	union {
@@ -34,6 +35,7 @@ struct Port {
 	*/
 	Light plugLights[3];
 
+	// Type of a port/plug
 	enum Type {
 		INPUT,
 		OUTPUT,

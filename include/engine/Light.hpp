@@ -6,6 +6,7 @@ namespace rack {
 namespace engine {
 
 
+/** Brightness of a color */	
 struct Light {
 	/** The square of the brightness.
 	Unstable API. Use set/getBrightness().

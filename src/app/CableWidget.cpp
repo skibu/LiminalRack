@@ -26,6 +26,11 @@ struct TintWidget : widget::Widget {
 };
 
 
+/** 
+ * To draw a light indicating state of the plug. Will be a 
+ * combination of red, green, and blue lights.
+ * Color is specified by a TintWidget.
+ */
 struct PlugLight : componentlibrary::TRedGreenBlueLight<app::MultiLightWidget> {
 	PlugLight() {
 		box.size = math::Vec(9, 9);
@@ -33,63 +38,99 @@ struct PlugLight : componentlibrary::TRedGreenBlueLight<app::MultiLightWidget> {
 };
 
 
-struct PlugWidget::Internal {
+struct PlugWidget::PlugInternals {
+	// The parent cable widget.
 	CableWidget* cableWidget;
+
+	// Type of the plug, either INPUT or OUTPUT.
 	engine::Port::Type type;
 
-	/** Initially pointing upward. */
+	// Angle of the plug. Initially pointing upward. 
 	float angle = 0.5f * M_PI;
 
+	// The framebuffer used to draw the plug.
 	widget::FramebufferWidget* fb;
+
+	// How to rotate and scale the drawing of the plug
 	widget::TransformWidget* plugTransform;
+
+	// Color of the plug, set by CableWidget.
 	TintWidget* plugTint;
+
+	// Drawing of the cable's plug
 	widget::SvgWidget* plug;
+
+	// Drawing of the jack
 	widget::SvgWidget* plugPort;
+
+	// Drawing of an light indicating state/voltage of the jack
 	app::MultiLightWidget* plugLight;
 };
 
+/**
+ * @brief Construct a new Plug Widget so that it can be drawn
+ * 
+ * @details Drawing is done by first drawing PlugInput or PlugOutput, and
+ * then drawing PlugPort on top of it. Goal is to have output port look like
+ * an arrow pointing away from the jack, and the input port look like an
+ * arrow pointing towards the jack. This should help user better understand
+ * flow of signals in the patch.
+ * 
+ * @param cableWidget 
+ * @param type INPUT or OUTPUT
+ */
+PlugWidget::PlugWidget(const CableWidget* cableWidget, engine::Port::Type type) {
+    plugInternals = new PlugInternals;
 
-PlugWidget::PlugWidget() {
-	internal = new Internal;
+    plugInternals->cableWidget = const_cast<CableWidget*>(cableWidget);
+    plugInternals->type = type;
 
-	internal->fb = new widget::FramebufferWidget;
-	addChild(internal->fb);
+    plugInternals->fb = new widget::FramebufferWidget;
+    addChild(plugInternals->fb);
 
-	internal->plugTransform = new widget::TransformWidget;
-	internal->fb->addChild(internal->plugTransform);
+    plugInternals->plugTransform = new widget::TransformWidget;
+    plugInternals->fb->addChild(plugInternals->plugTransform);
 
-	internal->plugTint = new TintWidget;
-	internal->plugTransform->addChild(internal->plugTint);
+    plugInternals->plugTint = new TintWidget;
+    plugInternals->plugTransform->addChild(plugInternals->plugTint);
 
-	internal->plug = new widget::SvgWidget;
-	internal->plug->setSvg(window::Svg::load(asset::system("res/ComponentLibrary/Plug.svg")));
-	internal->plugTint->addChild(internal->plug);
-	internal->plugTransform->setSize(internal->plug->getSize());
-	internal->plugTransform->setPosition(internal->plug->getSize().mult(-0.5));
-	internal->plugTint->setSize(internal->plug->getSize());
+    // Setup for drawing of the jack
+    plugInternals->plugPort = new widget::SvgWidget;
+    plugInternals->plugPort->setSvg(
+        window::Svg::load(asset::system("res/ComponentLibrary/PlugPort.svg")));
+    plugInternals->plugPort->setPosition(plugInternals->plugPort->getSize().mult(-0.5));
+    plugInternals->fb->addChild(plugInternals->plugPort);
 
-	internal->plugPort = new widget::SvgWidget;
-	internal->plugPort->setSvg(window::Svg::load(asset::system("res/ComponentLibrary/PlugPort.svg")));
-	internal->plugPort->setPosition(internal->plugPort->getSize().mult(-0.5));
-	internal->fb->addChild(internal->plugPort);
+    // Setup for drawing of the plug
+    plugInternals->plug = new widget::SvgWidget;
+	auto plus_svg_filename = plugInternals->type == engine::Port::INPUT ? 
+		"res/ComponentLibrary/PlugInput.svg" : "res/ComponentLibrary/PlugOutput.svg";
+    plugInternals->plug->setSvg(window::Svg::load(asset::system(plus_svg_filename)));
+    plugInternals->plugTint->addChild(plugInternals->plug);
+    plugInternals->plugTransform->setSize(plugInternals->plug->getSize());
+    plugInternals->plugTransform->setPosition(plugInternals->plug->getSize().mult(-0.5));
+    plugInternals->plugTint->setSize(plugInternals->plug->getSize());
 
-	internal->plugLight = new PlugLight;
-	internal->plugLight->setPosition(internal->plugLight->getSize().mult(-0.5));
-	addChild(internal->plugLight);
+	// Setup for drawing of the light indicating state/voltage of the plug
+    plugInternals->plugLight = new PlugLight;
+    plugInternals->plugLight->setPosition(plugInternals->plugLight->getSize().mult(-0.5));
+    addChild(plugInternals->plugLight);
 
-	setSize(internal->plug->getSize());
+    setSize(plugInternals->plug->getSize());
 }
 
-
 PlugWidget::~PlugWidget() {
-	delete internal;
+	delete plugInternals;
 }
 
 void PlugWidget::step() {
+	// To contain brightness of colors (red, green, and blue) of the plug light
 	std::vector<float> values(3);
 
-	PortWidget* pw = internal->cableWidget->getPort(internal->type);
-	if (pw && internal->plugLight->isVisible()) {
+	// Gets info from the port on brightness for each color. Stores those values
+	// in the plug's plugLight so that it can be drawn later
+	PortWidget* pw = plugInternals->cableWidget->getPort(plugInternals->type);
+	if (pw && plugInternals->plugLight->isVisible()) {
 		engine::Port* port = pw->getPort();
 		if (port) {
 			for (int i = 0; i < 3; i++) {
@@ -97,57 +138,52 @@ void PlugWidget::step() {
 			}
 		}
 	}
-	internal->plugLight->setBrightnesses(values);
+	plugInternals->plugLight->setBrightnesses(values);
 
 	Widget::step();
 }
 
 void PlugWidget::setColor(NVGcolor color) {
-	if (color::isEqual(color, internal->plugTint->color))
+	if (color::isEqual(color, plugInternals->plugTint->color))
 		return;
-	internal->plugTint->color = color;
-	internal->fb->setDirty();
+	plugInternals->plugTint->color = color;
+	plugInternals->fb->setDirty();
 }
 
 void PlugWidget::setAngle(float angle) {
-	if (angle == internal->angle)
+	if (angle == plugInternals->angle)
 		return;
-	internal->angle = angle;
-	internal->plugTransform->identity();
-	internal->plugTransform->rotate(angle - 0.5f * M_PI, internal->plug->getSize().div(2));
-	internal->fb->setDirty();
+	plugInternals->angle = angle;
+	plugInternals->plugTransform->identity();
+	plugInternals->plugTransform->rotate(angle - 0.5f * M_PI, plugInternals->plug->getSize().div(2));
+	plugInternals->fb->setDirty();
 }
 
 void PlugWidget::setTop(bool top) {
-	internal->plugLight->setVisible(top);
+	plugInternals->plugLight->setVisible(top);
 }
 
 CableWidget* PlugWidget::getCable() {
-	return internal->cableWidget;
+	return plugInternals->cableWidget;
 }
 
 engine::Port::Type PlugWidget::getType() {
-	return internal->type;
+	return plugInternals->type;
 }
 
 
-struct CableWidget::Internal {
+struct CableWidget::CableInternal {
 	/** For making history consistent when disconnecting and reconnecting cable. */
 	int64_t cableId = -1;
 };
 
 
 CableWidget::CableWidget() {
-	internal = new Internal;
+	cableInternals = new CableInternal;
 	color = color::BLACK_TRANSPARENT;
 
-	outputPlug = new PlugWidget;
-	outputPlug->internal->cableWidget = this;
-	outputPlug->internal->type = engine::Port::OUTPUT;
-
-	inputPlug = new PlugWidget;
-	inputPlug->internal->cableWidget = this;
-	inputPlug->internal->type = engine::Port::INPUT;
+	outputPlug = new PlugWidget(this, engine::Port::OUTPUT);
+	inputPlug = new PlugWidget(this, engine::Port::INPUT);
 }
 
 
@@ -156,7 +192,7 @@ CableWidget::~CableWidget() {
 	delete inputPlug;
 
 	setCable(NULL);
-	delete internal;
+	delete cableInternals;
 }
 
 
@@ -173,13 +209,13 @@ void CableWidget::updateCable() {
 	}
 	if (inputPort && outputPort) {
 		cable = new engine::Cable;
-		cable->id = internal->cableId;
+		cable->id = cableInternals->cableId;
 		cable->inputModule = inputPort->module;
 		cable->inputId = inputPort->portId;
 		cable->outputModule = outputPort->module;
 		cable->outputId = outputPort->portId;
 		APP->engine->addCable(cable);
-		internal->cableId = cable->id;
+		cableInternals->cableId = cable->id;
 	}
 }
 
@@ -189,7 +225,7 @@ void CableWidget::setCable(engine::Cable* cable) {
 		APP->engine->removeCable(this->cable);
 		delete this->cable;
 		this->cable = NULL;
-		internal->cableId = -1;
+		cableInternals->cableId = -1;
 	}
 	if (cable) {
 		app::ModuleWidget* outputMw = APP->scene->rack->getModule(cable->outputModule->id);
@@ -207,7 +243,7 @@ void CableWidget::setCable(engine::Cable* cable) {
 			throw Exception("Cable cannot find input port %d", cable->inputId);
 
 		this->cable = cable;
-		internal->cableId = cable->id;
+		cableInternals->cableId = cable->id;
 	}
 	else {
 		outputPort = NULL;
@@ -283,14 +319,14 @@ void CableWidget::step() {
 	NVGcolor colorOpaque = color;
 	colorOpaque.a = 1.f;
 
-	// Draw output plug
+	// Setup drawing of output plug
 	outputPlug->setPosition(outputPos);
 	bool outputTop = outputPort && (APP->scene->rack->getTopPlug(outputPort) == outputPlug);
 	outputPlug->setTop(outputTop);
 	outputPlug->setAngle(slump.minus(outputPos).arg());
 	outputPlug->setColor(colorOpaque);
 
-	// Draw input plug
+	// Setup drawing of input plug
 	inputPlug->setPosition(inputPos);
 	bool inputTop = inputPort && (APP->scene->rack->getTopPlug(inputPort) == inputPlug);
 	inputPlug->setTop(inputTop);
@@ -306,13 +342,17 @@ void CableWidget::draw(const DrawArgs& args) {
 }
 
 
+
 void CableWidget::drawLayer(const DrawArgs& args, int layer) {
-	// Cable shadow and cable
+	// Determine opacity for drawing cable and shadow
 	float opacity = settings::cableOpacity;
 	bool thick = false;
 
+	// Determine opacity to use for drawing the cable
 	if (isComplete()) {
+		// Cable connected on both ends to port, so determine desired opacity of cable accordingly 
 		engine::Output* output = &cable->outputModule->outputs[cable->outputId];
+
 		// Increase thickness if output port is polyphonic
 		if (output->isPolyphonic()) {
 			thick = true;
@@ -329,7 +369,7 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 		}
 	}
 	else {
-		// Draw opaque if the cable is incomplete
+		// Draw opaque since the cable is incomplete
 		opacity = 1.0;
 	}
 
@@ -337,18 +377,24 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 		return;
 	nvgAlpha(args.vg, std::pow(opacity, 1.5));
 
+	// Determine how to draw the cable
 	math::Vec outputPos = getOutputPos();
 	math::Vec inputPos = getInputPos();
 
+	// Set how thick the cable should be drawn
 	float thickness = thick ? 9.0 : 6.0;
 
-	// The endpoints are off-center
+	// The endpoints of cable don't go all the way to center of jack.
+	// For output jack they should go closer to look somewhat like an arrow.
 	math::Vec slump = getSlumpPos(outputPos, inputPos);
-	float dist = 14.f;
-	outputPos = outputPos.plus(slump.minus(outputPos).normalize().mult(dist));
-	inputPos = inputPos.plus(slump.minus(inputPos).normalize().mult(dist));
+	float outputJackDistance = 17.f;
+	outputPos = outputPos.plus(slump.minus(outputPos).normalize().mult(outputJackDistance));
+	float inputJackDistance = 6.f;
+	inputPos = inputPos.plus(slump.minus(inputPos).normalize().mult(inputJackDistance));
 
+	// Best line cap seems to be rounded
 	nvgLineCap(args.vg, NVG_ROUND);
+
 	// Avoids glitches when cable is bent
 	nvgLineJoin(args.vg, NVG_ROUND);
 
@@ -380,6 +426,7 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 		nvgStroke(args.vg);
 	}
 
+	// Draw children widgets, such as plugs
 	Widget::drawLayer(args, layer);
 }
 
@@ -387,7 +434,7 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 engine::Cable* CableWidget::releaseCable() {
 	engine::Cable* cable = this->cable;
 	this->cable = NULL;
-	internal->cableId = -1;
+	cableInternals->cableId = -1;
 	return cable;
 }
 
