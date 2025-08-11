@@ -15,7 +15,7 @@ std::string logPath;
 static FILE* outputFile = NULL;
 static std::mutex mutex;
 static bool truncated = false;
-const static long maxSize = 10 * 1000 * 1000; // 10 MB
+const static long maxSize = 1000 * 1000 * 1000; // 1 GB
 
 
 static bool fileEndsWith(FILE* file, std::string str) {
