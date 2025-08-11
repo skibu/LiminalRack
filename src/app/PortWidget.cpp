@@ -253,12 +253,18 @@ engine::PortInfo* PortWidget::getPortInfo() {
 
 
 void PortWidget::createTooltip() {
+	// If tooltips disabled, do not create tooltip
 	if (!settings::tooltips)
 		return;
+
+	// If tooltip already exists, do not create another one
 	if (internal->tooltip)
 		return;
+
 	if (!module)
 		return;
+
+	// Create tooltip
 	PortTooltip* tooltip = new PortTooltip;
 	tooltip->portWidget = this;
 	APP->scene->addChild(tooltip);
@@ -267,8 +273,11 @@ void PortWidget::createTooltip() {
 
 
 void PortWidget::destroyTooltip() {
+	// If no tooltip don't need to destroy it
 	if (!internal->tooltip)
 		return;
+
+	// Actually destroy the tooltip
 	APP->scene->removeChild(internal->tooltip);
 	delete internal->tooltip;
 	internal->tooltip = NULL;
@@ -377,12 +386,22 @@ void PortWidget::draw(const DrawArgs& args) {
 	// Check if left-dragging a PortWidget
 	PortWidget* draggedPw = dynamic_cast<PortWidget*>(APP->event->getDraggedWidget());
 	if (draggedPw && APP->event->dragButton == GLFW_MOUSE_BUTTON_LEFT) {
+		// Dragging a cable, which means should emphasize ports that can be connected to
+		// and deemphasize ports that cannot be connected to. Use nvtTint to change the
+		// colors and alpha used to draw the ports.
 		if (draggedPw->internal->draggedType != type) {
-			// Dim the PortWidget if the active cable cannot plug into this PortWidget
-			nvgTint(args.vg, nvgRGBf(0.33, 0.33, 0.33));
+			// Cannot make a connection to the port so deemphasize it. This is accomplished
+			// by reducing alpha to 0.4, which basically makes the port fade out
+			nvgTint(args.vg, nvgRGBAf(1.0, 1.0, 1.0, 0.4));
+		} else {
+			// Can make a connection to the port so emphasize it. Do this by keeping green
+			// color high but reducing red and blue. Keeping alpha at 1.0. Result is sthat
+			// the port will still be pretty bright but will also be green. 
+			nvgTint(args.vg, nvgRGBAf(0.7, 1.0, 0.7, 1.0));
 		}
 	}
-	Widget::draw(args);
+
+    Widget::draw(args);
 }
 
 
