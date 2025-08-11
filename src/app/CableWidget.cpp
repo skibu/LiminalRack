@@ -18,7 +18,10 @@ namespace app {
 
 
 struct TintWidget : widget::Widget {
+	// The color to tint the widget with. WHITE is just the
+	// initial default. Typically this is set by CableWidget.
 	NVGcolor color = color::WHITE;
+
 	void draw(const DrawArgs& args) override {
 		nvgTint(args.vg, color);
 		Widget::draw(args);
@@ -67,18 +70,7 @@ struct PlugWidget::PlugInternals {
 	app::MultiLightWidget* plugLight;
 };
 
-/**
- * @brief Construct a new Plug Widget so that it can be drawn
- * 
- * @details Drawing is done by first drawing PlugInput or PlugOutput, and
- * then drawing PlugPort on top of it. Goal is to have output port look like
- * an arrow pointing away from the jack, and the input port look like an
- * arrow pointing towards the jack. This should help user better understand
- * flow of signals in the patch.
- * 
- * @param cableWidget 
- * @param type INPUT or OUTPUT
- */
+
 PlugWidget::PlugWidget(const CableWidget* cableWidget, engine::Port::Type type) {
     plugInternals = new PlugInternals;
 
@@ -389,7 +381,7 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 	math::Vec slump = getSlumpPos(outputPos, inputPos);
 	float outputJackDistance = 17.f;
 	outputPos = outputPos.plus(slump.minus(outputPos).normalize().mult(outputJackDistance));
-	float inputJackDistance = 6.f;
+	float inputJackDistance = 16.f;
 	inputPos = inputPos.plus(slump.minus(inputPos).normalize().mult(inputJackDistance));
 
 	// Best line cap seems to be rounded
@@ -399,7 +391,7 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 	nvgLineJoin(args.vg, NVG_ROUND);
 
 	if (layer == -1) {
-		// Draw cable shadow using a slump point below the cable
+		// Setup to draw cable shadow using a slump point below the cable
 		float shadowDeltaPxls = 15.f;
 		math::Vec shadowSlump = slump.plus(math::Vec(0, shadowDeltaPxls));
 		nvgBeginPath(args.vg);
@@ -411,7 +403,7 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 		nvgStroke(args.vg);
 	}
 	else if (layer == 0) {
-		// Draw cable outline
+		// Setup to draw cable outline
 		nvgBeginPath(args.vg);
 		nvgMoveTo(args.vg, VEC_ARGS(outputPos));
 		nvgQuadTo(args.vg, VEC_ARGS(slump), VEC_ARGS(inputPos));
@@ -426,7 +418,7 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 		nvgStroke(args.vg);
 	}
 
-	// Draw children widgets, such as plugs
+	// Draw children widgets
 	Widget::drawLayer(args, layer);
 }
 
