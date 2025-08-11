@@ -3,6 +3,7 @@
 - 8/11/25
   - Reduced droopiness of cables. Previously the cables were absurdly droopy when tension set to 0.
   - Improved drawing of cable plugs so that they clearly show which is an input and which is an output, and also which way the signal flows.
+  - Improved display of fps and cpu in menu bar
 - 8/10/25
   - Improved drawing of ports when dragging a cable. Previously the ports that couldn't connect to were really grayed out. But drawing them really dark drew attention to the ports that couldn't connect to instead of to the ones that could. So for ports where can't connect just fading out the ports by setting alpha to 0.4. And for the ports where can make a connection tinted them green so it is obvious that can connect to them.
 - 8/9/25
