@@ -297,8 +297,11 @@ void CableWidget::fromJson(json_t* rootJ) {
 static math::Vec getSlumpPos(math::Vec pos1, math::Vec pos2) {
 	float dist = pos1.minus(pos2).norm();
 	math::Vec avg = pos1.plus(pos2).div(2);
-	// Lower average point as distance increases
-	avg.y += (1.0 - settings::cableTension) * (150.0 + 1.0 * dist);
+	// Lower average point as distance increases. 
+	// Originally droopage was 150 but there is no good reason for
+	// the cables to hang so low.
+	double droopage = 50.0;
+	avg.y += (1.0 - settings::cableTension) * (droopage + 1.0 * dist);
 	return avg;
 }
 
