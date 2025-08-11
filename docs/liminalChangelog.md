@@ -1,5 +1,7 @@
 # Liminal Rack Change Log
 
+- 8/10/25
+  - Improved drawing of ports when dragging a cable. Previously the ports that couldn't connect to were really grayed out. But drawing them really dark drew attention to the ports that couldn't connect to instead of to the ones that could. So for ports where can't connect just fading out the ports by setting alpha to 0.4. And for the ports where can make a connection tinted them green so it is obvious that can connect to them.
 - 8/9/25
   - Improved rendering of cables by having better default params and by reducing shadow droop so that shadow looks more associated with cable.
 - 8/8/25
