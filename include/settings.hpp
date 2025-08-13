@@ -137,6 +137,11 @@ struct PluginWhitelist {
 extern std::map<std::string, PluginWhitelist> moduleWhitelist;
 
 bool isModuleWhitelisted(const std::string& pluginSlug, const std::string& moduleSlug);
+
+/**
+ * @brief Sets cableColors and cableLabels to default values
+ *  Then they can be overridden when settings.json file read in.
+ */
 void resetCables();
 
 PRIVATE void init();

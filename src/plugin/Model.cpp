@@ -222,6 +222,13 @@ void Model::setFavorite(bool favorite) {
 	mi.favorite = favorite;
 }
 
+std::vector<std::string> Model::getTagNames() {
+	std::vector<std::string> tagNames;
+	for (int tagId : tagIds) {
+		tagNames.push_back(tag::getTag(tagId));
+	}
+	return tagNames;
+}
 
 } // namespace plugin
 } // namespace rack

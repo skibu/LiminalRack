@@ -1,5 +1,6 @@
 #include <app/PortWidget.hpp>
 #include <app/Scene.hpp>
+#include <app/CableColorMatcher.hpp>
 #include <ui/MenuItem.hpp>
 #include <ui/MenuSeparator.hpp>
 #include <window/Window.hpp>
@@ -508,10 +509,10 @@ void PortWidget::onDragStart(const DragStartEvent& e) {
 	if (cws.empty()) {
 		CableWidget* cw = new CableWidget;
 
-		// Set color
-		cw->color = APP->scene->rack->getNextCableColor();
+		// Set color of the cable
+        cw->color = CableColorMatcher::getCableColor(getPortInfo());
 
-		// Set port
+        // Set port
 		cw->getPort(type) = this;
 		internal->draggedType = (type == engine::Port::INPUT) ? engine::Port::OUTPUT : engine::Port::INPUT;
 		APP->scene->rack->addCable(cw);
@@ -571,20 +572,26 @@ void PortWidget::onDragDrop(const DragDropEvent& e) {
 		if (type == engine::Port::OUTPUT) {
 			// Check that similar cable doesn't exist
 			if (cw->inputPort && !APP->scene->rack->getCable(this, cw->inputPort)) {
+				// Connecting to output port so remember this port
 				cw->outputPort = this;
 			}
 			else {
+				// Cable already exists so skip this one
 				continue;
 			}
 		}
 		else {
 			if (cw->outputPort && !APP->scene->rack->getCable(cw->outputPort, this)) {
+				// Connecting to input port so remember this port
 				cw->inputPort = this;
 			}
 			else {
+				// Cable already exists so skip this one
 				continue;
 			}
 		}
+
+		// Input and output ports are set, so finish updating the cable
 		cw->updateCable();
 
 		// This should always be true since the ComplexAction is created in onDragStart()

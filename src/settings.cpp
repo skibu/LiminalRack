@@ -112,6 +112,7 @@ bool isModuleWhitelisted(const std::string& pluginSlug, const std::string& modul
 
 
 void resetCables() {
+	// Set default cable colors
 	cableColors = {
 		color::fromHexString("#f3374b"), // red
 		color::fromHexString("#ffb437"), // yellow
@@ -119,7 +120,18 @@ void resetCables() {
 		color::fromHexString("#3695ef"), // blue
 		color::fromHexString("#8b4ade"), // purple
 	};
+
+	// Set default cable labels
 	cableLabels.clear();
+	cableLabels = {
+		"Red - Audio",
+		"Yellow - Pitch, 1V/oct",
+		"Green - Modulation, CV, LFO, Envelope",
+		"Blue - Trigger, Gate, Clock",
+		"Purple",
+	};
+
+	// Resize labels vector to match colors
 	cableLabels.resize(cableColors.size());
 }
 
@@ -604,7 +616,7 @@ void save(std::string path) {
 	if (path.empty())
 		path = settingsPath;
 
-	INFO("Saving settings %s", path.c_str());
+	DEBUG("Saving settings %s", path.c_str());
 	json_t* rootJ = toJson();
 	if (!rootJ)
 		return;

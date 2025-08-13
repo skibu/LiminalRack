@@ -1,4 +1,5 @@
 #include <app/CableWidget.hpp>
+#include <app/CableColorMatcher.hpp>
 #include <widget/SvgWidget.hpp>
 #include <widget/TransformWidget.hpp>
 #include <app/Scene.hpp>
@@ -194,23 +195,33 @@ bool CableWidget::isComplete() {
 
 
 void CableWidget::updateCable() {
+	// Clean up existing cable if it exists
 	if (cable) {
 		APP->engine->removeCable(cable);
 		delete cable;
 		cable = NULL;
 	}
-	if (inputPort && outputPort) {
-		cable = new engine::Cable;
-		cable->id = cableInternals->cableId;
-		cable->inputModule = inputPort->module;
-		cable->inputId = inputPort->portId;
-		cable->outputModule = outputPort->module;
-		cable->outputId = outputPort->portId;
-		APP->engine->addCable(cable);
-		cableInternals->cableId = cable->id;
-	}
-}
 
+	// If either input or output port not set then cannot create cable
+	if (!inputPort || !outputPort) return;
+
+	// Both ports are set, create a new cable
+	cable = new engine::Cable;
+	cable->id = cableInternals->cableId;
+	cable->inputModule = inputPort->module;
+	cable->inputId = inputPort->portId;
+	cable->outputModule = outputPort->module;
+	cable->outputId = outputPort->portId;
+	APP->engine->addCable(cable);
+	cableInternals->cableId = cable->id;
+
+	// Make sure cable color is correct. It was originally set based
+	// on the first port, but that port might not have definitively
+	// determined the color, perhaps because name of the port had
+	// insufficient information.
+    color = CableColorMatcher::getCableColor(inputPort->getPortInfo(),
+											outputPort->getPortInfo());
+}
 
 void CableWidget::setCable(engine::Cable* cable) {
 	if (this->cable) {

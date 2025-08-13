@@ -1,7 +1,7 @@
 #pragma once
 #include <common.hpp>
 #include <plugin/Plugin.hpp>
-
+#include <vector>
 #include <jansson.h>
 
 #include <list>
@@ -83,8 +83,10 @@ struct Model {
 	void appendContextMenu(ui::Menu* menu, bool inBrowser = false);
 	bool isFavorite();
 	void setFavorite(bool favorite);
-};
 
+	/** Returns vector of tag names that describe functionality of module */
+    std::vector<std::string> getTagNames();
+};
 
 } // namespace plugin
 } // namespace rack

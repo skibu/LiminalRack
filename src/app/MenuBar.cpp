@@ -588,19 +588,22 @@ struct ViewButton : MenuButton {
 				menu->addChild(item);
 			}
 
-			menu->addChild(createBoolMenuItem(string::translate("MenuBar.view.cableColors.autoRotate"), "",
-				[=]() -> bool {
-					return settings::cableAutoRotate;
-				},
-				[=](bool s) {
-					settings::cableAutoRotate = s;
-				}
-			));
-			menu->addChild(createMenuItem(string::translate("MenuBar.view.cableColors.restoreFactory"), "", [=]() {
-				if (!osdialog_message(OSDIALOG_WARNING, OSDIALOG_OK_CANCEL, string::translate("MenuBar.view.cableColors.overwriteFactory").c_str()))
-					return;
-				settings::resetCables();
-			}, false, true));
+			// Don't need to autorotate or restore cable colors in Liminal
+			if (!settings::isLiminal) {
+				menu->addChild(createBoolMenuItem(string::translate("MenuBar.view.cableColors.autoRotate"), "",
+					[=]() -> bool {
+						return settings::cableAutoRotate;
+					},
+					[=](bool s) {
+						settings::cableAutoRotate = s;
+					}
+				));
+				menu->addChild(createMenuItem(string::translate("MenuBar.view.cableColors.restoreFactory"), "", [=]() {
+					if (!osdialog_message(OSDIALOG_WARNING, OSDIALOG_OK_CANCEL, string::translate("MenuBar.view.cableColors.overwriteFactory").c_str()))
+						return;
+					settings::resetCables();
+				}, false, true));
+			}
 		}));
 
 		menu->addChild(new ui::MenuSeparator);
