@@ -10,6 +10,8 @@
 namespace rack {
 namespace logger {
 
+// The default logging level
+static Level systemLogLevel = INFO_LEVEL;
 
 std::string logPath;
 static FILE* outputFile = NULL;
@@ -17,15 +19,13 @@ static std::mutex mutex;
 static bool truncated = false;
 const static long maxSize = 1000 * 1000 * 1000; // 1 GB
 
-
 static bool fileEndsWith(FILE* file, std::string str) {
-	// Seek to last `len` characters
-	size_t len = str.size();
-	std::fseek(file, -long(len), SEEK_END);
-	std::vector<char> actual(len);
-	if (std::fread(actual.data(), 1, len, file) != len)
-		return false;
-	return std::string(actual.data(), len) == str;
+    // Seek to last `len` characters
+    size_t len = str.size();
+    std::fseek(file, -long(len), SEEK_END);
+    std::vector<char> actual(len);
+    if (std::fread(actual.data(), 1, len, file) != len) return false;
+    return std::string(actual.data(), len) == str;
 }
 
 static bool isTruncated() {
@@ -88,6 +88,15 @@ static const char* const levelLabels[] = {
 	"fatal",
 };
 
+void setLogLevel(Level level) {
+    systemLogLevel = level;
+}
+
+
+void logLogLevel() {
+    INFO("Log level=%s", levelLabels[systemLogLevel]);
+}
+
 static const int levelColors[] = {
 	35,
 	34,
@@ -123,10 +132,13 @@ static void logVa(Level level, const char* filename, int line, const char* func,
 }
 
 void log(Level level, const char* filename, int line, const char* func, const char* format, ...) {
-	va_list args;
-	va_start(args, format);
-	logVa(level, filename, line, func, format, args);
-	va_end(args);
+	// If log level for the logging statement is below the level set for the system then don't log
+    if (level < systemLogLevel) return;
+
+    va_list args;
+    va_start(args, format);
+    logVa(level, filename, line, func, format, args);
+    va_end(args);
 }
 
 bool wasTruncated() {

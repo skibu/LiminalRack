@@ -1,14 +1,17 @@
 #pragma once
 #include <common.hpp>
 
+/** Logging system. Default logLevel is INFO_LEVEL. To change it call
+ * setLogLevel(Level level);
+ */
 
-/** Example usage:
+/* Example usage:
 
-	DEBUG("error: %d", errno);
+        DEBUG("error: %d", errno);
 
 will print something like
 
-	[0.123 debug myfile.cpp:45] error: 67
+        [0.123 debug myfile.cpp:45] error: 67
 */
 #define DEBUG(format, ...) rack::logger::log(rack::logger::DEBUG_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
 #define INFO(format, ...) rack::logger::log(rack::logger::INFO_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
@@ -30,6 +33,12 @@ enum Level {
 	WARN_LEVEL,
 	FATAL_LEVEL
 };
+
+/** For setting log level to something besides the default of INFO_LEVEL */
+PRIVATE void setLogLevel(Level level);
+
+// Logs the current log level
+void logLogLevel();
 
 /** Returns whether logger was successfully initialized. */
 PRIVATE bool init();

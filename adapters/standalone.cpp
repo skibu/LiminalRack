@@ -78,6 +78,7 @@ int main(int argc, char* argv[]) {
 	// Parse command line arguments
 	static const struct option longOptions[] = {
 		{"safe", no_argument, NULL, 'a'},
+		{"debug", no_argument, NULL, 'b'},
 		{"dev", no_argument, NULL, 'd'},
 		{"headless", no_argument, NULL, 'h'},
 		{"liminal", no_argument, NULL, 'l'},
@@ -91,14 +92,18 @@ int main(int argc, char* argv[]) {
 	int c;
 	opterr = 0;
 
-	while ((c = getopt_long(argc, argv, "adhlt:s:u:vp:", longOptions, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "abdhlt:s:u:vp:", longOptions, NULL)) != -1) {
 		switch (c) {
 			case 'a': {
 				settings::safeMode = true;
 			} break;
+			case 'b': {
+				// Turn on debug logging
+                logger::setLogLevel(logger::Level::DEBUG_LEVEL);
+            } break;
 			case 'd': {
 				settings::devMode = true;
-			} break;
+            } break;
 			case 'h': {
 				settings::headless = true;
 			} break;
@@ -143,7 +148,10 @@ int main(int argc, char* argv[]) {
 	logger::init();
 	random::init();
 
-	// Test code
+	// Now that logging fully setup log the log level
+	logger::logLogLevel();
+
+    // Test code
 	// exit(0);
 
 	// We can now install a signal handler and log the output
