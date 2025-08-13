@@ -129,21 +129,35 @@ struct RackWidget : widget::OpaqueWidget {
 	CableWidget* getTopCable(PortWidget* port);
 	CableWidget* getCable(int64_t cableId);
 	CableWidget* getCable(PortWidget* outputPort, PortWidget* inputPort);
+
 	/** Returns all cables, complete and incomplete. */
 	std::vector<CableWidget*> getCables();
+
 	/** Returns all cables attached to 2 ports. */
 	std::vector<CableWidget*> getCompleteCables();
+
 	/** Returns all cables attached to less than 2 ports. */
 	std::vector<CableWidget*> getIncompleteCables();
+
 	/** Returns all cables attached to the port, complete or not. */
 	std::vector<CableWidget*> getCablesOnPort(PortWidget* port);
+
 	/** Returns all complete cables attached to the port. */
 	std::vector<CableWidget*> getCompleteCablesOnPort(PortWidget* port);
-	/** Returns but does not advance the next cable color. */
+
+	/** 
+	 * Returns but does not advance the next cable color. For if want to provide
+	 * user with a new cable color each time they create a cable.
+	 */
 	int getNextCableColorId();
 	void setNextCableColorId(int id);
-	/** Returns and advances the next cable color. */
+
+	/**
+	 * Returns and advances the next cable color. For if want to provide
+	 * user with a new cable color each time they create a cable.
+	 */
 	NVGcolor getNextCableColor();
+
 	ParamWidget* getTouchedParam();
 	void setTouchedParam(ParamWidget* pw);
 
