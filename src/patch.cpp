@@ -236,7 +236,6 @@ void Manager::saveTemplateDialog() {
 
 void Manager::saveAutosave() {
 	std::string patchPath = system::join(autosavePath, "patch.json");
-	INFO("Saving autosave %s", patchPath.c_str());
 	json_t* rootJ = toJson();
 	if (!rootJ)
 		return;
