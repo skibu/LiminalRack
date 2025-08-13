@@ -1,5 +1,8 @@
 # Liminal Rack Change Log
 
+- 8/13/25
+  - Logging changed so can set logging level and only have DEBUG statements output if debug level enabled. Can enable debug level via standalone.cpp by using command line option -b.
+  - When creating cable system determines best color. Uses info from the ports and modules to try to see what kind of signal will be handled, like CV, pitch, or gate. And then looks at the cable lables to determine the corresponding cable. If system cannot make a match then it simply uses default color. Hopefully makes it so that without user having to specify colors the functionality of the cables will be quite organized.
 - 8/11/25
   - Reduced droopiness of cables. Previously the cables were absurdly droopy when tension set to 0.
   - Improved drawing of cable plugs so that they clearly show which is an input and which is an output, and also which way the signal flows.
