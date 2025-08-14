@@ -408,14 +408,26 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 		// Setup to draw cable shadow using a slump point below the cable
 		float shadowDeltaPxls = 15.f;
 		math::Vec shadowSlump = slump.plus(math::Vec(0, shadowDeltaPxls));
+
 		nvgBeginPath(args.vg);
 		nvgMoveTo(args.vg, VEC_ARGS(outputPos));
 		nvgQuadTo(args.vg, VEC_ARGS(shadowSlump), VEC_ARGS(inputPos));
-		NVGcolor shadowColor = nvgRGBAf(0, 0, 0, 0.15);
+		NVGcolor shadowColor = nvgRGBAf(0, 0, 0, 0.12);
 		nvgStrokeColor(args.vg, shadowColor);
 		nvgStrokeWidth(args.vg, thickness - 1.0);
 		nvgStroke(args.vg);
-	}
+
+		// And now draw shadow but in white so that it shows up
+		// on top of black panels as well
+		nvgBeginPath(args.vg);
+		nvgMoveTo(args.vg, VEC_ARGS(outputPos));
+		nvgQuadTo(args.vg, VEC_ARGS(shadowSlump), VEC_ARGS(inputPos));
+		NVGcolor shadowColorForDarkPanel = nvgRGBAf(1.0, 1.0, 1.0, 0.12);
+		nvgStrokeColor(args.vg, shadowColorForDarkPanel);
+		nvgStrokeWidth(args.vg, thickness - 1.0);
+		nvgStroke(args.vg);
+
+        }
 	else if (layer == 0) {
 		// Setup to draw cable outline
 		nvgBeginPath(args.vg);
