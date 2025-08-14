@@ -72,8 +72,11 @@ void RackScrollWidget::setZoom(float zoom, math::Vec pivot) {
 
 
 void RackScrollWidget::zoomToModules() {
+	// Determine bounding box of the existing modules
 	widget::Widget* moduleContainer = rackWidget->getModuleContainer();
 	math::Rect bound = moduleContainer->getChildrenBoundingBox();
+
+	// Zoom to the modules
 	zoomToBound(bound);
 }
 
@@ -81,7 +84,14 @@ void RackScrollWidget::zoomToModules() {
 void RackScrollWidget::zoomToBound(math::Rect bound) {
 	if (!bound.pos.isFinite())
 		return;
-	bound = bound.grow(math::Vec(24, 24));
+
+	// Originally the boundary was expanded by 24 units, presumably to show extra rails
+	// to idicate that more space is available. But for Liminal have a relatively small
+	// screen and don't want to waste any space.
+	if (!rack::settings::isLiminal) {
+		bound = bound.grow(math::Vec(24, 24));
+	}
+	
 	math::Vec size = getSize();
 	float zoom = std::min(size.x / bound.size.x, size.y / bound.size.y);
 	offset = bound.getCenter() * zoom - size / 2;

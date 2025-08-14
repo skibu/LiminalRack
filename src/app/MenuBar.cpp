@@ -443,10 +443,12 @@ struct ViewButton : MenuButton {
 		zoomSlider->box.size.x = 250.0;
 		menu->addChild(zoomSlider);
 
+		// Add menu button to zoom fit to modules
 		menu->addChild(createMenuItem(string::translate("MenuBar.view.zoomFit"), widget::getKeyCommandName(GLFW_KEY_F4, 0), [=]() {
 			APP->scene->rackScroll->zoomToModules();
 		}));
 
+		// Create zoom sub menu, if not in Liminal mode
 		if (!settings::isLiminal) {
 			menu->addChild(createIndexPtrSubmenuItem(string::translate("MenuBar.view.mouseWheelZoom"), {
 				string::f(string::translate("MenuBar.view.mouseWheelZoom.scroll"), RACK_MOD_CTRL_NAME),
