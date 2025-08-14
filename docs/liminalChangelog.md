@@ -1,6 +1,7 @@
 # Liminal Rack Change Log
 
 - 8/13/25
+  - For Liminal, when zoom to modules now making modules as large as possible instead of adding a 24 unit margin. Important since using smaller screen for Liminal.
   - Improved cable shadows so there is a light one for dark panels. Provides a more consistent look that is nice.
   - For when connecting a cable to ports, the ports that can be used are now colored depending on whether they are input or output ports. Input ports are colored green, as before. But output ports are colored yellow/gold. Didn't use red for output ports since want things to look good for Instruo modules.
   - Logging changed so can set logging level and only have DEBUG statements output if debug level enabled. Can enable debug level via standalone.cpp by using command line option -b.
