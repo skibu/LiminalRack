@@ -114,11 +114,11 @@ bool isModuleWhitelisted(const std::string& pluginSlug, const std::string& modul
 void resetCables() {
 	// Set default cable colors
 	cableColors = {
-		color::fromHexString("#f3374b"), // red
+		color::fromHexString("#f24354"), // red
 		color::fromHexString("#ffb437"), // yellow
-		color::fromHexString("#00b56e"), // green
+		color::fromHexString("#2db57f"), // green
 		color::fromHexString("#3695ef"), // blue
-		color::fromHexString("#8b4ade"), // purple
+		color::fromHexString("#9a61e4ff"), // purple
 	};
 
 	// Set default cable labels
