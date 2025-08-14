@@ -37,7 +37,7 @@ struct PortWidget : widget::OpaqueWidget {
 	 * @brief Called when need to draw port
 	 * 
 	 * Draws the port, but if cable being dragged then will deemphasize 
-	 * port types that cannot be connected to and emphasizes ports that
+	 * port types that cannot be connected to and emphasizes via color ports that
 	 * can be connected to. This way easy for user to see which ports can
 	 * connect to. Key thing is that outputs can only be connected to inputs
 	 * and inputs can only be connected to outputs.
