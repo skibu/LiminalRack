@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "settings.hpp" 
+#include "settings.hpp"
 
 namespace rack {
 namespace ui {

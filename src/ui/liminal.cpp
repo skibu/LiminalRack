@@ -1,5 +1,4 @@
 #include <ui/liminal.hpp>
-#include <rack.hpp>
 #include <settings.hpp>
 
 namespace rack {
