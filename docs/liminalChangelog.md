@@ -1,6 +1,8 @@
 # Liminal Rack Change Log
 
 - 8/13/25
+  - Improved cable shadows so there is a light one for dark panels. Provides a more consistent look that is nice.
+  - For when connecting a cable to ports, the ports that can be used are now colored depending on whether they are input or output ports. Input ports are colored green, as before. But output ports are colored yellow/gold. Didn't use red for output ports since want things to look good for Instruo modules.
   - Logging changed so can set logging level and only have DEBUG statements output if debug level enabled. Can enable debug level via standalone.cpp by using command line option -b.
   - When creating cable system determines best color. Uses info from the ports and modules to try to see what kind of signal will be handled, like CV, pitch, or gate. And then looks at the cable lables to determine the corresponding cable. If system cannot make a match then it simply uses default color. Hopefully makes it so that without user having to specify colors the functionality of the cables will be quite organized.
 - 8/11/25
