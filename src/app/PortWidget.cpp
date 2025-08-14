@@ -382,29 +382,37 @@ void PortWidget::step() {
 	Widget::step();
 }
 
-
 void PortWidget::draw(const DrawArgs& args) {
-	// Check if left-dragging a PortWidget
-	PortWidget* draggedPw = dynamic_cast<PortWidget*>(APP->event->getDraggedWidget());
-	if (draggedPw && APP->event->dragButton == GLFW_MOUSE_BUTTON_LEFT) {
-		// Dragging a cable, which means should emphasize ports that can be connected to
-		// and deemphasize ports that cannot be connected to. Use nvtTint to change the
-		// colors and alpha used to draw the ports.
-		if (draggedPw->internal->draggedType != type) {
-			// Cannot make a connection to the port so deemphasize it. This is accomplished
-			// by reducing alpha to 0.4, which basically makes the port fade out
-			nvgTint(args.vg, nvgRGBAf(1.0, 1.0, 1.0, 0.4));
-		} else {
-			// Can make a connection to the port so emphasize it. Do this by keeping green
-			// color high but reducing red and blue. Keeping alpha at 1.0. Result is sthat
-			// the port will still be pretty bright but will also be green. 
-			nvgTint(args.vg, nvgRGBAf(0.7, 1.0, 0.7, 1.0));
-		}
-	}
+    // Check if left-dragging a PortWidget
+    PortWidget* draggedPw = dynamic_cast<PortWidget*>(APP->event->getDraggedWidget());
+    if (draggedPw && APP->event->dragButton == GLFW_MOUSE_BUTTON_LEFT) {
+        // Dragging a cable, which means should emphasize ports that can be connected to
+        // and deemphasize ports that cannot be connected to. Use nvtTint to change the
+        // colors and alpha used to draw the ports.
+        if (draggedPw->internal->draggedType != type) {
+            // Cannot make a connection to the port so deemphasize it. This is accomplished
+            // by reducing alpha to 0.4, which basically makes the port fade out
+            nvgTint(args.vg, nvgRGBAf(1.0, 1.0, 1.0, 0.5));
+        } else {
+            // Can make a connection to the port so emphasize it
+            if (draggedPw->internal->draggedType == engine::Port::OUTPUT) {
+                // It is an output port so emphasize it with a gold color.
+				// Note: if instead want to emphasize red then should use
+                // nvgTint(args.vg, nvgRGBAf(1.0, 0.7, 0.7, 1.0));
+                nvgTint(args.vg, nvgRGBAf(1.1, 1.2, 0.5, 1.0));
+            } else {
+                // Emphasize port as an INPUT port by keeping
+                // green color high but reducing red and blue. Keeping
+                // alpha at 1.0. Result is sthat the port will still be
+                // pretty bright but will also be noticably green.
+                nvgTint(args.vg, nvgRGBAf(0.7, 1.0, 0.7, 1.0));
+            }
+        }
+    }
 
+	// Draw port with appropriate tinting
     Widget::draw(args);
 }
-
 
 void PortWidget::onButton(const ButtonEvent& e) {
 	OpaqueWidget::onButton(e);
