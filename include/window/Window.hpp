@@ -88,8 +88,15 @@ struct Window {
 	Don't call this from a Key event. Simply use `e.mods` instead.
 	*/
 	int getMods();
+
+	/** Puts main window into full screen or non full screen mode depending on the fullScreen
+	 * parameter
+	 */
 	void setFullScreen(bool fullScreen);
+
+	/** Returns true if main window currently in full screen mode */
 	bool isFullScreen();
+
 	/** Returns the primary monitor's refresh rate in Hz. */
 	double getMonitorRefreshRate();
 	/** Returns the timestamp of the beginning of the current frame render process.

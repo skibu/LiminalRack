@@ -35,6 +35,7 @@ int bndWidgetHeight = BND_WIDGET_HEIGHT;
 std::string language = "en";
 bool safeMode = false;
 std::string token;
+// Whether in full screen mode
 bool windowMaximized = false;
 math::Vec windowSize = math::Vec(1024, 720);
 math::Vec windowPos = math::Vec(NAN, NAN);
