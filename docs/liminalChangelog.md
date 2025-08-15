@@ -1,5 +1,7 @@
 # Liminal Rack Change Log
 
+- 8/14/25
+  - If window should be full screen mode, which is default for Liminal Rack, then it is done automatically at startup. This way seems less like a computer application and more like a dedicated tool.
 - 8/13/25
   - For Liminal, when zoom to modules now making modules as large as possible instead of adding a 24 unit margin. Important since using smaller screen for Liminal.
   - Improved cable shadows so there is a light one for dark panels. Provides a more consistent look that is nice.
