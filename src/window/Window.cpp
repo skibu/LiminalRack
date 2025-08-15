@@ -693,22 +693,25 @@ int Window::getMods() {
 	return mods;
 }
 
-
 void Window::setFullScreen(bool fullScreen) {
-	if (!fullScreen) {
-		glfwSetWindowMonitor(win, NULL, internal->lastWindowX, internal->lastWindowY, internal->lastWindowWidth, internal->lastWindowHeight, GLFW_DONT_CARE);
-	}
-	else {
-		glfwGetWindowPos(win, &internal->lastWindowX, &internal->lastWindowY);
-		glfwGetWindowSize(win, &internal->lastWindowWidth, &internal->lastWindowHeight);
-		GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-		const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-		glfwSetWindowMonitor(win, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-	}
+    if (!fullScreen) {
+        // Put window into non-full screen mode
+        INFO("Taking main window out of full screen mode");
+        glfwSetWindowMonitor(win, NULL, internal->lastWindowX, internal->lastWindowY,
+                             internal->lastWindowWidth, internal->lastWindowHeight, GLFW_DONT_CARE);
+    } else {
+        // Put window into full screen mode
+        INFO("Putting main window into full screen mode");
+        glfwGetWindowPos(win, &internal->lastWindowX, &internal->lastWindowY);
+        glfwGetWindowSize(win, &internal->lastWindowWidth, &internal->lastWindowHeight);
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        glfwSetWindowMonitor(win, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+    }
 }
 
-
 bool Window::isFullScreen() {
+	// Return whether main window is in full screen mode
 	GLFWmonitor* monitor = glfwGetWindowMonitor(win);
 	return monitor != NULL;
 }

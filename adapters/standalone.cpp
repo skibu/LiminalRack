@@ -1,3 +1,12 @@
+/**
+ * @file standalone.cpp
+ *
+ * Contains the application's main() function. Handles the startup
+ * of the application. Everything from processing command line options,
+ * loading config settings, initializing modules, and then running the
+ * main loop.
+ */
+
 #include <ui/liminal.hpp>
 
 #include <common.hpp>
@@ -54,7 +63,35 @@ static void fatalSignalHandler(int sig) {
 	raise(sig);
 }
 
+/**
+ * Creates the main window if not in headless mode. Also puts the window into 
+ * full screen mode if so configured. These multiple steps have been put into 
+ * this one function since they are very order dependent. This function uses 
+ * settings so they must be read in first.
+ */
+static void initUI() {
+	// Initialize context. Needs to be done before Window created
+	contextSet(new Context);
 
+	// If in headless mode then don't need to create window, so done
+    if (settings::headless) return;
+
+    INFO("Initializing UI");
+    ui::init();
+
+    INFO("Initializing window");
+    window::init();
+
+    INFO("Creating window");
+    APP->window = new window::Window;
+
+    // If was in full screen mode previously go right into full screen mode
+    if (settings::windowMaximized) APP->window->setFullScreen(true);
+}
+
+/**
+ * THe main entry point for Rack. Starts up the whole application.
+ */
 int main(int argc, char* argv[]) {
 #if defined ARCH_WIN
 	// Windows global mutex to prevent multiple instances
@@ -183,7 +220,7 @@ int main(int argc, char* argv[]) {
 
 	string::init();
 
-	// Load settings
+	// Load configuration settings
 	settings::init();
 	try {
 		settings::load();
@@ -204,6 +241,9 @@ int main(int argc, char* argv[]) {
 		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, message.c_str());
 		exit(1);
 	}
+	
+	// Initialize main UI window
+	initUI();
 
 	INFO("Initializing network");
 	network::init();
@@ -228,15 +268,6 @@ int main(int argc, char* argv[]) {
 	app::browserInit();
 	INFO("Initializing library");
 	library::init();
-	if (!settings::headless) {
-		INFO("Initializing UI");
-		ui::init();
-		INFO("Initializing window");
-		window::init();
-	}
-
-	// Initialize context
-	contextSet(new Context);
 	INFO("Creating MIDI loopback");
 	APP->midiLoopbackContext = new midiloopback::Context;
 	INFO("Creating engine");
@@ -250,10 +281,6 @@ int main(int argc, char* argv[]) {
 	APP->event->rootWidget = APP->scene;
 	INFO("Creating patch manager");
 	APP->patch = new patch::Manager;
-	if (!settings::headless) {
-		INFO("Creating window");
-		APP->window = new window::Window;
-	}
 
 	// On Mac, use a hacked-in GLFW addition to get the launched path.
 #if defined ARCH_MAC
@@ -266,7 +293,7 @@ int main(int argc, char* argv[]) {
 	}
 #endif
 
-	// Initialize patch
+    // Initialize patch
 	if (logger::wasTruncated() && osdialog_message(OSDIALOG_INFO, OSDIALOG_YES_NO, string::translate("standalone.crashed").c_str())) {
 		// Do nothing, which leaves a blank patch
 	}
@@ -286,9 +313,10 @@ int main(int argc, char* argv[]) {
 		APP->window->screenshotModules(asset::user("screenshots"), screenshotZoom);
 	}
 	else {
-		INFO("Running window");
+		INFO("Running window loop");
+		// Run till user exits
 		APP->window->run();
-		INFO("Stopped window");
+		INFO("Stopped window loop");
 
 		// INFO("Destroying window");
 		// delete APP->window;
