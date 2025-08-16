@@ -1,3 +1,8 @@
+/** 
+ * The Browser is the window that shows the modules the user has
+ * available and can add to their rack.
+ */
+
 #pragma once
 #include <app/common.hpp>
 #include <widget/Widget.hpp>

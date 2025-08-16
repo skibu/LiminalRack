@@ -1,4 +1,9 @@
-#include <set>
+/**
+ * The Browser is the window that shows the modules the user has
+ * available and can add to their rack.
+ */
+
+#include<set>
 #include <algorithm>
 #include <thread>
 
@@ -80,6 +85,7 @@ static void modelDbInit() {
 }
 
 
+/** Called when user clicks on module to choose it */
 static ModuleWidget* chooseModel(plugin::Model* model) {
 	// Record usage
 	settings::ModuleInfo& mi = settings::moduleInfos[model->plugin->slug][model->slug];
@@ -464,7 +470,9 @@ struct UrlButton : ui::Button {
 	}
 };
 
-
+/** The actual Browser class. The Browser is the window that shows the modules 
+ * the user has available and can add to their rack.
+ */
 struct Browser : widget::OpaqueWidget {
 	ui::SequentialLayout* headerLayout;
 	BrowserSearchField* searchField;
