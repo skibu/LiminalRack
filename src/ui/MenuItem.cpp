@@ -10,7 +10,7 @@ void MenuItem::draw(const DrawArgs& args) {
 	drawOffset(args.vg, 0);
 }
 
-void MenuItem::drawOffset(NVGcontext* vg, float offset) {
+void MenuItem::drawOffset(NVGcontext* vg, float x_offset) {
 	BNDwidgetState state = BND_DEFAULT;
 
 	if (APP->event->hoveredWidget == this)
@@ -21,32 +21,38 @@ void MenuItem::drawOffset(NVGcontext* vg, float offset) {
 	if (parentMenu && parentMenu->activeEntry == this)
 		state = BND_ACTIVE;
 
-	// Main text and background
+	// Draw main text and background
 	const BNDtheme* theme = bndGetTheme();
 	if (!disabled) {
-		// bndMenuItem(vg, 0.0, 0.0, box.size.x, box.size.y, state, -1, text.c_str());
-		// From bndMenuItem() implementation
+		// Draw label as active.
+		// From bndMenuItem() implementation, draw background box
 		if (state != BND_DEFAULT) {
 			bndInnerBox(vg, 0.0, 0.0, box.size.x, box.size.y, 0, 0, 0, 0,
 				bndOffsetColor(theme->menuItemTheme.innerSelectedColor, theme->menuItemTheme.shadeTop),
 				bndOffsetColor(theme->menuItemTheme.innerSelectedColor, theme->menuItemTheme.shadeDown));
 			state = BND_ACTIVE;
 		}
-		bndIconLabelValue(vg, offset + 0.0, 0.0, box.size.x - offset, box.size.y, -1,
+		// Draw the label centered vertically in the box
+		float y_centering_offset = (settings::bndWidgetHeight - settings::bndLabelFontSize) / 2.0;
+		bndIconLabelValue(vg, x_offset + 0.0, -y_centering_offset, box.size.x - x_offset, box.size.y, -1,
 			bndTextColor(&theme->menuItemTheme, state), BND_LEFT,
 			rack::settings::bndLabelFontSize, text.c_str(), NULL);
 	}
 	else {
-		// bndMenuLabel(vg, 0.0, 0.0, box.size.x, box.size.y, -1, text.c_str());
+		// Draw label as inactive.
 		// From bndMenuLabel() implementation
-		bndIconLabelValue(vg, offset + 0.0, 0.0, box.size.x, box.size.y, -1, theme->menuTheme.textColor, BND_LEFT, rack::settings::bndLabelFontSize, text.c_str(), NULL);
-	}
+		bndIconLabelValue(vg, x_offset + 0.0, 0.0, box.size.x, box.size.y, -1,
+							theme->menuTheme.textColor, BND_LEFT,
+							rack::settings::bndLabelFontSize, text.c_str(), NULL);
+    }
 
-	// Right text
+    // Draw the text on the right of the menu item. Typically used for keyboard shortcuts.
 	float x = box.size.x - bndLabelWidth(vg, -1, rightText.c_str());
-	NVGcolor rightColor = (state == BND_DEFAULT && !disabled) ? bndGetTheme()->menuTheme.textColor : bndGetTheme()->menuTheme.textSelectedColor;
-        bndIconLabelValue(vg, x, 0.0, box.size.x, box.size.y, -1, rightColor, BND_LEFT,
-                          rack::settings::bndLabelFontSize, rightText.c_str(), NULL);
+	NVGcolor rightColor = (state == BND_DEFAULT && !disabled)
+								? bndGetTheme()->menuTheme.textColor
+								: bndGetTheme()->menuTheme.textSelectedColor;
+	bndIconLabelValue(vg, x, 0.0, box.size.x, box.size.y, -1, rightColor, BND_LEFT,
+						rack::settings::bndLabelFontSize, rightText.c_str(), NULL);
 }
 
 void MenuItem::step() {

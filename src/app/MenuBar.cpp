@@ -31,24 +31,40 @@ namespace rack {
 namespace app {
 namespace menuBar {
 
-
+/**
+ * MenuButtons are buttons that are in the main menu bar. They are for pulling down
+ * a menu. Each button subclasses from MenuButton in order to handle the appropriate
+ * action items.
+ */
 struct MenuButton : ui::Button {
+	// Handle actions
 	void step() override {
 		box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str()) + 1.0;
 		Widget::step();
 	}
+
+	// Handle drawing the button
 	void draw(const DrawArgs& args) override {
-		BNDwidgetState state = BND_DEFAULT;
+		// Determine state to draw button
+		BNDwidgetState state = BND_DEFAULT; // Normal look
 		if (APP->event->hoveredWidget == this)
-			state = BND_HOVER;
+			state = BND_HOVER; // Mouse over button
 		if (APP->event->draggedWidget == this)
-			state = BND_ACTIVE;
-		bndMenuItem(args.vg, 0.0, 0.0, box.size.x, box.size.y, state, -1, text.c_str());
+			state = BND_ACTIVE; // Clicked on and menu pulled down
+
+		// Draw the button. Found that using y=1.0 better centers the box verticqlly
+		// due to a strange offset in bndMenuItem height determination.
+		bndMenuItem(args.vg, 0.0, 1.0, box.size.x, box.size.y, state, -1, text.c_str());
+
+		// Draw all the nodes
 		Widget::draw(args);
 	}
 };
 
 
+/**
+ * For drawing red dot in a menu bar button to indicate a notification
+ */
 struct NotificationIcon : widget::Widget {
 	void draw(const DrawArgs& args) override {
 		nvgBeginPath(args.vg);
@@ -67,6 +83,9 @@ struct NotificationIcon : widget::Widget {
 ////////////////////
 
 
+/**
+ * The File button for the main menu
+ */
 struct FileButton : MenuButton {
 	void onAction(const ActionEvent& e) override {
 		ui::Menu* menu = createMenu();
@@ -133,6 +152,9 @@ struct FileButton : MenuButton {
 ////////////////////
 
 
+/**
+ * The Edit button for the main menu
+ */
 struct EditButton : MenuButton {
 	void onAction(const ActionEvent& e) override {
 		ui::Menu* menu = createMenu();
@@ -393,7 +415,9 @@ struct KnobScrollSensitivitySlider : ui::Slider {
 	}
 };
 
-
+/**
+ * The View button for the main menu
+ */
 struct ViewButton : MenuButton {
 	void onAction(const ActionEvent& e) override {
 		ui::Menu* menu = createMenu();
@@ -699,45 +723,47 @@ struct SampleRateItem : ui::MenuItem {
 	}
 };
 
-
+/**
+ * The Engine button for the main menu
+ */
 struct EngineButton : MenuButton {
-	void onAction(const ActionEvent& e) override {
-		ui::Menu* menu = createMenu();
-		menu->cornerFlags = BND_CORNER_TOP;
-		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+    void onAction(const ActionEvent& e) override {
+        ui::Menu* menu = createMenu();
+        menu->cornerFlags = BND_CORNER_TOP;
+        menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 
-		menu->addChild(new ui::MenuSeparator);
+        menu->addChild(new ui::MenuSeparator);
 
-		std::string cpuMeterText = widget::getKeyCommandName(GLFW_KEY_F3, 0);
-		if (settings::cpuMeter)
-			cpuMeterText += " " CHECKMARK_STRING;
-		menu->addChild(createMenuItem(string::translate("MenuBar.engine.cpuMeter"), cpuMeterText, [=]() {
-			settings::cpuMeter ^= true;
-		}));
+        std::string cpuMeterText = widget::getKeyCommandName(GLFW_KEY_F3, 0);
+        if (settings::cpuMeter) cpuMeterText += " " CHECKMARK_STRING;
+        menu->addChild(createMenuItem(string::translate("MenuBar.engine.cpuMeter"), cpuMeterText,
+                                      [=]() { settings::cpuMeter ^= true; }));
 
-		menu->addChild(createMenuItem<SampleRateItem>(string::translate("MenuBar.engine.sampleRate"), RIGHT_ARROW));
+        menu->addChild(createMenuItem<SampleRateItem>(
+            string::translate("MenuBar.engine.sampleRate"), RIGHT_ARROW));
 
-		if (!settings::isLiminal) {
-			menu->addChild(createSubmenuItem(string::translate("MenuBar.engine.threads"), string::f("%d", settings::threadCount), [=](ui::Menu* menu) {
-				// BUG This assumes SMT is enabled.
-				int cores = system::getLogicalCoreCount() / 2;
+        if (!settings::isLiminal) {
+            menu->addChild(createSubmenuItem(
+                string::translate("MenuBar.engine.threads"), string::f("%d", settings::threadCount),
+                [=](ui::Menu* menu) {
+                    // BUG This assumes SMT is enabled.
+                    int cores = system::getLogicalCoreCount() / 2;
 
-				for (int i = 1; i <= 2 * cores; i++) {
-					std::string rightText;
-					if (i == cores)
-						rightText += string::translate("MenuBar.engine.threads.most");
-					else if (i == 1)
-						rightText += string::translate("MenuBar.engine.threads.lowest");
-					menu->addChild(createCheckMenuItem(string::f("%d", i), rightText,
-						[=]() {return settings::threadCount == i;},
-						[=]() {settings::threadCount = i;}
-					));
-				}
-			}));
-		}
-	}
+                    for (int i = 1; i <= 2 * cores; i++) {
+                        std::string rightText;
+                        if (i == cores)
+                            rightText += string::translate("MenuBar.engine.threads.most");
+                        else if (i == 1)
+                            rightText += string::translate("MenuBar.engine.threads.lowest");
+                        menu->addChild(createCheckMenuItem(
+                            string::f("%d", i), rightText,
+                            [=]() { return settings::threadCount == i; },
+                            [=]() { settings::threadCount = i; }));
+                    }
+                }));
+        }
+    }
 };
-
 
 ////////////////////
 // Plugins
@@ -968,7 +994,11 @@ struct LibraryMenu : ui::Menu {
 };
 
 
+/**
+ * The Library button for the main menu
+ */
 struct LibraryButton : MenuButton {
+	// For drawing red dot in the Library Button for when there is a notification
 	NotificationIcon* notification;
 
 	LibraryButton() {
@@ -1015,14 +1045,18 @@ struct LibraryButton : MenuButton {
 // Help
 ////////////////////
 
-
+/**
+ * The Help button for the main menu
+ */
 struct HelpButton : MenuButton {
-	NotificationIcon* notification;
+    // For drawing red dot in the Help Button for when there is a notification
+	// that an app update is availablef
+    NotificationIcon* notification;
 
-	HelpButton() {
-		notification = new NotificationIcon;
-		addChild(notification);
-	}
+    HelpButton() {
+        notification = new NotificationIcon;
+        addChild(notification);
+    }
 
 	void onAction(const ActionEvent& e) override {
 		ui::Menu* menu = createMenu();
@@ -1071,28 +1105,39 @@ struct HelpButton : MenuButton {
 			}));
 		}
 
-		if (library::isAppUpdateAvailable()) {
-			menu->addChild(createMenuItem(string::f(string::translate("MenuBar.help.update"), APP_NAME), APP_VERSION + " → " + library::appVersion, [=]() {
-				system::openBrowser(library::appDownloadUrl);
-			}));
-		}
-		else if (!settings::autoCheckUpdates && !settings::devMode) {
-			menu->addChild(createMenuItem(string::f(string::translate("MenuBar.help.checkUpdate"), APP_NAME), "", [=]() {
-				std::thread t([&]() {
-					library::checkAppUpdate();
-				});
-				t.detach();
-			}, false, true));
+		// For VCV Rack make getting updates easy. But this doesn't work for forks like Liminal
+		if (!settings::isLiminal) {
+			if (library::isAppUpdateAvailable()) {
+				// If there is a new version of app available then create menu button to update to it
+				menu->addChild(createMenuItem(string::f(string::translate("MenuBar.help.update"), APP_NAME), APP_VERSION + " → " + library::appVersion, [=]() {
+					system::openBrowser(library::appDownloadUrl);
+				}));
+			}
+			else if (!settings::autoCheckUpdates && !settings::devMode) {
+				// Create button for checking for update
+				menu->addChild(createMenuItem(string::f(string::translate("MenuBar.help.checkUpdate"), APP_NAME), "", [=]() {
+					std::thread t([&]() {
+						library::checkAppUpdate();
+					});
+					t.detach();
+				}, false, true));
+			}
 		}
 	}
 
 	void step() override {
-		notification->box.pos = math::Vec(0, 0);
-		notification->visible = library::isAppUpdateAvailable();
+		// For VCV Rack make getting updates easy. But this doesn't work for forks like Liminal
+		if (!settings::isLiminal) {
+			// Light up red notification dot on Help button if an update is available
+			notification->box.pos = math::Vec(0, 0);
+			notification->visible = library::isAppUpdateAvailable();
+		} else {
+			// Not VCV rack so always hide notification since can't update app in usual way
+			notification->visible = false;
+		}
 		MenuButton::step();
 	}
 };
-
 
 ////////////////////
 // InfoBar - displays frame rate, cpu, and app name/version info
@@ -1153,16 +1198,23 @@ struct InfoLabel : ui::Label {
 // MenuBar
 ////////////////////
 
+/**
+ * The main menu bar for the application. Contains a buncch of buttons,
+ * one for each pull down menu. Example buttons are FileButton and LibraryButton.
+ * These button classes inheret from MenuButton, which is used to draw the buttons.
+ */
 struct MenuBar : widget::OpaqueWidget {
+	/* For drawing in menu bar some greyed out info, like CPU and Rack version */
 	InfoLabel* infoLabel;
 
 	MenuBar() {
-		const float margin = 5;
+		const float margin = 3.0;
 		box.size.y = rack::settings::bndWidgetHeight + 2 * margin;
 
 		ui::SequentialLayout* layout = new ui::SequentialLayout;
 		layout->margin = math::Vec(margin, margin);
-		layout->spacing = math::Vec(0, 0);
+		// Set some space between the menu items so that they are easy to differentiate
+		layout->spacing = math::Vec(15.0, 0);
 		addChild(layout);
 
 		FileButton* fileButton = new FileButton;
@@ -1205,8 +1257,8 @@ struct MenuBar : widget::OpaqueWidget {
 	void step() override {
 		Widget::step();
 		infoLabel->box.size.x = box.size.x - infoLabel->box.pos.x - 5;
-		// Setting 50% alpha prevents Label from using the default UI theme color, so set the color manually here.
-		infoLabel->color = color::alpha(bndGetTheme()->regularTheme.textColor, 0.5);
+		// Setting 40% alpha prevents Label from using the default UI theme color, so set the color manually here.
+		infoLabel->color = color::alpha(bndGetTheme()->regularTheme.textColor, 0.4);
 	}
 };
 
