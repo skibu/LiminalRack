@@ -1,5 +1,7 @@
 # Liminal Rack Change Log
 
+- 8/16/25
+  - Improved what was the Library menu. Previously was difficult for user to understand how to add a module since had to right-click on background, something there were no visual hints for. So change the Library menu to 'Add Module" and added a "Add module to rack" button to make things clear and easy. Also changed names and ordering of the VCV rack items to make it clear they are for the different VCV Rack library.
 - 8/15/25
   - Improved help menu so doesn't show VCV rack version info when running branch
   - Improved menus by getting text centered and margins just right. Also commented some code since the uncommented original was hard to understand.
