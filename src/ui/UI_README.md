@@ -15,13 +15,26 @@ The appearance is defined by overriding `draw()`, and the behavior is defined by
 
 MenuLabel - A non-selectable label that can be an item in a menu
 
-### Class hierarchy
+### Class hierarchy for Menu widgets
 ```
 Widget - box, parent, children, visible
   OpaqueWidget -
+    MenuBar - infoLabel
     Menu - parentMenu, childMenu, activeEntry
     MenuOverlay - bgcolor
     MenuEntry - sets box.size = math::Vec(0, rack::settings::bndWidgetHeight)
       MenuItem - text, rightText, disabled
       MenuLabel - text
+```
+
+But there are also the buttons that go in the menu bar, which have a completely different heirarchy.
+```
+ui::Button
+  MenuButton (in MenuBar.cpp)
+    FileButton
+    EditButton
+    ViewButton
+    EngineButton
+    LibraryButton
+    HelpButton
 ```
