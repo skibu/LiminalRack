@@ -200,6 +200,7 @@ void RackWidget::onButton(const ButtonEvent& e) {
 		return;
 
 	if (e.button == GLFW_MOUSE_BUTTON_RIGHT) {
+		// Right mouse button clicked so open up module browser
 		if (e.action == GLFW_PRESS) {
 			APP->scene->browser->show();
 		}
