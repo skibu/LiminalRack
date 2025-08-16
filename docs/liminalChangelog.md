@@ -1,5 +1,9 @@
 # Liminal Rack Change Log
 
+- 8/15/25
+  - Improved help menu so doesn't show VCV rack version info when running branch
+  - Improved menus by getting text centered and margins just right. Also commented some code since the uncommented original was hard to understand.
+  - Improved some wording for menu labels to make things more clear.
 - 8/14/25
   - If window should be full screen mode, which is default for Liminal Rack, then it is done automatically at startup. This way seems less like a computer application and more like a dedicated tool.
 - 8/13/25
