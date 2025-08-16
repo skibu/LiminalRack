@@ -195,6 +195,13 @@ struct EditButton : MenuButton {
 
 		menu->addChild(new ui::MenuSeparator);
 
+		// Add button for opening up the local module browser
+		menu->addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "", [=]() {
+			APP->scene->browser->show();
+		}));
+
+		menu->addChild(new ui::MenuSeparator);
+		
 		APP->scene->rack->appendSelectionContextMenu(menu);
 	}
 };
@@ -939,6 +946,7 @@ struct LibraryMenu : ui::Menu {
 		if (settings::devMode) {
 			addChild(createMenuLabel(string::translate("MenuBar.library.devMode")));
 		}
+		// If user not logged in to VCV then they need to log in first
 		else if (!library::isLoggedIn()) {
 			addChild(createMenuItem(string::translate("MenuBar.library.register"), "", [=]() {
 				system::openBrowser("https://vcvrack.com/login");
@@ -962,23 +970,34 @@ struct LibraryMenu : ui::Menu {
 			passwordField->logInItem = logInItem;
 			addChild(logInItem);
 		}
+		// The regular module library options for when user is logged in
 		else {
-			addChild(createMenuItem(string::translate("MenuBar.library.logOut"), "", [=]() {
-				library::logOut();
+			addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "", [=]() {
+				APP->scene->browser->show();
+			}));
+
+			addChild(new ui::MenuSeparator);
+
+			addChild(createMenuItem(string::translate("MenuBar.library.browse"), "", [=]() {
+				system::openBrowser("https://library.vcvrack.com/");
 			}));
 
 			addChild(createMenuItem(string::translate("MenuBar.library.account"), "", [=]() {
 				system::openBrowser("https://vcvrack.com/account");
 			}));
 
-			addChild(createMenuItem(string::translate("MenuBar.library.browse"), "", [=]() {
-				system::openBrowser("https://library.vcvrack.com/");
+			addChild(createMenuItem(string::translate("MenuBar.library.logOut"), "", [=]() {
+				library::logOut();
 			}));
 
+			addChild(new ui::MenuSeparator);
+
+			// Add menu item to sync updates from VCV Rack library
 			SyncUpdatesItem* syncItem = new SyncUpdatesItem;
 			syncItem->text = string::translate("MenuBar.library.updateAll");
 			addChild(syncItem);
 
+			// Add buttons for updating individual collections of modules
 			if (!library::updateInfos.empty()) {
 				addChild(new ui::MenuSeparator);
 				addChild(createMenuLabel(string::translate("MenuBar.library.updates")));
