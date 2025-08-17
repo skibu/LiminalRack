@@ -1377,74 +1377,96 @@ void RackWidget::setSelectionPosNearest(math::Vec delta) {
 }
 
 void RackWidget::appendSelectionContextMenu(ui::Menu* menu) {
-	int n = getSelected().size();
-	menu->addChild(createMenuLabel(n == 1 ? string::translate("RackWidget.selectedOne") : string::f(string::translate("RackWidget.selectedMany"), n)));
+    // Provide info on which module(s) selected
+    int n = getSelected().size();
+    switch (n) {
+        case 0:
+            // No modules selected so say so
+            menu->addChild(createMenuLabel(string::translate("RackWidget.selectedNone")));
+            break;
+        case 1: {
+            // One module selected so display its name and brand
+            ModuleWidget* selectedModule = *getSelected().begin();
+            plugin::Model* model = selectedModule->getModel();
 
-	// Enable alwaysConsume of menu items if the number of selected modules changes
+            std::string moduleName = model->name;
+            menu->addChild(createMenuLabel(moduleName));
 
-	// Select all
-	menu->addChild(createMenuItem(string::translate("RackWidget.selectAll"), widget::getKeyCommandName(GLFW_KEY_A, RACK_MOD_CTRL), [=]() {
-		selectAll();
-	}, false, true));
+			std::string brand = model->plugin->brand;
+            menu->addChild(createMenuLabel("By " + brand));
+            break;
+        }
+        default:
+            // There are multiple modules selected so just display how many
+            menu->addChild(
+                createMenuLabel(string::f(string::translate("RackWidget.selectedMany"), n)));
+            break;
+    }
 
-	// Deselect
-	menu->addChild(createMenuItem(string::translate("RackWidget.deselect"), widget::getKeyCommandName(GLFW_KEY_A, RACK_MOD_CTRL | GLFW_MOD_SHIFT), [=]() {
-		deselectAll();
-	}, n == 0, true));
+    // Deselect
+    menu->addChild(createMenuItem(
+        string::translate("RackWidget.deselect"),
+        widget::getKeyCommandName(GLFW_KEY_A, RACK_MOD_CTRL | GLFW_MOD_SHIFT),
+        [=]() { deselectAll(); }, n == 0, true));
 
-	// Copy
-	menu->addChild(createMenuItem(string::translate("RackWidget.copy"), widget::getKeyCommandName(GLFW_KEY_C, RACK_MOD_CTRL), [=]() {
-		copyClipboardSelection();
-	}, n == 0));
+    // Copy
+    menu->addChild(createMenuItem(
+        string::translate("RackWidget.copy"), widget::getKeyCommandName(GLFW_KEY_C, RACK_MOD_CTRL),
+        [=]() { copyClipboardSelection(); }, n == 0));
 
-	// Paste
-	menu->addChild(createMenuItem(string::translate("RackWidget.paste"), widget::getKeyCommandName(GLFW_KEY_V, RACK_MOD_CTRL), [=]() {
-		pasteClipboardAction();
-	}, false, true));
+    // Paste
+    menu->addChild(createMenuItem(
+        string::translate("RackWidget.paste"), widget::getKeyCommandName(GLFW_KEY_V, RACK_MOD_CTRL),
+        [=]() { pasteClipboardAction(); }, false, true));
 
-	// Save
-	menu->addChild(createMenuItem(string::translate("RackWidget.saveAs"), "", [=]() {
-		saveSelectionDialog();
-	}, n == 0));
+    // Save
+    menu->addChild(createMenuItem(
+        string::translate("RackWidget.saveAs"), "", [=]() { saveSelectionDialog(); }, n == 0));
 
-	// Initialize
-	menu->addChild(createMenuItem(string::translate("RackWidget.initialize"), widget::getKeyCommandName(GLFW_KEY_I, RACK_MOD_CTRL), [=]() {
-		resetSelectionAction();
-	}, n == 0));
+    // Initialize
+    menu->addChild(createMenuItem(
+        string::translate("RackWidget.initialize"),
+        widget::getKeyCommandName(GLFW_KEY_I, RACK_MOD_CTRL), [=]() { resetSelectionAction(); },
+        n == 0));
 
-	// Randomize
-	menu->addChild(createMenuItem(string::translate("RackWidget.randomize"), widget::getKeyCommandName(GLFW_KEY_R, RACK_MOD_CTRL), [=]() {
-		randomizeSelectionAction();
-	}, n == 0));
+    // Randomize
+    menu->addChild(createMenuItem(
+        string::translate("RackWidget.randomize"),
+        widget::getKeyCommandName(GLFW_KEY_R, RACK_MOD_CTRL), [=]() { randomizeSelectionAction(); },
+        n == 0));
 
-	// Disconnect cables
-	menu->addChild(createMenuItem(string::translate("RackWidget.disconnectCables"), widget::getKeyCommandName(GLFW_KEY_U, RACK_MOD_CTRL), [=]() {
-		disconnectSelectionAction();
-	}, n == 0));
+    // Disconnect cables
+    menu->addChild(createMenuItem(
+        string::translate("RackWidget.disconnectCables"),
+        widget::getKeyCommandName(GLFW_KEY_U, RACK_MOD_CTRL),
+        [=]() { disconnectSelectionAction(); }, n == 0));
 
-	// Bypass
-	std::string bypassText = widget::getKeyCommandName(GLFW_KEY_E, RACK_MOD_CTRL);
-	bool bypassed = (n > 0) && isSelectionBypassed();
-	if (bypassed)
-		bypassText += " " CHECKMARK_STRING;
-	menu->addChild(createMenuItem(string::translate("RackWidget.bypass"), bypassText, [=]() {
-		bypassSelectionAction(!bypassed);
-	}, n == 0, true));
+    // Bypass
+    std::string bypassText = widget::getKeyCommandName(GLFW_KEY_E, RACK_MOD_CTRL);
+    bool bypassed = (n > 0) && isSelectionBypassed();
+    if (bypassed) bypassText += " " CHECKMARK_STRING;
+    menu->addChild(createMenuItem(
+        string::translate("RackWidget.bypass"), bypassText,
+        [=]() { bypassSelectionAction(!bypassed); }, n == 0, true));
 
-	// Duplicate
-	menu->addChild(createMenuItem(string::translate("RackWidget.duplicate"), widget::getKeyCommandName(GLFW_KEY_D, RACK_MOD_CTRL), [=]() {
-		cloneSelectionAction(false);
-	}, n == 0));
+    // Duplicate
+    menu->addChild(createMenuItem(
+        string::translate("RackWidget.duplicate"),
+        widget::getKeyCommandName(GLFW_KEY_D, RACK_MOD_CTRL),
+        [=]() { cloneSelectionAction(false); }, n == 0));
 
-	// Duplicate with cables
-	menu->addChild(createMenuItem("└ " + string::translate("RackWidget.duplicateWithCables"), widget::getKeyCommandName(GLFW_KEY_D, RACK_MOD_CTRL | GLFW_MOD_SHIFT), [=]() {
-		cloneSelectionAction(true);
-	}, n == 0));
+    // Duplicate with cables
+    menu->addChild(createMenuItem(
+        "└ " + string::translate("RackWidget.duplicateWithCables"),
+        widget::getKeyCommandName(GLFW_KEY_D, RACK_MOD_CTRL | GLFW_MOD_SHIFT),
+        [=]() { cloneSelectionAction(true); }, n == 0));
 
-	// Delete
-	menu->addChild(createMenuItem(string::translate("RackWidget.delete"), widget::getKeyCommandName(GLFW_KEY_BACKSPACE, 0) + "/" + widget::getKeyCommandName(GLFW_KEY_DELETE, 0), [=]() {
-		deleteSelectionAction();
-	}, n == 0, true));
+    // Delete
+    menu->addChild(createMenuItem(
+        string::translate("RackWidget.delete"),
+        widget::getKeyCommandName(GLFW_KEY_BACKSPACE, 0) + "/" +
+            widget::getKeyCommandName(GLFW_KEY_DELETE, 0),
+        [=]() { deleteSelectionAction(); }, n == 0, true));
 }
 
 void RackWidget::clearCables() {

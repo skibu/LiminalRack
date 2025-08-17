@@ -195,13 +195,21 @@ struct EditButton : MenuButton {
 
 		menu->addChild(new ui::MenuSeparator);
 
-		// Add button for opening up the local module browser
+		// Add button for adding a module by opening up the local module browser
 		menu->addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "", [=]() {
 			APP->scene->browser->show();
 		}));
 
+		// Add select all modules button
+    	menu->addChild(createMenuItem(
+        string::translate("RackWidget.selectAll"),
+        widget::getKeyCommandName(GLFW_KEY_A, RACK_MOD_CTRL), [=]() { APP->scene->rack->selectAll(); }, false, true));
+
+		// Add module related menu items
 		menu->addChild(new ui::MenuSeparator);
-		
+		menu->addChild(createMenuLabel(string::translate("MenuBar.edit.moduleContextMenuHeader")));
+
+		// Append context menu for the module so user can affect it
 		APP->scene->rack->appendSelectionContextMenu(menu);
 	}
 };
