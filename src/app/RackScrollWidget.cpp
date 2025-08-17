@@ -88,7 +88,7 @@ void RackScrollWidget::zoomToBound(math::Rect bound) {
 	// Originally the boundary was expanded by 24 units, presumably to show extra rails
 	// to idicate that more space is available. But for Liminal have a relatively small
 	// screen and don't want to waste any space.
-	if (!rack::settings::isLiminal) {
+	if (!rack::settings::isNotVCVRack) {
 		bound = bound.grow(math::Vec(24, 24));
 	}
 	

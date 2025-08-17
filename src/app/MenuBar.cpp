@@ -450,7 +450,7 @@ struct ViewButton : MenuButton {
 			APP->window->setFullScreen(!fullscreen);
 		}));
 
-		if (!settings::isLiminal) {
+		if (!settings::isNotVCVRack) {
 			menu->addChild(createSubmenuItem(string::translate("MenuBar.view.frameRate"), string::f("%.0f Hz", settings::frameRateLimit), [=](ui::Menu* menu) {
 				for (int i = 1; i <= 6; i++) {
 					double frameRate = APP->window->getMonitorRefreshRate() / i;
@@ -462,7 +462,7 @@ struct ViewButton : MenuButton {
 			}));
 		}
 
-		if (!settings::isLiminal) {
+		if (!settings::isNotVCVRack) {
 			static const std::vector<float> pixelRatios = {0, 1, 1.5, 2, 2.5, 3};
 			std::vector<std::string> pixelRatioLabels;
 			for (float pixelRatio : pixelRatios) {
@@ -488,7 +488,7 @@ struct ViewButton : MenuButton {
 		}));
 
 		// Create zoom sub menu, if not in Liminal mode
-		if (!settings::isLiminal) {
+		if (!settings::isNotVCVRack) {
 			menu->addChild(createIndexPtrSubmenuItem(string::translate("MenuBar.view.mouseWheelZoom"), {
 				string::f(string::translate("MenuBar.view.mouseWheelZoom.scroll"), RACK_MOD_CTRL_NAME),
 				string::f(string::translate("MenuBar.view.mouseWheelZoom.zoom"), RACK_MOD_CTRL_NAME)
@@ -498,7 +498,7 @@ struct ViewButton : MenuButton {
 		menu->addChild(new ui::MenuSeparator);
 		menu->addChild(createMenuLabel(string::translate("MenuBar.view.appearance")));
 
-		if (!settings::isLiminal) {
+		if (!settings::isNotVCVRack) {
 			static const std::vector<std::string> uiThemes = {"dark", "light", "hcdark"};
 			menu->addChild(createIndexSubmenuItem(string::translate("MenuBar.view.uiTheme"), {
 				string::translate("MenuBar.view.appearance.dark"),
@@ -630,7 +630,7 @@ struct ViewButton : MenuButton {
 			}
 
 			// Don't need to autorotate or restore cable colors in Liminal
-			if (!settings::isLiminal) {
+			if (!settings::isNotVCVRack) {
 				menu->addChild(createBoolMenuItem(string::translate("MenuBar.view.cableColors.autoRotate"), "",
 					[=]() -> bool {
 						return settings::cableAutoRotate;
@@ -668,7 +668,7 @@ struct ViewButton : MenuButton {
 			}
 		}));
 
-		if (!settings::isLiminal) {
+		if (!settings::isNotVCVRack) {
 			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.knobScroll"), "", &settings::knobScroll));
 
 			KnobScrollSensitivitySlider* knobScrollSensitivitySlider = new KnobScrollSensitivitySlider;
@@ -681,7 +681,7 @@ struct ViewButton : MenuButton {
 
 		menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.lockModules"), "", &settings::lockModules));
 
-		if (!settings::isLiminal) {
+		if (!settings::isNotVCVRack) {
 			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.squeezeModules"), "", &settings::squeezeModules));
 
 			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.preferDarkPanels"), "", &settings::preferDarkPanels));
@@ -757,7 +757,7 @@ struct EngineButton : MenuButton {
         menu->addChild(createMenuItem<SampleRateItem>(
             string::translate("MenuBar.engine.sampleRate"), RIGHT_ARROW));
 
-        if (!settings::isLiminal) {
+        if (!settings::isNotVCVRack) {
             menu->addChild(createSubmenuItem(
                 string::translate("MenuBar.engine.threads"), string::f("%d", settings::threadCount),
                 [=](ui::Menu* menu) {
@@ -1104,7 +1104,7 @@ struct HelpButton : MenuButton {
 			system::openBrowser("https://vcvrack.com/manual");
 		}));
 
-		if (!settings::isLiminal) {
+		if (!settings::isNotVCVRack) {
 			menu->addChild(createMenuItem(string::translate("MenuBar.help.support"), "", [=]() {
 				system::openBrowser("https://vcvrack.com/support");
 			}));
@@ -1120,20 +1120,20 @@ struct HelpButton : MenuButton {
 			system::openDirectory(asset::user(""));
 		}));
 
-		if (settings::isLiminal) {
-			// Show Liminal Rack changelog
-			menu->addChild(createMenuItem(string::translate("MenuBar.help.changelog"), "", [=]() {
-				system::openBrowser("https://github.com/skibu/LiminalRack/blob/v2/docs/liminalChangelog.md");
-			}));		
-		} else {
+		if (settings::isNotVCVRack) {
 			// Show VCV Rack changelog
 			menu->addChild(createMenuItem(string::translate("MenuBar.help.changelog"), "", [=]() {
 				system::openBrowser("https://github.com/VCVRack/Rack/blob/v2/CHANGELOG.md");
 			}));
+		} else {
+			// Show Non VCV Rack changelog
+			menu->addChild(createMenuItem(string::translate("MenuBar.help.changelog"), "", [=]() {
+				system::openBrowser("https://github.com/skibu/LiminalRack/blob/v2/docs/liminalChangelog.md");
+			}));		
 		}
 
 		// For VCV Rack make getting updates easy. But this doesn't work for forks like Liminal
-		if (!settings::isLiminal) {
+		if (!settings::isNotVCVRack) {
 			if (library::isAppUpdateAvailable()) {
 				// If there is a new version of app available then create menu button to update to it
 				menu->addChild(createMenuItem(string::f(string::translate("MenuBar.help.update"), APP_NAME), APP_VERSION + " → " + library::appVersion, [=]() {
@@ -1154,7 +1154,7 @@ struct HelpButton : MenuButton {
 
 	void step() override {
 		// For VCV Rack make getting updates easy. But this doesn't work for forks like Liminal
-		if (!settings::isLiminal) {
+		if (!settings::isNotVCVRack) {
 			// Light up red notification dot on Help button if an update is available
 			notification->box.pos = math::Vec(0, 0);
 			notification->visible = library::isAppUpdateAvailable();

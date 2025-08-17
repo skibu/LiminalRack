@@ -7,6 +7,9 @@ namespace ui {
 void Liminal::configAsLiminal() {
     rack::settings::isLiminal = true;
 
+    // This is a fork of VCV Rack, so some things need to be done differently
+    rack::settings::isNotVCVRack = true;
+
     // When in liminal mode then set other params as appropriate
     rack::settings::hasTouchscreen = true;
     rack::settings::hasKeyboard = false; 

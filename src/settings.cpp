@@ -21,6 +21,10 @@ bool headless = false;
 bool isPlugin = false;
 bool restart = false;
 
+std::string themeBackgroundColor = "rgba(87, 55, 55, 1)";
+
+// True if a fork of VCV Rack and things need to be done differently
+bool isNotVCVRack = false;
 // Whether this is Liminal version of Rack
 bool isLiminal = false;
 // When touch screen used need to increase size of widgets
@@ -163,6 +167,7 @@ json_t* toJson() {
 
 	json_object_set_new(rootJ, "token", json_string(token.c_str()));
 
+	json_object_set_new(rootJ, "isNotVCVRack", json_boolean(isNotVCVRack));
 	json_object_set_new(rootJ, "isLiminal", json_boolean(isLiminal));
 	json_object_set_new(rootJ, "hasTouchscreen", json_boolean(hasTouchscreen));
 	json_object_set_new(rootJ, "hasKeyboard", json_boolean(hasKeyboard));
@@ -338,6 +343,9 @@ void fromJson(json_t* rootJ) {
 	if (tokenJ)
 		token = json_string_value(tokenJ);
 	
+	json_t* isNotVCVRackJ = json_object_get(rootJ, "isNotVCVRack");
+	if (isNotVCVRackJ) isNotVCVRack = json_boolean_value(isNotVCVRackJ);
+
 	json_t* isLiminalJ = json_object_get(rootJ, "isLiminal");
 	if (isLiminalJ) isLiminal = json_boolean_value(isLiminalJ);
 
@@ -656,8 +664,8 @@ void load(std::string path) {
 }
 
 void initBlendish() {
-    if (isLiminal) {
-		bndSetLabelFontSize(bndLabelFontSize);
+    if (isNotVCVRack) {
+        bndSetLabelFontSize(bndLabelFontSize);
         bndSetWidgetHeight(bndWidgetHeight);
     }
 }

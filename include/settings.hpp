@@ -37,6 +37,9 @@ extern bool safeMode;
 extern std::string token;
 /** Whether the window is maximized */
 extern bool windowMaximized;
+
+/** True if a fork of VCV Rack and things need to be done differently */
+extern bool isNotVCVRack;
 /** Whether this is Liminal version of Rack */
 extern bool isLiminal;
 /** Whether touchscreen being used */
