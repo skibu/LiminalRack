@@ -24,7 +24,7 @@ Widget - box, parent, children, visible
     MenuOverlay - bgcolor
     MenuEntry - sets box.size = math::Vec(0, rack::settings::bndWidgetHeight)
       MenuItem - text, rightText, disabled
-      MenuLabel - text
+      MenuLabel (non-clickable) - text
 ```
 
 But there are also the buttons that go in the menu bar, which have a completely different heirarchy.
