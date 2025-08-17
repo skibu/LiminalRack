@@ -41,7 +41,8 @@ void MenuItem::drawOffset(NVGcontext* vg, float x_offset) {
 	else {
 		// Draw label as inactive.
 		// From bndMenuLabel() implementation
-		bndIconLabelValue(vg, x_offset + 0.0, 0.0, box.size.x, box.size.y, -1,
+		float y_centering_offset = (settings::bndWidgetHeight - settings::bndLabelFontSize) / 2.0;
+		bndIconLabelValue(vg, x_offset + 0.0, -y_centering_offset, box.size.x, box.size.y, -1,
 							theme->menuTheme.textColor, BND_LEFT,
 							rack::settings::bndLabelFontSize, text.c_str(), NULL);
     }
