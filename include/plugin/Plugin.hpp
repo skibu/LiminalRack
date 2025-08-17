@@ -13,7 +13,10 @@ namespace plugin {
 struct Model;
 
 
-// Subclass this and return a pointer to a new one when init() is called
+/** 
+ * Contains details of the module like name, brand, etc
+ * Subclass this and return a pointer to a new one when init() is called
+ */
 struct Plugin {
 	/** List of models contained in this plugin.
 	Add with addModel().

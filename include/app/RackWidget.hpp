@@ -90,7 +90,10 @@ struct RackWidget : widget::OpaqueWidget {
 	void deselectAll();
 	void select(ModuleWidget* mw, bool selected = true);
 	bool hasSelection();
+
+	/** Returns set of ModuleWidgets that are currently selected */
 	const std::set<ModuleWidget*>& getSelected();
+	
 	bool isSelected(ModuleWidget* mw);
 	json_t* selectionToJson(bool cables = true);
 	void loadSelection(std::string path);
@@ -107,6 +110,9 @@ struct RackWidget : widget::OpaqueWidget {
 	void deleteSelectionAction();
 	bool requestSelectionPos(math::Vec delta);
 	void setSelectionPosNearest(math::Vec delta);
+
+	/** Appends to the specified menu the buttons for actions that 
+	 * can be done on the selected modules */
 	void appendSelectionContextMenu(ui::Menu* menu);
 
 	// Cable methods
