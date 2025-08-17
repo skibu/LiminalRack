@@ -77,15 +77,19 @@ void setTheme(NVGcolor bg, NVGcolor fg) {
 
 void refreshTheme() {
 	if (settings::uiTheme == "light") {
+		// Set main forground and background colors for light theme
 		setTheme(nvgRGB(0xf0, 0xf0, 0xf0), nvgRGB(0x04, 0x04, 0x04));
 	}
 	else if (settings::uiTheme == "hcdark") {
+		// Set main forground and background colors for high contrast dark theme
 		setTheme(nvgRGB(0x00, 0x00, 0x00), nvgRGB(0xff, 0xff, 0xff));
 	}
 	else {
-		// Dark
-		setTheme(nvgRGB(0x10, 0x10, 0x70), nvgRGB(0xf0, 0xf0, 0xf0));
-	}
+		// Set main forground and background colors for dark theme
+                auto bg = nvgRGB(87, 55, 55);
+                //auto bg = nvgRGB(0x10, 0x10, 0x70); // dark blue
+				setTheme(bg, nvgRGB(0xf0, 0xf0, 0xf0));
+        }
 }
 
 
