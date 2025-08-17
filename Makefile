@@ -1,7 +1,10 @@
 RACK_DIR ?= .
 RACK_EDITION := Free
 RACK_VERSION_MAJOR := 2
-RACK_VERSION ?= $(patsubst v%,%,$(shell git describe --tags --match "v$(RACK_VERSION_MAJOR).*"))
+# The original method for determining the Rack version doesn't work when compiling
+# within VSCode. Therefore just hardcoding it for now.
+#RACK_VERSION ?= $(patsubst v%,%,$(shell git describe --tags --match "v$(RACK_VERSION_MAJOR).*"))
+RACK_VERSION := 2.6.4
 
 FLAGS += -Iinclude -Idep/include
 
