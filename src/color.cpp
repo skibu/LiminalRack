@@ -92,6 +92,9 @@ std::string toHexString(NVGcolor c) {
 		return string::f("#%02x%02x%02x%02x", r, g, b, a);
 }
 
+float brightness(const NVGcolor c) {
+    return (0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b) / 255.0f;
+}
 
 } // namespace network
 } // namespace rack

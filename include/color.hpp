@@ -63,7 +63,8 @@ NVGcolor fromHexString(std::string s);
 Floating point color components are rounded to nearest 8-bit integer.
 */
 std::string toHexString(NVGcolor c);
-
+/** Returns brightness of color `c` in the range [0.0, 1.0]. */
+float brightness(const NVGcolor c);
 
 } // namespace color
 } // namespace rack
