@@ -53,7 +53,9 @@ bool knobScroll = false;
 float knobLinearSensitivity = 0.001f;
 float knobScrollSensitivity = 0.001f;
 float sampleRate = 0;
-int threadCount = 4; // Default of 4 makes more sense than just 1
+// Default of 3 makes more sense than just 1 so that use more threads by
+// default yet doesn't take over entire computer
+int threadCount = 3;
 bool tooltips = true;
 bool cpuMeter = false;
 bool lockModules = false;
