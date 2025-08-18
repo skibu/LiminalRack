@@ -685,10 +685,10 @@ struct ViewButton : MenuButton {
 
 		menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.lockModules"), "", &settings::lockModules));
         if (settings::isNotVCVRack) {
-			// Nice to be able to add modules within the View Modules section
-		    menu->addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "",
-								[=]() { APP->scene->browser->show(); }));
-	    } else {
+            // Nice to be able to add modules within the View Modules section
+            menu->addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "",
+                                          [=]() { APP->scene->browser->show(); }));
+            } else {
 			// These options not that useful so removed when not VCVRack but left in otherwise
 			// to keep the VCV Rack UI consistent				
 			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.squeezeModules"), "", &settings::squeezeModules));
