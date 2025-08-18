@@ -6,7 +6,7 @@
 namespace rack {
 namespace ui {
 
-
+/** A separator line in a menu */
 struct MenuSeparator : MenuEntry {
 	MenuSeparator();
 	void draw(const DrawArgs& args) override;

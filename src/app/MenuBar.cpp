@@ -650,7 +650,11 @@ struct ViewButton : MenuButton {
 		menu->addChild(new ui::MenuSeparator);
 		menu->addChild(createMenuLabel(string::translate("MenuBar.view.parameters")));
 
-		menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.lockCursor"), "", &settings::allowCursorLock));
+		// Usually want to hide cursor when turning a knob so don't need to make this settable.
+		// But if VCVRack best to not change the UI.
+		if (!settings::isNotVCVRack) {
+			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.lockCursor"), "", &settings::allowCursorLock));
+		}
 
 		static const std::vector<std::string> knobModeLabels = {
 			string::translate("MenuBar.view.knob.linear"),
