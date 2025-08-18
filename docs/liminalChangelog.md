@@ -1,5 +1,7 @@
 # Liminal Rack Change Log
 
+- 8/17/25
+  - Differentiated MenuLabels so that they look different (usually darker background) than disabled buttons. This really helps reduce confusion about what the menu elements.
 - 8/16/25
   - Created kludge so that RACK_VERSION set to reasonable value via Makefile even when VSCode or other IDE being used. This is important so that updating plugin libraries can work.
   - Improved menus to make it clear how to add a module, what libraries were about, and how to take action on a module. Should make learning about those functionalities much easier.
