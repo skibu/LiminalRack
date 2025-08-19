@@ -1,6 +1,7 @@
 # Liminal Rack Change Log
 
 - 8/18/25
+  - Increased contrast betwee Module Browser and the rack below. This way it is easier for user to understand the context, that the Browser Window is in view but that the separate Rack window is still there, but below and inactive, yet accessible. Also added comments to code to make future changes easier.
   - Added title to the Module Browser window to explain that this window is used to add modules to one's rack.
   - Fixed Label so that can center text even when different font is used.
   - Changed color of the Module Browser window to be medium grey. This color can be used for both light and dark modes. And it is good to look different from the rest of the app so user immediately understands where they are. And looks nice. Also, made some improvements to the border around the Module Browser window.
