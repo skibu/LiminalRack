@@ -86,10 +86,9 @@ void refreshTheme() {
 	}
 	else {
 		// Set main forground and background colors for dark theme
-                auto bg = nvgRGB(87, 55, 55);
-                //auto bg = nvgRGB(0x10, 0x10, 0x70); // dark blue
-				setTheme(bg, nvgRGB(0xf0, 0xf0, 0xf0));
-        }
+		auto bg = nvgRGB(87, 55, 55); // Kind of a brick red
+		setTheme(bg, nvgRGB(0xf0, 0xf0, 0xf0));
+	}
 }
 
 
