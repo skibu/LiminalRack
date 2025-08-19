@@ -155,6 +155,27 @@ PRIVATE json_t* toJson();
 PRIVATE void fromJson(json_t* rootJ);
 PRIVATE void save(std::string path = "");
 PRIVATE void load(std::string path = "");
+
+/**
+ * There are two labelFontSize variables, the blendish one and the settings one.
+ * Both are used in the Rack code, somewhat randomly. Therefore need to
+ * use this setter in order to make sure they are synced. Therefore should 
+ * use this function to set the value.
+ */
+PRIVATE void setLabelFontSize(int size);
+/** Gets current value of the settings labelFontSize */
+PRIVATE int getLabelFontSize();
+
+/**
+ * There are two widgetHeight variables, the blendish one and the settings one.
+ * Both are used in the Rack code, somewhat randomly. Therefore need to
+ * use this setter in order to make sure they are synced. Therefore should 
+ * use this function to set the value.
+ */
+PRIVATE void setWidgetHeight(int height);
+/** Gets current value of the settings widgetHeight */
+PRIVATE int getWidgetHeight();
+
 PRIVATE void initBlendish();
 
 } // namespace settings

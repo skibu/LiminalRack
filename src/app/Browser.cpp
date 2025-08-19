@@ -413,6 +413,7 @@ struct BrandButton : ui::ChoiceButton {
 };
 
 
+/** An item for the tag menu. Causes the TagItem::onAction() method to be called on a click. */
 struct TagItem : ui::MenuItem {
 	Browser* browser;
 	int tagId;
@@ -475,6 +476,41 @@ struct UrlButton : ui::Button {
 	}
 };
 
+/**
+ * BrowserHeader is the widget that is the head of the Module Browser. It's only purpose
+ * is to override SequentialLayout onDraw() so that a specified font can be used for all
+ * of the children of the header. */
+class BrowserHeader : public ui::SequentialLayout {
+   public:
+    BrowserHeader() {
+        alignment = CENTER_ALIGNMENT;
+    }
+
+    static const int HeaderFontSize = 16;
+    static const int HeaderWidgetHeight = 24;
+
+    /** Override draw() so that all children of the header are drawn with a specified font size.
+     * This is necessary since the header contains buttons and labels that need to be drawn with a
+     * different font size than the rest of the browser. 
+     */
+    void draw(const DrawArgs& args) override {
+        // Temporarily store the current font size
+        int originalFontSize = settings::getLabelFontSize();
+        int originalWidgetHeight = settings::getWidgetHeight();
+
+        // Set the font size for the header
+        settings::setLabelFontSize(HeaderFontSize);
+		settings::setWidgetHeight(BrowserHeader::HeaderWidgetHeight);
+
+        // Draw all the children of the header using that font size
+        SequentialLayout::draw(args);
+
+        // Restore the font size
+        settings::setLabelFontSize(originalFontSize);
+        settings::setWidgetHeight(originalWidgetHeight);
+    }
+};
+
 /** The actual Browser class. The Browser is the window that shows the modules 
  * the user has available and can add to their rack.
  */
@@ -513,31 +549,40 @@ struct Browser : widget::OpaqueWidget {
         titleLabel->fontSize = 40;
         titleLabel->alignment = ui::Label::Alignment::CENTER_ALIGNMENT;
         titleLabel->box.pos.x = outerMargin;
-        titleLabel->box.pos.y = outerMargin;
+        titleLabel->box.pos.y = outerMargin + 2.0;
         titleLabel->box.size.y = titleLabel->fontSize * 0.7 + 2.0; // Don't need full height for label
         addChild(titleLabel);
 
         // Header
-        headerLayout = new ui::SequentialLayout;
-        headerLayout->box.pos = math::Vec(0, outerMargin +titleLabel->box.size.y);
-        headerLayout->box.size.y = 0;
+        headerLayout = new BrowserHeader();
+        headerLayout->box.pos = math::Vec(0, outerMargin + titleLabel->box.size.y);
+        headerLayout->box.size.y = 0; // Height will be set later
         headerLayout->margin = math::Vec(outerMargin, outerMargin);
         headerLayout->spacing = math::Vec(outerMargin, outerMargin);
         addChild(headerLayout);
 
+        // Need to set desired widgetHeight here instead of when drawing since
+        // box.size.y is set in Button's constructor
+        int originalWidgetHeight = settings::getWidgetHeight();
+		settings::setWidgetHeight(BrowserHeader::HeaderWidgetHeight);
+
+        // Note: for the header widgets size.x using original values for VCV Rack,
+        // but then adjusting them to the font size actually being used here.
+        // This way it is easy to change the font size simply by setting HeaderFontSize.
+
         searchField = new BrowserSearchField;
-        searchField->box.size.x = 150;
+        searchField->box.size.x = 150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
         searchField->placeholder = string::translate("Browser.searchModules");
         searchField->browser = this;
         headerLayout->addChild(searchField);
 
         brandButton = new BrandButton;
-        brandButton->box.size.x = 150;
+        brandButton->box.size.x = 150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
         brandButton->browser = this;
         headerLayout->addChild(brandButton);
 
         tagButton = new TagButton;
-        tagButton->box.size.x = 150;
+        tagButton->box.size.x = 150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
         tagButton->browser = this;
         headerLayout->addChild(tagButton);
 
@@ -547,34 +592,43 @@ struct Browser : widget::OpaqueWidget {
         favoriteButton = new ui::OptionButton;
         favoriteButton->quantity = favoriteQuantity;
         favoriteButton->text = string::translate("Browser.favorites");
-        favoriteButton->box.size.x = 70;
+        favoriteButton->box.size.x = 70 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
         headerLayout->addChild(favoriteButton);
 
         clearButton = new ClearButton;
-        clearButton->box.size.x = 130;
+        clearButton->box.size.x = 90 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
         clearButton->text = string::translate("Browser.resetFilters");
         clearButton->browser = this;
         headerLayout->addChild(clearButton);
 
-        countLabel = new ui::Label;
-        countLabel->box.size.x = 110;
-        headerLayout->addChild(countLabel);
+        // The count of the number of modules being displayed is not that important since
+        // can see the modules. And it takes up precious space. Plus there are already 
+        // lots of other action widgets, complicating the UI. Therefore don't display it
+        // unless VCV Rack where want UI to be consistent.
+        if (!settings::isNotVCVRack) {
+            countLabel = new ui::Label;
+            countLabel->box.size.x = 110 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+            headerLayout->addChild(countLabel);
+        }
 
         SortButton* sortButton = new SortButton;
-        sortButton->box.size.x = 150;
+        sortButton->box.size.x = 130 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
         sortButton->browser = this;
         headerLayout->addChild(sortButton);
 
         ZoomButton* zoomButton = new ZoomButton;
-        zoomButton->box.size.x = 100;
+        zoomButton->box.size.x = 100 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
         zoomButton->browser = this;
         headerLayout->addChild(zoomButton);
 
         UrlButton* libraryButton = new UrlButton;
-        libraryButton->box.size.x = 150;
+        libraryButton->box.size.x = 170 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
         libraryButton->text = string::translate("Browser.browseLibrary");
         libraryButton->url = "https://library.vcvrack.com/";
         headerLayout->addChild(libraryButton);
+
+        // Restore original height
+        settings::setWidgetHeight(originalWidgetHeight);
 
         // Create scrollable module container
         moduleScroll = new ui::ScrollWidget;
@@ -826,14 +880,18 @@ struct Browser : widget::OpaqueWidget {
 			}
 		}
 
-		// Count visible modules
-		int count = 0;
-		for (Widget* w : moduleContainer->children) {
-			if (w->isVisible())
-				count++;
-		}
-		countLabel->text = (count == 1) ? string::translate("Browser.modulesOne") : string::f(string::translate("Browser.modulesMany"), count);
-	}
+        // Only update countLabel if it was actually created
+        if (countLabel) {
+            // Count visible modules
+            int count = 0;
+            for (Widget* w : moduleContainer->children) {
+                if (w->isVisible()) count++;
+            }
+            countLabel->text =
+                (count == 1) ? string::translate("Browser.modulesOne")
+                                : string::f(string::translate("Browser.modulesMany"), count);
+        }
+        }
 
 	void clearSelectorsInHeader() {
 		search = "";
@@ -943,6 +1001,7 @@ inline void BrandItem::step() {
 }
 
 inline void BrandButton::onAction(const ActionEvent& e) {
+    INFO("Clicked on Brand and got action "/*, e.context */);
 	ui::Menu* menu = createMenu();
 	menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 	menu->box.size.x = box.size.x;
@@ -981,6 +1040,7 @@ inline void BrandButton::step() {
 	ChoiceButton::step();
 }
 
+/** Called when user clicks on an item in the tag menu */
 inline void TagItem::onAction(const ActionEvent& e) {
 	auto it = browser->tagIds.find(tagId);
 	bool isSelected = (it != browser->tagIds.end());
@@ -1036,7 +1096,13 @@ inline void TagButton::onAction(const ActionEvent& e) {
 	noneItem->browser = browser;
 	menu->addChild(noneItem);
 
-	menu->addChild(createMenuLabel(widget::getKeyCommandName(0, RACK_MOD_CTRL) + string::translate("key.click") + string::translate("Browser.tagsSelectMultiple")));
+    if (settings::hasTouchscreen) {
+        // Touchscreen, so Let user know they can select multiple tags by long click
+        menu->addChild(createMenuLabel(string::translate("Browser.tagsSelectMultipleTouchScreen")));
+    } else {
+        // Not a touch screen so tell user they can use MOD_CTRL click to select multiple
+        menu->addChild(createMenuLabel(widget::getKeyCommandName(0, RACK_MOD_CTRL) + string::translate("key.click") + string::translate("Browser.tagsSelectMultiple")));
+    }
 	menu->addChild(new ui::MenuSeparator);
 
 	for (int tagId = 0; tagId < (int) tag::tagAliases.size(); tagId++) {

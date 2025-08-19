@@ -667,10 +667,28 @@ void load(std::string path) {
 	fromJson(rootJ);
 }
 
+void setLabelFontSize(int size) {
+    bndLabelFontSize = size;
+    bndSetLabelFontSize(bndLabelFontSize);
+}
+
+int getLabelFontSize() {
+    return bndLabelFontSize;
+}
+
+void setWidgetHeight(int height) {
+    bndWidgetHeight = height;
+    bndSetWidgetHeight(bndWidgetHeight);
+}
+
+int getWidgetHeight() {
+    return bndWidgetHeight;
+}
+
 void initBlendish() {
     if (isNotVCVRack) {
-        bndSetLabelFontSize(bndLabelFontSize);
-        bndSetWidgetHeight(bndWidgetHeight);
+        setLabelFontSize(bndLabelFontSize);
+        setWidgetHeight(bndWidgetHeight);
     }
 }
 

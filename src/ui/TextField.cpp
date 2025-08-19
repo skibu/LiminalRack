@@ -79,14 +79,17 @@ void TextField::draw(const DrawArgs& args) {
 		drawText = text;
 	}
 
-	bndTextField(args.vg, 0.0, 0.0, box.size.x, box.size.y, BND_CORNER_NONE, state, -1, drawText.c_str(), begin, end);
+    bndTextField(args.vg, 0.0, 0.0, box.size.x, box.size.y, BND_CORNER_NONE, state, -1,
+                    drawText.c_str(), begin, end);
 
-	// Draw placeholder text
-	if (text.empty()) {
-		bndIconLabelCaret(args.vg, 0.0, 0.0, box.size.x, box.size.y, -1, bndGetTheme()->textFieldTheme.itemColor, 13, placeholder.c_str(), bndGetTheme()->textFieldTheme.itemColor, 0, -1);
-	}
+    // Draw placeholder text
+    if (text.empty()) {
+        bndIconLabelCaret(args.vg, 0.0, 0.0, box.size.x, box.size.y, -1,
+                            bndGetTheme()->textFieldTheme.itemColor, 13, placeholder.c_str(),
+                            bndGetTheme()->textFieldTheme.itemColor, 0, -1);
+    }
 
-	nvgResetScissor(args.vg);
+    nvgResetScissor(args.vg);
 }
 
 void TextField::onDragHover(const DragHoverEvent& e) {
