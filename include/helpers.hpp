@@ -178,6 +178,7 @@ TParamWidget* createLightParamCentered(math::Vec pos, engine::Module* module, in
 }
 
 
+/** Creates a blank menu that menu buttons can be added to */
 template <class TMenu = ui::Menu>
 TMenu* createMenu() {
 	TMenu* menu = new TMenu;
