@@ -35,6 +35,8 @@ extern std::string language;
 extern bool safeMode;
 /** vcvrack.com user token */
 extern std::string token;
+/** To customize the Module Browser window background */
+extern NVGcolor moduleBrowserBg;
 /** Whether the window is maximized */
 extern bool windowMaximized;
 

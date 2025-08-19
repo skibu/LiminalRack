@@ -659,7 +659,7 @@ struct Browser : widget::OpaqueWidget {
 
 	void draw(const DrawArgs& args) override {
 		// Draw a light gray background
-		NVGcolor bg_color = nvgRGB(90, 90, 90); // FIXME use a settings color
+		NVGcolor bg_color = settings::moduleBrowserBg;
 		NVGcolor outline_color = color::brightness(bg_color) < 0.5f
 										? color::lerp(bg_color, color::WHITE,
 													0.1)  // Light outline for dark background

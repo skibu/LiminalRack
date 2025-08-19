@@ -21,8 +21,6 @@ bool headless = false;
 bool isPlugin = false;
 bool restart = false;
 
-std::string themeBackgroundColor = "rgba(87, 55, 55, 1)";
-
 // True if a fork of VCV Rack and things need to be done differently
 bool isNotVCVRack = false;
 // Whether this is Liminal version of Rack
@@ -39,6 +37,8 @@ int bndWidgetHeight = BND_WIDGET_HEIGHT;
 std::string language = "en";
 bool safeMode = false;
 std::string token;
+// To customize the Module Browser window background
+NVGcolor moduleBrowserBg = color::fromHexString("#909090");
 // Whether in full screen mode
 bool windowMaximized = false;
 math::Vec windowSize = math::Vec(1024, 720);
@@ -166,6 +166,8 @@ json_t* toJson() {
 	json_object_set_new(rootJ, "safeMode", json_boolean(false));
 
 	json_object_set_new(rootJ, "token", json_string(token.c_str()));
+    
+    json_object_set_new(rootJ, "moduleBrowserBg", json_string(color::toHexString(moduleBrowserBg).c_str()));
 
 	json_object_set_new(rootJ, "isNotVCVRack", json_boolean(isNotVCVRack));
 	json_object_set_new(rootJ, "isLiminal", json_boolean(isLiminal));
@@ -343,10 +345,12 @@ void fromJson(json_t* rootJ) {
 	if (tokenJ)
 		token = json_string_value(tokenJ);
 	
-	json_t* isNotVCVRackJ = json_object_get(rootJ, "isNotVCVRack");
-	if (isNotVCVRackJ) isNotVCVRack = json_boolean_value(isNotVCVRackJ);
+    json_t* moduleBrowserBgJ = json_object_get(rootJ, "moduleBrowserBg");
+    if (moduleBrowserBgJ) {
+        moduleBrowserBg = color::fromHexString(json_string_value(moduleBrowserBgJ));
+    }
 
-	json_t* isLiminalJ = json_object_get(rootJ, "isLiminal");
+    json_t* isLiminalJ = json_object_get(rootJ, "isLiminal");
 	if (isLiminalJ) isLiminal = json_boolean_value(isLiminalJ);
 
 	json_t* hasTouchscreenJ = json_object_get(rootJ, "hasTouchscreen");
