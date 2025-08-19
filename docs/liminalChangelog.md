@@ -1,5 +1,9 @@
 # Liminal Rack Change Log
 
+- 8/18/25
+  - Added title to the Module Browser window to explain that this window is used to add modules to one's rack.
+  - Fixed Label so that can center text even when different font is used.
+  - Changed color of the Module Browser window to be medium grey. This color can be used for both light and dark modes. And it is good to look different from the rest of the app so user immediately understands where they are. And looks nice. Also, made some improvements to the border around the Module Browser window.
 - 8/17/25
   - Differentiated MenuLabels so that they look different (usually darker background) than disabled buttons. This really helps reduce confusion about what the menu elements.
 - 8/16/25
