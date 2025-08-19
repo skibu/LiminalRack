@@ -7,7 +7,10 @@ namespace rack {
 namespace ui {
 
 
-/** Deletes itself from parent when clicked */
+/**
+ * Useful for covering up everything else and dimming it.
+ * Deletes itself from parent when clicked.
+ */
 struct MenuOverlay : widget::OpaqueWidget {
 	NVGcolor bgColor;
 

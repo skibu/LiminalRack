@@ -11,8 +11,10 @@
 namespace rack {
 namespace app {
 
-
+/** Initializes the browser */
 PRIVATE void browserInit();
+
+/** Creates the browser window */
 PRIVATE widget::Widget* browserCreate();
 
 

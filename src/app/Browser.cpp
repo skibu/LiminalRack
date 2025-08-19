@@ -132,6 +132,11 @@ static ModuleWidget* chooseModel(plugin::Model* model) {
 struct Browser;
 
 
+/** 
+ * For covering up everything outside the Browser Window and making
+ * that area darker. This way the user focus is on the Browser Window
+ * yet they still see that the rack window is there, right underneath.
+ */
 struct BrowserOverlay : ui::MenuOverlay {
 	void step() override {
 		// Only step if visible, since there are potentially thousands of descendants that don't need to be stepped.
@@ -1107,9 +1112,12 @@ void browserInit() {
 
 
 widget::Widget* browserCreate() {
+    // Draw a dark area over the rest of the UI. This way user's focus is on
+    // the Browser Window but they can still see that the Rack window is there, underneath.
 	browser::BrowserOverlay* overlay = new browser::BrowserOverlay;
-	overlay->bgColor = nvgRGBAf(0, 0, 0, 0.33);
+	overlay->bgColor = nvgRGBAf(0, 0, 0, 0.53); // Higher the value the darker things get
 
+    // Now actually create the Browser window and add it to the overlay heirachy
 	browser::Browser* browser = new browser::Browser;
 	overlay->addChild(browser);
 
