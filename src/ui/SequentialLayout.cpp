@@ -21,36 +21,6 @@ void SequentialLayout::step() {
 	// Sort widgets into rows (or columns if vertical)
 	std::vector<widget::Widget*> row;
 	math::Vec cursor = margin;
-	auto flushRow = [&]() {
-		// For center and right alignment, compute offset from the left margin
-		if (alignment != LEFT_ALIGNMENT) {
-			float rowWidth = 0.f;
-			for (widget::Widget* child : row) {
-				rowWidth += X(child->box.size) + X(spacing);
-			}
-			rowWidth -= X(spacing);
-
-			if (alignment == CENTER_ALIGNMENT)
-				X(cursor) += (boundWidth - rowWidth) / 2;
-			else if (alignment == RIGHT_ALIGNMENT)
-				X(cursor) += boundWidth - rowWidth;
-		}
-
-		// Set positions of widgets
-		float maxHeight = 0.f;
-		for (widget::Widget* child : row) {
-			child->box.pos = cursor;
-			X(cursor) += X(child->box.size) + X(spacing);
-
-			if (Y(child->box.size) > maxHeight)
-				maxHeight = Y(child->box.size);
-		}
-		row.clear();
-
-		// Reset cursor to next line
-		X(cursor) = X(margin);
-		Y(cursor) += maxHeight + Y(spacing);
-	};
 
 	// Iterate through children until row is full
 	float rowWidth = 0.0;
@@ -63,7 +33,7 @@ void SequentialLayout::step() {
 
 		// Should we wrap the widget now?
 		if (wrap && !row.empty() && rowWidth + X(child->box.size) > boundWidth) {
-			flushRow();
+			flushRow(row, cursor, boundWidth);
 			rowWidth = 0.0;
 		}
 
@@ -73,12 +43,42 @@ void SequentialLayout::step() {
 
 	// Flush last row
 	if (!row.empty()) {
-		flushRow();
+		flushRow(row, cursor, boundWidth);
 	}
 
 	Y(box.size) = Y(cursor) - Y(spacing) + Y(margin);
 }
 
+void SequentialLayout::flushRow(std::vector<widget::Widget*>& row, math::Vec& cursor,
+                                float boundWidth ) {
+    // For center and right alignment, compute offset from the left margin
+    if (alignment != LEFT_ALIGNMENT) {
+        float rowWidth = 0.f;
+        for (widget::Widget* child : row) {
+            rowWidth += X(child->box.size) + X(spacing);
+        }
+        rowWidth -= X(spacing);
+
+        if (alignment == CENTER_ALIGNMENT)
+            X(cursor) += (boundWidth - rowWidth) / 2;
+        else if (alignment == RIGHT_ALIGNMENT)
+            X(cursor) += boundWidth - rowWidth;
+    }
+
+    // Set positions of widgets
+    float maxHeight = 0.f;
+    for (widget::Widget* child : row) {
+        child->box.pos = cursor;
+        X(cursor) += X(child->box.size) + X(spacing);
+
+        if (Y(child->box.size) > maxHeight) maxHeight = Y(child->box.size);
+    }
+    row.clear();
+
+    // Reset cursor to next line
+    X(cursor) = X(margin);
+    Y(cursor) += maxHeight + Y(spacing);
+};
 
 } // namespace ui
 } // namespace rack
