@@ -1,5 +1,7 @@
 # Liminal Rack Change Log
 
+- 8/19/25
+  - Can use larger font for Module Browser header. Will work better on a touch screen.
 - 8/18/25
   - Increased contrast betwee Module Browser and the rack below. This way it is easier for user to understand the context, that the Browser Window is in view but that the separate Rack window is still there, but below and inactive, yet accessible. Also added comments to code to make future changes easier.
   - Added title to the Module Browser window to explain that this window is used to add modules to one's rack.
