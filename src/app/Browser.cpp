@@ -477,9 +477,10 @@ struct UrlButton : ui::Button {
 };
 
 /**
- * BrowserHeader is the widget that is the head of the Module Browser. It's only purpose
+ * BrowserHeader is the widget that is at the head of the Module Browser. It's only purpose
  * is to override SequentialLayout onDraw() so that a specified font can be used for all
- * of the children of the header. */
+ * of the children of the header. It uses the same layout algorithm as SequentialLayout.
+ */
 class BrowserHeader : public ui::SequentialLayout {
    public:
     BrowserHeader() {
@@ -527,7 +528,7 @@ struct Browser : widget::OpaqueWidget {
 
     ui::ScrollWidget* moduleScroll;
     widget::Widget* moduleMargin;
-    ui::SequentialLayout* moduleContainer;
+    ui::SequentialLayout* moduleLayoutContainer;
 
     std::string search;
     std::string brand;
@@ -638,10 +639,10 @@ struct Browser : widget::OpaqueWidget {
         moduleMargin = new widget::Widget;
         moduleScroll->container->addChild(moduleMargin);
 
-        moduleContainer = new ui::SequentialLayout;
-        moduleContainer->margin = math::Vec(outerMargin, 2);  // Add 2 pixels for favorites border
-        moduleContainer->spacing = math::Vec(outerMargin, outerMargin);
-        moduleMargin->addChild(moduleContainer);
+        moduleLayoutContainer = new ui::SequentialLayout;
+        moduleLayoutContainer->margin = math::Vec(outerMargin, 2);  // Add 2 pixels for favorites border
+        moduleLayoutContainer->spacing = math::Vec(outerMargin, outerMargin);
+        moduleMargin->addChild(moduleLayoutContainer);
 
         resetModuleBoxes();
         clearSelectorsInHeader();
@@ -652,7 +653,7 @@ struct Browser : widget::OpaqueWidget {
 	}
 
 	void resetModuleBoxes() {
-		moduleContainer->clearChildren();
+		moduleLayoutContainer->clearChildren();
 		modelOrders.clear();
 		// Iterate plugins
 		for (plugin::Plugin* plugin : plugin::plugins) {
@@ -662,7 +663,7 @@ struct Browser : widget::OpaqueWidget {
 				// Create ModelBox
 				ModelBox* modelBox = new ModelBox;
 				modelBox->setModel(model);
-				moduleContainer->addChild(modelBox);
+				moduleLayoutContainer->addChild(modelBox);
 
 				modelOrders[model] = modelIndex;
 				modelIndex++;
@@ -673,7 +674,7 @@ struct Browser : widget::OpaqueWidget {
 	void updateZoom() {
 		moduleScroll->offset = math::Vec();
 
-		for (Widget* w : moduleContainer->children) {
+		for (Widget* w : moduleLayoutContainer->children) {
 			ModelBox* mb = reinterpret_cast<ModelBox*>(w);
 			assert(mb);
 			mb->updateZoom();
@@ -702,15 +703,15 @@ struct Browser : widget::OpaqueWidget {
 
 		// Set the size of the moduleMargin which is inside of the moduleScroll
 		moduleMargin->box.size.x = moduleScroll->box.size.x;
-		moduleMargin->box.size.y = moduleContainer->box.size.y + rightAndBottomMargin;
-		moduleContainer->box.size.x = moduleMargin->box.size.x - rightAndBottomMargin;
+		moduleMargin->box.size.y = moduleLayoutContainer->box.size.y + rightAndBottomMargin;
+		moduleLayoutContainer->box.size.x = moduleMargin->box.size.x - rightAndBottomMargin;
 
 		// Check if preferDarkPanels has changed
 		if (settings::preferDarkPanels != lastPreferDarkPanels) {
 			lastPreferDarkPanels = settings::preferDarkPanels;
 			// Request module framebuffers to re-render
 			Widget::DirtyEvent eDirty;
-			moduleContainer->onDirty(eDirty);
+			moduleLayoutContainer->onDirty(eDirty);
 		}
 
 		OpaqueWidget::step();
@@ -779,7 +780,7 @@ struct Browser : widget::OpaqueWidget {
 
 	template <typename F>
 	void sortModels(F f) {
-		moduleContainer->children.sort([&](Widget* w1, Widget* w2) {
+		moduleLayoutContainer->children.sort([&](Widget* w1, Widget* w2) {
 			ModelBox* m1 = reinterpret_cast<ModelBox*>(w1);
 			ModelBox* m2 = reinterpret_cast<ModelBox*>(w2);
 			return f(m1) < f(m2);
@@ -793,7 +794,7 @@ struct Browser : widget::OpaqueWidget {
 		prefilteredModelScores.clear();
 
 		// Filter ModelBoxes by brand and tag
-		for (Widget* w : moduleContainer->children) {
+		for (Widget* w : moduleLayoutContainer->children) {
 			ModelBox* m = reinterpret_cast<ModelBox*>(w);
 			m->setVisible(isModelVisible(m->model, brand, tagIds, favorite));
 		}
@@ -801,7 +802,7 @@ struct Browser : widget::OpaqueWidget {
 		// Filter and sort by search results
 		if (search.empty()) {
 			// Add all models to prefilteredModelScores with scores of 1
-			for (Widget* w : moduleContainer->children) {
+			for (Widget* w : moduleLayoutContainer->children) {
 				ModelBox* m = reinterpret_cast<ModelBox*>(w);
 				prefilteredModelScores[m->model] = 1.f;
 			}
@@ -848,7 +849,7 @@ struct Browser : widget::OpaqueWidget {
 			}
 			else if (settings::browserSort == settings::BROWSER_SORT_RANDOM) {
 				std::map<ModelBox*, uint64_t> randomOrder;
-				for (Widget* w : moduleContainer->children) {
+				for (Widget* w : moduleLayoutContainer->children) {
 					ModelBox* m = reinterpret_cast<ModelBox*>(w);
 					randomOrder[m] = random::u64();
 				}
@@ -870,7 +871,7 @@ struct Browser : widget::OpaqueWidget {
 				return -get(prefilteredModelScores, m->model, 0.f);
 			});
 			// Filter by whether the score is above the threshold
-			for (Widget* w : moduleContainer->children) {
+			for (Widget* w : moduleLayoutContainer->children) {
 				ModelBox* m = reinterpret_cast<ModelBox*>(w);
 				assert(m);
 				if (m->isVisible()) {
@@ -884,7 +885,7 @@ struct Browser : widget::OpaqueWidget {
         if (countLabel) {
             // Count visible modules
             int count = 0;
-            for (Widget* w : moduleContainer->children) {
+            for (Widget* w : moduleLayoutContainer->children) {
                 if (w->isVisible()) count++;
             }
             countLabel->text =
@@ -915,7 +916,7 @@ struct Browser : widget::OpaqueWidget {
 			// Secret key command to dump all visible modules into rack
 			if (e.isKeyCommand(GLFW_KEY_F2, RACK_MOD_CTRL | GLFW_MOD_SHIFT | GLFW_MOD_ALT)) {
 				int count = 0;
-				for (widget::Widget* w : moduleContainer->children) {
+				for (widget::Widget* w : moduleLayoutContainer->children) {
 					ModelBox* mb = dynamic_cast<ModelBox*>(w);
 					if (!mb)
 						continue;
@@ -975,7 +976,7 @@ inline void BrowserSearchField::onChange(const ChangeEvent& e) {
 inline void BrowserSearchField::onAction(const ActionEvent& e) {
 	// Get first ModelBox
 	ModelBox* mb = NULL;
-	for (Widget* w : browser->moduleContainer->children) {
+	for (Widget* w : browser->moduleLayoutContainer->children) {
 		if (w->isVisible()) {
 			mb = reinterpret_cast<ModelBox*>(w);
 			break;
