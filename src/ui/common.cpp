@@ -78,7 +78,7 @@ void setTheme(NVGcolor bg, NVGcolor fg) {
 void refreshTheme() {
 	if (settings::uiTheme == "light") {
 		// Set main forground and background colors for light theme
-		setTheme(nvgRGB(0xf0, 0xf0, 0xf0), nvgRGB(0x04, 0x04, 0x04));
+		setTheme(settings::lightModeThemeBg, settings::lightModeThemeFg);
 	}
 	else if (settings::uiTheme == "hcdark") {
 		// Set main forground and background colors for high contrast dark theme
@@ -86,8 +86,7 @@ void refreshTheme() {
 	}
 	else {
 		// Set main forground and background colors for dark theme
-		auto bg = nvgRGB(87, 55, 55); // Kind of a brick red
-		setTheme(bg, nvgRGB(0xf0, 0xf0, 0xf0));
+		setTheme(settings::darkModeThemeBg, settings::darkModeThemeFg);
 	}
 }
 
