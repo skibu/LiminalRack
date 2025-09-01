@@ -35,10 +35,18 @@ int bndLabelFontSize = BND_LABEL_FONT_SIZE;
 // Size of widgets in pixels
 int bndWidgetHeight = BND_WIDGET_HEIGHT;
 std::string language = "en";
-bool safeMode = false;
-std::string token;
+
 // To customize the Module Browser window background
-NVGcolor moduleBrowserBg = color::fromHexString("#909090");
+NVGcolor moduleBrowserBg = color::fromHexString("#A0A0A0");
+
+// For dark mode customize the colors used for things like menu bar and buttons
+NVGcolor darkModeThemeBg = color::fromHexString("#422a2a"); // "#573737" is brick red
+NVGcolor darkModeThemeFg = color::fromHexString("#F0F0F0");
+
+// For light mode customize the colors used for things like menu bar and buttons
+NVGcolor lightModeThemeBg = color::fromHexString("#F0F0F0");
+NVGcolor lightModeThemeFg = color::fromHexString("#040404");
+
 // Whether in full screen mode
 bool windowMaximized = false;
 math::Vec windowSize = math::Vec(1024, 720);
@@ -73,6 +81,10 @@ bool preferDarkPanels = false;
 #endif
 float autosaveInterval = 15.0;
 bool skipLoadOnLaunch = false;
+
+bool safeMode = false;
+std::string token;
+
 std::string lastPatchDirectory;
 std::string lastSelectionDirectory;
 std::list<std::string> recentPatchPaths;
@@ -84,7 +96,7 @@ bool verifyHttpsCerts = true;
 bool showTipsOnLaunch = false;
 int tipIndex = -1;
 BrowserSort browserSort = BROWSER_SORT_UPDATED;
-float browserZoom = -1.f;
+float browserZoom = 0.75f;
 json_t* pluginSettingsJ = NULL;
 std::map<std::string, std::map<std::string, ModuleInfo>> moduleInfos;
 std::map<std::string, PluginWhitelist> moduleWhitelist;
@@ -168,6 +180,11 @@ json_t* toJson() {
 	json_object_set_new(rootJ, "token", json_string(token.c_str()));
     
     json_object_set_new(rootJ, "moduleBrowserBg", json_string(color::toHexString(moduleBrowserBg).c_str()));
+
+    json_object_set_new(rootJ, "lightModeThemeBg", json_string(color::toHexString(lightModeThemeBg).c_str()));
+    json_object_set_new(rootJ, "lightModeThemeFg", json_string(color::toHexString(lightModeThemeFg).c_str()));
+    json_object_set_new(rootJ, "darkModeThemeBg", json_string(color::toHexString(darkModeThemeBg).c_str()));
+    json_object_set_new(rootJ, "darkModeThemeFg", json_string(color::toHexString(darkModeThemeFg).c_str()));
 
 	json_object_set_new(rootJ, "isNotVCVRack", json_boolean(isNotVCVRack));
 	json_object_set_new(rootJ, "isLiminal", json_boolean(isLiminal));
@@ -348,6 +365,23 @@ void fromJson(json_t* rootJ) {
     json_t* moduleBrowserBgJ = json_object_get(rootJ, "moduleBrowserBg");
     if (moduleBrowserBgJ) {
         moduleBrowserBg = color::fromHexString(json_string_value(moduleBrowserBgJ));
+    }
+
+    json_t* lightModeThemeBgJ = json_object_get(rootJ, "lightModeThemeBg");
+    if (lightModeThemeBgJ) {
+        lightModeThemeBg = color::fromHexString(json_string_value(lightModeThemeBgJ));
+    }
+    json_t* lightModeThemeFgJ = json_object_get(rootJ, "lightModeThemeFg");
+    if (lightModeThemeFgJ) {
+        lightModeThemeFg = color::fromHexString(json_string_value(lightModeThemeFgJ));
+    }
+    json_t* darkModeThemeBgJ = json_object_get(rootJ, "darkModeThemeBg");
+    if (darkModeThemeBgJ) {
+        darkModeThemeBg = color::fromHexString(json_string_value(darkModeThemeBgJ));
+    }
+    json_t* darkModeThemeFgJ = json_object_get(rootJ, "darkModeThemeFg");
+    if (darkModeThemeFgJ) {
+        darkModeThemeFg = color::fromHexString(json_string_value(darkModeThemeFgJ));
     }
 
     json_t* isLiminalJ = json_object_get(rootJ, "isLiminal");

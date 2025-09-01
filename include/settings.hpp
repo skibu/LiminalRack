@@ -31,12 +31,25 @@ extern bool restart;
 
 /** ISO 639-1 language code for string translations. */
 extern std::string language;
-/** Launches Rack without loading plugins or the autosave patch. Always set to false when settings are saved. */
-extern bool safeMode;
-/** vcvrack.com user token */
-extern std::string token;
 /** To customize the Module Browser window background */
 extern NVGcolor moduleBrowserBg;
+
+/** Background color for light mode theme */
+extern NVGcolor lightModeThemeBg;
+/** Foreground color for light mode theme */
+extern NVGcolor lightModeThemeFg;
+
+/** Background color for dark mode theme */
+extern NVGcolor darkModeThemeBg;
+/** Foreground color for dark mode theme */
+extern NVGcolor darkModeThemeFg;
+
+
+/** Background color for dark mode theme */
+extern NVGcolor darkModeThemeBg;
+/** Foreground color for dark mode theme */
+extern NVGcolor darkModeThemeFg;
+
 /** Whether the window is maximized */
 extern bool windowMaximized;
 
@@ -95,6 +108,10 @@ extern bool preferDarkPanels;
 extern float frameRateLimit;
 /** Interval between autosaves in seconds. */
 extern float autosaveInterval;
+/** Launches Rack without loading plugins or the autosave patch. Always set to false when settings are saved. */
+extern bool safeMode;
+/** vcvrack.com user token */
+extern std::string token;
 extern bool skipLoadOnLaunch;
 extern std::string lastPatchDirectory;
 extern std::string lastSelectionDirectory;
