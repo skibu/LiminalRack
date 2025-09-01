@@ -1,9 +1,19 @@
 # Liminal Rack Change Log
 
-- 8/19/25
+- 8/31/25
+  - Rewrite of SequentialLayout so that it has additional features
+    - Can now evenly space items so that they take full width. Great for displaying modules in Browser.
+    - Changed Browser header so that buttons are divided evenly between two rows, which looks significantly better.
+    - Code more C++ like and actually commented
+  - Many changes to module browser window
+    - Changed margins and other things in module browser window to make it look significantly better.
+    - Improved and simplified zoom code
+    - Code more C++ like and actually commented
+  - Can set more colors via settings. This way don't want to figure out how colors are set in seemingly random places in the code.
+- 8/19/25 
   - Can use larger font for Module Browser header. Will work better on a touch screen.
 - 8/18/25
-  - Increased contrast betwee Module Browser and the rack below. This way it is easier for user to understand the context, that the Browser Window is in view but that the separate Rack window is still there, but below and inactive, yet accessible. Also added comments to code to make future changes easier.
+  - Increased contrast between Module Browser and the rack below. This way it is easier for user to understand the context, that the Browser Window is in view but that the separate Rack window is still there, but below and inactive, yet accessible. Also added comments to code to make future changes easier.
   - Added title to the Module Browser window to explain that this window is used to add modules to one's rack.
   - Fixed Label so that can center text even when different font is used.
   - Changed color of the Module Browser window to be medium grey. This color can be used for both light and dark modes. And it is good to look different from the rest of the app so user immediately understands where they are. And looks nice. Also, made some improvements to the border around the Module Browser window.
