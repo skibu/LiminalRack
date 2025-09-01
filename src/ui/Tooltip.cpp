@@ -9,21 +9,29 @@
 namespace rack {
 namespace ui {
 
-
 void Tooltip::step() {
-	// Wrap size to contents
-	nvgSave(APP->window->vg);
-	nvgTextLineHeight(APP->window->vg, 1.2);
-	box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str());
-	box.size.y = bndLabelHeight(APP->window->vg, -1, text.c_str(), INFINITY);
-	// Position near cursor. This assumes that the Tooltip is added to the root widget.
-	box.pos = APP->scene->mousePos.plus(math::Vec(15, 15));
-	// Fit inside parent
-	assert(parent);
-	box = box.nudge(parent->box.zeroPos());
-	nvgRestore(APP->window->vg);
+    // Save the current render state
+    nvgSave(APP->window->vg);
 
-	Widget::step();
+    // Set line height to reasonable value
+    nvgTextLineHeight(APP->window->vg, 1.2);
+
+    // Set size of tooltip to fit contents
+    box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str());
+    box.size.y = bndLabelHeight(APP->window->vg, -1, text.c_str(), INFINITY);
+
+    // Position tooltip near cursor. This assumes that the Tooltip is added
+    // to the root widget.
+    box.pos = APP->scene->mousePos.plus(math::Vec(15, 15));
+
+    // Fit inside parent
+    assert(parent);
+    box = box.nudge(parent->box.zeroPos());
+
+    // Restore the previous render state
+    nvgRestore(APP->window->vg);
+
+    Widget::step();
 }
 
 /** 
