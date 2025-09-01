@@ -1248,9 +1248,9 @@ struct MenuBar : widget::OpaqueWidget {
 		box.size.y = rack::settings::bndWidgetHeight + 2 * margin;
 
 		ui::SequentialLayout* layout = new ui::SequentialLayout;
-		layout->margin = math::Vec(margin, margin);
+		layout->setMargin(math::Vec(margin, margin));
 		// Set some space between the menu items so that they are easy to differentiate
-		layout->spacing = math::Vec(15.0, 0);
+		layout->setMinSpacing(math::Vec(15.0, 0));
 		addChild(layout);
 
 		FileButton* fileButton = new FileButton;
