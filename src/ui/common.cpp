@@ -58,8 +58,12 @@ void setTheme(NVGcolor bg, NVGcolor fg) {
 	// Placeholder text and highlight background
 	t.textFieldTheme.itemColor = color::lerp(bg, fg, 0.3);
 
-	t.scrollBarTheme.itemColor = color::lerp(bg, fg, 0.4);
+    // Scrollbar handle color and alpha
+	t.scrollBarTheme.itemColor = color::lerp(bg, fg, 0.7);
+    t.scrollBarTheme.itemColor.a = 0.9f;
+    // Scrollbar track background color and alpha
 	t.scrollBarTheme.innerColor = color::lerp(bg, fg, 0.1);
+    t.scrollBarTheme.innerColor.a = 0.3f;
 
 	// Menu background
 	t.menuTheme.innerColor = bg;

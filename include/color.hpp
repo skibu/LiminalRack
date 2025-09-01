@@ -44,7 +44,10 @@ NVGcolor mult(NVGcolor a, NVGcolor b);
 Alpha value is untouched.
 */
 NVGcolor mult(NVGcolor a, float x);
-/** Interpolates RGBA color components. */
+/** Interpolates between a and b RGBA color components. If t = 0, returns a. If
+ * t = 1, returns b. The closer t is to 1 the more the returned color will be
+ * like b instead of a.
+ */
 NVGcolor lerp(NVGcolor a, NVGcolor b, float t);
 /** Screen blending with alpha compositing.
 https://en.wikipedia.org/wiki/Blend_modes#Screen
