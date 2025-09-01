@@ -77,10 +77,10 @@ struct TipWindow : widget::OpaqueWidget {
 		layout = new ui::SequentialLayout;
 		layout->box.pos = math::Vec(0, 10);
 		layout->box.size = box.size;
-		layout->orientation = ui::SequentialLayout::VERTICAL_ORIENTATION;
-		layout->margin = math::Vec(margin, margin);
-		layout->spacing = math::Vec(margin, margin);
-		layout->wrap = false;
+		layout->setOrientation(ui::SequentialLayout::VERTICAL_ORIENTATION);
+		layout->setMargin(math::Vec(margin, margin));
+		layout->setMinSpacing(math::Vec(margin, margin));
+		layout->setWrap(false);
 		addChild(layout);
 
 		ui::Label* header = new ui::Label;
@@ -106,7 +106,7 @@ struct TipWindow : widget::OpaqueWidget {
 
 		buttonLayout = new ui::SequentialLayout;
 		buttonLayout->box.size.x = box.size.x - 2*margin;
-		buttonLayout->spacing = math::Vec(margin, margin);
+		buttonLayout->setMinSpacing(math::Vec(margin, margin));
 		layout->addChild(buttonLayout);
 
 		struct ShowQuantity : Quantity {
