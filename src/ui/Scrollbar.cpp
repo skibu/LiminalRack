@@ -29,10 +29,10 @@ void Scrollbar::draw(const DrawArgs& args) {
 		state = BND_HOVER;
 	if (APP->event->getDraggedWidget() == this)
 		state = BND_ACTIVE;
-
-	float handleOffset = sw->getHandleOffset()[vertical];
+    
+    // Draw the scrollbar
+    float handleOffset = sw->getHandleOffset()[vertical];
 	float handleSize = sw->getHandleSize()[vertical];
-	nvgAlpha(args.vg, 0.5);
 	bndScrollBar(args.vg, 0.0, 0.0, box.size.x, box.size.y, state, handleOffset, handleSize);
 }
 
