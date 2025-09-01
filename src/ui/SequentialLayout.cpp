@@ -7,78 +7,156 @@ namespace rack {
 namespace ui {
 
 
-/** We assume horizontal orientation in this file, but we can achieve vertical orientation just by swapping the axes.
-*/
-#define X(v) (orientation == HORIZONTAL_ORIENTATION ? (v).x : (v).y)
-#define Y(v) (orientation == HORIZONTAL_ORIENTATION ? (v).y : (v).x)
+SequentialLayout::SequentialLayout(Alignment alignment, bool if_two_rows_make_even) {
+    this->alignment_ = alignment;
+    this->if_two_rows_make_even_ = if_two_rows_make_even;
+}
 
 
 void SequentialLayout::step() {
+    // Have superclass do its stuff
 	Widget::step();
 
-	float boundWidth = X(box.size) - 2 * X(margin);
+    // Determine how much space is available horizontally for the children
+	available_width_ = X(box.size) - 2 * X(margin_);
 
-	// Sort widgets into rows (or columns if vertical)
-	std::vector<widget::Widget*> row;
-	math::Vec cursor = margin;
+    // Go through all the children and add them to the current row. When a row
+    // fills up create a new one.
+    rows_.clear();
+    Row row = Row();
+    float current_row_width = 0.0f;
 
-	// Iterate through children until row is full
-	float rowWidth = 0.0;
-	for (widget::Widget* child : children) {
-		// Skip invisible children
-		if (!child->isVisible()) {
-			child->box.pos = math::Vec();
-			continue;
-		}
+    for (widget::Widget* child : children) {
+        // Skip invisible children
+        if (!child->isVisible()) continue;
 
-		// Should we wrap the widget now?
-		if (wrap && !row.empty() && rowWidth + X(child->box.size) > boundWidth) {
-			flushRow(row, cursor, boundWidth);
-			rowWidth = 0.0;
-		}
+        // Determine minimum space needed for child
+        float space_needed_for_child = X(child->box.size);
+        if (row.size() > 0) {
+            space_needed_for_child += X(min_spacing_);
+        }
 
-		row.push_back(child);
-		rowWidth += X(child->box.size) + X(spacing);
-	}
+        // If row would not be too wide then add child to row
+        if (current_row_width + space_needed_for_child <= available_width_) {
+            // This child fits so add it to the row
+            row.push_back(child);
+            current_row_width += space_needed_for_child;
+        } else {
+            // This child would make the row too wide so store the curret row now that
+            // it is complete, create another row and put the child into the new row.
+            rows_.push_back(row);
+            row = Row();
+            row.push_back(child);
+            current_row_width = X(child->box.size);
+        }
+    }
 
-	// Flush last row
-	if (!row.empty()) {
-		flushRow(row, cursor, boundWidth);
-	}
+    // Add the last row to the list of rows
+    rows_.push_back(row);
 
-	Y(box.size) = Y(cursor) - Y(spacing) + Y(margin);
+    // Handle special two row case
+    makeSecondRowEven();
+
+    // Update the layout of the children
+    updateLayout();
 }
 
-void SequentialLayout::flushRow(std::vector<widget::Widget*>& row, math::Vec& cursor,
-                                float boundWidth ) {
-    // For center and right alignment, compute offset from the left margin
-    if (alignment != LEFT_ALIGNMENT) {
-        float rowWidth = 0.f;
-        for (widget::Widget* child : row) {
-            rowWidth += X(child->box.size) + X(spacing);
-        }
-        rowWidth -= X(spacing);
-
-        if (alignment == CENTER_ALIGNMENT)
-            X(cursor) += (boundWidth - rowWidth) / 2;
-        else if (alignment == RIGHT_ALIGNMENT)
-            X(cursor) += boundWidth - rowWidth;
-    }
-
-    // Set positions of widgets
-    float maxHeight = 0.f;
+float SequentialLayout::rowWidth(const Row& row) {
+    float width = 0.0f;
     for (widget::Widget* child : row) {
-        child->box.pos = cursor;
-        X(cursor) += X(child->box.size) + X(spacing);
-
-        if (Y(child->box.size) > maxHeight) maxHeight = Y(child->box.size);
+        width += X(child->box.size);
     }
-    row.clear();
+    return width;
+}
 
-    // Reset cursor to next line
-    X(cursor) = X(margin);
-    Y(cursor) += maxHeight + Y(spacing);
-};
+float SequentialLayout::rowHeight(const Row& row) {
+    float height = 0.0f;
+    for (widget::Widget* child : row) {
+        height = std::max(height, Y(child->box.size));
+    }
+    return height;
+}
+
+float SequentialLayout::rowWidth(const Row& row, float spacing) {
+    float width = 0.0f;
+    for (widget::Widget* child : row) {
+        width += X(child->box.size) + spacing;
+    }
+    return width - spacing; // Remove last spacing
+}
+
+void SequentialLayout::makeSecondRowEven() {
+    // If nothing to do then done
+    if (!if_two_rows_make_even_ || rows_.size() != 2 || children.size() < 2)
+        return;
+
+    Row& first_row = rows_[0];
+    Row& second_row = rows_[1];
+    while (rowWidth(first_row, X(min_spacing_)) >
+           rowWidth(second_row, X(min_spacing_))) {
+        // Move last child of first row to be first child of second row
+        second_row.insert(second_row.begin(), first_row.back());
+        first_row.pop_back();
+    }
+}
+
+void SequentialLayout::updateLayout() {
+    // Start vertical position at just below the top margin
+    float y_position_of_child = Y(margin_);
+
+    // For each row updates the layout of each child in that row
+    for (const Row& row : rows_) {
+        // Determine spacing to use between the children
+        float spacing_to_use = X(min_spacing_);
+        if (alignment_ == TAKE_ENTIRE_WIDTH) {
+            // Spread children out to take up the entire width, but if margin would
+            // be too big, greater than 10x min_spacing_, then cap it
+            spacing_to_use =
+                std::min((available_width_ - rowWidth(row)) / (row.size() - 1),
+                         10 * X(min_spacing_));
+        }
+
+        // Determine left starting point for first child of row.
+        float left_starting_point;
+        switch (alignment_) {
+            case LEFT_ALIGNMENT:
+                // If left aligning then starting point is 0.0
+                left_starting_point = 0.0f;
+                break;
+            case CENTER_ALIGNMENT:
+                // Set left starting point to center the children
+                left_starting_point = (available_width_ - rowWidth(row, spacing_to_use)) / 2;
+                break;
+            case RIGHT_ALIGNMENT:
+                // Set left starting point to right align the children
+                left_starting_point = (available_width_ - rowWidth(row, spacing_to_use));
+                break;
+            case TAKE_ENTIRE_WIDTH:
+                // Same as CENTER_ALIGNMENT, except using a special spacing
+                left_starting_point = (available_width_ - rowWidth(row, spacing_to_use)) / 2;
+                break;
+        }
+
+        // Go through each child and set its position
+        float left_pos = left_starting_point + X(margin_);
+        for (widget::Widget* child : row) {
+            // Set horizontal position of child
+            setX(child->box.pos, left_pos);
+
+            // Update left position for next child
+            left_pos += X(child->box.size) + spacing_to_use;
+
+            // Set vertical position of child
+            setY(child->box.pos, y_position_of_child);
+        }
+
+        // Done with this row so update y_position_of_child for next row
+        y_position_of_child += rowHeight(row) + Y(min_spacing_);
+
+        // Update the height of the container
+        setY(box.size, y_position_of_child - Y(min_spacing_)) ;
+    }
+}
 
 } // namespace ui
 } // namespace rack

@@ -87,42 +87,43 @@ static void modelDbInit() {
 
 /** Called when user clicks on module to choose it */
 static ModuleWidget* chooseModel(plugin::Model* model) {
-	// Record usage
-	settings::ModuleInfo& mi = settings::moduleInfos[model->plugin->slug][model->slug];
-	mi.added++;
-	mi.lastAdded = system::getUnixTime();
+    // Record usage
+    settings::ModuleInfo& mi =
+        settings::moduleInfos[model->plugin->slug][model->slug];
+    mi.added++;
+    mi.lastAdded = system::getUnixTime();
 
-	history::ComplexAction* h = new history::ComplexAction;
-	h->name = string::translate("Browser.history.addModule");
+    history::ComplexAction* h = new history::ComplexAction;
+    h->name = string::translate("Browser.history.addModule");
 
-	// Create Module and ModuleWidget
-	INFO("Creating module %s", model->getFullName().c_str());
-	engine::Module* module = model->createModule();
-	APP->engine->addModule(module);
+    // Create Module and ModuleWidget
+    INFO("Creating module %s", model->getFullName().c_str());
+    engine::Module* module = model->createModule();
+    APP->engine->addModule(module);
 
-	INFO("Creating module widget %s", model->getFullName().c_str());
-	ModuleWidget* moduleWidget = model->createModuleWidget(module);
+    INFO("Creating module widget %s", model->getFullName().c_str());
+    ModuleWidget* moduleWidget = model->createModuleWidget(module);
 
-	APP->scene->rack->deselectAll();
-	APP->scene->rack->updateModuleOldPositions();
-	APP->scene->rack->addModuleAtMouse(moduleWidget);
-	h->push(APP->scene->rack->getModuleDragAction());
+    APP->scene->rack->deselectAll();
+    APP->scene->rack->updateModuleOldPositions();
+    APP->scene->rack->addModuleAtMouse(moduleWidget);
+    h->push(APP->scene->rack->getModuleDragAction());
 
-	// Load template preset
-	moduleWidget->loadTemplate();
+    // Load template preset
+    moduleWidget->loadTemplate();
 
-	// history::ModuleAdd
-	history::ModuleAdd* ha = new history::ModuleAdd;
-	// This serializes the module so redoing returns to the current state.
-	ha->setModule(moduleWidget);
-	h->push(ha);
+    // history::ModuleAdd
+    history::ModuleAdd* ha = new history::ModuleAdd;
+    // This serializes the module so redoing returns to the current state.
+    ha->setModule(moduleWidget);
+    h->push(ha);
 
-	APP->history->push(h);
+    APP->history->push(h);
 
-	// Hide Module Browser
-	APP->scene->browser->hide();
+    // Hide Module Browser
+    APP->scene->browser->hide();
 
-	return moduleWidget;
+    return moduleWidget;
 }
 
 
@@ -177,19 +178,24 @@ struct ModelBox : widget::OpaqueWidget {
 		this->model = model;
 	}
 
+    /** Updates the zoom level of this module */
 	void updateZoom() {
-		float zoom = std::pow(2.f, settings::browserZoom);
+        // Determine the fractional zoom level to use. If not VCV Rack, use standard choices.
+        // But if VCV Rack, use powers of 2.
+        float zoom = settings::isNotVCVRack
+                         ? settings::browserZoom
+                         : std::pow(2.f, settings::browserZoom);
 
-		if (previewWidget) {
-			fb->setDirty();
-			zoomWidget->setZoom(zoom);
-			box.size.x = moduleWidget->box.size.x * zoom;
-		}
-		else {
-			// Approximate size as 12HP before we know the actual size.
-			// We need a nonzero size, otherwise too many ModelBoxes will lazily render in the same frame.
-			box.size.x = 12 * RACK_GRID_WIDTH * zoom;
-		}
+        if (previewWidget) {
+            fb->setDirty();
+            zoomWidget->setZoom(zoom);
+            box.size.x = moduleWidget->box.size.x * zoom;
+        } else {
+            // Approximate size as 12HP before we know the actual size.
+            // We need a nonzero size, otherwise too many ModelBoxes will lazily
+            // render in the same frame.
+            box.size.x = 12 * RACK_GRID_WIDTH * zoom;
+        }
 		box.size.y = RACK_GRID_HEIGHT * zoom;
 		box.size = box.size.ceil();
 	}
@@ -455,19 +461,23 @@ struct SortButton : ui::ChoiceButton {
 	}
 };
 
-
+/** Zoom selector for the browser */
 struct ZoomButton : ui::ChoiceButton {
-	Browser* browser;
+    Browser* browser;
 
-	void onAction(const ActionEvent& e) override;
+    // Shows the choices
+    void onAction(const ActionEvent& e) override;
 
-	void step() override {
-		text = string::translate("Browser.zoom");
-		text += string::f("%.0f%%", std::pow(2.f, settings::browserZoom) * 100.f);
-		ChoiceButton::step();
-	}
+    void step() override {
+        // Determine the current zoom level to display
+        text = string::translate("Browser.zoom");
+        float zoom_fraction = settings::isNotVCVRack
+                                  ? settings::browserZoom
+                                  : std::pow(2.f, settings::browserZoom);
+        text += string::f("%.0f%%", zoom_fraction * 100.f);
+        ChoiceButton::step();
+    }
 };
-
 
 struct UrlButton : ui::Button {
 	std::string url;
@@ -483,16 +493,17 @@ struct UrlButton : ui::Button {
  */
 class BrowserHeader : public ui::SequentialLayout {
    public:
-    BrowserHeader() {
-        alignment = CENTER_ALIGNMENT;
-    }
+   /** Create browser header, and use center alignmentn and if two rows of children
+    * make them even.
+    */
+    BrowserHeader() : SequentialLayout(CENTER_ALIGNMENT, true) {}
 
     static const int HeaderFontSize = 16;
     static const int HeaderWidgetHeight = 24;
 
     /** Override draw() so that all children of the header are drawn with a specified font size.
      * This is necessary since the header contains buttons and labels that need to be drawn with a
-     * different font size than the rest of the browser. 
+     * smaller font size than the rest of the browser because they contain longer text strings.
      */
     void draw(const DrawArgs& args) override {
         // Temporarily store the current font size
@@ -540,26 +551,26 @@ struct Browser : widget::OpaqueWidget {
     std::map<plugin::Model*, float> prefilteredModelScores;
     std::map<plugin::Model*, int> modelOrders;
 
-    Browser() {
-        // Margin used for the small border around the Browser window
-        const float outerMargin = 8.0;
+    // Margin used for the small border around the Browser window
+    const float MARGIN = 8.0;
 
+    Browser() {
         // Browser top label
         titleLabel = new ui::Label;
         titleLabel->text = string::translate("Browser.title");
         titleLabel->fontSize = 40;
+        titleLabel->color = color::BLACK; // Set text color to contrast well with the background
         titleLabel->alignment = ui::Label::Alignment::CENTER_ALIGNMENT;
-        titleLabel->box.pos.x = outerMargin;
-        titleLabel->box.pos.y = outerMargin + 2.0;
+        titleLabel->box.pos.x = MARGIN;
+        titleLabel->box.pos.y = MARGIN + 2.0;
         titleLabel->box.size.y = titleLabel->fontSize * 0.7 + 2.0; // Don't need full height for label
         addChild(titleLabel);
 
         // Header
         headerLayout = new BrowserHeader();
-        headerLayout->box.pos = math::Vec(0, outerMargin + titleLabel->box.size.y);
-        headerLayout->box.size.y = 0; // Height will be set later
-        headerLayout->margin = math::Vec(outerMargin, outerMargin);
-        headerLayout->spacing = math::Vec(outerMargin, outerMargin);
+        headerLayout->box.pos = math::Vec(0, titleLabel->box.size.y + 2 * MARGIN);
+        headerLayout->setMargin(math::Vec(MARGIN, MARGIN));
+        headerLayout->setMinSpacing(math::Vec(MARGIN, MARGIN));
         addChild(headerLayout);
 
         // Need to set desired widgetHeight here instead of when drawing since
@@ -617,11 +628,13 @@ struct Browser : widget::OpaqueWidget {
         sortButton->browser = this;
         headerLayout->addChild(sortButton);
 
+        // For zooming in or out on the modules in the Browser
         ZoomButton* zoomButton = new ZoomButton;
         zoomButton->box.size.x = 100 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
         zoomButton->browser = this;
         headerLayout->addChild(zoomButton);
 
+        // For adding modules from VCV Rack to the users' library
         UrlButton* libraryButton = new UrlButton;
         libraryButton->box.size.x = 170 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
         libraryButton->text = string::translate("Browser.browseLibrary");
@@ -633,15 +646,14 @@ struct Browser : widget::OpaqueWidget {
 
         // Create scrollable module container
         moduleScroll = new ui::ScrollWidget;
-        moduleScroll->box.pos.y = rack::settings::bndWidgetHeight;
         addChild(moduleScroll);
 
         moduleMargin = new widget::Widget;
         moduleScroll->container->addChild(moduleMargin);
 
-        moduleLayoutContainer = new ui::SequentialLayout;
-        moduleLayoutContainer->margin = math::Vec(outerMargin, 2);  // Add 2 pixels for favorites border
-        moduleLayoutContainer->spacing = math::Vec(outerMargin, outerMargin);
+        moduleLayoutContainer = new ui::SequentialLayout(ui::SequentialLayout::TAKE_ENTIRE_WIDTH);
+        moduleLayoutContainer->setMargin(math::Vec(MARGIN, 1));  // Add 1 pixel in Y for favorites border
+        moduleLayoutContainer->setMinSpacing(math::Vec(MARGIN, MARGIN));
         moduleMargin->addChild(moduleLayoutContainer);
 
         resetModuleBoxes();
@@ -671,26 +683,28 @@ struct Browser : widget::OpaqueWidget {
 		}
 	}
 
-	void updateZoom() {
-		moduleScroll->offset = math::Vec();
+        /** Called when user selects zoom level. Updates zoom for each module in
+         * the Browser */
+        void updateZoom() {
+            moduleScroll->offset = math::Vec();
 
-		for (Widget* w : moduleLayoutContainer->children) {
-			ModelBox* mb = reinterpret_cast<ModelBox*>(w);
-			assert(mb);
-			mb->updateZoom();
-		}
-	}
+            for (Widget* w : moduleLayoutContainer->children) {
+                ModelBox* mb = reinterpret_cast<ModelBox*>(w);
+                assert(mb);
+                mb->updateZoom();
+            }
+        }
 
-	void step() override {
-		// Determine size of the Browser window. Make it 30 units smaller than
+        void step() override {
+		// Determine size of the Browser window. Make it 40 units smaller than
 		// the main window so that can see that the window is on top of the rack display
-		box = parent->box.zeroPos().grow(math::Vec(-30, -30));
+		box = parent->box.zeroPos().grow(math::Vec(-36, -36));
 
 		// Determine horizontal layout of titleLabel
 		titleLabel->box.size.x = box.size.x; 
 
 		// The modules to edges of window margin
-		const float rightAndBottomMargin = 10; // FIXME should verify what this really does
+		const float rightAndBottomMargin = MARGIN; 
 
 		// Now that know how big enclosing window is can set position and sizes of the 
 		// containers. First, set width of the headerLayout widget.
@@ -698,8 +712,8 @@ struct Browser : widget::OpaqueWidget {
 
 		// Set the position and size of the scrollable container that contains all the modules.
 		// Make it so there is a margin at the bottom.
-		moduleScroll->box.pos = headerLayout->box.getBottomLeft();
-		moduleScroll->box.size = box.size.minus(moduleScroll->box.pos) - math::Vec(0, 10);
+		moduleScroll->box.pos = headerLayout->box.getBottomLeft() + math::Vec(0, 2*MARGIN);
+		moduleScroll->box.size = box.size.minus(moduleScroll->box.pos) - math::Vec(0, MARGIN);
 
 		// Set the size of the moduleMargin which is inside of the moduleScroll
 		moduleMargin->box.size.x = moduleScroll->box.size.x;
@@ -720,6 +734,7 @@ struct Browser : widget::OpaqueWidget {
 	void draw(const DrawArgs& args) override {
 		// Draw a light gray background
 		NVGcolor bg_color = settings::moduleBrowserBg;
+        // Outline color that contrasts with the background color
 		NVGcolor outline_color = color::brightness(bg_color) < 0.5f
 										? color::lerp(bg_color, color::WHITE,
 													0.1)  // Light outline for dark background
@@ -1150,22 +1165,39 @@ inline void SortButton::onAction(const ActionEvent& e) {
 	}
 }
 
+/** Called when user clicks on the zoom button. Shows possible choices. */
 inline void ZoomButton::onAction(const ActionEvent& e) {
 	ui::Menu* menu = createMenu();
 	menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 	menu->box.size.x = box.size.x;
 
-	for (float zoom = 1.f; zoom >= -2.f; zoom -= 0.5f) {
-		menu->addChild(createCheckMenuItem(string::f("%.0f%%", std::pow(2.f, zoom) * 100.f), "",
-			[=]() {return settings::browserZoom == zoom;},
-			[=]() {
-				if (zoom == settings::browserZoom)
-					return;
-				settings::browserZoom = zoom;
-				browser->updateZoom();
-			}
-		));
-	}
+    if (!settings::isNotVCVRack) {
+        // Use standard VCV Rack zoom level choices
+        for (float zoom = 1.f; zoom >= -2.f; zoom -= 0.5f) {
+            menu->addChild(createCheckMenuItem(
+                string::f("%.0f%%", std::pow(2.f, zoom) * 100.f), "",
+                [=]() { return settings::browserZoom == zoom; },
+                [=]() {
+                    if (zoom == settings::browserZoom) return;
+                    settings::browserZoom = zoom;
+                    browser->updateZoom();
+                }));
+        }
+    } else {
+        // Not VCV Rack so use choices that don't appear to be mystical numbers.
+        // Simply don't make the user get distracted thinking about the choices.
+        std::vector<float> zoomLevels = {1.5f, 1.0f, 0.75f, 0.5f, 0.25f};
+        for (float zoom : zoomLevels) {
+            menu->addChild(createCheckMenuItem(
+                string::f("%.0f%%", zoom * 100.f), "",
+                [=]() { return settings::browserZoom == zoom; },
+                [=]() {
+                    if (zoom == settings::browserZoom) return;
+                    settings::browserZoom = zoom;
+                    browser->updateZoom();
+                }));
+        }
+    }
 }
 
 
@@ -1180,9 +1212,12 @@ void browserInit() {
 
 widget::Widget* browserCreate() {
     // Draw a dark area over the rest of the UI. This way user's focus is on
-    // the Browser Window but they can still see that the Rack window is there, underneath.
-	browser::BrowserOverlay* overlay = new browser::BrowserOverlay;
-	overlay->bgColor = nvgRGBAf(0, 0, 0, 0.53); // Higher the value the darker things get
+    // the Browser Window but they can still see that the Rack window is there,
+    // underneath.
+    browser::BrowserOverlay* overlay = new browser::BrowserOverlay;
+    // Set opacity for where drawing on top of the rack. Higher the value the
+    // darker things get
+    overlay->bgColor = nvgRGBAf(0, 0, 0, 0.58);
 
     // Now actually create the Browser window and add it to the overlay heirachy
 	browser::Browser* browser = new browser::Browser;
