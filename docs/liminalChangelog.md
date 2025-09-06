@@ -1,5 +1,7 @@
 # Liminal Rack Change Log
 
+- 9/6/25
+  - Can now use any font face for a label. Nice so that can make a header label bold.
 - 9/5/25
   - Improved tooltips.
     - Separate color to distinguish them from clickable items like menus. The value is in settings. Picked nice dark gray.
