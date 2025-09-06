@@ -1,5 +1,7 @@
 # Liminal Rack Change Log
 
+- 9/1/25
+  - Srollbar colors and opacity changed so that they are much more visible
 - 8/31/25
   - Rewrite of SequentialLayout so that it has additional features
     - Can now evenly space items so that they take full width. Great for displaying modules in Browser.
