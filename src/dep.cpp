@@ -15,6 +15,7 @@
 #include <nanovg_gl.h>
 
 // Hack to get framebuffer objects working on OpenGL 2 (we blindly assume the extension is supported)
+#pragma clang diagnostic ignored "-Wmacro-redefined"
 #define NANOVG_FBO_VALID
 #include <nanovg_gl_utils.h>
 
