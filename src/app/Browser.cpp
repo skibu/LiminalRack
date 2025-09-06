@@ -608,7 +608,7 @@ struct Browser : widget::OpaqueWidget {
     const float MARGIN = 8.0;
 
     Browser() {
-        // Browser top label
+        // Browser bit title label at the top
         titleLabel = new ui::Label(string::translate("Browser.title"));
 		titleLabel->setFontSize(40);
 		titleLabel->setColor(color::BLACK); // Set text color to contrast well with the background

@@ -749,6 +749,7 @@ std::shared_ptr<Font> Window::loadFont(const std::string& filename) {
 	if (!font)
 		return NULL;
 
+    // Load fallback fonts for CJK and emoji characters
 	std::shared_ptr<Font> jpFont = loadFontWithoutFallbacks(asset::system("res/fonts/NotoSansJP-Medium.otf"));
 	if (jpFont)
 		nvgAddFallbackFontId(vg, font->handle, jpFont->handle);
@@ -782,6 +783,16 @@ std::shared_ptr<Font> Window::loadFontWithoutFallbacks(const std::string& filena
 	return font;
 }
 
+
+void Window::overrideFontFace(const std::string& filename) {
+    std::shared_ptr<Font> font = loadFontWithoutFallbacks(filename);
+    if (font)
+        bndSetFont(font->handle);
+}
+
+void Window::resetFontFace() {
+    bndSetFont(APP->window->uiFont->handle);
+}
 
 std::shared_ptr<Image> Window::loadImage(const std::string& filename) {
 	const auto& it = internal->imageCache.find(filename);

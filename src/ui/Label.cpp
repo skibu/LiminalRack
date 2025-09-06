@@ -1,5 +1,8 @@
 #include <ui/Label.hpp>
 #include <settings.hpp>
+#include <context.hpp>
+#include <asset.hpp>
+
 namespace rack {
 namespace ui {
 
@@ -17,8 +20,13 @@ Label::Label() {
 }
 
 void Label::draw(const DrawArgs& args) {
-    // For debugging one can draw rectangle so that can see the rectanble used for the Label
-    //bndBackgroundColor(args.vg, 0.0, 0.0, box.size.x, box.size.y, 0, color::RED, color::GREEN);
+    // For debugging one can draw rectangle so that can see the rectanble used
+    // for the Label
+    // bndBackgroundColor(args.vg, 0.0, 0.0, box.size.x, box.size.y, 0,
+    // color::RED, color::GREEN);
+
+    // Set font face to a bold one
+    APP->window->overrideFontFace(asset::system("res/fonts/Roboto-Bold.ttf"));
 
     // Align the text as specified.
     float x;
@@ -28,16 +36,24 @@ void Label::draw(const DrawArgs& args) {
             x = 0.0;
         } break;
         case RIGHT_ALIGNMENT: {
-            x = box.size.x - bndLabelWidthForFontSize(args.vg, -1, fontSize, text.c_str());
+            x = box.size.x -
+                bndLabelWidthForFontSize(args.vg, -1, fontSize, text.c_str());
         } break;
         case CENTER_ALIGNMENT: {
-            x = (box.size.x - bndLabelWidthForFontSize(args.vg, -1, fontSize, text.c_str())) / 2.0;
+            x = (box.size.x - bndLabelWidthForFontSize(args.vg, -1, fontSize,
+                                                       text.c_str())) /
+                2.0;
         } break;
-	}
+    }
 
-	nvgTextLineHeight(args.vg, lineHeight);
-	NVGcolor colorActual = (color.a > 0.f) ? color : bndGetTheme()->regularTheme.textColor;
-	bndIconLabelValue(args.vg, x, 0.0, box.size.x, box.size.y, -1, colorActual, BND_LEFT, fontSize, text.c_str(), NULL);
+    nvgTextLineHeight(args.vg, lineHeight);
+    NVGcolor colorActual =
+        (color.a > 0.f) ? color : bndGetTheme()->regularTheme.textColor;
+    bndIconLabelValue(args.vg, x, 0.0, box.size.x, box.size.y, -1, colorActual,
+                      BND_LEFT, fontSize, text.c_str(), NULL);
+
+    // Restore the original font face
+    APP->window->resetFontFace();
 }
 
 }  // namespace ui

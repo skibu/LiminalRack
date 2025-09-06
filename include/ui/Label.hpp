@@ -29,12 +29,17 @@ class Label : public widget::Widget {
     void setFontSize(float fontSize) { this->fontSize = fontSize; }
     float getFontSize() const { return fontSize; }
 
+    /** Sets the font face to use for this label in place of default one */
+    void setFontFaceOverride(const std::string& fontFile) { this->fontFaceOverride = fontFile; }
+
    private:
     std::string text;
     NVGcolor color;
     Alignment alignment = LEFT_ALIGNMENT;
     float fontSize;
     float lineHeight;
+    // For if want to use a different font face than the default
+    std::string fontFaceOverride = "";
 
     void draw(const DrawArgs& args) override;
 };

@@ -117,6 +117,12 @@ struct Window {
 	std::shared_ptr<Font> loadFont(const std::string& filename);
 	/** Loads and caches a Font without adding fallback fonts. */
 	std::shared_ptr<Font> loadFontWithoutFallbacks(const std::string& filename);
+
+    /** Overrides the current font used for drawing text in Blendish. */
+    void overrideFontFace(const std::string& filename);
+    /** Resets the font to the default UI font. */
+    void resetFontFace();
+
 	/** Loads and caches an Image from a file path.
 	Do not store this reference across screen frames, as the Window may have changed, invalidating the Image.
 	*/
