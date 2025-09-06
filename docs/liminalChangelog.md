@@ -1,5 +1,15 @@
 # Liminal Rack Change Log
 
+- 9/5/25
+  - Improved tooltips.
+    - Separate color to distinguish them from clickable items like menus. The value is in settings. Picked nice dark gray.
+    - Separate and smaller font since can get a good amount of text and the user doesn't need to click on parts of it. The value is in settings. 
+    - Got outline of tooltip to actually be noticeable
+    - Got text to be centered perfectly within the box
+    - Limited width so that don't get absurdly wide tooltips
+    - Not displaying "Hardware clone" type since that doesn't seem to be really useful to user and the list of types/tags can be overly long. 
+  - Major code cleanup. Refactored a lot of the cringy UI related structs and converted them to classes. And cleaned up and commented a lot of code. This will make future changes easier to implement.
+  - Changed "Tags" to "Types" in Browser window in en.json. Seemed bit unfriendly to user CS term for a music device. Know your audience!
 - 9/1/25
   - Srollbar colors and opacity changed so that they are much more visible
 - 8/31/25
