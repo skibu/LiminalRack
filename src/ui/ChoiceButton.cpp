@@ -14,8 +14,8 @@ void ChoiceButton::draw(const DrawArgs& args) {
 		state = BND_ACTIVE;
 
 	std::string text = this->text;
-	if (text.empty() && quantity)
-		text = quantity->getLabel();
+	if (text.empty() && getQuantity())
+		text = getQuantity()->getLabel();
 	bndChoiceButton(args.vg, 0.0, 0.0, box.size.x, box.size.y, BND_CORNER_NONE, state, -1, text.c_str());
 }
 

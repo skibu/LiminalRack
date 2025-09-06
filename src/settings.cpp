@@ -39,13 +39,18 @@ std::string language = "en";
 // To customize the Module Browser window background
 NVGcolor moduleBrowserBg = color::fromHexString("#A0A0A0");
 
-// For dark mode customize the colors used for things like menu bar and buttons
-NVGcolor darkModeThemeBg = color::fromHexString("#422a2a"); // "#573737" is brick red
-NVGcolor darkModeThemeFg = color::fromHexString("#F0F0F0");
-
 // For light mode customize the colors used for things like menu bar and buttons
 NVGcolor lightModeThemeBg = color::fromHexString("#F0F0F0");
 NVGcolor lightModeThemeFg = color::fromHexString("#040404");
+
+// For dark mode customize the colors used for things like menu bar and buttons
+NVGcolor darkModeThemeBg = color::fromHexString("#422a2a"); // "#573737" is brick red
+NVGcolor darkModeThemeFg = color::fromHexString("#D0D0D0");
+
+// For tooltips customize the colors */
+NVGcolor tooltipBg = color::fromHexString("#3b3434");
+NVGcolor tooltipFg = color::fromHexString("#F0F0F0");
+int tooltipFontSize = 15;
 
 // Whether in full screen mode
 bool windowMaximized = false;
@@ -185,6 +190,10 @@ json_t* toJson() {
     json_object_set_new(rootJ, "lightModeThemeFg", json_string(color::toHexString(lightModeThemeFg).c_str()));
     json_object_set_new(rootJ, "darkModeThemeBg", json_string(color::toHexString(darkModeThemeBg).c_str()));
     json_object_set_new(rootJ, "darkModeThemeFg", json_string(color::toHexString(darkModeThemeFg).c_str()));
+
+    json_object_set_new(rootJ, "tooltipBg", json_string(color::toHexString(tooltipBg).c_str()));
+    json_object_set_new(rootJ, "tooltipFg", json_string(color::toHexString(tooltipFg).c_str()));
+    json_object_set_new(rootJ, "tooltipFontSize", json_integer(tooltipFontSize));
 
 	json_object_set_new(rootJ, "isNotVCVRack", json_boolean(isNotVCVRack));
 	json_object_set_new(rootJ, "isLiminal", json_boolean(isLiminal));
@@ -375,6 +384,7 @@ void fromJson(json_t* rootJ) {
     if (lightModeThemeFgJ) {
         lightModeThemeFg = color::fromHexString(json_string_value(lightModeThemeFgJ));
     }
+
     json_t* darkModeThemeBgJ = json_object_get(rootJ, "darkModeThemeBg");
     if (darkModeThemeBgJ) {
         darkModeThemeBg = color::fromHexString(json_string_value(darkModeThemeBgJ));
@@ -383,6 +393,16 @@ void fromJson(json_t* rootJ) {
     if (darkModeThemeFgJ) {
         darkModeThemeFg = color::fromHexString(json_string_value(darkModeThemeFgJ));
     }
+
+    json_t* tooltipBgJ = json_object_get(rootJ, "tooltipBg");
+    if (tooltipBgJ)
+        tooltipBg = color::fromHexString(json_string_value(tooltipBgJ));
+    json_t* tooltipFgJ = json_object_get(rootJ, "tooltipFg");
+    if (tooltipFgJ)
+        tooltipFg = color::fromHexString(json_string_value(tooltipFgJ));
+    json_t* tooltipFontSizeJ = json_object_get(rootJ, "tooltipFontSize");
+    if (tooltipFontSizeJ)
+        tooltipFontSize = json_integer_value(tooltipFontSizeJ);
 
     json_t* isLiminalJ = json_object_get(rootJ, "isLiminal");
 	if (isLiminalJ) isLiminal = json_boolean_value(isLiminalJ);

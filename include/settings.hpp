@@ -44,11 +44,13 @@ extern NVGcolor darkModeThemeBg;
 /** Foreground color for dark mode theme */
 extern NVGcolor darkModeThemeFg;
 
-
-/** Background color for dark mode theme */
-extern NVGcolor darkModeThemeBg;
-/** Foreground color for dark mode theme */
-extern NVGcolor darkModeThemeFg;
+/** Background color for tooltips. Want them to be different from other
+ * interactive items */
+extern NVGcolor tooltipBg;
+/** Foreground color for tooltips */
+extern NVGcolor tooltipFg;
+/** Font size for tooltips */
+extern int tooltipFontSize;
 
 /** Whether the window is maximized */
 extern bool windowMaximized;
@@ -73,9 +75,7 @@ extern math::Vec windowPos;
 extern bool invertZoom;
 /** Mouse wheel zooms instead of pans. */
 extern bool mouseWheelZoom;
-/** Ratio between UI pixel and physical screen pixel.
-0 for auto.
-*/
+/** Ratio between UI pixel and physical screen pixel. 0 for auto. */
 extern float pixelRatio;
 /** Name of UI theme, specified in ui::refreshTheme() */
 extern std::string uiTheme;
@@ -83,7 +83,10 @@ extern std::string uiTheme;
 extern float cableOpacity;
 /** Straightness of cables in the range [0, 1]. Unitless and arbitrary. */
 extern float cableTension;
+/** Sometimes nice to dim rack so that it isn't too bright */
 extern float rackBrightness;
+/** When dimming rack it can be nice to have system draw halos around the lights
+ * on the module */
 extern float haloBrightness;
 /** Allows rack to hide and lock the cursor position when dragging knobs etc. */
 extern bool allowCursorLock;
@@ -93,16 +96,29 @@ enum KnobMode {
 	KNOB_MODE_ROTARY_ABSOLUTE,
 	KNOB_MODE_ROTARY_RELATIVE,
 };
+
+/** How the user can interact with the knobs */
 extern KnobMode knobMode;
 extern bool knobScroll;
 extern float knobLinearSensitivity;
 extern float knobScrollSensitivity;
+
+/** Audio sample rate */
 extern float sampleRate;
+/** Number of threads to use. The more threads the more audio can be processed.
+ * But if you specify that all cores should be used then the computer might get
+ * bogged down.*/
 extern int threadCount;
+/** Whether tooltips are enabled  */
 extern bool tooltips;
+/** Whether CPU meter is enabled */
 extern bool cpuMeter;
+/** Don't allow user to drag modules around */
 extern bool lockModules;
+/** Whether user allowed to drag modules in between other modules even 
+ * if there isn't a sufficent gap. */
 extern bool squeezeModules;
+/** Uses dark panels if they are available */
 extern bool preferDarkPanels;
 /** Maximum screen redraw frequency in Hz, or 0 for unlimited. */
 extern float frameRateLimit;

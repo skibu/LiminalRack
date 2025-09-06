@@ -88,7 +88,7 @@ struct PortCloneCableItem : ui::MenuItem {
 
 	void onButton(const ButtonEvent& e) override {
 		OpaqueWidget::onButton(e);
-		if (disabled)
+		if (isDisabled())
 			return;
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
 			// Set PortWidget::onDragStart overrides
@@ -125,7 +125,7 @@ struct PortCableItem : ui::ColorDotMenuItem {
 
 	void onButton(const ButtonEvent& e) override {
 		OpaqueWidget::onButton(e);
-		if (disabled)
+		if (isDisabled())
 			return;
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
 			// Set PortWidget::onDragStart overrides
@@ -146,7 +146,7 @@ struct PortCableItem : ui::ColorDotMenuItem {
 		for (NVGcolor color : settings::cableColors) {
 			// Include extra leading spaces for the color circle
 			CableColorItem* item = createMenuItem<CableColorItem>(string::translate("PortWidget.setColor"));
-			item->disabled = color::isEqual(color, cw->color);
+			item->setDisabled(color::isEqual(color, cw->color));
 			item->cw = cw;
 			item->color = color;
 			menu->addChild(item);
@@ -181,7 +181,7 @@ struct PortCreateCableItem : ui::MenuItem {
 
 	void onButton(const ButtonEvent& e) override {
 		OpaqueWidget::onButton(e);
-		if (disabled)
+		if (isDisabled())
 			return;
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
 			// Set PortWidget::onDragStart overrides
@@ -202,7 +202,7 @@ struct PortCreateCableColorItem : ui::ColorDotMenuItem {
 
 	void onButton(const ButtonEvent& e) override {
 		OpaqueWidget::onButton(e);
-		if (disabled)
+		if (isDisabled())
 			return;
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
 			APP->scene->rack->setNextCableColorId(colorId);
@@ -307,7 +307,7 @@ void PortWidget::createContextMenu() {
 
 	{
 		PortCloneCableItem* item = createMenuItem<PortCloneCableItem>(string::translate("PortWidget.cloneTopCable"), widget::getKeyCommandName(0, RACK_MOD_CTRL | RACK_MOD_SHIFT) + string::translate("key.drag"));
-		item->disabled = !topCw;
+		item->setDisabled(!topCw);
 		item->pw = this;
 		item->cw = topCw;
 		menu->addChild(item);

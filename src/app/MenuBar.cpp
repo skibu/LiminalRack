@@ -32,35 +32,39 @@ namespace app {
 namespace menuBar {
 
 /**
- * MenuButtons are buttons that are in the main menu bar. They are for pulling down
- * a menu. Each button subclasses from MenuButton in order to handle the appropriate
- * action items.
+ * MenuButtons are buttons that are in the main menu bar. They are for pulling
+ * down a menu. Each button subclasses from MenuButton in order to handle the
+ * appropriate action items.
  */
-struct MenuButton : ui::Button {
-	// Handle actions
-	void step() override {
-		box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str()) + 1.0;
-		Widget::step();
-	}
+class MenuButton : public ui::Button {
+   public:
+    MenuButton(const std::string& text) : ui::Button(text) {}
 
-	// Handle drawing the button
-	void draw(const DrawArgs& args) override {
-		// Determine state to draw button
-		BNDwidgetState state = BND_DEFAULT; // Normal look
-		if (APP->event->hoveredWidget == this)
-			state = BND_HOVER; // Mouse over button
-		if (APP->event->draggedWidget == this)
-			state = BND_ACTIVE; // Clicked on and menu pulled down
+    // Handle actions
+    void step() override {
+        box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str()) + 1.0;
+        Widget::step();
+    }
 
-		// Draw the button. Found that using y=1.0 better centers the box verticqlly
-		// due to a strange offset in bndMenuItem height determination.
-		bndMenuItem(args.vg, 0.0, 1.0, box.size.x, box.size.y, state, -1, text.c_str());
+    // Handle drawing the button
+    void draw(const DrawArgs& args) override {
+        // Determine state to draw button
+        BNDwidgetState state = BND_DEFAULT;  // Normal look
+        if (APP->event->hoveredWidget == this)
+            state = BND_HOVER;  // Mouse over button
+        if (APP->event->draggedWidget == this)
+            state = BND_ACTIVE;  // Clicked on and menu pulled down
 
-		// Draw all the nodes
-		Widget::draw(args);
-	}
+        // Draw the button. Found that using y=1.0 better centers the box
+        // verticqlly due to a strange offset in bndMenuItem height
+        // determination.
+        bndMenuItem(args.vg, 0.0, 1.0, box.size.x, box.size.y, state, -1,
+                    text.c_str());
+
+        // Draw all the nodes
+        Widget::draw(args);
+    }
 };
-
 
 /**
  * For drawing red dot in a menu bar button to indicate a notification
@@ -82,70 +86,82 @@ struct NotificationIcon : widget::Widget {
 // File
 ////////////////////
 
-
 /**
  * The File button for the main menu
  */
-struct FileButton : MenuButton {
-	void onAction(const ActionEvent& e) override {
-		ui::Menu* menu = createMenu();
-		menu->cornerFlags = BND_CORNER_TOP;
-		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+class FileButton : public MenuButton {
+   public:
+    FileButton() : MenuButton(string::translate("MenuBar.file")) {}
 
-		menu->addChild(new ui::MenuSeparator);
+   private:
+    void onAction(const ActionEvent& e) override {
+        ui::Menu* menu = createMenu();
+        menu->cornerFlags = BND_CORNER_TOP;
+        menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.file.new"), widget::getKeyCommandName(GLFW_KEY_N, RACK_MOD_CTRL), []() {
-			APP->patch->loadTemplateDialog();
-		}));
+        menu->addChild(new ui::MenuSeparator);
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.file.open"), widget::getKeyCommandName(GLFW_KEY_O, RACK_MOD_CTRL), []() {
-			APP->patch->loadDialog();
-		}));
+        menu->addChild(
+            createMenuItem(string::translate("MenuBar.file.new"),
+                           widget::getKeyCommandName(GLFW_KEY_N, RACK_MOD_CTRL),
+                           []() { APP->patch->loadTemplateDialog(); }));
 
-		menu->addChild(createSubmenuItem(string::translate("MenuBar.file.openRecent"), "", [](ui::Menu* menu) {
-			for (const std::string& path : settings::recentPatchPaths) {
-				std::string name = system::getStem(path);
-				menu->addChild(createMenuItem(name, "", [=]() {
-					APP->patch->loadPathDialog(path);
-				}));
-			}
-		}, settings::recentPatchPaths.empty()));
+        menu->addChild(
+            createMenuItem(string::translate("MenuBar.file.open"),
+                           widget::getKeyCommandName(GLFW_KEY_O, RACK_MOD_CTRL),
+                           []() { APP->patch->loadDialog(); }));
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.file.save"), widget::getKeyCommandName(GLFW_KEY_S, RACK_MOD_CTRL), []() {
-			APP->patch->saveDialog();
-		}));
+        menu->addChild(createSubmenuItem(
+            string::translate("MenuBar.file.openRecent"), "",
+            [](ui::Menu* menu) {
+                for (const std::string& path : settings::recentPatchPaths) {
+                    std::string name = system::getStem(path);
+                    menu->addChild(createMenuItem(
+                        name, "", [=]() { APP->patch->loadPathDialog(path); }));
+                }
+            },
+            settings::recentPatchPaths.empty()));
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.file.saveAs"), widget::getKeyCommandName(GLFW_KEY_S, RACK_MOD_CTRL | GLFW_MOD_SHIFT), []() {
-			APP->patch->saveAsDialog();
-		}));
+        menu->addChild(
+            createMenuItem(string::translate("MenuBar.file.save"),
+                           widget::getKeyCommandName(GLFW_KEY_S, RACK_MOD_CTRL),
+                           []() { APP->patch->saveDialog(); }));
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.file.saveCopy"), "", []() {
-			APP->patch->saveAsDialog(false);
-		}));
+        menu->addChild(
+            createMenuItem(string::translate("MenuBar.file.saveAs"),
+                           widget::getKeyCommandName(
+                               GLFW_KEY_S, RACK_MOD_CTRL | GLFW_MOD_SHIFT),
+                           []() { APP->patch->saveAsDialog(); }));
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.file.revert"), widget::getKeyCommandName(GLFW_KEY_O, RACK_MOD_CTRL | GLFW_MOD_SHIFT), []() {
-			APP->patch->revertDialog();
-		}, APP->patch->path == ""));
+        menu->addChild(
+            createMenuItem(string::translate("MenuBar.file.saveCopy"), "",
+                           []() { APP->patch->saveAsDialog(false); }));
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.file.overwriteTemplate"), "", []() {
-			APP->patch->saveTemplateDialog();
-		}));
+        menu->addChild(createMenuItem(
+            string::translate("MenuBar.file.revert"),
+            widget::getKeyCommandName(GLFW_KEY_O,
+                                      RACK_MOD_CTRL | GLFW_MOD_SHIFT),
+            []() { APP->patch->revertDialog(); }, APP->patch->path == ""));
 
-		menu->addChild(new ui::MenuSeparator);
+        menu->addChild(
+            createMenuItem(string::translate("MenuBar.file.overwriteTemplate"),
+                           "", []() { APP->patch->saveTemplateDialog(); }));
 
-		// Load selection
-		menu->addChild(createMenuItem(string::translate("MenuBar.file.importSelection"), "", [=]() {
-			APP->scene->rack->loadSelectionDialog();
-		}, false, true));
+        menu->addChild(new ui::MenuSeparator);
 
-		menu->addChild(new ui::MenuSeparator);
+        // Load selection
+        menu->addChild(createMenuItem(
+            string::translate("MenuBar.file.importSelection"), "",
+            [=]() { APP->scene->rack->loadSelectionDialog(); }, false, true));
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.file.quit"), widget::getKeyCommandName(GLFW_KEY_Q, RACK_MOD_CTRL), []() {
-			APP->window->close();
-		}));
-	}
+        menu->addChild(new ui::MenuSeparator);
+
+        menu->addChild(
+            createMenuItem(string::translate("MenuBar.file.quit"),
+                           widget::getKeyCommandName(GLFW_KEY_Q, RACK_MOD_CTRL),
+                           []() { APP->window->close(); }));
+    }
 };
-
 
 ////////////////////
 // Edit
@@ -155,19 +171,27 @@ struct FileButton : MenuButton {
 /**
  * The Edit button for the main menu
  */
-struct EditButton : MenuButton {
-	void onAction(const ActionEvent& e) override {
-		ui::Menu* menu = createMenu();
-		menu->cornerFlags = BND_CORNER_TOP;
-		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+class EditButton : public MenuButton {
+   public:
+    EditButton() : MenuButton(string::translate("MenuBar.edit")) {}
+
+   private:
+    void onAction(const ActionEvent& e) override {
+        ui::Menu* menu = createMenu();
+        menu->cornerFlags = BND_CORNER_TOP;
+        menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 
 		menu->addChild(new ui::MenuSeparator);
 
-		struct UndoItem : ui::MenuItem {
+		class UndoItem : public ui::MenuItem {
+            public:
+            UndoItem() {}
+
+            private:
 			void step() override {
 				bool canUndo = APP->history->canUndo();
-				text = canUndo ? string::f(string::translate("MenuBar.edit.undoAction"), APP->history->getUndoName()) : string::translate("MenuBar.edit.undo");
-				disabled = !canUndo;
+				setText(canUndo ? string::f(string::translate("MenuBar.edit.undoAction"), APP->history->getUndoName()) : string::translate("MenuBar.edit.undo"));
+				setDisabled(!canUndo);
 				MenuItem::step();
 			}
 			void onAction(const ActionEvent& e) override {
@@ -176,11 +200,15 @@ struct EditButton : MenuButton {
 		};
 		menu->addChild(createMenuItem<UndoItem>("", widget::getKeyCommandName(GLFW_KEY_Z, RACK_MOD_CTRL)));
 
-		struct RedoItem : ui::MenuItem {
+		class RedoItem : public ui::MenuItem {
+            public:
+            RedoItem() {}
+
+            private:
 			void step() override {
 				bool canRedo = APP->history->canRedo();
-				text = canRedo ? string::f(string::translate("MenuBar.edit.redoAction"), APP->history->getRedoName()) : string::translate("MenuBar.edit.redo");
-				disabled = !canRedo;
+				setText(canRedo ? string::f(string::translate("MenuBar.edit.redoAction"), APP->history->getRedoName()) : string::translate("MenuBar.edit.redo"));
+				setDisabled(!canRedo);
 				MenuItem::step();
 			}
 			void onAction(const ActionEvent& e) override {
@@ -433,7 +461,10 @@ struct KnobScrollSensitivitySlider : ui::Slider {
 /**
  * The View button for the main menu
  */
-struct ViewButton : MenuButton {
+class ViewButton : public MenuButton {
+   public:
+    ViewButton() : MenuButton(string::translate("MenuBar.view")) {}
+    
 	void onAction(const ActionEvent& e) override {
 		ui::Menu* menu = createMenu();
 		menu->cornerFlags = BND_CORNER_TOP;
@@ -750,7 +781,11 @@ struct SampleRateItem : ui::MenuItem {
 /**
  * The Engine button for the main menu
  */
-struct EngineButton : MenuButton {
+class EngineButton : public MenuButton {
+   public:
+    EngineButton() : MenuButton(string::translate("MenuBar.engine")) {}
+
+   private:
     void onAction(const ActionEvent& e) override {
         ui::Menu* menu = createMenu();
         menu->cornerFlags = BND_CORNER_TOP;
@@ -793,22 +828,29 @@ struct EngineButton : MenuButton {
 // Plugins
 ////////////////////
 
+class AccountPasswordField : public ui::PasswordField {
+   public:
+	AccountPasswordField() {}
 
-struct AccountPasswordField : ui::PasswordField {
+	void setLogInItem(ui::MenuItem* item) {
+		logInItem = item;
+	}
+
+   private:
 	ui::MenuItem* logInItem;
+
 	void onAction(const ActionEvent& e) override {
 		logInItem->doAction();
 	}
 };
-
 
 struct LogInItem : ui::MenuItem {
 	ui::TextField* emailField;
 	ui::TextField* passwordField;
 
 	void onAction(const ActionEvent& e) override {
-		std::string email = emailField->text;
-		std::string password = passwordField->text;
+		std::string email = emailField->getText();
+		std::string password = passwordField->getText();
 		std::thread t([=] {
 			library::logIn(email, password);
 			library::checkUpdates();
@@ -818,8 +860,8 @@ struct LogInItem : ui::MenuItem {
 	}
 
 	void step() override {
-		text = string::translate("MenuBar.library.login");
-		rightText = library::loginStatus;
+		setText(string::translate("MenuBar.library.login"));
+		setRightText(library::loginStatus);
 		MenuItem::step();
 	}
 };
@@ -828,19 +870,19 @@ struct LogInItem : ui::MenuItem {
 struct SyncUpdatesItem : ui::MenuItem {
 	void step() override {
 		if (library::updateStatus != "") {
-			text = library::updateStatus;
+			setText(library::updateStatus);
 		}
 		else if (library::isSyncing) {
-			text = string::translate("MenuBar.library.updating");
+			setText(string::translate("MenuBar.library.updating"));
 		}
 		else if (!library::hasUpdates()) {
-			text = string::translate("MenuBar.library.upToDate");
+			setText(string::translate("MenuBar.library.upToDate"));
 		}
 		else {
-			text = string::translate("MenuBar.library.updateAll");
+			setText(string::translate("MenuBar.library.updateAll"));
 		}
 
-		disabled = library::isSyncing || !library::hasUpdates();
+		setDisabled(library::isSyncing || !library::hasUpdates());
 		MenuItem::step();
 	}
 
@@ -865,7 +907,7 @@ struct SyncUpdateItem : ui::MenuItem {
 			return;
 		library::UpdateInfo update = it->second;
 
-		text = update.name;
+		setText(update.name);
 	}
 
 	ui::Menu* createChildMenu() override {
@@ -895,37 +937,40 @@ struct SyncUpdateItem : ui::MenuItem {
 	}
 
 	void step() override {
-		disabled = false;
+		bool isDisabled = false;
 
 		if (library::isSyncing)
-			disabled = true;
+			isDisabled = true;
 
 		auto it = library::updateInfos.find(slug);
 		if (it == library::updateInfos.end()) {
-			disabled = true;
+			isDisabled = true;
 		}
 		else {
 			library::UpdateInfo update = it->second;
 
 			if (update.minRackVersion != "")
-				disabled = true;
+				isDisabled = true;
 
 			if (update.downloaded) {
-				rightText = CHECKMARK_STRING;
-				disabled = true;
+				setRightText(CHECKMARK_STRING);
+				isDisabled = true;
 			}
 			else if (slug == library::updateSlug) {
-				rightText = string::f("%.0f%%", library::updateProgress * 100.f);
+				setRightText(string::f("%.0f%%", library::updateProgress * 100.f));
 			}
 			else {
-				rightText = "";
+				std::string rt = "";
 				plugin::Plugin* p = plugin::getPlugin(slug);
 				if (p) {
-					rightText += p->version + " → ";
+					rt += p->version + " → ";
 				}
-				rightText += update.version;
+				rt += update.version;
+				setRightText(rt);
 			}
 		}
+
+		setDisabled(isDisabled);
 
 		MenuItem::step();
 	}
@@ -970,21 +1015,21 @@ struct LibraryMenu : ui::Menu {
 			}));
 
 			ui::TextField* emailField = new ui::TextField;
-			emailField->placeholder = string::translate("MenuBar.library.email");
+			emailField->setPlaceholder(string::translate("MenuBar.library.email"));
 			emailField->box.size.x = 240.0;
 			addChild(emailField);
 
-			AccountPasswordField* passwordField = new AccountPasswordField;
-			passwordField->placeholder = string::translate("MenuBar.library.password");
+			AccountPasswordField* passwordField = new AccountPasswordField();
+			passwordField->setPlaceholder(string::translate("MenuBar.library.password"));
 			passwordField->box.size.x = 240.0;
-			passwordField->nextField = emailField;
-			emailField->nextField = passwordField;
+			passwordField->setNextField(emailField);
+			emailField->setNextField(passwordField);
 			addChild(passwordField);
 
 			LogInItem* logInItem = new LogInItem;
 			logInItem->emailField = emailField;
 			logInItem->passwordField = passwordField;
-			passwordField->logInItem = logInItem;
+			passwordField->setLogInItem(logInItem);
 			addChild(logInItem);
 		}
 		// The regular module library options for when user is logged in
@@ -1011,7 +1056,7 @@ struct LibraryMenu : ui::Menu {
 
 			// Add menu item to sync updates from VCV Rack library
 			SyncUpdatesItem* syncItem = new SyncUpdatesItem;
-			syncItem->text = string::translate("MenuBar.library.updateAll");
+			syncItem->setText(string::translate("MenuBar.library.updateAll"));
 			addChild(syncItem);
 
 			// Add buttons for updating individual collections of modules
@@ -1033,14 +1078,16 @@ struct LibraryMenu : ui::Menu {
 /**
  * The Library button for the main menu
  */
-struct LibraryButton : MenuButton {
-	// For drawing red dot in the Library Button for when there is a notification
-	NotificationIcon* notification;
-
-	LibraryButton() {
+class LibraryButton : public MenuButton {
+   public:
+	LibraryButton() : MenuButton(string::translate("MenuBar.library")) {
 		notification = new NotificationIcon;
 		addChild(notification);
 	}
+
+   private:
+	// For drawing red dot in the Library Button for when there is a notification
+	NotificationIcon* notification;
 
 	void onAction(const ActionEvent& e) override {
 		ui::Menu* menu = createMenu<LibraryMenu>();
@@ -1084,81 +1131,94 @@ struct LibraryButton : MenuButton {
 /**
  * The Help button for the main menu
  */
-struct HelpButton : MenuButton {
-    // For drawing red dot in the Help Button for when there is a notification
-	// that an app update is availablef
-    NotificationIcon* notification;
-
-    HelpButton() {
+class HelpButton : public MenuButton {
+   public:
+    HelpButton() : MenuButton(string::translate("MenuBar.help")) {
         notification = new NotificationIcon;
         addChild(notification);
     }
 
-	void onAction(const ActionEvent& e) override {
-		ui::Menu* menu = createMenu();
-		menu->cornerFlags = BND_CORNER_TOP;
-		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+   private:
+    // For drawing red dot in the Help Button for when there is a notification
+    NotificationIcon* notification;
 
-		menu->addChild(new ui::MenuSeparator);
+    void onAction(const ActionEvent& e) override {
+        ui::Menu* menu = createMenu();
+        menu->cornerFlags = BND_CORNER_TOP;
+        menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 
-		menu->addChild(createSubmenuItem("🌐 " + string::translate("MenuBar.help.language"), "", [=](ui::Menu* menu) {
-			appendLanguageMenu(menu);
-		}));
+        menu->addChild(new ui::MenuSeparator);
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.help.tips"), "", [=]() {
-			APP->scene->addChild(tipWindowCreate());
-		}));
+        menu->addChild(createSubmenuItem(
+            "🌐 " + string::translate("MenuBar.help.language"), "",
+            [=](ui::Menu* menu) { appendLanguageMenu(menu); }));
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.help.manual"), widget::getKeyCommandName(GLFW_KEY_F1, 0), [=]() {
-			system::openBrowser("https://vcvrack.com/manual");
-		}));
+        menu->addChild(
+            createMenuItem(string::translate("MenuBar.help.tips"), "",
+                           [=]() { APP->scene->addChild(tipWindowCreate()); }));
 
-		if (!settings::isNotVCVRack) {
-			menu->addChild(createMenuItem(string::translate("MenuBar.help.support"), "", [=]() {
-				system::openBrowser("https://vcvrack.com/support");
-			}));
+        menu->addChild(createMenuItem(
+            string::translate("MenuBar.help.manual"),
+            widget::getKeyCommandName(GLFW_KEY_F1, 0),
+            [=]() { system::openBrowser("https://vcvrack.com/manual"); }));
 
-			menu->addChild(createMenuItem("VCVRack.com", "", [=]() {
-				system::openBrowser("https://vcvrack.com/");
-			}));
-		}
+        if (!settings::isNotVCVRack) {
+            menu->addChild(createMenuItem(
+                string::translate("MenuBar.help.support"), "",
+                [=]() { system::openBrowser("https://vcvrack.com/support"); }));
 
-		menu->addChild(new ui::MenuSeparator);
+            menu->addChild(createMenuItem("VCVRack.com", "", [=]() {
+                system::openBrowser("https://vcvrack.com/");
+            }));
+        }
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.help.userFolder"), "", [=]() {
-			system::openDirectory(asset::user(""));
-		}));
+        menu->addChild(new ui::MenuSeparator);
 
-		if (settings::isNotVCVRack) {
-			// Show VCV Rack changelog
-			menu->addChild(createMenuItem(string::translate("MenuBar.help.changelog"), "", [=]() {
-				system::openBrowser("https://github.com/VCVRack/Rack/blob/v2/CHANGELOG.md");
-			}));
-		} else {
-			// Show Non VCV Rack changelog
-			menu->addChild(createMenuItem(string::translate("MenuBar.help.changelog"), "", [=]() {
-				system::openBrowser("https://github.com/skibu/LiminalRack/blob/v2/docs/liminalChangelog.md");
-			}));		
-		}
+        menu->addChild(
+            createMenuItem(string::translate("MenuBar.help.userFolder"), "",
+                           [=]() { system::openDirectory(asset::user("")); }));
 
-		// For VCV Rack make getting updates easy. But this doesn't work for forks like Liminal
-		if (!settings::isNotVCVRack) {
-			if (library::isAppUpdateAvailable()) {
-				// If there is a new version of app available then create menu button to update to it
-				menu->addChild(createMenuItem(string::f(string::translate("MenuBar.help.update"), APP_NAME), APP_VERSION + " → " + library::appVersion, [=]() {
-					system::openBrowser(library::appDownloadUrl);
-				}));
-			}
-			else if (!settings::autoCheckUpdates && !settings::devMode) {
-				// Create button for checking for update
-				menu->addChild(createMenuItem(string::f(string::translate("MenuBar.help.checkUpdate"), APP_NAME), "", [=]() {
-					std::thread t([&]() {
-						library::checkAppUpdate();
-					});
-					t.detach();
-				}, false, true));
-			}
-		}
+        if (settings::isNotVCVRack) {
+            // Show VCV Rack changelog
+            menu->addChild(createMenuItem(
+                string::translate("MenuBar.help.changelog"), "", [=]() {
+                    system::openBrowser(
+                        "https://github.com/VCVRack/Rack/blob/v2/CHANGELOG.md");
+                }));
+        } else {
+            // Show Non VCV Rack changelog
+            menu->addChild(createMenuItem(
+                string::translate("MenuBar.help.changelog"), "", [=]() {
+                    system::openBrowser(
+                        "https://github.com/skibu/LiminalRack/blob/v2/docs/"
+                        "liminalChangelog.md");
+                }));
+        }
+
+        // For VCV Rack make getting updates easy. But this doesn't work for
+        // forks like Liminal
+        if (!settings::isNotVCVRack) {
+            if (library::isAppUpdateAvailable()) {
+                // If there is a new version of app available then create menu
+                // button to update to it
+                menu->addChild(createMenuItem(
+                    string::f(string::translate("MenuBar.help.update"),
+                              APP_NAME),
+                    APP_VERSION + " → " + library::appVersion,
+                    [=]() { system::openBrowser(library::appDownloadUrl); }));
+            } else if (!settings::autoCheckUpdates && !settings::devMode) {
+                // Create button for checking for update
+                menu->addChild(createMenuItem(
+                    string::f(string::translate("MenuBar.help.checkUpdate"),
+                              APP_NAME),
+                    "",
+                    [=]() {
+                        std::thread t([&]() { library::checkAppUpdate(); });
+                        t.detach();
+                    },
+                    false, true));
+            }
+        }
 	}
 
 	void step() override {
@@ -1180,7 +1240,7 @@ struct HelpButton : MenuButton {
 ////////////////////
 
 
-struct InfoLabel : ui::Label {
+class InfoLabel : public ui::Label {
 	int frameCount = 0;
 	double frameDurationTotal = 0.0;
 	double frameDurationAvg = NAN;
@@ -1211,20 +1271,21 @@ struct InfoLabel : ui::Label {
 		// 	uiLastTime = time;
 		// }
 
-		text = "";
+        std::string label = "";
 
 		// If window wide enough display frame rate and CPU meter
 		if (box.size.x >= 460) {
 			double fps = std::isfinite(frameDurationAvg) ? 1.0 / frameDurationAvg : 0.0;
 			double meterAverage = APP->engine->getMeterAverage();
 			double meterMax = APP->engine->getMeterMax();
-            text += string::f(string::translate("MenuBar.infoLabel"), fps, meterAverage * 100, meterMax * 100);
-			text += "    ";
+            label += string::f(string::translate("MenuBar.infoLabel"), fps, meterAverage * 100, meterMax * 100);
+			label += "    ";
 		}
 
 		// Add in app and OS name
-		text += APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION + " " + APP_OS_NAME + " " + APP_CPU_NAME;
+		label += APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION + " " + APP_OS_NAME + " " + APP_CPU_NAME;
 
+		setText(label);
 		Label::step();
 	}
 };
@@ -1253,33 +1314,28 @@ struct MenuBar : widget::OpaqueWidget {
 		layout->setMinSpacing(math::Vec(15.0, 0));
 		addChild(layout);
 
-		FileButton* fileButton = new FileButton;
-		fileButton->text = string::translate("MenuBar.file");
+		FileButton* fileButton = new FileButton();
 		layout->addChild(fileButton);
 
-		EditButton* editButton = new EditButton;
-		editButton->text = string::translate("MenuBar.edit");
+		EditButton* editButton = new EditButton();
 		layout->addChild(editButton);
 
-		ViewButton* viewButton = new ViewButton;
-		viewButton->text = string::translate("MenuBar.view");
+		ViewButton* viewButton = new ViewButton();
 		layout->addChild(viewButton);
 
-		EngineButton* engineButton = new EngineButton;
-		engineButton->text = string::translate("MenuBar.engine");
+		EngineButton* engineButton = new EngineButton();
 		layout->addChild(engineButton);
 
-		LibraryButton* libraryButton = new LibraryButton;
-		libraryButton->text = string::translate("MenuBar.library");
+		LibraryButton* libraryButton = new LibraryButton();
 		layout->addChild(libraryButton);
 
-		HelpButton* helpButton = new HelpButton;
-		helpButton->text = string::translate("MenuBar.help");
+		HelpButton* helpButton = new HelpButton();
 		layout->addChild(helpButton);
 
-		infoLabel = new InfoLabel;
+        // To display CPU and other such info
+		infoLabel = new InfoLabel();
 		infoLabel->box.size.x = 600;
-		infoLabel->alignment = ui::Label::RIGHT_ALIGNMENT;
+		infoLabel->setAlignment(ui::Label::RIGHT_ALIGNMENT);
 		layout->addChild(infoLabel);
 	}
 
@@ -1294,7 +1350,7 @@ struct MenuBar : widget::OpaqueWidget {
 		Widget::step();
 		infoLabel->box.size.x = box.size.x - infoLabel->box.pos.x - 5;
 		// Setting 40% alpha prevents Label from using the default UI theme color, so set the color manually here.
-		infoLabel->color = color::alpha(bndGetTheme()->regularTheme.textColor, 0.4);
+		infoLabel->setColor(color::alpha(bndGetTheme()->regularTheme.textColor, 0.4));
 	}
 };
 

@@ -6,18 +6,20 @@
 namespace rack {
 namespace ui {
 
+class Tooltip : public widget::Widget {
+   public:
+    Tooltip(const std::string& text) : text(text) {}
+    Tooltip() {}
 
-struct Tooltip : widget::Widget {
     /** Text to display in the tooltip */
-	std::string text;
+    std::string text;
 
     /** Position and size the tooltip */
-	void step() override;
+    void step() override;
 
     /** Actually draw the tooltip */
-	void draw(const DrawArgs& args) override;
+    void draw(const DrawArgs& args) override;
 };
-
 
 } // namespace ui
 } // namespace rack

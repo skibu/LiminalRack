@@ -5,11 +5,13 @@
 namespace rack {
 namespace ui {
 
-
+/** Default constructor needs to be declared here instead of inlined
+ * so that modules that use it, like 4ms, can link against it.
+ */
 Button::Button() {
-    box.size.y = rack::settings::bndWidgetHeight;
+    // FIXME really needed?
+    box.size.y = settings::bndWidgetHeight;
 }
-
 
 void Button::draw(const DrawArgs& args) {
 	BNDwidgetState state = BND_DEFAULT;

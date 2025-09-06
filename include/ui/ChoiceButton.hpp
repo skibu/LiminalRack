@@ -9,8 +9,12 @@ namespace ui {
 
 /** Button with a dropdown icon on its right.
 */
-struct ChoiceButton : Button {
-	void draw(const DrawArgs& args) override;
+class ChoiceButton : public Button {
+   public:
+    ChoiceButton(const std::string& text = "") : Button(text) {}
+
+   private:
+    void draw(const DrawArgs& args) override;
 };
 
 

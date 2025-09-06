@@ -41,8 +41,8 @@ static void appendAudioDriverMenu(ui::Menu* menu, audio::Port* port) {
 		AudioDriverValueItem* item = new AudioDriverValueItem;
 		item->port = port;
 		item->driverId = driverId;
-		item->text = audio::getDriver(driverId)->getName();
-		item->rightText = CHECKMARK(item->driverId == port->getDriverId());
+		item->setText(audio::getDriver(driverId)->getName());
+		item->setRightText(CHECKMARK(item->driverId == port->getDriverId()));
 		menu->addChild(item);
 	}
 }
@@ -99,8 +99,8 @@ static void appendAudioDeviceMenu(ui::Menu* menu, audio::Port* port) {
 		AudioDeviceValueItem* item = new AudioDeviceValueItem;
 		item->port = port;
 		item->deviceId = -1;
-		item->text = "(" + string::translate("AudioDisplay.noDevice") + ")";
-		item->rightText = CHECKMARK(item->deviceId == port->getDeviceId());
+		item->setText("(" + string::translate("AudioDisplay.noDevice") + ")");
+		item->setRightText(CHECKMARK(item->deviceId == port->getDeviceId()));
 		menu->addChild(item);
 	}
 
@@ -123,8 +123,8 @@ static void appendAudioDeviceMenu(ui::Menu* menu, audio::Port* port) {
 			item->deviceId = deviceId;
 			item->inputOffset = inputOffset;
 			item->outputOffset = outputOffset;
-			item->text = getDetailTemplate(name, numInputs, inputOffset, numOutputs, outputOffset);
-			item->rightText = CHECKMARK(deviceId == port->getDeviceId() && inputOffset == port->inputOffset && outputOffset == port->outputOffset);
+			item->setText(getDetailTemplate(name, numInputs, inputOffset, numOutputs, outputOffset));
+			item->setRightText(CHECKMARK(deviceId == port->getDeviceId() && inputOffset == port->inputOffset && outputOffset == port->outputOffset));
 			menu->addChild(item);
 		}
 	}
@@ -189,8 +189,8 @@ static void appendAudioSampleRateMenu(ui::Menu* menu, audio::Port* port) {
 		AudioSampleRateValueItem* item = new AudioSampleRateValueItem;
 		item->port = port;
 		item->sampleRate = sampleRate;
-		item->text = string::f("%g kHz", sampleRate / 1000.0);
-		item->rightText = CHECKMARK(item->sampleRate == port->getSampleRate());
+		item->setText(string::f("%g kHz", sampleRate / 1000.0));
+		item->setRightText(CHECKMARK(item->sampleRate == port->getSampleRate()));
 		menu->addChild(item);
 	}
 }
@@ -253,8 +253,8 @@ static void appendAudioBlockSizeMenu(ui::Menu* menu, audio::Port* port) {
 		item->port = port;
 		item->blockSize = blockSize;
 		float latency = (float) blockSize / port->getSampleRate() * 1000.0;
-		item->text = string::f("%d (%.1f ms)", blockSize, latency);
-		item->rightText = CHECKMARK(item->blockSize == port->getBlockSize());
+		item->setText(string::f("%d (%.1f ms)", blockSize, latency));
+		item->setRightText(CHECKMARK(item->blockSize == port->getBlockSize()));
 		menu->addChild(item);
 	}
 }

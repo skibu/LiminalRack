@@ -318,27 +318,43 @@ struct ModelBox : widget::OpaqueWidget {
 		OpaqueWidget::onHoverKey(e);
 	}
 
+    /** Determines if the tagId is one that should be filtered out because it is
+     * not really helpful info to the user. Specifically, filters out the "Hardware clone" tag.
+     */
+    static bool shouldFilterTag(int tagId) {
+        int undesiredTagId = tag::findId("Hardware clone");
+        return tagId == undesiredTagId;
+    }
+
+    /** Creates the tooltip text for a module in the Browser window. 
+     * @return A new Tooltip instance with the created text.
+    */
 	ui::Tooltip* createTooltip() {
 		std::string text;
+        text += model->plugin->brand;
+		text += " - ";
 		text += model->name;
-		text += "\n";
-		text += model->plugin->brand;
+		
 		// Description
 		if (model->description != "") {
 			text += "\n" + model->description;
 		}
-		// Tags
-		text += "\n\n";
-		text += string::translate("Browser.tooltipTags");
+
+		// Tags (aka Types)
+		text += "\n" + string::translate("Browser.tooltipTags");
 		std::vector<std::string> tags;
 		for (int tagId : model->tagIds) {
+            // Filter out certain tags that are not helpful to show to the user
+            if (shouldFilterTag(tagId))
+                continue;
+
 			std::string tag = string::translate("tag." + tag::getTag(tagId));
 			tags.push_back(tag);
 		}
 		text += string::join(tags, ", ");
-		ui::Tooltip* tooltip = new ui::Tooltip;
-		tooltip->text = text;
-		return tooltip;
+
+        // Create and return tooltip
+		return new ui::Tooltip(text);
 	}
 
 	void onEnter(const EnterEvent& e) override {
@@ -364,75 +380,103 @@ struct ModelBox : widget::OpaqueWidget {
 	}
 };
 
+class BrowserSearchField : public ui::TextField {
+   public:
+    BrowserSearchField(Browser& browser) : browser(browser) {}
 
-struct BrowserSearchField : ui::TextField {
-	Browser* browser;
+   private:
+    Browser& browser;
 
-	void step() override {
-		// Steal focus when step is called
-		APP->event->setSelectedWidget(this);
-		TextField::step();
-	}
+    void step() override {
+        // Steal focus when step is called
+        APP->event->setSelectedWidget(this);
+        TextField::step();
+    }
 
-	void onSelectKey(const SelectKeyEvent& e) override;
-	void onChange(const ChangeEvent& e) override;
-	void onAction(const ActionEvent& e) override;
+    void onSelectKey(const SelectKeyEvent& e) override;
+    void onChange(const ChangeEvent& e) override;
+    void onAction(const ActionEvent& e) override;
 
-	void onHide(const HideEvent& e) override {
-		APP->event->setSelectedWidget(NULL);
-		ui::TextField::onHide(e);
-	}
+    void onHide(const HideEvent& e) override {
+        APP->event->setSelectedWidget(NULL);
+        ui::TextField::onHide(e);
+    }
 
-	void onShow(const ShowEvent& e) override {
-		selectAll();
-		TextField::onShow(e);
-	}
+    void onShow(const ShowEvent& e) override {
+        selectAll();
+        TextField::onShow(e);
+    }
 };
 
+class FavoriteQuantity : public Quantity {
+   public:
+    FavoriteQuantity(Browser& browser) : browser(browser) {}
 
-struct FavoriteQuantity : Quantity {
-	Browser* browser;
-	void setValue(float value) override;
-	float getValue() override;
+   private:
+    Browser& browser;
+
+   public:
+    void setValue(float value) override;
+    float getValue() override;
 };
 
+class ClearButton : public ui::Button {
+   public:
+    ClearButton(Browser& browser)
+        : Button(string::translate("Browser.resetFilters")), browser(browser) {}
 
-struct ClearButton : ui::Button {
-	Browser* browser;
-	void onAction(const ActionEvent& e) override;
+   private:
+    Browser& browser;
+
+    void onAction(const ActionEvent& e) override;
 };
 
+class BrandItem : public ui::MenuItem {
+   public:
+    BrandItem(Browser& browser, const std::string& brand = "")
+        : MenuItem(brand), browser(browser) {}
 
-struct BrandItem : ui::MenuItem {
-	Browser* browser;
-	std::string brand;
-	void onAction(const ActionEvent& e) override;
-	void step() override;
+   private:
+    Browser& browser;
+
+    void onAction(const ActionEvent& e) override;
+    void step() override;
 };
 
+class BrandButton : public ui::ChoiceButton {
+   public:
+    BrandButton(Browser& browser) : browser(browser) {}
 
-struct BrandButton : ui::ChoiceButton {
-	Browser* browser;
+   private:
+    Browser& browser;
 
-	void onAction(const ActionEvent& e) override;
-	void step() override;
+    void onAction(const ActionEvent& e) override;
+    void step() override;
 };
-
 
 /** An item for the tag menu. Causes the TagItem::onAction() method to be called on a click. */
-struct TagItem : ui::MenuItem {
-	Browser* browser;
-	int tagId;
-	void onAction(const ActionEvent& e) override;
-	void step() override;
+class TagItem : public ui::MenuItem {
+public:
+    TagItem(Browser& browser, int tagId = -1) : browser(browser), tagId(tagId) {}
+    
+private:
+    Browser& browser;
+    int tagId;
+
+    void onAction(const ActionEvent& e) override;
+    void step() override;
 };
 
 
-struct TagButton : ui::ChoiceButton {
-	Browser* browser;
+class TagButton : public ui::ChoiceButton {
+public:
+    TagButton(Browser& browser) : browser(browser) {}
 
-	void onAction(const ActionEvent& e) override;
-	void step() override;
+private:
+    Browser& browser;
+
+    void onAction(const ActionEvent& e) override;
+    void step() override;
 };
 
 
@@ -448,17 +492,20 @@ static std::vector<std::string> getSortNames() {
 };
 
 
-struct SortButton : ui::ChoiceButton {
-	Browser* browser;
+class SortButton : public ui::ChoiceButton {
+public:
+    SortButton(Browser& browser) : browser(browser) {}
 
-	void onAction(const ActionEvent& e) override;
+private:
+    Browser& browser;
 
-	void step() override {
-		text = string::translate("Browser.sort");
-		text += getSortNames()[settings::browserSort];
-		text = string::ellipsize(text, 20);
-		ChoiceButton::step();
-	}
+    void onAction(const ActionEvent& e) override;
+    void step() override {
+        text = string::translate("Browser.sort");
+        text += getSortNames()[settings::browserSort];
+        text = string::ellipsize(text, 20);
+        ChoiceButton::step();
+    }
 };
 
 /** Zoom selector for the browser */
@@ -479,11 +526,17 @@ struct ZoomButton : ui::ChoiceButton {
     }
 };
 
-struct UrlButton : ui::Button {
-	std::string url;
-	void onAction(const ActionEvent& e) override {
-		system::openBrowser(url);
-	}
+class UrlButton : public ui::Button {
+   public:
+	UrlButton(const std::string& url, const std::string& text)
+		: Button(text), url(url) {}
+
+   private:
+    std::string url;
+
+    void onAction(const ActionEvent& e) override {
+        system::openBrowser(url);
+    }
 };
 
 /**
@@ -556,14 +609,13 @@ struct Browser : widget::OpaqueWidget {
 
     Browser() {
         // Browser top label
-        titleLabel = new ui::Label;
-        titleLabel->text = string::translate("Browser.title");
-        titleLabel->fontSize = 40;
-        titleLabel->color = color::BLACK; // Set text color to contrast well with the background
-        titleLabel->alignment = ui::Label::Alignment::CENTER_ALIGNMENT;
+        titleLabel = new ui::Label(string::translate("Browser.title"));
+		titleLabel->setFontSize(40);
+		titleLabel->setColor(color::BLACK); // Set text color to contrast well with the background
+		titleLabel->setAlignment(ui::Label::Alignment::CENTER_ALIGNMENT);
         titleLabel->box.pos.x = MARGIN;
         titleLabel->box.pos.y = MARGIN + 2.0;
-        titleLabel->box.size.y = titleLabel->fontSize * 0.7 + 2.0; // Don't need full height for label
+		titleLabel->box.size.y = titleLabel->getFontSize() * 0.7 + 2.0; // Don't need full height for label
         addChild(titleLabel);
 
         // Header
@@ -582,38 +634,30 @@ struct Browser : widget::OpaqueWidget {
         // but then adjusting them to the font size actually being used here.
         // This way it is easy to change the font size simply by setting HeaderFontSize.
 
-        searchField = new BrowserSearchField;
-        searchField->box.size.x = 150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        searchField->placeholder = string::translate("Browser.searchModules");
-        searchField->browser = this;
-        headerLayout->addChild(searchField);
+		searchField = new BrowserSearchField(*this);
+		searchField->box.size.x = 150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+		searchField->setPlaceholder(string::translate("Browser.searchModules"));
+		headerLayout->addChild(searchField);
 
-        brandButton = new BrandButton;
+        brandButton = new BrandButton(*this);
         brandButton->box.size.x = 150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        brandButton->browser = this;
         headerLayout->addChild(brandButton);
 
-        tagButton = new TagButton;
+        tagButton = new TagButton(*this);
         tagButton->box.size.x = 150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        tagButton->browser = this;
         headerLayout->addChild(tagButton);
 
-        favoriteQuantity = new FavoriteQuantity;
-        favoriteQuantity->browser = this;
+        favoriteQuantity = new FavoriteQuantity(*this);
 
-        favoriteButton = new ui::OptionButton;
-        favoriteButton->quantity = favoriteQuantity;
-        favoriteButton->text = string::translate("Browser.favorites");
-        favoriteButton->box.size.x = 70 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        headerLayout->addChild(favoriteButton);
+		favoriteButton = new ui::OptionButton(string::translate("Browser.favorites"));
+		favoriteButton->setQuantity(favoriteQuantity);
+		favoriteButton->box.size.x = 70 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+		headerLayout->addChild(favoriteButton);
 
-        clearButton = new ClearButton;
-        clearButton->box.size.x = 90 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        clearButton->text = string::translate("Browser.resetFilters");
-        clearButton->browser = this;
-        headerLayout->addChild(clearButton);
+        clearButton = new ClearButton(*this);
+		clearButton->box.size.x = 90 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+		headerLayout->addChild(clearButton);
 
-        // The count of the number of modules being displayed is not that important since
         // can see the modules. And it takes up precious space. Plus there are already 
         // lots of other action widgets, complicating the UI. Therefore don't display it
         // unless VCV Rack where want UI to be consistent.
@@ -623,9 +667,8 @@ struct Browser : widget::OpaqueWidget {
             headerLayout->addChild(countLabel);
         }
 
-        SortButton* sortButton = new SortButton;
+        SortButton* sortButton = new SortButton(*this);
         sortButton->box.size.x = 130 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        sortButton->browser = this;
         headerLayout->addChild(sortButton);
 
         // For zooming in or out on the modules in the Browser
@@ -635,10 +678,11 @@ struct Browser : widget::OpaqueWidget {
         headerLayout->addChild(zoomButton);
 
         // For adding modules from VCV Rack to the users' library
-        UrlButton* libraryButton = new UrlButton;
-        libraryButton->box.size.x = 170 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        libraryButton->text = string::translate("Browser.browseLibrary");
-        libraryButton->url = "https://library.vcvrack.com/";
+        UrlButton* libraryButton =
+            new UrlButton("https://library.vcvrack.com/",
+                          string::translate("Browser.browseLibrary"));
+        libraryButton->box.size.x =
+            170 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
         headerLayout->addChild(libraryButton);
 
         // Restore original height
@@ -802,99 +846,107 @@ struct Browser : widget::OpaqueWidget {
 		});
 	}
 
-	void refresh() {
-		// Reset scroll position
-		moduleScroll->offset = math::Vec();
+    void refresh() {
+        // Reset scroll position
+        moduleScroll->offset = math::Vec();
 
-		prefilteredModelScores.clear();
+        prefilteredModelScores.clear();
 
-		// Filter ModelBoxes by brand and tag
-		for (Widget* w : moduleLayoutContainer->children) {
-			ModelBox* m = reinterpret_cast<ModelBox*>(w);
-			m->setVisible(isModelVisible(m->model, brand, tagIds, favorite));
-		}
+        // Filter ModelBoxes by brand and tag
+        for (Widget* w : moduleLayoutContainer->children) {
+            ModelBox* m = reinterpret_cast<ModelBox*>(w);
+            m->setVisible(
+                isModelVisible(m->model, brand, tagIds, favorite));
+        }
 
-		// Filter and sort by search results
-		if (search.empty()) {
-			// Add all models to prefilteredModelScores with scores of 1
-			for (Widget* w : moduleLayoutContainer->children) {
-				ModelBox* m = reinterpret_cast<ModelBox*>(w);
-				prefilteredModelScores[m->model] = 1.f;
-			}
+        // Filter and sort by search results
+        if (search.empty()) {
+            // Add all models to prefilteredModelScores with scores of 1
+            for (Widget* w : moduleLayoutContainer->children) {
+                ModelBox* m = reinterpret_cast<ModelBox*>(w);
+                prefilteredModelScores[m->model] = 1.f;
+            }
 
-			// Sort ModelBoxes
-			if (settings::browserSort == settings::BROWSER_SORT_UPDATED) {
-				sortModels([this](ModelBox* m) {
-					plugin::Plugin* p = m->model->plugin;
-					int modelOrder = get(modelOrders, m->model, 0);
-					return std::make_tuple(-p->modifiedTimestamp, p->brand, p->name, modelOrder);
-				});
-			}
-			else if (settings::browserSort == settings::BROWSER_SORT_LAST_USED) {
-				sortModels([this](ModelBox* m) {
-					plugin::Plugin* p = m->model->plugin;
-					const settings::ModuleInfo* mi = settings::getModuleInfo(p->slug, m->model->slug);
-					double lastAdded = mi ? mi->lastAdded : -INFINITY;
-					int modelOrder = get(modelOrders, m->model, 0);
-					return std::make_tuple(-lastAdded, -p->modifiedTimestamp, p->brand, p->name, modelOrder);
-				});
-			}
-			else if (settings::browserSort == settings::BROWSER_SORT_MOST_USED) {
-				sortModels([this](ModelBox* m) {
-					plugin::Plugin* p = m->model->plugin;
-					const settings::ModuleInfo* mi = settings::getModuleInfo(p->slug, m->model->slug);
-					int added = mi ? mi->added : 0;
-					double lastAdded = mi ? mi->lastAdded : -INFINITY;
-					int modelOrder = get(modelOrders, m->model, 0);
-					return std::make_tuple(-added, -lastAdded, -p->modifiedTimestamp, p->brand, p->name, modelOrder);
-				});
-			}
-			else if (settings::browserSort == settings::BROWSER_SORT_BRAND) {
-				sortModels([this](ModelBox* m) {
-					plugin::Plugin* p = m->model->plugin;
-					int modelOrder = get(modelOrders, m->model, 0);
-					return std::make_tuple(p->brand, p->name, modelOrder);
-				});
-			}
-			else if (settings::browserSort == settings::BROWSER_SORT_NAME) {
-				sortModels([](ModelBox* m) {
-					plugin::Plugin* p = m->model->plugin;
-					return std::make_tuple(m->model->name, p->brand);
-				});
-			}
-			else if (settings::browserSort == settings::BROWSER_SORT_RANDOM) {
-				std::map<ModelBox*, uint64_t> randomOrder;
-				for (Widget* w : moduleLayoutContainer->children) {
-					ModelBox* m = reinterpret_cast<ModelBox*>(w);
-					randomOrder[m] = random::u64();
-				}
-				sortModels([&](ModelBox* m) {
-					return get(randomOrder, m, 0);
-				});
-			}
-		}
-		else {
-			// Score results against search query
-			auto results = modelDb.search(search);
-			// DEBUG("=============");
-			for (auto& result : results) {
-				prefilteredModelScores[result.key] = result.score;
-				// DEBUG("%s %s\t\t%f", result.key->plugin->slug.c_str(), result.key->slug.c_str(), result.score);
-			}
-			// Sort by score
-			sortModels([&](ModelBox* m) {
-				return -get(prefilteredModelScores, m->model, 0.f);
-			});
-			// Filter by whether the score is above the threshold
-			for (Widget* w : moduleLayoutContainer->children) {
-				ModelBox* m = reinterpret_cast<ModelBox*>(w);
-				assert(m);
-				if (m->isVisible()) {
-					if (prefilteredModelScores.find(m->model) == prefilteredModelScores.end())
-						m->hide();
-				}
-			}
-		}
+            // Sort ModelBoxes
+            if (settings::browserSort == settings::BROWSER_SORT_UPDATED) {
+                sortModels([this](ModelBox* m) {
+                    plugin::Plugin* p = m->model->plugin;
+                    int modelOrder = get(modelOrders, m->model, 0);
+                    return std::make_tuple(-p->modifiedTimestamp, p->brand,
+                                            p->name, modelOrder);
+                });
+            } else if (settings::browserSort ==
+                        settings::BROWSER_SORT_LAST_USED) {
+                sortModels([this](ModelBox* m) {
+                    plugin::Plugin* p = m->model->plugin;
+                    const settings::ModuleInfo* mi =
+                        settings::getModuleInfo(p->slug, m->model->slug);
+                    double lastAdded = mi ? mi->lastAdded : -INFINITY;
+                    int modelOrder = get(modelOrders, m->model, 0);
+                    return std::make_tuple(-lastAdded,
+                                            -p->modifiedTimestamp, p->brand,
+                                            p->name, modelOrder);
+                });
+            } else if (settings::browserSort ==
+                        settings::BROWSER_SORT_MOST_USED) {
+                sortModels([this](ModelBox* m) {
+                    plugin::Plugin* p = m->model->plugin;
+                    const settings::ModuleInfo* mi =
+                        settings::getModuleInfo(p->slug, m->model->slug);
+                    int added = mi ? mi->added : 0;
+                    double lastAdded = mi ? mi->lastAdded : -INFINITY;
+                    int modelOrder = get(modelOrders, m->model, 0);
+                    return std::make_tuple(-added, -lastAdded,
+                                            -p->modifiedTimestamp, p->brand,
+                                            p->name, modelOrder);
+                });
+            } else if (settings::browserSort ==
+                        settings::BROWSER_SORT_BRAND) {
+                sortModels([this](ModelBox* m) {
+                    plugin::Plugin* p = m->model->plugin;
+                    int modelOrder = get(modelOrders, m->model, 0);
+                    return std::make_tuple(p->brand, p->name, modelOrder);
+                });
+            } else if (settings::browserSort ==
+                        settings::BROWSER_SORT_NAME) {
+                sortModels([](ModelBox* m) {
+                    plugin::Plugin* p = m->model->plugin;
+                    return std::make_tuple(m->model->name, p->brand);
+                });
+            } else if (settings::browserSort ==
+                        settings::BROWSER_SORT_RANDOM) {
+                std::map<ModelBox*, uint64_t> randomOrder;
+                for (Widget* w : moduleLayoutContainer->children) {
+                    ModelBox* m = reinterpret_cast<ModelBox*>(w);
+                    randomOrder[m] = random::u64();
+                }
+                sortModels(
+                    [&](ModelBox* m) { return get(randomOrder, m, 0); });
+            }
+        } else {
+            // Score results against search query
+            auto results = modelDb.search(search);
+            // DEBUG("=============");
+            for (auto& result : results) {
+                prefilteredModelScores[result.key] = result.score;
+                // DEBUG("%s %s\t\t%f", result.key->plugin->slug.c_str(),
+                // result.key->slug.c_str(), result.score);
+            }
+            // Sort by score
+            sortModels([&](ModelBox* m) {
+                return -get(prefilteredModelScores, m->model, 0.f);
+            });
+            // Filter by whether the score is above the threshold
+            for (Widget* w : moduleLayoutContainer->children) {
+                ModelBox* m = reinterpret_cast<ModelBox*>(w);
+                assert(m);
+                if (m->isVisible()) {
+                    if (prefilteredModelScores.find(m->model) ==
+                        prefilteredModelScores.end())
+                        m->hide();
+                }
+            }
+        }
 
         // Only update countLabel if it was actually created
         if (countLabel) {
@@ -903,30 +955,31 @@ struct Browser : widget::OpaqueWidget {
             for (Widget* w : moduleLayoutContainer->children) {
                 if (w->isVisible()) count++;
             }
-            countLabel->text =
-                (count == 1) ? string::translate("Browser.modulesOne")
-                                : string::f(string::translate("Browser.modulesMany"), count);
+            countLabel->setText(
+                (count == 1)
+                    ? string::translate("Browser.modulesOne")
+                    : string::f(string::translate("Browser.modulesMany"),
+                                count));
         }
-        }
+    }
 
-	void clearSelectorsInHeader() {
-		search = "";
-		searchField->setText("");
-		brand = "";
-		tagIds = {};
-		favorite = false;
-		refresh();
-	}
+    void clearSelectorsInHeader() {
+        search = "";
+        searchField->setText("");
+        brand = "";
+        tagIds = {};
+        favorite = false;
+        refresh();
+    }
 
-	void onButton(const ButtonEvent& e) override {
-		Widget::onButton(e);
-		e.stopPropagating();
-		// Consume all mouse buttons
-		if (!e.isConsumed())
-			e.consume(this);
-	}
+    void onButton(const ButtonEvent& e) override {
+        Widget::onButton(e);
+        e.stopPropagating();
+        // Consume all mouse buttons
+        if (!e.isConsumed()) e.consume(this);
+    }
 
-	void onHoverKey(const HoverKeyEvent& e) override {
+    void onHoverKey(const HoverKeyEvent& e) override {
 		if (e.action == GLFW_PRESS) {
 			// Secret key command to dump all visible modules into rack
 			if (e.isKeyCommand(GLFW_KEY_F2, RACK_MOD_CTRL | GLFW_MOD_SHIFT | GLFW_MOD_ALT)) {
@@ -956,24 +1009,24 @@ struct Browser : widget::OpaqueWidget {
 
 
 inline void FavoriteQuantity::setValue(float value) {
-	browser->favorite = value;
-	browser->refresh();
+	browser.favorite = value;
+	browser.refresh();
 }
 
 inline float FavoriteQuantity::getValue() {
-	return browser->favorite;
+	return browser.favorite;
 }
 
 inline void ClearButton::onAction(const ActionEvent& e) {
-	browser->clearSelectorsInHeader();
+	browser.clearSelectorsInHeader();
 }
 
 inline void BrowserSearchField::onSelectKey(const SelectKeyEvent& e) {
 	if (e.action == GLFW_PRESS || e.action == GLFW_REPEAT) {
 		// Backspace when the field is empty to clear filters.
 		if (e.isKeyCommand(GLFW_KEY_BACKSPACE) || e.isKeyCommand(GLFW_KEY_BACKSPACE, RACK_MOD_CTRL)) {
-			if (text == "") {
-				browser->clearSelectorsInHeader();
+			if (getText() == "") {
+				browser.clearSelectorsInHeader();
 				e.consume(this);
 			}
 		}
@@ -984,14 +1037,14 @@ inline void BrowserSearchField::onSelectKey(const SelectKeyEvent& e) {
 }
 
 inline void BrowserSearchField::onChange(const ChangeEvent& e) {
-	browser->search = string::trim(text);
-	browser->refresh();
+	browser.search = string::trim(getText());
+	browser.refresh();
 }
 
 inline void BrowserSearchField::onAction(const ActionEvent& e) {
 	// Get first ModelBox
 	ModelBox* mb = NULL;
-	for (Widget* w : browser->moduleLayoutContainer->children) {
+	for (Widget* w : browser.moduleLayoutContainer->children) {
 		if (w->isVisible()) {
 			mb = reinterpret_cast<ModelBox*>(w);
 			break;
@@ -1004,53 +1057,49 @@ inline void BrowserSearchField::onAction(const ActionEvent& e) {
 }
 
 inline void BrandItem::onAction(const ActionEvent& e) {
-	if (browser->brand == brand)
-		browser->brand = "";
+	if (browser.brand == getText())
+		browser.brand = "";
 	else
-		browser->brand = brand;
-	browser->refresh();
+		browser.brand = getText();
+	browser.refresh();
 }
 
 inline void BrandItem::step() {
-	rightText = CHECKMARK(browser->brand == brand);
-	MenuItem::step();
+    setRightText(CHECKMARK(browser.brand == getText()));
+    MenuItem::step();
 }
 
 inline void BrandButton::onAction(const ActionEvent& e) {
-    INFO("Clicked on Brand and got action "/*, e.context */);
-	ui::Menu* menu = createMenu();
-	menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
-	menu->box.size.x = box.size.x;
+    INFO("Clicked on Brand and got action " /*, e.context */);
+    ui::Menu* menu = createMenu();
+    menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+    menu->box.size.x = box.size.x;
 
-	BrandItem* noneItem = new BrandItem;
-	noneItem->text = string::translate("Browser.allBrands");
-	noneItem->brand = "";
-	noneItem->browser = browser;
-	menu->addChild(noneItem);
+    BrandItem* noneItem =
+        new BrandItem(browser, string::translate("Browser.allBrands"));
+    menu->addChild(noneItem);
 
-	menu->addChild(new ui::MenuSeparator);
+    menu->addChild(new ui::MenuSeparator);
 
-	// Collect brands from all plugins
-	std::set<std::string, string::CaseInsensitiveCompare> brands;
-	for (plugin::Plugin* plugin : plugin::plugins) {
-		brands.insert(plugin->brand);
-	}
+    // Collect brands from all plugins
+    std::set<std::string, string::CaseInsensitiveCompare> brands;
+    for (plugin::Plugin* plugin : plugin::plugins) {
+        brands.insert(plugin->brand);
+    }
 
-	for (const std::string& brand : brands) {
-		BrandItem* brandItem = new BrandItem;
-		brandItem->text = brand;
-		brandItem->brand = brand;
-		brandItem->browser = browser;
-		brandItem->disabled = !browser->hasVisibleModel(brand, browser->tagIds, browser->favorite);
-		menu->addChild(brandItem);
-	}
+    for (const std::string& brand : brands) {
+        BrandItem* brandItem = new BrandItem(browser, brand);
+        brandItem->setDisabled(
+            !browser.hasVisibleModel(brand, browser.tagIds, browser.favorite));
+        menu->addChild(brandItem);
+    }
 }
 
 inline void BrandButton::step() {
 	text = string::translate("Browser.brand");
-	if (!browser->brand.empty()) {
+	if (!browser.brand.empty()) {
 		text += ": ";
-		text += browser->brand;
+		text += browser.brand;
 	}
 	text = string::ellipsize(text, 20);
 	ChoiceButton::step();
@@ -1058,86 +1107,87 @@ inline void BrandButton::step() {
 
 /** Called when user clicks on an item in the tag menu */
 inline void TagItem::onAction(const ActionEvent& e) {
-	auto it = browser->tagIds.find(tagId);
-	bool isSelected = (it != browser->tagIds.end());
+	auto it = browser.tagIds.find(tagId);
+	bool isSelected = (it != browser.tagIds.end());
 
 	if (tagId >= 0) {
 		// Specific tag
 		if (!e.isConsumed()) {
 			// Multi select
 			if (isSelected)
-				browser->tagIds.erase(tagId);
+				browser.tagIds.erase(tagId);
 			else
-				browser->tagIds.insert(tagId);
+				browser.tagIds.insert(tagId);
 			e.unconsume();
 		}
 		else {
 			// Single select
 			if (isSelected)
-				browser->tagIds = {};
+				browser.tagIds = {};
 			else {
-				browser->tagIds = {tagId};
+				browser.tagIds = {tagId};
 			}
 		}
 	}
 	else {
 		// All tags
-		browser->tagIds = {};
+		browser.tagIds = {};
 	}
 
-	browser->refresh();
+	browser.refresh();
 }
 
 inline void TagItem::step() {
 	// TODO Disable tags with no modules
 	if (tagId >= 0) {
-		auto it = browser->tagIds.find(tagId);
-		bool isSelected = (it != browser->tagIds.end());
-		rightText = CHECKMARK(isSelected);
+		auto it = browser.tagIds.find(tagId);
+		bool isSelected = (it != browser.tagIds.end());
+		setRightText(CHECKMARK(isSelected));
 	}
 	else {
-		rightText = CHECKMARK(browser->tagIds.empty());
+		setRightText(CHECKMARK(browser.tagIds.empty()));
 	}
 	MenuItem::step();
 }
 
 inline void TagButton::onAction(const ActionEvent& e) {
-	ui::Menu* menu = createMenu();
-	menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
-	menu->box.size.x = box.size.x;
+    ui::Menu* menu = createMenu();
+    menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+    menu->box.size.x = box.size.x;
 
-	TagItem* noneItem = new TagItem;
-	noneItem->text = string::translate("Browser.allTags");
-	noneItem->tagId = -1;
-	noneItem->browser = browser;
-	menu->addChild(noneItem);
+    TagItem* noneItem = new TagItem(browser);
+    menu->addChild(noneItem);
 
     if (settings::hasTouchscreen) {
-        // Touchscreen, so Let user know they can select multiple tags by long click
-        menu->addChild(createMenuLabel(string::translate("Browser.tagsSelectMultipleTouchScreen")));
+        // Touchscreen, so Let user know they can select multiple tags by long
+        // click
+        menu->addChild(createMenuLabel(
+            string::translate("Browser.tagsSelectMultipleTouchScreen")));
     } else {
-        // Not a touch screen so tell user they can use MOD_CTRL click to select multiple
-        menu->addChild(createMenuLabel(widget::getKeyCommandName(0, RACK_MOD_CTRL) + string::translate("key.click") + string::translate("Browser.tagsSelectMultiple")));
+        // Not a touch screen so tell user they can use MOD_CTRL click to select
+        // multiple
+        menu->addChild(
+            createMenuLabel(widget::getKeyCommandName(0, RACK_MOD_CTRL) +
+                            string::translate("key.click") +
+                            string::translate("Browser.tagsSelectMultiple")));
     }
-	menu->addChild(new ui::MenuSeparator);
+    menu->addChild(new ui::MenuSeparator);
 
-	for (int tagId = 0; tagId < (int) tag::tagAliases.size(); tagId++) {
-		TagItem* tagItem = new TagItem;
-		std::string tag = string::translate("tag." + tag::getTag(tagId));
-		tagItem->text = tag;
-		tagItem->tagId = tagId;
-		tagItem->browser = browser;
-		tagItem->disabled = !browser->hasVisibleModel(browser->brand, {tagId}, browser->favorite);
-		menu->addChild(tagItem);
-	}
+    for (int tagId = 0; tagId < (int)tag::tagAliases.size(); tagId++) {
+        TagItem* tagItem = new TagItem(browser, tagId);
+        tagItem->setText(string::translate("tag." + tag::getTag(tagId)));
+        tagItem->setDisabled(
+            !browser.hasVisibleModel(browser.brand, {tagId}, browser.favorite));
+        menu->addChild(tagItem);
+    }
 }
 
 inline void TagButton::step() {
 	text = string::translate("Browser.tags");
-	if (!browser->tagIds.empty()) {
+	if (!browser.tagIds.empty()) {
 		text += ": ";
 		bool firstTag = true;
-		for (int tagId : browser->tagIds) {
+		for (int tagId : browser.tagIds) {
 			if (!firstTag)
 				text += ", ";
 			std::string tag = string::translate("tag." + tag::getTag(tagId));
@@ -1159,7 +1209,7 @@ inline void SortButton::onAction(const ActionEvent& e) {
 			[=]() {return settings::browserSort == sortId;},
 			[=]() {
 				settings::browserSort = (settings::BrowserSort) sortId;
-				browser->refresh();
+				browser.refresh();
 			}
 		));
 	}

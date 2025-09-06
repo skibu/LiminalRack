@@ -203,8 +203,8 @@ TMenuLabel* createMenuLabel(std::string text) {
 template <class TMenuItem = ui::MenuItem>
 TMenuItem* createMenuItem(std::string text, std::string rightText = "") {
 	TMenuItem* item = new TMenuItem;
-	item->text = text;
-	item->rightText = rightText;
+	item->setText(text);
+	item->setRightText(rightText);
 	return item;
 }
 
@@ -233,7 +233,7 @@ TMenuItem* createMenuItem(std::string text, std::string rightText, std::function
 
 	Item* item = createMenuItem<Item>(text, rightText);
 	item->action = action;
-	item->disabled = disabled;
+	item->setDisabled(disabled);
 	item->alwaysConsume = alwaysConsume;
 	return item;
 }
@@ -260,12 +260,13 @@ TMenuItem* createCheckMenuItem(std::string text, std::string rightText, std::fun
 		bool alwaysConsume;
 
 		void step() override {
-			this->rightText = rightTextPrefix;
+			std::string rightText = rightTextPrefix;
 			if (checked()) {
 				if (!rightTextPrefix.empty())
-					this->rightText += "  ";
-				this->rightText += CHECKMARK_STRING;
+					rightText += "  ";
+				rightText += CHECKMARK_STRING;
 			}
+			this->setRightText(rightText);
 			TMenuItem::step();
 		}
 		void onAction(const event::Action& e) override {
@@ -279,7 +280,7 @@ TMenuItem* createCheckMenuItem(std::string text, std::string rightText, std::fun
 	item->rightTextPrefix = rightText;
 	item->checked = checked;
 	item->action = action;
-	item->disabled = disabled;
+	item->setDisabled(disabled);
 	item->alwaysConsume = alwaysConsume;
 	return item;
 }
@@ -348,7 +349,7 @@ TMenuItem* createSubmenuItem(std::string text, std::string rightText, std::funct
 
 	Item* item = createMenuItem<Item>(text, rightText + (rightText.empty() ? "" : "  ") + RIGHT_ARROW);
 	item->createMenu = createMenu;
-	item->disabled = disabled;
+	item->setDisabled(disabled);
 	return item;
 }
 
@@ -377,7 +378,7 @@ TMenuItem* createIndexSubmenuItem(std::string text, std::vector<std::string> lab
 		void step() override {
 			size_t currIndex = getter();
 			std::string label = (currIndex < labels.size()) ? labels[currIndex] : "";
-			this->rightText = label + "  " + RIGHT_ARROW;
+			this->setRightText(label + "  " + RIGHT_ARROW);
 			TMenuItem::step();
 		}
 		ui::Menu* createChildMenu() override {
@@ -397,7 +398,7 @@ TMenuItem* createIndexSubmenuItem(std::string text, std::vector<std::string> lab
 	item->getter = getter;
 	item->setter = setter;
 	item->labels = labels;
-	item->disabled = disabled;
+	item->setDisabled(disabled);
 	item->alwaysConsume = alwaysConsume;
 	return item;
 }

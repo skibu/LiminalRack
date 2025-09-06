@@ -5,9 +5,15 @@
 #include <sstream>
 #include <string>
 #include <ui/Tooltip.hpp>
+#include <settings.hpp>
 
 namespace rack {
 namespace ui {
+
+/** So can clamp tooltip width to half the window width */
+static float maxTooltipWidth() {
+    return settings::windowSize.x / 3.0; // Third the window width
+}
 
 void Tooltip::step() {
     // Save the current render state
@@ -17,14 +23,26 @@ void Tooltip::step() {
     nvgTextLineHeight(APP->window->vg, 1.2);
 
     // Set size of tooltip to fit contents
-    box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str());
-    box.size.y = bndLabelHeight(APP->window->vg, -1, text.c_str(), INFINITY);
+    box.size.x = std::min(maxTooltipWidth(), bndLabelWidthForFontSize(
+        APP->window->vg, -1, settings::tooltipFontSize, text.c_str()));
+    box.size.y = bndLabelHeightForFontSize(
+        APP->window->vg, -1, settings::tooltipFontSize, text.c_str(), maxTooltipWidth());
+    // add bit of vertical padding
+    box.size.y += 2;
 
     // Position tooltip near cursor. This assumes that the Tooltip is added
     // to the root widget.
-    box.pos = APP->scene->mousePos.plus(math::Vec(15, 15));
+    math::Vec offset = settings::hasTouchscreen
+                           ?
+                           // For touchscreen don't want finger to cover tooltip
+                           // so place it above finger
+                           math::Vec(0/*22*/, 0/*-22*/ - box.size.y)
+                           :
+                           // Default tooltip offset
+                           math::Vec(15, 15);
+    box.pos = APP->scene->mousePos.plus(offset);
 
-    // Fit inside parent
+    // Fit tooltop inside parent's box
     assert(parent);
     box = box.nudge(parent->box.zeroPos());
 
@@ -93,21 +111,23 @@ static std::string formatFloatingPoints(const std::string& inputString) {
 }
 
 void Tooltip::draw(const DrawArgs& args) {
-	bndTooltipBackground(args.vg, 0.0, 0.0, box.size.x, box.size.y);
-	nvgTextLineHeight(args.vg, 1.2);
+    bndTooltipBackground(args.vg, 0.0, 0.0, box.size.x, box.size.y);
+    nvgTextLineHeight(args.vg, 1.2);
 
-	// Because there is no bndThemeLabel() function, temporarily replace the menu text color with tooltip text color and draw a menu label
-	BNDtheme* theme = (BNDtheme*) bndGetTheme();
-	NVGcolor menuTextColor = theme->menuTheme.textColor;
-	theme->menuTheme.textColor = theme->tooltipTheme.textColor;
-	// Format floating point numbers
-	text = formatFloatingPoints(text); 
-	bndMenuLabel(args.vg, 0.0, 0.0, INFINITY, box.size.y, -1, text.c_str());
-	theme->menuTheme.textColor = menuTextColor;
+    // Because there is no bndThemeLabel() function, temporarily replace the
+    // menu text color with tooltip text color and draw a menu label
+    BNDtheme* theme = bndGetTheme();
+    NVGcolor menuTextColor = theme->menuTheme.textColor;
+    theme->menuTheme.textColor = theme->tooltipTheme.textColor;
 
-	Widget::draw(args);
+    // Format floating point numbers
+    text = formatFloatingPoints(text);
+    bndTooltipLabel(args.vg, 0.0, 0.0, maxTooltipWidth(), box.size.y,
+                    settings::tooltipFontSize, text.c_str());
+    theme->menuTheme.textColor = menuTextColor;
+
+    Widget::draw(args);
 }
-
 
 } // namespace ui
 } // namespace rack

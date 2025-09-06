@@ -1,3 +1,7 @@
+/**
+ * For managing colors of the various UI components. 
+ */
+
 #include <ui/common.hpp>
 #include <settings.hpp>
 
@@ -16,17 +20,23 @@ void init() {
 void destroy() {
 }
 
-
-void setTheme(NVGcolor bg, NVGcolor fg) {
+/** Returns a copy of a BNDwidgetTheme object. */
+static BNDwidgetTheme createTheme(NVGcolor bg, NVGcolor fg) {
 	BNDwidgetTheme w;
-	w.outlineColor = color::lerp(bg, fg, 0.1);
+	w.outlineColor = color::lerp(bg, fg, 0.35);
 	w.itemColor = fg;
 	w.innerColor = color::lerp(bg, fg, 0.1);
-	w.innerSelectedColor = color::lerp(bg, fg, 0.2);
+	w.innerSelectedColor = color::lerp(bg, fg, 0.4);
 	w.textColor = fg;
 	w.textSelectedColor = fg;
 	w.shadeTop = 0;
 	w.shadeDown = 0;
+	return w;
+}
+
+void setTheme(NVGcolor bg, NVGcolor fg) {
+    // Create the overall theme
+	BNDwidgetTheme w = createTheme(bg, fg);
 
 	BNDtheme t;
 	t.backgroundColor = bg;
@@ -39,9 +49,11 @@ void setTheme(NVGcolor bg, NVGcolor fg) {
 	t.numberFieldTheme = w;
 	t.sliderTheme = w;
 	t.scrollBarTheme = w;
-	t.tooltipTheme = w;
 	t.menuTheme = w;
 	t.menuItemTheme = w;
+
+    // Create the tooltip theme and store it
+    t.tooltipTheme = createTheme(settings::tooltipBg, settings::tooltipFg);
 
 	// Slider filled background
 	t.sliderTheme.itemColor = color::lerp(bg, fg, 0.4);
@@ -70,10 +82,6 @@ void setTheme(NVGcolor bg, NVGcolor fg) {
 	// Menu label text
 	t.menuTheme.textColor = color::lerp(bg, fg, 0.6);
 	t.menuTheme.textSelectedColor = t.menuTheme.textColor;
-
-	// Tooltip background
-	t.tooltipTheme.innerColor = bg;
-	t.tooltipTheme.textColor = fg;
 
 	bndSetTheme(t);
 }

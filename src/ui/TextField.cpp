@@ -302,10 +302,6 @@ int TextField::getTextPosition(math::Vec mousePos) {
 	return bndTextFieldTextPosition(APP->window->vg, 0.0, 0.0, box.size.x, box.size.y, -1, text.c_str(), mousePos.x, mousePos.y);
 }
 
-std::string TextField::getText() {
-	return text;
-}
-
 void TextField::setText(std::string text) {
 	if (this->text != text) {
 		this->text = text;
@@ -321,7 +317,7 @@ void TextField::selectAll() {
 	selection = 0;
 }
 
-std::string TextField::getSelectedText() {
+const std::string TextField::getSelectedText() const {
 	int begin = std::min(cursor, selection);
 	int len = std::abs(selection - cursor);
 	return text.substr(begin, len);
@@ -399,26 +395,26 @@ void TextField::createContextMenu() {
 	ui::Menu* menu = createMenu();
 
 	TextFieldCutItem* cutItem = new TextFieldCutItem;
-	cutItem->text = string::translate("TextField.cut");
-	cutItem->rightText = widget::getKeyCommandName(GLFW_KEY_X, RACK_MOD_CTRL);
+	cutItem->setText(string::translate("TextField.cut"));
+	cutItem->setRightText(widget::getKeyCommandName(GLFW_KEY_X, RACK_MOD_CTRL));
 	cutItem->textField = this;
 	menu->addChild(cutItem);
 
 	TextFieldCopyItem* copyItem = new TextFieldCopyItem;
-	copyItem->text = string::translate("TextField.copy");
-	copyItem->rightText = widget::getKeyCommandName(GLFW_KEY_C, RACK_MOD_CTRL);
+	copyItem->setText(string::translate("TextField.copy"));
+	copyItem->setRightText(widget::getKeyCommandName(GLFW_KEY_C, RACK_MOD_CTRL));
 	copyItem->textField = this;
 	menu->addChild(copyItem);
 
 	TextFieldPasteItem* pasteItem = new TextFieldPasteItem;
-	pasteItem->text = string::translate("TextField.paste");
-	pasteItem->rightText = widget::getKeyCommandName(GLFW_KEY_V, RACK_MOD_CTRL);
+	pasteItem->setText(string::translate("TextField.paste"));
+	pasteItem->setRightText(widget::getKeyCommandName(GLFW_KEY_V, RACK_MOD_CTRL));
 	pasteItem->textField = this;
 	menu->addChild(pasteItem);
 
 	TextFieldSelectAllItem* selectAllItem = new TextFieldSelectAllItem;
-	selectAllItem->text = string::translate("TextField.selectAll");
-	selectAllItem->rightText = widget::getKeyCommandName(GLFW_KEY_A, RACK_MOD_CTRL);
+	selectAllItem->setText(string::translate("TextField.selectAll"));
+	selectAllItem->setRightText(widget::getKeyCommandName(GLFW_KEY_A, RACK_MOD_CTRL));
 	selectAllItem->textField = this;
 	menu->addChild(selectAllItem);
 }

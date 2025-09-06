@@ -23,8 +23,8 @@ static void appendMidiDriverMenu(ui::Menu* menu, midi::Port* port) {
 		MidiDriverValueItem* item = new MidiDriverValueItem;
 		item->port = port;
 		item->driverId = driverId;
-		item->text = midi::getDriver(driverId)->getName();
-		item->rightText = CHECKMARK(item->driverId == port->getDriverId());
+		item->setText(midi::getDriver(driverId)->getName());
+		item->setRightText(CHECKMARK(item->driverId == port->getDriverId()));
 		menu->addChild(item);
 	}
 }
@@ -72,8 +72,8 @@ static void appendMidiDeviceMenu(ui::Menu* menu, midi::Port* port) {
 		MidiDeviceValueItem* item = new MidiDeviceValueItem;
 		item->port = port;
 		item->deviceId = -1;
-		item->text = "(" + string::translate("MidiDisplay.noDevice") + ")";
-		item->rightText = CHECKMARK(item->deviceId == port->getDeviceId());
+		item->setText("(" + string::translate("MidiDisplay.noDevice") + ")");
+		item->setRightText(CHECKMARK(item->deviceId == port->getDeviceId()));
 		menu->addChild(item);
 	}
 
@@ -81,8 +81,8 @@ static void appendMidiDeviceMenu(ui::Menu* menu, midi::Port* port) {
 		MidiDeviceValueItem* item = new MidiDeviceValueItem;
 		item->port = port;
 		item->deviceId = deviceId;
-		item->text = port->getDeviceName(deviceId);
-		item->rightText = CHECKMARK(item->deviceId == port->getDeviceId());
+		item->setText(port->getDeviceName(deviceId));
+		item->setRightText(CHECKMARK(item->deviceId == port->getDeviceId()));
 		menu->addChild(item);
 	}
 }
@@ -130,8 +130,8 @@ static void appendMidiChannelMenu(ui::Menu* menu, midi::Port* port) {
 		MidiChannelValueItem* item = new MidiChannelValueItem;
 		item->port = port;
 		item->channel = channel;
-		item->text = port->getChannelName(channel);
-		item->rightText = CHECKMARK(item->channel == port->getChannel());
+		item->setText(port->getChannelName(channel));
+		item->setRightText(CHECKMARK(item->channel == port->getChannel()));
 		menu->addChild(item);
 	}
 }

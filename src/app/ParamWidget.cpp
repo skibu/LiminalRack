@@ -28,7 +28,7 @@ struct ParamField : ui::TextField {
 		this->paramWidget = paramWidget;
 		engine::ParamQuantity* pq = paramWidget->getParamQuantity();
 		if (pq)
-			text = pq->getDisplayValueString();
+			setText(pq->getDisplayValueString());
 		selectAll();
 	}
 
@@ -38,7 +38,7 @@ struct ParamField : ui::TextField {
 			assert(pq);
 			float oldValue = pq->getValue();
 			if (pq)
-				pq->setDisplayValueString(text);
+				pq->setDisplayValueString(getText());
 			float newValue = pq->getValue();
 
 			if (oldValue != newValue) {

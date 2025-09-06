@@ -16,11 +16,21 @@ namespace rack {
 namespace app {
 
 
-struct UrlButton : ui::Button {
-	std::string url;
-	void onAction(const ActionEvent& e) override {
-		system::openBrowser(url);
-	}
+class UrlButton : public ui::Button {
+public:
+    UrlButton() : Button("") {}
+
+    void setUrl(const std::string& newUrl) {
+        url = newUrl;
+    }
+
+    private:
+        std::string url;
+
+
+    void onAction(const ActionEvent& e) override {
+        system::openBrowser(url);
+    }
 };
 
 
@@ -83,11 +93,11 @@ struct TipWindow : widget::OpaqueWidget {
 		layout->setWrap(false);
 		addChild(layout);
 
-		ui::Label* header = new ui::Label;
+		ui::Label* header = new ui::Label();
 		// header->box.size.x = box.size.x - 2*margin;
 		header->box.size.y = 20;
-		header->fontSize = 20;
-		header->text = string::f(string::translate("TipWindow.welcome"), APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION);
+		header->setFontSize(20);
+		header->setText(string::f(string::translate("TipWindow.welcome"), APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION));
 		layout->addChild(header);
 
 		label = new ui::Label;
@@ -99,12 +109,12 @@ struct TipWindow : widget::OpaqueWidget {
 		widget::Widget* linkPlaceholder = new widget::Widget;
 		layout->addChild(linkPlaceholder);
 
-		linkButton = new UrlButton;
+		linkButton = new UrlButton();
 		linkButton->box.size.x = box.size.x - 2*margin;
 		linkPlaceholder->box.size = linkButton->box.size;
 		linkPlaceholder->addChild(linkButton);
 
-		buttonLayout = new ui::SequentialLayout;
+		buttonLayout = new ui::SequentialLayout();
 		buttonLayout->box.size.x = box.size.x - 2*margin;
 		buttonLayout->setMinSpacing(math::Vec(margin, margin));
 		layout->addChild(buttonLayout);
@@ -119,47 +129,62 @@ struct TipWindow : widget::OpaqueWidget {
 		};
 		static ShowQuantity showQuantity;
 
-		ui::OptionButton* showButton = new ui::OptionButton;
+		ui::OptionButton* showButton = new ui::OptionButton(string::translate("TipWindow.startup"));
 		showButton->box.size.x = 200;
-		showButton->text = string::translate("TipWindow.startup");
-		showButton->quantity = &showQuantity;
+		showButton->setQuantity(&showQuantity);
 		buttonLayout->addChild(showButton);
 
-		struct PreviousButton : ui::Button {
-			TipWindow* tipWindow;
-			void onAction(const ActionEvent& e) override {
-				tipWindow->advanceTip(-1);
-			}
-		};
-		PreviousButton* prevButton = new PreviousButton;
-		prevButton->box.size.x = buttonWidth;
-		prevButton->text = "◀  " + string::translate("TipWindow.previous");
-		prevButton->tipWindow = this;
-		buttonLayout->addChild(prevButton);
+        class PreviousButton : public ui::Button {
+            public:
+            PreviousButton(const std::string& text, TipWindow& tw)
+                : ui::Button(text), tipWindow(tw) {}
 
-		struct NextButton : ui::Button {
-			TipWindow* tipWindow;
-			void onAction(const ActionEvent& e) override {
-				tipWindow->advanceTip();
-			}
-		};
-		NextButton* nextButton = new NextButton;
+            private:
+            TipWindow& tipWindow;
+
+            void onAction(const ActionEvent& e) override {
+                tipWindow.advanceTip(-1);
+            }
+        };
+
+        PreviousButton* prevButton = new PreviousButton(
+            "◀  " + string::translate("TipWindow.previous"), *this /* TipWindow */);
+        prevButton->box.size.x = buttonWidth;
+        buttonLayout->addChild(prevButton);
+
+        class NextButton : public ui::Button {
+            public:
+            NextButton(const std::string& text, TipWindow& tw)
+            : ui::Button(text), tipWindow(tw) {}
+
+            private:
+            TipWindow& tipWindow;
+
+            void onAction(const ActionEvent& e) override {
+            tipWindow.advanceTip(1);
+            }
+        };
+
+		NextButton* nextButton = new NextButton("▶  " + string::translate("TipWindow.next"), *this);
 		nextButton->box.size.x = buttonWidth;
-		nextButton->text = "▶  " + string::translate("TipWindow.next");
-		nextButton->tipWindow = this;
 		buttonLayout->addChild(nextButton);
 
-		struct CloseButton : ui::Button {
-			TipWindow* tipWindow;
-			void onAction(const ActionEvent& e) override {
-				tipWindow->getParent()->requestDelete();
-			}
-		};
-		CloseButton* closeButton = new CloseButton;
-		closeButton->box.size.x = buttonWidth;
-		closeButton->text = "✖  " + string::translate("TipWindow.close");
-		closeButton->tipWindow = this;
-		buttonLayout->addChild(closeButton);
+        class CloseButton : public ui::Button {
+        public:
+            CloseButton(const std::string& text, TipWindow& tw)
+            : ui::Button(text), tipWindow(tw) {}
+
+        private:
+            TipWindow& tipWindow;
+
+            void onAction(const ActionEvent& e) override {
+            tipWindow.getParent()->requestDelete();
+            }
+        };
+
+        CloseButton* closeButton = new CloseButton("✖  " + string::translate("TipWindow.close"), *this);
+        closeButton->box.size.x = buttonWidth;
+        buttonLayout->addChild(closeButton);
 
 		buttonLayout->box.size.y = closeButton->box.size.y;
 
@@ -174,10 +199,10 @@ struct TipWindow : widget::OpaqueWidget {
 		settings::tipIndex = math::eucMod(settings::tipIndex + delta, (int) tipInfos.size());
 
 		const TipInfo& tipInfo = tipInfos[settings::tipIndex];
-		label->text = tipInfo.text;
+		label->setText(tipInfo.text);
 		linkButton->setVisible(tipInfo.linkText != "");
-		linkButton->text = tipInfo.linkText;
-		linkButton->url = tipInfo.linkUrl;
+		linkButton->setText(tipInfo.linkText);
+		linkButton->setUrl(tipInfo.linkUrl);
 	}
 
 	void step() override {

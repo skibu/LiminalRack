@@ -7,7 +7,9 @@ namespace rack {
 namespace tag {
 
 
-/** See https://vcvrack.com/manual/Manifest#modules-tags for documentation of tags. */
+/** See https://vcvrack.com/manual/Manifest#modules-tags for documentation of tags. 
+ * It there are multiple only the first name is used. The entries are deprecated names.
+*/
 const std::vector<std::vector<std::string>> tagAliases = {
 	{"Arpeggiator"},
 	{"Attenuator"},

@@ -6,13 +6,15 @@
 namespace rack {
 namespace ui {
 
-
 /** Behaves like a RadioButton and appears with a checkmark beside text.
-*/
-struct OptionButton : RadioButton {
-	void draw(const DrawArgs& args) override;
-};
+ */
+class OptionButton : public RadioButton {
+   public:
+    OptionButton(const std::string& text) : RadioButton(text) {}
 
+   private:
+    void draw(const DrawArgs& args) override;
+};
 
 } // namespace ui
 } // namespace rack

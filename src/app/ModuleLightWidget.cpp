@@ -13,7 +13,11 @@ struct ModuleLightWidget::Internal {
 };
 
 
-struct LightTooltip : ui::Tooltip {
+class LightTooltip : public ui::Tooltip {
+    public:
+    LightTooltip(const std::string& text) : ui::Tooltip(text) {}
+    LightTooltip() : ui::Tooltip() {}
+    
 	ModuleLightWidget* lightWidget;
 
 	void step() override {
@@ -88,7 +92,7 @@ void ModuleLightWidget::createTooltip() {
 	// If the LightInfo is null, don't show a tooltip
 	if (!getLightInfo())
 		return;
-	LightTooltip* tooltip = new LightTooltip;
+	LightTooltip* tooltip = new LightTooltip();
 	tooltip->lightWidget = this;
 	APP->scene->addChild(tooltip);
 	internal->tooltip = tooltip;

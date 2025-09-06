@@ -3,14 +3,18 @@
 namespace rack {
 namespace ui {
 
-
-Label::Label() {
-	fontSize = rack::settings::bndLabelFontSize;
-	box.size.y = fontSize + 12;
-	lineHeight = 1.2;
-	color = color::BLACK_TRANSPARENT;
+/** Constructor with param for initialing text to a value. Does actual
+ * initialization using the default constructor. */
+Label::Label(const std::string& initialText) : Label() {
+    setText(initialText);
 }
 
+Label::Label() {
+    fontSize = rack::settings::bndLabelFontSize;
+    box.size.y = fontSize + 12;
+    lineHeight = 1.2;
+    color = color::BLACK_TRANSPARENT;
+}
 
 void Label::draw(const DrawArgs& args) {
     // For debugging one can draw rectangle so that can see the rectanble used for the Label
@@ -36,6 +40,5 @@ void Label::draw(const DrawArgs& args) {
 	bndIconLabelValue(args.vg, x, 0.0, box.size.x, box.size.y, -1, colorActual, BND_LEFT, fontSize, text.c_str(), NULL);
 }
 
-
-} // namespace ui
+}  // namespace ui
 } // namespace rack

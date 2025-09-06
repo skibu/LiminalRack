@@ -1,4 +1,8 @@
-#pragma once
+/**
+ * For managing colors of the various UI components. 
+ */
+
+ #pragma once
 #include <nanovg.h>
 #include <blendish.h>
 
@@ -16,8 +20,7 @@
 namespace rack {
 
 
-/** Common graphical user interface widgets
-*/
+/** Common graphical user interface widgets */
 namespace ui {
 
 
@@ -25,14 +28,14 @@ PRIVATE void init();
 PRIVATE void destroy();
 
 /**
- * @brief Sets the theme using the colors specified by bg and fg params.
+ * @brief Sets the theme colors using the colors specified by bg and fg params.
  * 
  * @param bg background color
  * @param fg  foreground color
  */
 PRIVATE void setTheme(NVGcolor bg, NVGcolor fg);
 
-/** Sets theme using value of settings::uiTheme which can be set to 
+/** Sets theme colors using value of settings::uiTheme which can be set to 
  * "light", "dark", or "hcdark". Sets the colors associated with the
  * theme. */
 void refreshTheme();

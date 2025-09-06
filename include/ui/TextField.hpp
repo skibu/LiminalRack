@@ -7,53 +7,98 @@
 namespace rack {
 namespace ui {
 
+/**
+ * @brief A text input field.
+ *
+ * Can be single-line or multi-line. Can also be a password field.
+ */
+class TextField : public widget::OpaqueWidget {
+public:
+    TextField();
 
-struct TextField : widget::OpaqueWidget {
-	std::string text;
-	std::string placeholder;
-	/** Masks text with "*". */
-	bool password = false;
-	bool multiline = false;
-	/** The index of the text cursor */
-	int cursor = 0;
-	/** The index of the other end of the selection.
-	If nothing is selected, this is equal to `cursor`.
-	*/
-	int selection = 0;
+    /** Sets the text content of the field. Also resets the cursor to the end of
+     * the text and clears any selection.
+     * NOTE: the original VCV Rack interface passes in text param by value instead
+     * of the proper way of passing by const reference. Unfortunately some modules
+     * like 4ms one uses this part of the old interface. Therefore should not change
+     * the param to const reference or will get link errors.
+     */
+    void setText(std::string text);
 
-	/** For Tab and Shift-Tab focusing.
-	*/
-	Widget* prevField = NULL;
-	Widget* nextField = NULL;
+    const std::string& getText() const {
+        return text;
+    }
 
-	TextField();
-	void draw(const DrawArgs& args) override;
-	void onDragHover(const DragHoverEvent& e) override;
-	void onButton(const ButtonEvent& e) override;
-	void onSelectText(const SelectTextEvent& e) override;
-	void onSelectKey(const SelectKeyEvent& e) override;
-	virtual int getTextPosition(math::Vec mousePos);
+    const char* getTextCStr() const {
+        return text.c_str();
+    }
 
-	std::string getText();
-	/** Replaces the entire text */
-	void setText(std::string text);
-	void selectAll();
-	std::string getSelectedText();
-	/** Inserts text at the cursor, replacing the selection if necessary */
-	void insertText(std::string text);
-	void copyClipboard();
-	void cutClipboard();
-	void pasteClipboard();
-	void cursorToPrevWord();
-	void cursorToNextWord();
-	void createContextMenu();
+    void setPassword(bool password) {
+        this->password = password;
+    }
+
+    void setPlaceholder(const std::string& placeholder) {
+        this->placeholder = placeholder;
+    }
+
+    void setNextField(Widget* nextField) {
+        this->nextField = nextField;
+    }
+
+    int getCursor() const {
+        return cursor;
+    }
+
+    int getSelection() const {
+        return selection;
+    }
+
+    /** These action event functions are used externally so need to be public */
+    void selectAll();
+    void onSelectKey(const SelectKeyEvent& e) override;
+    /** Inserts text at the cursor, replacing the selection if necessary */
+    void insertText(std::string text);
+    void copyClipboard();
+    void cutClipboard();
+    void pasteClipboard();
+    const std::string getSelectedText() const;
+
+    // Needs to be public because at least one VCV module accesses it directly
+    bool multiline = false;
+
+private:
+    std::string text;
+    std::string placeholder;
+    /** Masks text with "*". */
+    bool password = false;
+    /** The index of the text cursor */
+    int cursor = 0;
+    /** The index of the other end of the selection.
+    If nothing is selected, this is equal to `cursor`.
+    */
+    int selection = 0;
+
+    /** For Tab and Shift-Tab focusing.
+    */
+    Widget* prevField = NULL;
+    Widget* nextField = NULL;
+
+    void draw(const DrawArgs& args) override;
+    void onDragHover(const DragHoverEvent& e) override;
+    void onButton(const ButtonEvent& e) override;
+    void onSelectText(const SelectTextEvent& e) override;
+    virtual int getTextPosition(math::Vec mousePos);
+    void cursorToPrevWord();
+    void cursorToNextWord();
+    void createContextMenu();
 };
 
 
-struct PasswordField : TextField {
-	PasswordField() {
-		password = true;
-	}
+class PasswordField : public TextField {
+   public:
+    PasswordField() {
+        setPassword(true);
+    }
 };
 
 

@@ -164,12 +164,14 @@ void LedDisplayTextField::drawLayer(const DrawArgs& args, int layer) {
 
 			NVGcolor highlightColor = color;
 			highlightColor.a = 0.5;
+            int cursor = getCursor();
+            int selection = getSelection();
 			int begin = std::min(cursor, selection);
 			int end = (this == APP->event->selectedWidget) ? std::max(cursor, selection) : -1;
 			bndIconLabelCaret(args.vg,
 				textOffset.x, textOffset.y,
 				box.size.x - 2 * textOffset.x, box.size.y - 2 * textOffset.y,
-				-1, color, 12, text.c_str(), highlightColor, begin, end);
+				-1, color, 12, getTextCStr(), highlightColor, begin, end);
 
 			bndSetFont(APP->window->uiFont->handle);
 		}
@@ -189,7 +191,7 @@ int LedDisplayTextField::getTextPosition(math::Vec mousePos) {
 	int textPos = bndIconLabelTextPosition(APP->window->vg,
 		textOffset.x, textOffset.y,
 		box.size.x - 2 * textOffset.x, box.size.y - 2 * textOffset.y,
-		-1, 12, text.c_str(), mousePos.x, mousePos.y);
+		-1, 12, getTextCStr(), mousePos.x, mousePos.y);
 	bndSetFont(APP->window->uiFont->handle);
 	return textPos;
 }
