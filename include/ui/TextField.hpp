@@ -53,6 +53,10 @@ public:
         return selection;
     }
 
+    void setMultiline(bool multiline) {
+        this->multiline = multiline;
+    }
+
     /** These action event functions are used externally so need to be public */
     void selectAll();
     void onSelectKey(const SelectKeyEvent& e) override;
@@ -61,14 +65,12 @@ public:
     void copyClipboard();
     void cutClipboard();
     void pasteClipboard();
-    const std::string getSelectedText() const;
-
-    // Needs to be public because at least one VCV module accesses it directly
-    bool multiline = false;
+    const std::string getSelectedText() const;   
 
 private:
     std::string text;
     std::string placeholder;
+    bool multiline = false;
     /** Masks text with "*". */
     bool password = false;
     /** The index of the text cursor */

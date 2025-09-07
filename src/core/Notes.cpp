@@ -59,8 +59,8 @@ struct NotesTextField : LedDisplayTextField {
 struct NotesDisplay : LedDisplay {
 	void setModule(NotesModule* module) {
 		NotesTextField* textField = createWidget<NotesTextField>(Vec(0, 0));
+		textField->setMultiline(true);
 		textField->box.size = box.size;
-		textField->multiline = true;
 		textField->module = module;
 		addChild(textField);
 	}
