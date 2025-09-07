@@ -1236,7 +1236,7 @@ inline void ZoomButton::onAction(const ActionEvent& e) {
     } else {
         // Not VCV Rack so use choices that don't appear to be mystical numbers.
         // Simply don't make the user get distracted thinking about the choices.
-        std::vector<float> zoomLevels = {1.5f, 1.0f, 0.75f, 0.5f, 0.25f};
+        std::vector<float> zoomLevels = {2.0f, 1.5f, 1.0f, 0.75f, 0.5f, 0.25f};
         for (float zoom : zoomLevels) {
             menu->addChild(createCheckMenuItem(
                 string::f("%.0f%%", zoom * 100.f), "",
