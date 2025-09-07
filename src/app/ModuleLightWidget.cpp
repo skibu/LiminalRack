@@ -45,9 +45,10 @@ class LightTooltip : public ui::Tooltip {
 				text += string::f("% 3.0f%%", brightness * 100.f);
 			}
 		}
+
+        // Use Tooltip step() to size and position the tooltip
 		Tooltip::step();
-		// Position at bottom-right of parameter
-		box.pos = lightWidget->getAbsoluteOffset(lightWidget->box.size).round();
+
 		// Fit inside parent (copied from Tooltip.cpp)
 		assert(parent);
 		box = box.nudge(parent->box.zeroPos());

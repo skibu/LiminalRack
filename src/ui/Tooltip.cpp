@@ -36,7 +36,7 @@ void Tooltip::step() {
                            ?
                            // For touchscreen don't want finger to cover tooltip
                            // so place it above finger
-                           math::Vec(0/*22*/, 0/*-22*/ - box.size.y)
+                           math::Vec(12, -12 - box.size.y)
                            :
                            // Default tooltip offset
                            math::Vec(15, 15);

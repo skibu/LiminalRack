@@ -72,9 +72,10 @@ struct PortTooltip : ui::Tooltip {
 				text += (otherPw->type == engine::Port::INPUT) ? string::translate("PortWidget.input") : string::translate("PortWidget.output");
 			}
 		}
+
+        // Use Tooltip step() to size and position the tooltip
 		Tooltip::step();
-		// Position at bottom-right of parameter
-		box.pos = portWidget->getAbsoluteOffset(portWidget->box.size).round();
+
 		// Fit inside parent (copied from Tooltip.cpp)
 		assert(parent);
 		box = box.nudge(parent->box.zeroPos());
