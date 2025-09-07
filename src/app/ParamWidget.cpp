@@ -62,66 +62,87 @@ struct ParamField : ui::TextField {
 };
 
 
-struct ParamValueItem : ui::MenuItem {
-	ParamWidget* paramWidget;
-	float value;
+class ParamValueItem : public ui::MenuItem {
+public:
+    ParamValueItem(ParamWidget* paramWidgetPtr = nullptr) : paramWidget(paramWidgetPtr) {}
 
-	void onAction(const ActionEvent& e) override {
-		engine::ParamQuantity* pq = paramWidget->getParamQuantity();
-		if (pq) {
-			float oldValue = pq->getValue();
-			pq->setValue(value);
-			float newValue = pq->getValue();
+    void setParamWidget(ParamWidget* paramWidgetPtr) {
+        paramWidget = paramWidgetPtr;
+    }
 
-			if (oldValue != newValue) {
-				// Push ParamChange history action
-				history::ParamChange* h = new history::ParamChange;
-				h->name = string::translate("ParamWidget.history.setParam");
-				h->moduleId = paramWidget->module->id;
-				h->paramId = paramWidget->paramId;
-				h->oldValue = oldValue;
-				h->newValue = newValue;
-				APP->history->push(h);
-			}
-		}
-	}
+    // Could be used by module code so need to leave it as public
+    float value;
+
+private:
+    ParamWidget* paramWidget;
+
+    void onAction(const ActionEvent& e) override {
+        if (!paramWidget)
+            return;
+        engine::ParamQuantity* pq = paramWidget->getParamQuantity();
+        if (pq) {
+            float oldValue = pq->getValue();
+            pq->setValue(value);
+            float newValue = pq->getValue();
+
+            if (oldValue != newValue) {
+                // Push ParamChange history action
+                history::ParamChange* h = new history::ParamChange;
+                h->name = string::translate("ParamWidget.history.setParam");
+                h->moduleId = paramWidget->module->id;
+                h->paramId = paramWidget->paramId;
+                h->oldValue = oldValue;
+                h->newValue = newValue;
+                APP->history->push(h);
+            }
+        }
+    }
 };
 
+class ParamTooltip : public ui::Tooltip {
+   public:
+    ParamTooltip(ParamWidget& paramWidgetRef) : paramWidget(paramWidgetRef) {}
 
-struct ParamTooltip : ui::Tooltip {
-	ParamWidget* paramWidget;
+   private:
+    void step() override {
+        engine::ParamQuantity* pq = paramWidget.getParamQuantity();
+        if (pq) {
+            // Quantity string
+            text = pq->getString();
+            // Description
+            std::string description = pq->getDescription();
+            if (description != "") {
+                text += "\n";
+                text += description;
+            }
+        }
 
-	void step() override {
-		engine::ParamQuantity* pq = paramWidget->getParamQuantity();
-		if (pq) {
-			// Quantity string
-			text = pq->getString();
-			// Description
-			std::string description = pq->getDescription();
-			if (description != "") {
-				text += "\n";
-				text += description;
-			}
-		}
-		Tooltip::step();
-		// Position at bottom-right of parameter
-		box.pos = paramWidget->getAbsoluteOffset(paramWidget->box.size).round();
-		// Fit inside parent (copied from Tooltip.cpp)
-		assert(parent);
-		box = box.nudge(parent->box.zeroPos());
-	}
+        // Use Tooltip step() to size and position the tooltip
+        Tooltip::step();
+
+        // Fit inside parent (copied from Tooltip.cpp).
+        // Seems to not actually do anything though.
+        assert(parent);
+        box = box.nudge(parent->box.zeroPos());
+    }
+
+   private:
+    ParamWidget& paramWidget;
 };
 
+class ParamLabel : public ui::MenuLabel {
+   public:
+    ParamLabel(ParamWidget& paramWidgetRef) : paramWidget(paramWidgetRef) {}
 
-struct ParamLabel : ui::MenuLabel {
-	ParamWidget* paramWidget;
-	void step() override {
-		engine::ParamQuantity* pq = paramWidget->getParamQuantity();
-		text = pq->getString();
-		MenuLabel::step();
-	}
+   private:
+    ParamWidget& paramWidget;
+
+    void step() override {
+        engine::ParamQuantity* pq = paramWidget.getParamQuantity();
+        text = pq->getString();
+        MenuLabel::step();
+    }
 };
-
 
 engine::ParamQuantity* ParamWidget::getParamQuantity() {
 	if (!module)
@@ -154,8 +175,7 @@ void ParamWidget::createTooltip() {
 		return;
 	if (!module)
 		return;
-	ParamTooltip* tooltip = new ParamTooltip;
-	tooltip->paramWidget = this;
+	ParamTooltip* tooltip = new ParamTooltip(*this);
 	APP->scene->addChild(tooltip);
 	internal->tooltip = tooltip;
 }
@@ -246,8 +266,7 @@ void ParamWidget::createContextMenu() {
 	engine::ParamQuantity* pq = getParamQuantity();
 	engine::SwitchQuantity* switchQuantity = dynamic_cast<engine::SwitchQuantity*>(pq);
 
-	ParamLabel* paramLabel = new ParamLabel;
-	paramLabel->paramWidget = this;
+	ParamLabel* paramLabel = new ParamLabel(*this);
 	menu->addChild(paramLabel);
 
 	if (switchQuantity) {
@@ -257,7 +276,7 @@ void ParamWidget::createContextMenu() {
 		for (int i = 0; i < numStates; i++) {
 			std::string label = switchQuantity->labels[i];
 			ParamValueItem* paramValueItem = createMenuItem<ParamValueItem>(label, CHECKMARK(i == index));
-			paramValueItem->paramWidget = this;
+            paramValueItem->setParamWidget(this);
 			paramValueItem->value = minValue + i;
 			menu->addChild(paramValueItem);
 		}
