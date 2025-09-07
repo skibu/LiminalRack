@@ -2,6 +2,7 @@
 
 - 9/6/25
   - Can now use any font face for a label. Nice so that can make a header label bold.
+  - Tooltips no positioned out of the way of a finger if using a touch screen. Also, finished cleaning up of tooltip related code.
 - 9/5/25
   - Improved tooltips.
     - Separate color to distinguish them from clickable items like menus. The value is in settings. Picked nice dark gray.
