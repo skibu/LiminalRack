@@ -247,80 +247,77 @@ class EditButton : public MenuButton {
 // View
 ////////////////////
 
-
-struct ZoomQuantity : Quantity {
-	void setValue(float value) override {
-		APP->scene->rackScroll->setZoom(std::pow(2.f, value));
-	}
-	float getValue() override {
-		return std::log2(APP->scene->rackScroll->getZoom());
-	}
-	float getMinValue() override {
-		return -2.f;
-	}
-	float getMaxValue() override {
-		return 2.f;
-	}
-	float getDefaultValue() override {
-		return 0.0;
-	}
-	float getDisplayValue() override {
-		return std::round(std::pow(2.f, getValue()) * 100);
-	}
-	void setDisplayValue(float displayValue) override {
-		setValue(std::log2(displayValue / 100));
-	}
-	std::string getLabel() override {
-		return string::translate("MenuBar.view.zoom");
-	}
-	std::string getUnit() override {
-		return "%";
-	}
-};
-struct ZoomSlider : ui::Slider {
-	ZoomSlider() {
-		quantity = new ZoomQuantity;
-	}
-	~ZoomSlider() {
-		delete quantity;
-	}
+class ZoomQuantity : public Quantity {
+   public:
+    void setValue(float value) override {
+        APP->scene->rackScroll->setZoom(std::pow(2.f, value));
+    }
+    float getValue() override {
+        return std::log2(APP->scene->rackScroll->getZoom());
+    }
+    float getMinValue() override {
+        return -2.f;
+    }
+    float getMaxValue() override {
+        return 2.f;
+    }
+    float getDefaultValue() override {
+        return 0.0;
+    }
+    float getDisplayValue() override {
+        return std::round(std::pow(2.f, getValue()) * 100);
+    }
+    void setDisplayValue(float displayValue) override {
+        setValue(std::log2(displayValue / 100));
+    }
+    std::string getLabel() override {
+        return string::translate("MenuBar.view.zoom");
+    }
+    std::string getUnit() override {
+        return "%";
+    }
 };
 
-
-struct CableOpacityQuantity : Quantity {
-	void setValue(float value) override {
-		settings::cableOpacity = math::clamp(value, getMinValue(), getMaxValue());
-	}
-	float getValue() override {
-		return settings::cableOpacity;
-	}
-	float getDefaultValue() override {
-		return 0.5;
-	}
-	float getDisplayValue() override {
-		return getValue() * 100;
-	}
-	void setDisplayValue(float displayValue) override {
-		setValue(displayValue / 100);
-	}
-	std::string getLabel() override {
-		return string::translate("MenuBar.view.cableOpacity");
-	}
-	std::string getUnit() override {
-		return "%";
-	}
-};
-struct CableOpacitySlider : ui::Slider {
-	CableOpacitySlider() {
-		quantity = new CableOpacityQuantity;
-	}
-	~CableOpacitySlider() {
-		delete quantity;
-	}
+class ZoomSlider : public ui::Slider {
+   public:
+    ZoomSlider() : ui::Slider(new ZoomQuantity()) {
+        INFO("ZoomSlider constructor called");
+    }
 };
 
+class CableOpacityQuantity : public Quantity {
+   public:
+    void setValue(float value) override {
+        settings::cableOpacity =
+            math::clamp(value, getMinValue(), getMaxValue());
+    }
+    float getValue() override {
+        return settings::cableOpacity;
+    }
+    float getDefaultValue() override {
+        return 0.5;
+    }
+    float getDisplayValue() override {
+        return getValue() * 100;
+    }
+    void setDisplayValue(float displayValue) override {
+        setValue(displayValue / 100);
+    }
+    std::string getLabel() override {
+        return string::translate("MenuBar.view.cableOpacity");
+    }
+    std::string getUnit() override {
+        return "%";
+    }
+};
 
-struct CableTensionQuantity : Quantity {
+class CableOpacitySlider : public ui::Slider {
+   public:
+    CableOpacitySlider() : ui::Slider(new CableOpacityQuantity()) {}
+};
+
+class CableTensionQuantity : public Quantity {
+   public:
 	void setValue(float value) override {
 		settings::cableTension = math::clamp(value, getMinValue(), getMaxValue());
 	}
@@ -343,17 +340,14 @@ struct CableTensionQuantity : Quantity {
 		return "%";
 	}
 };
-struct CableTensionSlider : ui::Slider {
-	CableTensionSlider() {
-		quantity = new CableTensionQuantity;
-	}
-	~CableTensionSlider() {
-		delete quantity;
-	}
+
+class CableTensionSlider : public ui::Slider {
+   public:
+    CableTensionSlider() : ui::Slider(new CableTensionQuantity()) {}
 };
 
-
-struct RackBrightnessQuantity : Quantity {
+class RackBrightnessQuantity : public Quantity {
+   public:
 	void setValue(float value) override {
 		settings::rackBrightness = math::clamp(value, getMinValue(), getMaxValue());
 	}
@@ -376,17 +370,14 @@ struct RackBrightnessQuantity : Quantity {
 		return string::translate("MenuBar.view.roomBrightness");
 	}
 };
-struct RackBrightnessSlider : ui::Slider {
-	RackBrightnessSlider() {
-		quantity = new RackBrightnessQuantity;
-	}
-	~RackBrightnessSlider() {
-		delete quantity;
-	}
+
+class RackBrightnessSlider : public ui::Slider {
+   public:
+    RackBrightnessSlider() : ui::Slider(new RackBrightnessQuantity()) {}
 };
 
-
-struct HaloBrightnessQuantity : Quantity {
+class HaloBrightnessQuantity : public Quantity {
+    public:
 	void setValue(float value) override {
 		settings::haloBrightness = math::clamp(value, getMinValue(), getMaxValue());
 	}
@@ -409,53 +400,48 @@ struct HaloBrightnessQuantity : Quantity {
 		return string::translate("MenuBar.view.lightBloom");
 	}
 };
-struct HaloBrightnessSlider : ui::Slider {
-	HaloBrightnessSlider() {
-		quantity = new HaloBrightnessQuantity;
-	}
-	~HaloBrightnessSlider() {
-		delete quantity;
-	}
+
+class HaloBrightnessSlider : public ui::Slider {
+   public:
+    HaloBrightnessSlider() : ui::Slider(new HaloBrightnessQuantity()) {}
 };
 
-
-struct KnobScrollSensitivityQuantity : Quantity {
-	void setValue(float value) override {
-		value = math::clamp(value, getMinValue(), getMaxValue());
-		settings::knobScrollSensitivity = std::pow(2.f, value);
-	}
-	float getValue() override {
-		return std::log2(settings::knobScrollSensitivity);
-	}
-	float getMinValue() override {
-		return std::log2(1e-4f);
-	}
-	float getMaxValue() override {
-		return std::log2(1e-2f);
-	}
-	float getDefaultValue() override {
-		return std::log2(1e-3f);
-	}
-	float getDisplayValue() override {
-		return std::pow(2.f, getValue() - getDefaultValue());
-	}
-	void setDisplayValue(float displayValue) override {
-		setValue(std::log2(displayValue) + getDefaultValue());
-	}
-	std::string getLabel() override {
-		return string::translate("MenuBar.view.wheelSensitivity");
-	}
-	int getDisplayPrecision() override {
-		return 2;
-	}
+class KnobScrollSensitivityQuantity : public Quantity {
+   public:
+    void setValue(float value) override {
+        value = math::clamp(value, getMinValue(), getMaxValue());
+        settings::knobScrollSensitivity = std::pow(2.f, value);
+    }
+    float getValue() override {
+        return std::log2(settings::knobScrollSensitivity);
+    }
+    float getMinValue() override {
+        return std::log2(1e-4f);
+    }
+    float getMaxValue() override {
+        return std::log2(1e-2f);
+    }
+    float getDefaultValue() override {
+        return std::log2(1e-3f);
+    }
+    float getDisplayValue() override {
+        return std::pow(2.f, getValue() - getDefaultValue());
+    }
+    void setDisplayValue(float displayValue) override {
+        setValue(std::log2(displayValue) + getDefaultValue());
+    }
+    std::string getLabel() override {
+        return string::translate("MenuBar.view.wheelSensitivity");
+    }
+    int getDisplayPrecision() override {
+        return 2;
+    }
 };
-struct KnobScrollSensitivitySlider : ui::Slider {
-	KnobScrollSensitivitySlider() {
-		quantity = new KnobScrollSensitivityQuantity;
-	}
-	~KnobScrollSensitivitySlider() {
-		delete quantity;
-	}
+
+class KnobScrollSensitivitySlider : public ui::Slider {
+   public:
+    KnobScrollSensitivitySlider()
+        : ui::Slider(new KnobScrollSensitivityQuantity()) {}
 };
 
 /**
@@ -470,9 +456,11 @@ class ViewButton : public MenuButton {
 		menu->cornerFlags = BND_CORNER_TOP;
 		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 
+        // Add Window category menu label (inactive)
 		menu->addChild(new ui::MenuSeparator);
 		menu->addChild(createMenuLabel(string::translate("MenuBar.view.window")));
 
+        // Add fullscreen menu item
 		bool fullscreen = APP->window->isFullScreen();
 		std::string fullscreenText = widget::getKeyCommandName(GLFW_KEY_F11, 0);
 		if (fullscreen)
@@ -481,6 +469,7 @@ class ViewButton : public MenuButton {
 			APP->window->setFullScreen(!fullscreen);
 		}));
 
+        // Only provide frame rate option if not VCV rack because it is a obscure feature
 		if (!settings::isNotVCVRack) {
 			menu->addChild(createSubmenuItem(string::translate("MenuBar.view.frameRate"), string::f("%.0f Hz", settings::frameRateLimit), [=](ui::Menu* menu) {
 				for (int i = 1; i <= 6; i++) {
@@ -493,6 +482,7 @@ class ViewButton : public MenuButton {
 			}));
 		}
 
+        // Only provide pixel ratio option if not VCV rack because it is a obscure feature
 		if (!settings::isNotVCVRack) {
 			static const std::vector<float> pixelRatios = {0, 1, 1.5, 2, 2.5, 3};
 			std::vector<std::string> pixelRatioLabels;
@@ -509,6 +499,7 @@ class ViewButton : public MenuButton {
 			}));
         }
 
+        // Add zoom slider
         ZoomSlider* zoomSlider = new ZoomSlider;
 		zoomSlider->box.size.x = 250.0;
 		menu->addChild(zoomSlider);
@@ -526,6 +517,7 @@ class ViewButton : public MenuButton {
 			}, &settings::mouseWheelZoom));
 		}
 
+        // Add Appearance category menu label (inactive)
 		menu->addChild(new ui::MenuSeparator);
 		menu->addChild(createMenuLabel(string::translate("MenuBar.view.appearance")));
 
@@ -549,19 +541,19 @@ class ViewButton : public MenuButton {
 		menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.showTooltips"), "", &settings::tooltips));
 
 		// Various sliders
-		CableOpacitySlider* cableOpacitySlider = new CableOpacitySlider;
+		CableOpacitySlider* cableOpacitySlider = new CableOpacitySlider();
 		cableOpacitySlider->box.size.x = 250.0;
 		menu->addChild(cableOpacitySlider);
 
-		CableTensionSlider* cableTensionSlider = new CableTensionSlider;
+		CableTensionSlider* cableTensionSlider = new CableTensionSlider();
 		cableTensionSlider->box.size.x = 250.0;
 		menu->addChild(cableTensionSlider);
 
-		RackBrightnessSlider* rackBrightnessSlider = new RackBrightnessSlider;
+		RackBrightnessSlider* rackBrightnessSlider = new RackBrightnessSlider();
 		rackBrightnessSlider->box.size.x = 250.0;
 		menu->addChild(rackBrightnessSlider);
 
-		HaloBrightnessSlider* haloBrightnessSlider = new HaloBrightnessSlider;
+		HaloBrightnessSlider* haloBrightnessSlider = new HaloBrightnessSlider();
 		haloBrightnessSlider->box.size.x = 250.0;
 		menu->addChild(haloBrightnessSlider);
 
@@ -678,6 +670,7 @@ class ViewButton : public MenuButton {
 			}
 		}));
 
+        // Add Parameters category menu label (inactive)
 		menu->addChild(new ui::MenuSeparator);
 		menu->addChild(createMenuLabel(string::translate("MenuBar.view.parameters")));
 
@@ -706,11 +699,12 @@ class ViewButton : public MenuButton {
 		if (!settings::isNotVCVRack) {
 			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.knobScroll"), "", &settings::knobScroll));
 
-			KnobScrollSensitivitySlider* knobScrollSensitivitySlider = new KnobScrollSensitivitySlider;
+			KnobScrollSensitivitySlider* knobScrollSensitivitySlider = new KnobScrollSensitivitySlider();
 			knobScrollSensitivitySlider->box.size.x = 250.0;
 			menu->addChild(knobScrollSensitivitySlider);
 		}
 
+        // Add Modules category menu label (inactive)
 		menu->addChild(new ui::MenuSeparator);
 		menu->addChild(createMenuLabel(string::translate("MenuBar.view.modules")));
 

@@ -21,8 +21,9 @@ void MenuItem::drawOffset(NVGcontext* vg, float x_offset) {
 	if (parentMenu && parentMenu->activeEntry == this)
 		state = BND_ACTIVE;
 
-	// For centering text vertically
-    float y_centering_offset = (settings::bndWidgetHeight - settings::bndLabelFontSize) / 2.0;
+	// Want to center text vertically. At first thought that needed a y_centering_offset
+    // to adjust the text position, but then found that a value of 0 works best.
+    float y_centering_offset = 0;
 
     // Draw main text and background
 	const BNDtheme* theme = bndGetTheme();
@@ -30,21 +31,20 @@ void MenuItem::drawOffset(NVGcontext* vg, float x_offset) {
 		// Draw label as active.
 		// From bndMenuItem() implementation, draw background box
 		if (state != BND_DEFAULT) {
-			bndInnerBox(vg, 0.0, -y_centering_offset + 1.0, box.size.x, box.size.y+2.0, 0, 0, 0, 0,
+            // Hightlight since it is active or hovered
+			bndInnerBox(vg, 0.0, -1.0, box.size.x, box.size.y - 2.0, 0, 0, 0, 0,
 				bndOffsetColor(theme->menuItemTheme.innerSelectedColor, theme->menuItemTheme.shadeTop),
 				bndOffsetColor(theme->menuItemTheme.innerSelectedColor, theme->menuItemTheme.shadeDown));
 			state = BND_ACTIVE;
 		}
-		// Draw the label centered vertically in the box
-		bndIconLabelValue(vg, x_offset, -y_centering_offset, box.size.x - x_offset, box.size.y, -1,
+		// Draw the label as active and centered vertically in the box
+		bndIconLabelValue(vg, x_offset, y_centering_offset, box.size.x - x_offset, box.size.y, -1,
 			bndTextColor(&theme->menuItemTheme, state), BND_LEFT,
 			rack::settings::bndLabelFontSize, text.c_str(), NULL);
 	}
 	else {
-		// Draw label as inactive.
-		// From bndMenuLabel() implementation
-		float y_centering_offset = (settings::bndWidgetHeight - settings::bndLabelFontSize) / 2.0;
-		bndIconLabelValue(vg, x_offset + 0.0, -y_centering_offset, box.size.x, box.size.y, -1,
+		// Feature currently disabled, so draw label as inactive by drawing dimmer text
+		bndIconLabelValue(vg, x_offset, y_centering_offset, box.size.x, box.size.y, -1,
 							theme->menuTheme.textColor, BND_LEFT,
 							rack::settings::bndLabelFontSize, text.c_str(), NULL);
     }
@@ -54,7 +54,7 @@ void MenuItem::drawOffset(NVGcontext* vg, float x_offset) {
 	NVGcolor rightColor = (state == BND_DEFAULT && !disabled)
 								? bndGetTheme()->menuTheme.textColor
 								: bndGetTheme()->menuTheme.textSelectedColor;
-	bndIconLabelValue(vg, x, -y_centering_offset, box.size.x, box.size.y, -1, rightColor, BND_LEFT,
+	bndIconLabelValue(vg, x, y_centering_offset, box.size.x, box.size.y, -1, rightColor, BND_LEFT,
 						rack::settings::bndLabelFontSize, rightText.c_str(), NULL);
 }
 

@@ -26,7 +26,7 @@ void Slider::draw(const DrawArgs& args) {
 	// If parent is a Menu, make corners sharp
 	ui::Menu* parentMenu = dynamic_cast<ui::Menu*>(getParent());
 	int flags = parentMenu ? BND_CORNER_ALL : BND_CORNER_NONE;
-	bndSlider(args.vg, 0.0, 0.0, box.size.x, box.size.y, flags, state, progress, text.c_str(), NULL);
+	bndSlider(args.vg, 0.0, 0.0, box.size.x, box.size.y - 4.0, flags, state, progress, text.c_str(), NULL);
 }
 
 void Slider::onDragStart(const DragStartEvent& e) {
@@ -37,9 +37,9 @@ void Slider::onDragStart(const DragStartEvent& e) {
 }
 
 void Slider::onDragMove(const DragMoveEvent& e) {
-	if (quantity) {
-		quantity->moveScaledValue(SENSITIVITY * e.mouseDelta.x);
-	}
+    if (quantity == nullptr) return;
+
+    quantity->moveScaledValue(SENSITIVITY * e.mouseDelta.x);
 }
 
 void Slider::onDragEnd(const DragEndEvent& e) {
@@ -47,10 +47,10 @@ void Slider::onDragEnd(const DragEndEvent& e) {
 }
 
 void Slider::onDoubleClick(const DoubleClickEvent& e) {
-	if (quantity)
-		quantity->reset();
-}
+    if (quantity == nullptr) return;
 
+    quantity->reset();
+}
 
 } // namespace ui
 } // namespace rack

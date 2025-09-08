@@ -194,8 +194,7 @@ TMenu* createMenu() {
 
 template <class TMenuLabel = ui::MenuLabel>
 TMenuLabel* createMenuLabel(std::string text) {
-	TMenuLabel* label = new TMenuLabel;
-	label->text = text;
+	TMenuLabel* label = new TMenuLabel(text);
 	return label;
 }
 

@@ -11,20 +11,26 @@ namespace rack {
 
 Often used as a decorator component for `widget::Widget`s that read or write a quantity.
 */
-struct Quantity {
-	virtual ~Quantity() {}
+class Quantity {
+    public:
+     /** Need virtual destructor because there are other virtual functions
+      * and delete is used on subclasses through a Quantity pointer in the
+      * Module class.
+      */
+     virtual ~Quantity() {}
 
-	/** Sets the value directly.
-	Override this to change the state of your subclass to represent the new value.
-	*/
-	virtual void setValue(float value) {}
+     /** Sets the value directly.
+     Override this to change the state of your subclass to represent the new
+     value.
+     */
+     virtual void setValue(float value) {}
 
-	/** Returns the value.
-	Override this to return the state of your subclass.
-	*/
-	virtual float getValue() {
-		return 0.f;
-	}
+     /** Returns the value.
+     Override this to return the state of your subclass.
+     */
+     virtual float getValue() {
+         return 0.f;
+     }
 
 	/** Returns the minimum recommended value. */
 	virtual float getMinValue() {

@@ -139,7 +139,7 @@ class ParamLabel : public ui::MenuLabel {
 
     void step() override {
         engine::ParamQuantity* pq = paramWidget.getParamQuantity();
-        text = pq->getString();
+        setText(pq->getString());
         MenuLabel::step();
     }
 };
