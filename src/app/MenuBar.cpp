@@ -280,8 +280,13 @@ class ZoomQuantity : public Quantity {
 
 class ZoomSlider : public ui::Slider {
    public:
-    ZoomSlider() : ui::Slider(new ZoomQuantity()) {
-        INFO("ZoomSlider constructor called");
+   /** Construct a slider with a zoom quantity */
+    ZoomSlider() : ui::Slider(new ZoomQuantity()) {}
+
+    /** Since API requires passing in pointer, need to manually delete what we
+     * created and passed in  */
+    ~ZoomSlider() {
+        delete quantity;
     }
 };
 
@@ -313,7 +318,14 @@ class CableOpacityQuantity : public Quantity {
 
 class CableOpacitySlider : public ui::Slider {
    public:
+   /** Construct a slider with a cable opacity quantity */
     CableOpacitySlider() : ui::Slider(new CableOpacityQuantity()) {}
+
+    /** Since API requires passing in pointer, need to manually delete what we
+     * created and passed in  */
+    ~CableOpacitySlider() {
+        delete quantity;
+    }
 };
 
 class CableTensionQuantity : public Quantity {
@@ -343,7 +355,14 @@ class CableTensionQuantity : public Quantity {
 
 class CableTensionSlider : public ui::Slider {
    public:
+    /** Construct a slider with a cable tension quantity */
     CableTensionSlider() : ui::Slider(new CableTensionQuantity()) {}
+
+    /** Since API requires passing in pointer, need to manually delete what we
+     * created and passed in  */
+    ~CableTensionSlider() {
+        delete quantity;
+    }
 };
 
 class RackBrightnessQuantity : public Quantity {
@@ -373,7 +392,14 @@ class RackBrightnessQuantity : public Quantity {
 
 class RackBrightnessSlider : public ui::Slider {
    public:
+    /** Construct a slider with a rack brightness quantity */
     RackBrightnessSlider() : ui::Slider(new RackBrightnessQuantity()) {}
+
+    /** Since API requires passing in pointer, need to manually delete what we
+     * created and passed in  */
+    ~RackBrightnessSlider() {
+        delete quantity;
+    }
 };
 
 class HaloBrightnessQuantity : public Quantity {
@@ -403,7 +429,14 @@ class HaloBrightnessQuantity : public Quantity {
 
 class HaloBrightnessSlider : public ui::Slider {
    public:
+    /** Construct a slider with a halo brightness quantity */
     HaloBrightnessSlider() : ui::Slider(new HaloBrightnessQuantity()) {}
+
+    /** Since API requires passing in pointer, need to manually delete what we
+     * created and passed in  */
+    ~HaloBrightnessSlider() {
+        delete quantity;
+    }
 };
 
 class KnobScrollSensitivityQuantity : public Quantity {
@@ -440,8 +473,15 @@ class KnobScrollSensitivityQuantity : public Quantity {
 
 class KnobScrollSensitivitySlider : public ui::Slider {
    public:
+    /** Construct a slider with a knob scroll sensitivity quantity */
     KnobScrollSensitivitySlider()
         : ui::Slider(new KnobScrollSensitivityQuantity()) {}
+
+    /** Since API requires passing in pointer, need to manually delete what we
+     * created and passed in  */
+    ~KnobScrollSensitivitySlider() {
+        delete quantity;
+    }
 };
 
 /**
