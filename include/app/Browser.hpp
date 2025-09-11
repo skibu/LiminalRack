@@ -76,6 +76,7 @@ class Browser : public widget::OpaqueWidget {
         void step() override;
     };
 
+    /** Button for choosing types/tags */
     class TagButton : public ui::ChoiceButton {
        public:
         TagButton(Browser& browser) : browser(browser) {}
