@@ -378,8 +378,10 @@ class BrowserHeader : public ui::SequentialLayout {
     */
     BrowserHeader() : SequentialLayout(CENTER_ALIGNMENT, true) {}
 
-    static const int HeaderFontSize = 16;
-    static const int HeaderWidgetHeight = 24;
+    /** Font size to use for all widgets in the header */
+    static const int HEADER_FONT_SIZE = 16;
+    /** Height of all widgets in the header */
+    static const int HEADER_WIDGET_HEIGHT = 24;
 
     /** Override draw() so that all children of the header are drawn with a specified font size.
      * This is necessary since the header contains buttons and labels that need to be drawn with a
@@ -391,8 +393,8 @@ class BrowserHeader : public ui::SequentialLayout {
         int originalWidgetHeight = settings::getWidgetHeight();
 
         // Set the font size for the header
-        settings::setLabelFontSize(HeaderFontSize);
-		settings::setWidgetHeight(BrowserHeader::HeaderWidgetHeight);
+        settings::setLabelFontSize(HEADER_FONT_SIZE);
+		settings::setWidgetHeight(BrowserHeader::HEADER_WIDGET_HEIGHT);
 
         // Draw all the children of the header using that font size
         SequentialLayout::draw(args);
@@ -426,7 +428,7 @@ Browser::Browser() {
     // Need to set desired widgetHeight here instead of when drawing since
     // box.size.y is set in Button's constructor
     int originalWidgetHeight = settings::getWidgetHeight();
-    settings::setWidgetHeight(BrowserHeader::HeaderWidgetHeight);
+    settings::setWidgetHeight(BrowserHeader::HEADER_WIDGET_HEIGHT);
 
     // Note: for the header widgets size.x using original values for VCV Rack,
     // but then adjusting them to the font size actually being used here.
@@ -435,28 +437,28 @@ Browser::Browser() {
 
     searchField = new BrowserSearchField(*this);
     searchField->box.size.x =
-        150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+        150 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
     searchField->setPlaceholder(string::translate("Browser.searchModules"));
     headerLayout->addChild(searchField);
 
     brandButton = new BrandButton(*this);
     brandButton->box.size.x =
-        150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+        150 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(brandButton);
 
     tagButton = new TagButton(*this);
     tagButton->box.size.x =
-        150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+        150 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(tagButton);
 
     favoriteButton = new FavoriteButton(*this);
     favoriteButton->box.size.x =
-        110 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+        110 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(favoriteButton);
 
     clearButton = new ClearButton(*this);
     clearButton->box.size.x =
-        90 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+        90 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(clearButton);
 
     // can see the modules. And it takes up precious space. Plus there are
@@ -465,19 +467,19 @@ Browser::Browser() {
     if (!settings::isNotVCVRack) {
         countLabel = new ui::Label;
         countLabel->box.size.x =
-            110 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+            110 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
         headerLayout->addChild(countLabel);
     }
 
     SortButton* sortButton = new SortButton(*this);
     sortButton->box.size.x =
-        130 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+        130 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(sortButton);
 
     // For zooming in or out on the modules in the Browser
     ZoomButton* zoomButton = new ZoomButton(*this);
     zoomButton->box.size.x =
-        100 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+        100 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(zoomButton);
 
     // For adding modules from VCV Rack to the users' library
@@ -485,7 +487,7 @@ Browser::Browser() {
         new UrlButton("https://library.vcvrack.com/",
                       string::translate("Browser.browseLibrary"));
     libraryButton->box.size.x =
-        170 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+        170 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(libraryButton);
 
     // Restore original height
@@ -888,10 +890,13 @@ void Browser::BrowserSearchField::onAction(const ActionEvent& e) {
 }
 
 void Browser::BrandItem::onAction(const ActionEvent& e) {
-	if (browser.getBrand() == getText())
+	if (browser.getBrand() == getText()) {
+        // Set to all brands
 		browser.setBrand("");
-	else
+    } else {
+        // Set to this brand
 		browser.setBrand(getText());
+    }
 	browser.refresh();
 }
 
@@ -901,7 +906,6 @@ void Browser::BrandItem::step() {
 }
 
 void Browser::BrandButton::onAction(const ActionEvent& e) {
-    INFO("Clicked on Brand and got action " /*, e.context */);
     ui::Menu* menu = createMenu();
     menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
     menu->box.size.x = box.size.x;
@@ -986,7 +990,9 @@ void Browser::TagButton::onAction(const ActionEvent& e) {
     menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
     menu->box.size.x = box.size.x;
 
+    // So user can select no tags/types
     TagItem* noneItem = new TagItem(browser);
+    noneItem->setText(string::translate("Browser.allTags"));
     menu->addChild(noneItem);
 
     if (settings::hasTouchscreen) {
