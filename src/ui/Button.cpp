@@ -7,9 +7,12 @@ namespace ui {
 
 /** Default constructor needs to be declared here instead of inlined
  * so that modules that use it, like 4ms, can link against it.
+ * Sets the button height to settings::bndWidgetHeight. If you
+ * are using a different font size you might want to set the height
+ * to something else. Uses blendish bndToolButton() to actually draw 
+ * the button.
  */
 Button::Button() {
-    // FIXME really needed?
     box.size.y = settings::bndWidgetHeight;
 }
 
