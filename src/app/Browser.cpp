@@ -8,28 +8,19 @@
 #include <thread>
 
 #include <app/Browser.hpp>
-#include <widget/OpaqueWidget.hpp>
+
 #include <widget/TransparentWidget.hpp>
 #include <widget/ZoomWidget.hpp>
 #include <ui/MenuOverlay.hpp>
-#include <ui/ScrollWidget.hpp>
-#include <ui/SequentialLayout.hpp>
-#include <ui/Label.hpp>
 #include <ui/Slider.hpp>
-#include <ui/TextField.hpp>
-#include <ui/MenuItem.hpp>
 #include <ui/MenuSeparator.hpp>
 #include <ui/Button.hpp>
-#include <ui/ChoiceButton.hpp>
 #include <ui/RadioButton.hpp>
 #include <ui/OptionButton.hpp>
 #include <ui/Tooltip.hpp>
 #include <app/ModuleWidget.hpp>
 #include <app/Scene.hpp>
-#include <plugin.hpp>
-#include <context.hpp>
 #include <engine/Engine.hpp>
-#include <plugin/Model.hpp>
 #include <string.hpp>
 #include <history.hpp>
 #include <settings.hpp>
@@ -125,12 +116,6 @@ static ModuleWidget* chooseModel(plugin::Model* model) {
 
     return moduleWidget;
 }
-
-
-// Widgets
-
-
-struct Browser;
 
 
 /** 
@@ -380,164 +365,6 @@ struct ModelBox : widget::OpaqueWidget {
 	}
 };
 
-class BrowserSearchField : public ui::TextField {
-   public:
-    BrowserSearchField(Browser& browser) : browser(browser) {}
-
-   private:
-    Browser& browser;
-
-    void step() override {
-        // Steal focus when step is called
-        APP->event->setSelectedWidget(this);
-        TextField::step();
-    }
-
-    void onSelectKey(const SelectKeyEvent& e) override;
-    void onChange(const ChangeEvent& e) override;
-    void onAction(const ActionEvent& e) override;
-
-    void onHide(const HideEvent& e) override {
-        APP->event->setSelectedWidget(NULL);
-        ui::TextField::onHide(e);
-    }
-
-    void onShow(const ShowEvent& e) override {
-        selectAll();
-        TextField::onShow(e);
-    }
-};
-
-class FavoriteQuantity : public Quantity {
-   public:
-    FavoriteQuantity(Browser& browser) : browser(browser) {}
-
-   private:
-    Browser& browser;
-
-   public:
-    void setValue(float value) override;
-    float getValue() override;
-};
-
-class ClearButton : public ui::Button {
-   public:
-    ClearButton(Browser& browser)
-        : Button(string::translate("Browser.resetFilters")), browser(browser) {}
-
-   private:
-    Browser& browser;
-
-    void onAction(const ActionEvent& e) override;
-};
-
-class BrandItem : public ui::MenuItem {
-   public:
-    BrandItem(Browser& browser, const std::string& brand = "")
-        : MenuItem(brand), browser(browser) {}
-
-   private:
-    Browser& browser;
-
-    void onAction(const ActionEvent& e) override;
-    void step() override;
-};
-
-class BrandButton : public ui::ChoiceButton {
-   public:
-    BrandButton(Browser& browser) : browser(browser) {}
-
-   private:
-    Browser& browser;
-
-    void onAction(const ActionEvent& e) override;
-    void step() override;
-};
-
-/** An item for the tag menu. Causes the TagItem::onAction() method to be called on a click. */
-class TagItem : public ui::MenuItem {
-public:
-    TagItem(Browser& browser, int tagId = -1) : browser(browser), tagId(tagId) {}
-    
-private:
-    Browser& browser;
-    int tagId;
-
-    void onAction(const ActionEvent& e) override;
-    void step() override;
-};
-
-
-class TagButton : public ui::ChoiceButton {
-public:
-    TagButton(Browser& browser) : browser(browser) {}
-
-private:
-    Browser& browser;
-
-    void onAction(const ActionEvent& e) override;
-    void step() override;
-};
-
-
-static std::vector<std::string> getSortNames() {
-	return {
-		string::translate("Browser.sort.lastUpdated"),
-		string::translate("Browser.sort.lastUsed"),
-		string::translate("Browser.sort.mostUsed"),
-		string::translate("Browser.sort.brand"),
-		string::translate("Browser.sort.moduleName"),
-		string::translate("Browser.sort.random"),
-	};
-};
-
-
-class SortButton : public ui::ChoiceButton {
-public:
-    SortButton(Browser& browser) : browser(browser) {}
-
-private:
-    Browser& browser;
-
-    void onAction(const ActionEvent& e) override;
-    void step() override {
-        text = string::translate("Browser.sort");
-        text += getSortNames()[settings::browserSort];
-        text = string::ellipsize(text, 20);
-        ChoiceButton::step();
-    }
-};
-
-/** Zoom selector for the browser */
-struct ZoomButton : ui::ChoiceButton {
-    Browser* browser;
-
-    // Shows the choices
-    void onAction(const ActionEvent& e) override;
-
-    void step() override {
-        // Determine the current zoom level to display
-        text = string::translate("Browser.zoom");
-        float zoom_fraction = settings::isNotVCVRack
-                                  ? settings::browserZoom
-                                  : std::pow(2.f, settings::browserZoom);
-        text += string::f("%.0f%%", zoom_fraction * 100.f);
-        ChoiceButton::step();
-    }
-};
-
-class UrlButton : public ui::Button {
-   public:
-	UrlButton(const std::string& url, const std::string& text)
-		: Button(text), url(url) {}
-
-   private:
-    std::string url;
-
-    void onAction(const ActionEvent& e) override {
-        system::openBrowser(url);
-    }
-};
 
 /**
  * BrowserHeader is the widget that is at the head of the Module Browser. It's only purpose
@@ -576,452 +403,456 @@ class BrowserHeader : public ui::SequentialLayout {
     }
 };
 
-/** The actual Browser class. The Browser is the window that shows the modules 
- * the user has available and can add to their rack.
- */
-struct Browser : widget::OpaqueWidget {
-    ui::Label* titleLabel;
-    ui::SequentialLayout* headerLayout;
-    BrowserSearchField* searchField;
-    BrandButton* brandButton;
-    TagButton* tagButton;
-    FavoriteQuantity* favoriteQuantity;
-    ui::OptionButton* favoriteButton;
-    ClearButton* clearButton;
-    ui::Label* countLabel;
+Browser::Browser() {
+    // Browser bit title label at the top
+    titleLabel = new ui::Label(string::translate("Browser.title"));
+    titleLabel->setFontSize(40);
+    titleLabel->setColor(
+        color::BLACK);  // Set text color to contrast well with the background
+    titleLabel->setAlignment(ui::Label::Alignment::CENTER_ALIGNMENT);
+    titleLabel->box.pos.x = MARGIN;
+    titleLabel->box.pos.y = MARGIN + 2.0;
+    titleLabel->box.size.y = titleLabel->getFontSize() * 0.7 +
+                             2.0;  // Don't need full height for label
+    addChild(titleLabel);
 
-    ui::ScrollWidget* moduleScroll;
-    widget::Widget* moduleMargin;
-    ui::SequentialLayout* moduleLayoutContainer;
+    // Header
+    headerLayout = new BrowserHeader();
+    headerLayout->box.pos = math::Vec(0, titleLabel->box.size.y + 2 * MARGIN);
+    headerLayout->setMargin(math::Vec(MARGIN, MARGIN));
+    headerLayout->setMinSpacing(math::Vec(MARGIN, MARGIN));
+    addChild(headerLayout);
 
-    std::string search;
-    std::string brand;
-    std::set<int> tagIds = {};
-    bool favorite = false;
-    bool lastPreferDarkPanels = false;
+    // Need to set desired widgetHeight here instead of when drawing since
+    // box.size.y is set in Button's constructor
+    int originalWidgetHeight = settings::getWidgetHeight();
+    settings::setWidgetHeight(BrowserHeader::HeaderWidgetHeight);
 
-    // Caches and temporary state
-    std::map<plugin::Model*, float> prefilteredModelScores;
-    std::map<plugin::Model*, int> modelOrders;
+    // Note: for the header widgets size.x using original values for VCV Rack,
+    // but then adjusting them to the font size actually being used here.
+    // This way it is easy to change the font size simply by setting
+    // HeaderFontSize.
 
-    // Margin used for the small border around the Browser window
-    const float MARGIN = 8.0;
+    searchField = new BrowserSearchField(*this);
+    searchField->box.size.x =
+        150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+    searchField->setPlaceholder(string::translate("Browser.searchModules"));
+    headerLayout->addChild(searchField);
 
-    Browser() {
-        // Browser bit title label at the top
-        titleLabel = new ui::Label(string::translate("Browser.title"));
-		titleLabel->setFontSize(40);
-		titleLabel->setColor(color::BLACK); // Set text color to contrast well with the background
-		titleLabel->setAlignment(ui::Label::Alignment::CENTER_ALIGNMENT);
-        titleLabel->box.pos.x = MARGIN;
-        titleLabel->box.pos.y = MARGIN + 2.0;
-		titleLabel->box.size.y = titleLabel->getFontSize() * 0.7 + 2.0; // Don't need full height for label
-        addChild(titleLabel);
+    brandButton = new BrandButton(*this);
+    brandButton->box.size.x =
+        150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+    headerLayout->addChild(brandButton);
 
-        // Header
-        headerLayout = new BrowserHeader();
-        headerLayout->box.pos = math::Vec(0, titleLabel->box.size.y + 2 * MARGIN);
-        headerLayout->setMargin(math::Vec(MARGIN, MARGIN));
-        headerLayout->setMinSpacing(math::Vec(MARGIN, MARGIN));
-        addChild(headerLayout);
+    tagButton = new TagButton(*this);
+    tagButton->box.size.x =
+        150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+    headerLayout->addChild(tagButton);
 
-        // Need to set desired widgetHeight here instead of when drawing since
-        // box.size.y is set in Button's constructor
-        int originalWidgetHeight = settings::getWidgetHeight();
-		settings::setWidgetHeight(BrowserHeader::HeaderWidgetHeight);
+    favoriteButton = new FavoriteButton(*this);
+    favoriteButton->box.size.x =
+        110 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+    headerLayout->addChild(favoriteButton);
 
-        // Note: for the header widgets size.x using original values for VCV Rack,
-        // but then adjusting them to the font size actually being used here.
-        // This way it is easy to change the font size simply by setting HeaderFontSize.
+    clearButton = new ClearButton(*this);
+    clearButton->box.size.x =
+        90 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+    headerLayout->addChild(clearButton);
 
-		searchField = new BrowserSearchField(*this);
-		searchField->box.size.x = 150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-		searchField->setPlaceholder(string::translate("Browser.searchModules"));
-		headerLayout->addChild(searchField);
-
-        brandButton = new BrandButton(*this);
-        brandButton->box.size.x = 150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        headerLayout->addChild(brandButton);
-
-        tagButton = new TagButton(*this);
-        tagButton->box.size.x = 150 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        headerLayout->addChild(tagButton);
-
-        favoriteQuantity = new FavoriteQuantity(*this);
-
-		favoriteButton = new ui::OptionButton(string::translate("Browser.favorites"));
-		favoriteButton->setQuantity(favoriteQuantity);
-		favoriteButton->box.size.x = 70 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-		headerLayout->addChild(favoriteButton);
-
-        clearButton = new ClearButton(*this);
-		clearButton->box.size.x = 90 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-		headerLayout->addChild(clearButton);
-
-        // can see the modules. And it takes up precious space. Plus there are already 
-        // lots of other action widgets, complicating the UI. Therefore don't display it
-        // unless VCV Rack where want UI to be consistent.
-        if (!settings::isNotVCVRack) {
-            countLabel = new ui::Label;
-            countLabel->box.size.x = 110 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-            headerLayout->addChild(countLabel);
-        }
-
-        SortButton* sortButton = new SortButton(*this);
-        sortButton->box.size.x = 130 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        headerLayout->addChild(sortButton);
-
-        // For zooming in or out on the modules in the Browser
-        ZoomButton* zoomButton = new ZoomButton;
-        zoomButton->box.size.x = 100 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        zoomButton->browser = this;
-        headerLayout->addChild(zoomButton);
-
-        // For adding modules from VCV Rack to the users' library
-        UrlButton* libraryButton =
-            new UrlButton("https://library.vcvrack.com/",
-                          string::translate("Browser.browseLibrary"));
-        libraryButton->box.size.x =
-            170 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
-        headerLayout->addChild(libraryButton);
-
-        // Restore original height
-        settings::setWidgetHeight(originalWidgetHeight);
-
-        // Create scrollable module container
-        moduleScroll = new ui::ScrollWidget;
-        addChild(moduleScroll);
-
-        moduleMargin = new widget::Widget;
-        moduleScroll->container->addChild(moduleMargin);
-
-        moduleLayoutContainer = new ui::SequentialLayout(ui::SequentialLayout::TAKE_ENTIRE_WIDTH);
-        moduleLayoutContainer->setMargin(math::Vec(MARGIN, 1));  // Add 1 pixel in Y for favorites border
-        moduleLayoutContainer->setMinSpacing(math::Vec(MARGIN, MARGIN));
-        moduleMargin->addChild(moduleLayoutContainer);
-
-        resetModuleBoxes();
-        clearSelectorsInHeader();
+    // can see the modules. And it takes up precious space. Plus there are
+    // already lots of other action widgets, complicating the UI. Therefore
+    // don't display it unless VCV Rack where want UI to be consistent.
+    if (!settings::isNotVCVRack) {
+        countLabel = new ui::Label;
+        countLabel->box.size.x =
+            110 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+        headerLayout->addChild(countLabel);
     }
 
-	~Browser() {
-		delete favoriteQuantity;
-	}
+    SortButton* sortButton = new SortButton(*this);
+    sortButton->box.size.x =
+        130 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+    headerLayout->addChild(sortButton);
 
-	void resetModuleBoxes() {
-		moduleLayoutContainer->clearChildren();
-		modelOrders.clear();
-		// Iterate plugins
-		for (plugin::Plugin* plugin : plugin::plugins) {
-			// Iterate models in plugin
-			int modelIndex = 0;
-			for (plugin::Model* model : plugin->models) {
-				// Create ModelBox
-				ModelBox* modelBox = new ModelBox;
-				modelBox->setModel(model);
-				moduleLayoutContainer->addChild(modelBox);
+    // For zooming in or out on the modules in the Browser
+    ZoomButton* zoomButton = new ZoomButton(*this);
+    zoomButton->box.size.x =
+        100 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+    headerLayout->addChild(zoomButton);
 
-				modelOrders[model] = modelIndex;
-				modelIndex++;
-			}
-		}
-	}
+    // For adding modules from VCV Rack to the users' library
+    UrlButton* libraryButton =
+        new UrlButton("https://library.vcvrack.com/",
+                      string::translate("Browser.browseLibrary"));
+    libraryButton->box.size.x =
+        170 * BrowserHeader::HeaderFontSize / BND_LABEL_FONT_SIZE;
+    headerLayout->addChild(libraryButton);
 
-        /** Called when user selects zoom level. Updates zoom for each module in
-         * the Browser */
-        void updateZoom() {
-            moduleScroll->offset = math::Vec();
+    // Restore original height
+    settings::setWidgetHeight(originalWidgetHeight);
 
-            for (Widget* w : moduleLayoutContainer->children) {
-                ModelBox* mb = reinterpret_cast<ModelBox*>(w);
-                assert(mb);
-                mb->updateZoom();
-            }
-        }
+    // Create scrollable module container
+    moduleScroll = new ui::ScrollWidget;
+    addChild(moduleScroll);
 
-        void step() override {
-		// Determine size of the Browser window. Make it 40 units smaller than
-		// the main window so that can see that the window is on top of the rack display
-		box = parent->box.zeroPos().grow(math::Vec(-36, -36));
+    moduleMargin = new widget::Widget;
+    moduleScroll->container->addChild(moduleMargin);
 
-		// Determine horizontal layout of titleLabel
-		titleLabel->box.size.x = box.size.x; 
+    moduleLayoutContainer =
+        new ui::SequentialLayout(ui::SequentialLayout::TAKE_ENTIRE_WIDTH);
+    moduleLayoutContainer->setMargin(
+        math::Vec(MARGIN, 1));  // Add 1 pixel in Y for favorites border
+    moduleLayoutContainer->setMinSpacing(math::Vec(MARGIN, MARGIN));
+    moduleMargin->addChild(moduleLayoutContainer);
 
-		// The modules to edges of window margin
-		const float rightAndBottomMargin = MARGIN; 
+    resetModuleBoxes();
+    clearSelectorsInHeader();
+}
 
-		// Now that know how big enclosing window is can set position and sizes of the 
-		// containers. First, set width of the headerLayout widget.
-		headerLayout->box.size.x = box.size.x;
+void Browser::resetModuleBoxes() {
+    moduleLayoutContainer->clearChildren();
+    modelOrders.clear();
+    // Iterate plugins
+    for (plugin::Plugin* plugin : plugin::plugins) {
+        // Iterate models in plugin
+        int modelIndex = 0;
+        for (plugin::Model* model : plugin->models) {
+            // Create ModelBox
+            ModelBox* modelBox = new ModelBox;
+            modelBox->setModel(model);
+            moduleLayoutContainer->addChild(modelBox);
 
-		// Set the position and size of the scrollable container that contains all the modules.
-		// Make it so there is a margin at the bottom.
-		moduleScroll->box.pos = headerLayout->box.getBottomLeft() + math::Vec(0, 2*MARGIN);
-		moduleScroll->box.size = box.size.minus(moduleScroll->box.pos) - math::Vec(0, MARGIN);
-
-		// Set the size of the moduleMargin which is inside of the moduleScroll
-		moduleMargin->box.size.x = moduleScroll->box.size.x;
-		moduleMargin->box.size.y = moduleLayoutContainer->box.size.y + rightAndBottomMargin;
-		moduleLayoutContainer->box.size.x = moduleMargin->box.size.x - rightAndBottomMargin;
-
-		// Check if preferDarkPanels has changed
-		if (settings::preferDarkPanels != lastPreferDarkPanels) {
-			lastPreferDarkPanels = settings::preferDarkPanels;
-			// Request module framebuffers to re-render
-			Widget::DirtyEvent eDirty;
-			moduleLayoutContainer->onDirty(eDirty);
-		}
-
-		OpaqueWidget::step();
-	}
-
-	void draw(const DrawArgs& args) override {
-		// Draw a light gray background
-		NVGcolor bg_color = settings::moduleBrowserBg;
-        // Outline color that contrasts with the background color
-		NVGcolor outline_color = color::brightness(bg_color) < 0.5f
-										? color::lerp(bg_color, color::WHITE,
-													0.1)  // Light outline for dark background
-										: color::lerp(bg_color, color::BLACK,
-													0.1);  // Dark outline for light background
-		float radius = 10.0; // Use a noticable radius to further differentiate browser window
-        bndBackgroundColor(args.vg, 0.0, 0.0, box.size.x, box.size.y, radius, bg_color, 
-			outline_color);
-
-		Widget::draw(args);
-	}
-
-    bool isModelVisible(plugin::Model* model, const std::string& brand, std::set<int> tagIds, bool favorite) {
-		// Filter hidden
-		if (model->hidden)
-			return false;
-
-		// Filter moduleInfo setting if enabled is false
-		settings::ModuleInfo* mi = settings::getModuleInfo(model->plugin->slug, model->slug);
-		if (mi && !mi->enabled)
-			return false;
-
-		// Filter if not whitelisted by library
-		if (!settings::isModuleWhitelisted(model->plugin->slug, model->slug))
-			return false;
-
-		// Filter favorites
-		if (favorite) {
-			if (!mi || !mi->favorite)
-				return false;
-		}
-
-		// Filter brand
-		if (!brand.empty()) {
-			if (model->plugin->brand != brand)
-				return false;
-		}
-
-		// Filter tag
-		for (int tagId : tagIds) {
-			auto it = std::find(model->tagIds.begin(), model->tagIds.end(), tagId);
-			if (it == model->tagIds.end())
-				return false;
-		}
-
-		return true;
-	};
-
-	// Determines if there is at least 1 visible Model with a given brand and tag
-	bool hasVisibleModel(const std::string& brand, std::set<int> tagIds, bool favorite) {
-		for (const auto& pair : prefilteredModelScores) {
-			plugin::Model* model = pair.first;
-			if (isModelVisible(model, brand, tagIds, favorite))
-				return true;
-		}
-		return false;
-	};
-
-	template <typename F>
-	void sortModels(F f) {
-		moduleLayoutContainer->children.sort([&](Widget* w1, Widget* w2) {
-			ModelBox* m1 = reinterpret_cast<ModelBox*>(w1);
-			ModelBox* m2 = reinterpret_cast<ModelBox*>(w2);
-			return f(m1) < f(m2);
-		});
-	}
-
-    void refresh() {
-        // Reset scroll position
-        moduleScroll->offset = math::Vec();
-
-        prefilteredModelScores.clear();
-
-        // Filter ModelBoxes by brand and tag
-        for (Widget* w : moduleLayoutContainer->children) {
-            ModelBox* m = reinterpret_cast<ModelBox*>(w);
-            m->setVisible(
-                isModelVisible(m->model, brand, tagIds, favorite));
-        }
-
-        // Filter and sort by search results
-        if (search.empty()) {
-            // Add all models to prefilteredModelScores with scores of 1
-            for (Widget* w : moduleLayoutContainer->children) {
-                ModelBox* m = reinterpret_cast<ModelBox*>(w);
-                prefilteredModelScores[m->model] = 1.f;
-            }
-
-            // Sort ModelBoxes
-            if (settings::browserSort == settings::BROWSER_SORT_UPDATED) {
-                sortModels([this](ModelBox* m) {
-                    plugin::Plugin* p = m->model->plugin;
-                    int modelOrder = get(modelOrders, m->model, 0);
-                    return std::make_tuple(-p->modifiedTimestamp, p->brand,
-                                            p->name, modelOrder);
-                });
-            } else if (settings::browserSort ==
-                        settings::BROWSER_SORT_LAST_USED) {
-                sortModels([this](ModelBox* m) {
-                    plugin::Plugin* p = m->model->plugin;
-                    const settings::ModuleInfo* mi =
-                        settings::getModuleInfo(p->slug, m->model->slug);
-                    double lastAdded = mi ? mi->lastAdded : -INFINITY;
-                    int modelOrder = get(modelOrders, m->model, 0);
-                    return std::make_tuple(-lastAdded,
-                                            -p->modifiedTimestamp, p->brand,
-                                            p->name, modelOrder);
-                });
-            } else if (settings::browserSort ==
-                        settings::BROWSER_SORT_MOST_USED) {
-                sortModels([this](ModelBox* m) {
-                    plugin::Plugin* p = m->model->plugin;
-                    const settings::ModuleInfo* mi =
-                        settings::getModuleInfo(p->slug, m->model->slug);
-                    int added = mi ? mi->added : 0;
-                    double lastAdded = mi ? mi->lastAdded : -INFINITY;
-                    int modelOrder = get(modelOrders, m->model, 0);
-                    return std::make_tuple(-added, -lastAdded,
-                                            -p->modifiedTimestamp, p->brand,
-                                            p->name, modelOrder);
-                });
-            } else if (settings::browserSort ==
-                        settings::BROWSER_SORT_BRAND) {
-                sortModels([this](ModelBox* m) {
-                    plugin::Plugin* p = m->model->plugin;
-                    int modelOrder = get(modelOrders, m->model, 0);
-                    return std::make_tuple(p->brand, p->name, modelOrder);
-                });
-            } else if (settings::browserSort ==
-                        settings::BROWSER_SORT_NAME) {
-                sortModels([](ModelBox* m) {
-                    plugin::Plugin* p = m->model->plugin;
-                    return std::make_tuple(m->model->name, p->brand);
-                });
-            } else if (settings::browserSort ==
-                        settings::BROWSER_SORT_RANDOM) {
-                std::map<ModelBox*, uint64_t> randomOrder;
-                for (Widget* w : moduleLayoutContainer->children) {
-                    ModelBox* m = reinterpret_cast<ModelBox*>(w);
-                    randomOrder[m] = random::u64();
-                }
-                sortModels(
-                    [&](ModelBox* m) { return get(randomOrder, m, 0); });
-            }
-        } else {
-            // Score results against search query
-            auto results = modelDb.search(search);
-            // DEBUG("=============");
-            for (auto& result : results) {
-                prefilteredModelScores[result.key] = result.score;
-                // DEBUG("%s %s\t\t%f", result.key->plugin->slug.c_str(),
-                // result.key->slug.c_str(), result.score);
-            }
-            // Sort by score
-            sortModels([&](ModelBox* m) {
-                return -get(prefilteredModelScores, m->model, 0.f);
-            });
-            // Filter by whether the score is above the threshold
-            for (Widget* w : moduleLayoutContainer->children) {
-                ModelBox* m = reinterpret_cast<ModelBox*>(w);
-                assert(m);
-                if (m->isVisible()) {
-                    if (prefilteredModelScores.find(m->model) ==
-                        prefilteredModelScores.end())
-                        m->hide();
-                }
-            }
-        }
-
-        // Only update countLabel if it was actually created
-        if (countLabel) {
-            // Count visible modules
-            int count = 0;
-            for (Widget* w : moduleLayoutContainer->children) {
-                if (w->isVisible()) count++;
-            }
-            countLabel->setText(
-                (count == 1)
-                    ? string::translate("Browser.modulesOne")
-                    : string::f(string::translate("Browser.modulesMany"),
-                                count));
+            modelOrders[model] = modelIndex;
+            modelIndex++;
         }
     }
+}
 
-    void clearSelectorsInHeader() {
-        search = "";
-        searchField->setText("");
-        brand = "";
-        tagIds = {};
-        favorite = false;
-        refresh();
+void Browser::updateZoom() {
+    moduleScroll->offset = math::Vec();
+
+    for (Widget* w : moduleLayoutContainer->children) {
+        ModelBox* mb = reinterpret_cast<ModelBox*>(w);
+        assert(mb);
+        mb->updateZoom();
+    }
+}
+
+void Browser::step() {
+    // Determine size of the Browser window. Make it 40 units smaller than
+    // the main window so that can see that the window is on top of the rack
+    // display
+    box = parent->box.zeroPos().grow(math::Vec(-36, -36));
+
+    // Determine horizontal layout of titleLabel
+    titleLabel->box.size.x = box.size.x;
+
+    // The modules to edges of window margin
+    const float rightAndBottomMargin = MARGIN;
+
+    // Now that know how big enclosing window is can set position and sizes
+    // of the containers. First, set width of the headerLayout widget.
+    headerLayout->box.size.x = box.size.x;
+
+    // Set the position and size of the scrollable container that contains
+    // all the modules. Make it so there is a margin at the bottom.
+    moduleScroll->box.pos =
+        headerLayout->box.getBottomLeft() + math::Vec(0, 2 * MARGIN);
+    moduleScroll->box.size =
+        box.size.minus(moduleScroll->box.pos) - math::Vec(0, MARGIN);
+
+    // Set the size of the moduleMargin which is inside of the moduleScroll
+    moduleMargin->box.size.x = moduleScroll->box.size.x;
+    moduleMargin->box.size.y =
+        moduleLayoutContainer->box.size.y + rightAndBottomMargin;
+    moduleLayoutContainer->box.size.x =
+        moduleMargin->box.size.x - rightAndBottomMargin;
+
+    // Check if preferDarkPanels has changed
+    if (settings::preferDarkPanels != lastPreferDarkPanels) {
+        lastPreferDarkPanels = settings::preferDarkPanels;
+        // Request module framebuffers to re-render
+        Widget::DirtyEvent eDirty;
+        moduleLayoutContainer->onDirty(eDirty);
     }
 
-    void onButton(const ButtonEvent& e) override {
-        Widget::onButton(e);
-        e.stopPropagating();
-        // Consume all mouse buttons
-        if (!e.isConsumed()) e.consume(this);
+    OpaqueWidget::step();
+}
+
+void Browser::draw(const DrawArgs& args) {
+    // Draw a light gray background
+    NVGcolor bg_color = settings::moduleBrowserBg;
+    // Outline color that contrasts with the background color
+    NVGcolor outline_color =
+        color::brightness(bg_color) < 0.5f
+            ? color::lerp(bg_color, color::WHITE,
+                          0.1)  // Light outline for dark background
+            : color::lerp(bg_color, color::BLACK,
+                          0.1);  // Dark outline for light background
+    float radius =
+        10.0;  // Use a noticable radius to further differentiate browser window
+    bndBackgroundColor(args.vg, 0.0, 0.0, box.size.x, box.size.y, radius,
+                       bg_color, outline_color);
+
+    Widget::draw(args);
+}
+
+bool Browser::isModelVisible(plugin::Model* model, const std::string& brand,
+                             std::set<int> tagIds, bool favorite) {
+    // Filter hidden
+    if (model->hidden) return false;
+
+    // Filter moduleInfo setting if enabled is false
+    settings::ModuleInfo* mi =
+        settings::getModuleInfo(model->plugin->slug, model->slug);
+    if (mi && !mi->enabled) return false;
+
+    // Filter if not whitelisted by library
+    if (!settings::isModuleWhitelisted(model->plugin->slug, model->slug))
+        return false;
+
+    // Filter favorites
+    if (favorite) {
+        if (!mi || !mi->favorite) return false;
     }
 
-    void onHoverKey(const HoverKeyEvent& e) override {
-		if (e.action == GLFW_PRESS) {
-			// Secret key command to dump all visible modules into rack
-			if (e.isKeyCommand(GLFW_KEY_F2, RACK_MOD_CTRL | GLFW_MOD_SHIFT | GLFW_MOD_ALT)) {
-				int count = 0;
-				for (widget::Widget* w : moduleLayoutContainer->children) {
-					ModelBox* mb = dynamic_cast<ModelBox*>(w);
-					if (!mb)
-						continue;
-					if (!mb->visible)
-						continue;
-					count++;
-					DEBUG("Dumping into rack (%d): %s/%s", count, mb->model->plugin->slug.c_str(), mb->model->slug.c_str());
-					chooseModel(mb->model);
-				}
-				e.consume(this);
-			}
-		}
+    // Filter brand
+    if (!brand.empty()) {
+        if (model->plugin->brand != brand) return false;
+    }
 
-		if (e.isConsumed())
-			return;
-		OpaqueWidget::onHoverKey(e);
-	}
+    // Filter tag
+    for (int tagId : tagIds) {
+        auto it = std::find(model->tagIds.begin(), model->tagIds.end(), tagId);
+        if (it == model->tagIds.end()) return false;
+    }
+
+    return true;
 };
 
+bool Browser::hasVisibleModel(const std::string& brand, std::set<int> tagIds,
+                              bool favoritesEnabled) {
+    for (const auto& pair : prefilteredModelScores) {
+        plugin::Model* model = pair.first;
+        if (isModelVisible(model, brand, tagIds, favoritesEnabled)) return true;
+    }
+    return false;
+};
+
+template <typename F>
+void Browser::sortModels(F f) {
+    moduleLayoutContainer->children.sort([&](Widget* w1, Widget* w2) {
+        ModelBox* m1 = reinterpret_cast<ModelBox*>(w1);
+        ModelBox* m2 = reinterpret_cast<ModelBox*>(w2);
+        return f(m1) < f(m2);
+    });
+}
+
+void Browser::refresh() {
+    // Reset scroll position
+    moduleScroll->offset = math::Vec();
+
+    prefilteredModelScores.clear();
+
+    // Filter ModelBoxes by brand and tag
+    for (Widget* w : moduleLayoutContainer->children) {
+        ModelBox* m = reinterpret_cast<ModelBox*>(w);
+        m->setVisible(isModelVisible(m->model, brand, tagIds,
+                                     favoriteButton->isEnabled()));
+    }
+
+    // Filter and sort by search results
+    if (search.empty()) {
+        // Add all models to prefilteredModelScores with scores of 1
+        for (Widget* w : moduleLayoutContainer->children) {
+            ModelBox* m = reinterpret_cast<ModelBox*>(w);
+            prefilteredModelScores[m->model] = 1.f;
+        }
+
+        // Sort ModelBoxes
+        if (settings::browserSort == settings::BROWSER_SORT_UPDATED) {
+            sortModels([this](ModelBox* m) {
+                plugin::Plugin* p = m->model->plugin;
+                int modelOrder = get(modelOrders, m->model, 0);
+                return std::make_tuple(-p->modifiedTimestamp, p->brand, p->name,
+                                       modelOrder);
+            });
+        } else if (settings::browserSort == settings::BROWSER_SORT_LAST_USED) {
+            sortModels([this](ModelBox* m) {
+                plugin::Plugin* p = m->model->plugin;
+                const settings::ModuleInfo* mi =
+                    settings::getModuleInfo(p->slug, m->model->slug);
+                double lastAdded = mi ? mi->lastAdded : -INFINITY;
+                int modelOrder = get(modelOrders, m->model, 0);
+                return std::make_tuple(-lastAdded, -p->modifiedTimestamp,
+                                       p->brand, p->name, modelOrder);
+            });
+        } else if (settings::browserSort == settings::BROWSER_SORT_MOST_USED) {
+            sortModels([this](ModelBox* m) {
+                plugin::Plugin* p = m->model->plugin;
+                const settings::ModuleInfo* mi =
+                    settings::getModuleInfo(p->slug, m->model->slug);
+                int added = mi ? mi->added : 0;
+                double lastAdded = mi ? mi->lastAdded : -INFINITY;
+                int modelOrder = get(modelOrders, m->model, 0);
+                return std::make_tuple(-added, -lastAdded,
+                                       -p->modifiedTimestamp, p->brand, p->name,
+                                       modelOrder);
+            });
+        } else if (settings::browserSort == settings::BROWSER_SORT_BRAND) {
+            sortModels([this](ModelBox* m) {
+                plugin::Plugin* p = m->model->plugin;
+                int modelOrder = get(modelOrders, m->model, 0);
+                return std::make_tuple(p->brand, p->name, modelOrder);
+            });
+        } else if (settings::browserSort == settings::BROWSER_SORT_NAME) {
+            sortModels([](ModelBox* m) {
+                plugin::Plugin* p = m->model->plugin;
+                return std::make_tuple(m->model->name, p->brand);
+            });
+        } else if (settings::browserSort == settings::BROWSER_SORT_RANDOM) {
+            std::map<ModelBox*, uint64_t> randomOrder;
+            for (Widget* w : moduleLayoutContainer->children) {
+                ModelBox* m = reinterpret_cast<ModelBox*>(w);
+                randomOrder[m] = random::u64();
+            }
+            sortModels([&](ModelBox* m) { return get(randomOrder, m, 0); });
+        }
+    } else {
+        // Score results against search query
+        auto results = modelDb.search(search);
+        // DEBUG("=============");
+        for (auto& result : results) {
+            prefilteredModelScores[result.key] = result.score;
+            // DEBUG("%s %s\t\t%f", result.key->plugin->slug.c_str(),
+            // result.key->slug.c_str(), result.score);
+        }
+        // Sort by score
+        sortModels([&](ModelBox* m) {
+            return -get(prefilteredModelScores, m->model, 0.f);
+        });
+        // Filter by whether the score is above the threshold
+        for (Widget* w : moduleLayoutContainer->children) {
+            ModelBox* m = reinterpret_cast<ModelBox*>(w);
+            assert(m);
+            if (m->isVisible()) {
+                if (prefilteredModelScores.find(m->model) ==
+                    prefilteredModelScores.end())
+                    m->hide();
+            }
+        }
+    }
+
+    // Only update countLabel if it was actually created
+    if (countLabel) {
+        // Count visible modules
+        int count = 0;
+        for (Widget* w : moduleLayoutContainer->children) {
+            if (w->isVisible()) count++;
+        }
+        countLabel->setText(
+            (count == 1)
+                ? string::translate("Browser.modulesOne")
+                : string::f(string::translate("Browser.modulesMany"), count));
+    }
+}
+
+void Browser::clearSelectorsInHeader() {
+    search = "";
+    searchField->setText("");
+    brand = "";
+    tagIds = {};
+    favoriteButton->disable();
+    refresh();
+}
+
+void Browser::onButton(const ButtonEvent& e) {
+    Widget::onButton(e);
+    e.stopPropagating();
+    // Consume all mouse buttons
+    if (!e.isConsumed()) e.consume(this);
+}
+
+void Browser::onHoverKey(const HoverKeyEvent& e) {
+    if (e.action == GLFW_PRESS) {
+        // Secret key command to dump all visible modules into rack
+        if (e.isKeyCommand(GLFW_KEY_F2,
+                           RACK_MOD_CTRL | GLFW_MOD_SHIFT | GLFW_MOD_ALT)) {
+            int count = 0;
+            for (widget::Widget* w : moduleLayoutContainer->children) {
+                ModelBox* mb = dynamic_cast<ModelBox*>(w);
+                if (!mb) continue;
+                if (!mb->visible) continue;
+                count++;
+                DEBUG("Dumping into rack (%d): %s/%s", count,
+                      mb->model->plugin->slug.c_str(), mb->model->slug.c_str());
+                chooseModel(mb->model);
+            }
+            e.consume(this);
+        }
+    }
+
+    if (e.isConsumed()) return;
+    OpaqueWidget::onHoverKey(e);
+}
+
+void Browser::FavoriteButton::onAction(const ActionEvent& e) {
+    // Toggle enabled state
+    enabled = !enabled;
+
+    // Set the checkmark on right side of button if now enabled
+    std::string label = string::translate("Browser.favorites");
+    if (enabled) {
+        label += "  ";
+        label += CHECKMARK_STRING;
+    }
+    setText(label);
+
+    // Redisplay everything
+    browser.refresh();
+}
+
+
+static std::vector<std::string> getSortNames() {
+	return {
+		string::translate("Browser.sort.lastUpdated"),
+		string::translate("Browser.sort.lastUsed"),
+		string::translate("Browser.sort.mostUsed"),
+		string::translate("Browser.sort.brand"),
+		string::translate("Browser.sort.moduleName"),
+		string::translate("Browser.sort.random"),
+	};
+};
+
+void Browser::SortButton::step() {
+    text = string::translate("Browser.sort");
+    text += getSortNames()[settings::browserSort];
+    text = string::ellipsize(text, 20);
+    ChoiceButton::step();
+}
+
+void Browser::ZoomButton::step() {
+    // Determine the current zoom level to display
+    text = string::translate("Browser.zoom");
+    float zoom_fraction = settings::isNotVCVRack
+                              ? settings::browserZoom
+                              : std::pow(2.f, settings::browserZoom);
+    text += string::f("%.0f%%", zoom_fraction * 100.f);
+    ChoiceButton::step();
+}
+
+void Browser::UrlButton::onAction(const ActionEvent& e) {
+    system::openBrowser(url);
+}
 
 // Implementations to resolve dependencies
 
 
-inline void FavoriteQuantity::setValue(float value) {
-	browser.favorite = value;
-	browser.refresh();
-}
-
-inline float FavoriteQuantity::getValue() {
-	return browser.favorite;
-}
-
-inline void ClearButton::onAction(const ActionEvent& e) {
+void Browser::ClearButton::onAction(const ActionEvent& e) {
 	browser.clearSelectorsInHeader();
 }
 
-inline void BrowserSearchField::onSelectKey(const SelectKeyEvent& e) {
+void Browser::BrowserSearchField::onSelectKey(const SelectKeyEvent& e) {
 	if (e.action == GLFW_PRESS || e.action == GLFW_REPEAT) {
 		// Backspace when the field is empty to clear filters.
 		if (e.isKeyCommand(GLFW_KEY_BACKSPACE) || e.isKeyCommand(GLFW_KEY_BACKSPACE, RACK_MOD_CTRL)) {
@@ -1036,15 +867,15 @@ inline void BrowserSearchField::onSelectKey(const SelectKeyEvent& e) {
 		ui::TextField::onSelectKey(e);
 }
 
-inline void BrowserSearchField::onChange(const ChangeEvent& e) {
-	browser.search = string::trim(getText());
-	browser.refresh();
+void Browser::BrowserSearchField::onChange(const ChangeEvent& e) {
+    browser.setSearch(string::trim(getText()));
+    browser.refresh();
 }
 
-inline void BrowserSearchField::onAction(const ActionEvent& e) {
+void Browser::BrowserSearchField::onAction(const ActionEvent& e) {
 	// Get first ModelBox
 	ModelBox* mb = NULL;
-	for (Widget* w : browser.moduleLayoutContainer->children) {
+	for (Widget* w : browser.getModuleLayoutContainer()->children) {
 		if (w->isVisible()) {
 			mb = reinterpret_cast<ModelBox*>(w);
 			break;
@@ -1056,20 +887,20 @@ inline void BrowserSearchField::onAction(const ActionEvent& e) {
 	}
 }
 
-inline void BrandItem::onAction(const ActionEvent& e) {
-	if (browser.brand == getText())
-		browser.brand = "";
+void Browser::BrandItem::onAction(const ActionEvent& e) {
+	if (browser.getBrand() == getText())
+		browser.setBrand("");
 	else
-		browser.brand = getText();
+		browser.setBrand(getText());
 	browser.refresh();
 }
 
-inline void BrandItem::step() {
-    setRightText(CHECKMARK(browser.brand == getText()));
+void Browser::BrandItem::step() {
+    setRightText(CHECKMARK(browser.getBrand() == getText()));
     MenuItem::step();
 }
 
-inline void BrandButton::onAction(const ActionEvent& e) {
+void Browser::BrandButton::onAction(const ActionEvent& e) {
     INFO("Clicked on Brand and got action " /*, e.context */);
     ui::Menu* menu = createMenu();
     menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
@@ -1089,68 +920,68 @@ inline void BrandButton::onAction(const ActionEvent& e) {
 
     for (const std::string& brand : brands) {
         BrandItem* brandItem = new BrandItem(browser, brand);
-        brandItem->setDisabled(
-            !browser.hasVisibleModel(brand, browser.tagIds, browser.favorite));
+        brandItem->setDisabled(!browser.hasVisibleModel(
+            brand, browser.getTagIds(), browser.getFavoriteButton()->isEnabled()));
         menu->addChild(brandItem);
     }
 }
 
-inline void BrandButton::step() {
+void Browser::BrandButton::step() {
 	text = string::translate("Browser.brand");
-	if (!browser.brand.empty()) {
-		text += ": ";
-		text += browser.brand;
-	}
+    if (!browser.getBrand().empty()) {
+        text += ": ";
+        text += browser.getBrand();
+    }
 	text = string::ellipsize(text, 20);
 	ChoiceButton::step();
 }
 
 /** Called when user clicks on an item in the tag menu */
-inline void TagItem::onAction(const ActionEvent& e) {
-	auto it = browser.tagIds.find(tagId);
-	bool isSelected = (it != browser.tagIds.end());
+void Browser::TagItem::onAction(const ActionEvent& e) {
+	auto it = browser.getTagIds().find(tagId);
+	bool isSelected = (it != browser.getTagIds().end());
 
 	if (tagId >= 0) {
 		// Specific tag
 		if (!e.isConsumed()) {
 			// Multi select
 			if (isSelected)
-				browser.tagIds.erase(tagId);
+				browser.getTagIds().erase(tagId);
 			else
-				browser.tagIds.insert(tagId);
+				browser.getTagIds().insert(tagId);
 			e.unconsume();
 		}
 		else {
 			// Single select
 			if (isSelected)
-				browser.tagIds = {};
+				browser.setTagIds({});
 			else {
-				browser.tagIds = {tagId};
+				browser.setTagIds({tagId});
 			}
 		}
 	}
 	else {
 		// All tags
-		browser.tagIds = {};
+		browser.setTagIds({});
 	}
 
 	browser.refresh();
 }
 
-inline void TagItem::step() {
+void Browser::TagItem::step() {
 	// TODO Disable tags with no modules
 	if (tagId >= 0) {
-		auto it = browser.tagIds.find(tagId);
-		bool isSelected = (it != browser.tagIds.end());
+		auto it = browser.getTagIds().find(tagId);
+		bool isSelected = (it != browser.getTagIds().end());
 		setRightText(CHECKMARK(isSelected));
 	}
 	else {
-		setRightText(CHECKMARK(browser.tagIds.empty()));
+		setRightText(CHECKMARK(browser.getTagIds().empty()));
 	}
 	MenuItem::step();
 }
 
-inline void TagButton::onAction(const ActionEvent& e) {
+void Browser::TagButton::onAction(const ActionEvent& e) {
     ui::Menu* menu = createMenu();
     menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
     menu->box.size.x = box.size.x;
@@ -1176,18 +1007,18 @@ inline void TagButton::onAction(const ActionEvent& e) {
     for (int tagId = 0; tagId < (int)tag::tagAliases.size(); tagId++) {
         TagItem* tagItem = new TagItem(browser, tagId);
         tagItem->setText(string::translate("tag." + tag::getTag(tagId)));
-        tagItem->setDisabled(
-            !browser.hasVisibleModel(browser.brand, {tagId}, browser.favorite));
+        tagItem->setDisabled(!browser.hasVisibleModel(
+            browser.getBrand(), {tagId}, browser.getFavoriteButton()->isEnabled()));
         menu->addChild(tagItem);
     }
 }
 
-inline void TagButton::step() {
+void Browser::TagButton::step() {
 	text = string::translate("Browser.tags");
-	if (!browser.tagIds.empty()) {
+	if (!browser.getTagIds().empty()) {
 		text += ": ";
 		bool firstTag = true;
-		for (int tagId : browser.tagIds) {
+		for (int tagId : browser.getTagIds()) {
 			if (!firstTag)
 				text += ", ";
 			std::string tag = string::translate("tag." + tag::getTag(tagId));
@@ -1199,7 +1030,7 @@ inline void TagButton::step() {
 	ChoiceButton::step();
 }
 
-inline void SortButton::onAction(const ActionEvent& e) {
+void Browser::SortButton::onAction(const ActionEvent& e) {
 	ui::Menu* menu = createMenu();
 	menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 	menu->box.size.x = box.size.x;
@@ -1216,7 +1047,7 @@ inline void SortButton::onAction(const ActionEvent& e) {
 }
 
 /** Called when user clicks on the zoom button. Shows possible choices. */
-inline void ZoomButton::onAction(const ActionEvent& e) {
+void Browser::ZoomButton::onAction(const ActionEvent& e) {
 	ui::Menu* menu = createMenu();
 	menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 	menu->box.size.x = box.size.x;
@@ -1230,7 +1061,7 @@ inline void ZoomButton::onAction(const ActionEvent& e) {
                 [=]() {
                     if (zoom == settings::browserZoom) return;
                     settings::browserZoom = zoom;
-                    browser->updateZoom();
+                    browser.updateZoom();
                 }));
         }
     } else {
@@ -1244,12 +1075,11 @@ inline void ZoomButton::onAction(const ActionEvent& e) {
                 [=]() {
                     if (zoom == settings::browserZoom) return;
                     settings::browserZoom = zoom;
-                    browser->updateZoom();
+                    browser.updateZoom();
                 }));
         }
     }
 }
-
 
 } // namespace browser
 
