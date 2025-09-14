@@ -379,7 +379,7 @@ class BrowserHeader : public ui::SequentialLayout {
     BrowserHeader() : SequentialLayout(CENTER_ALIGNMENT, true) {}
 
     /** Font size to use for all widgets in the header */
-    static const int HEADER_FONT_SIZE = 16;
+    static const int HEADER_WIDGETS_FONT_SIZE = 16;
     /** Height of all widgets in the header */
     static const int HEADER_WIDGET_HEIGHT = 24;
 
@@ -392,8 +392,8 @@ class BrowserHeader : public ui::SequentialLayout {
         int originalFontSize = settings::getLabelFontSize();
         int originalWidgetHeight = settings::getWidgetHeight();
 
-        // Set the font size for the header
-        settings::setLabelFontSize(HEADER_FONT_SIZE);
+        // Set the font size for the widgets in theheader
+        settings::setLabelFontSize(HEADER_WIDGETS_FONT_SIZE);
 		settings::setWidgetHeight(BrowserHeader::HEADER_WIDGET_HEIGHT);
 
         // Draw all the children of the header using that font size
@@ -437,28 +437,29 @@ Browser::Browser() {
 
     searchField = new BrowserSearchField(*this);
     searchField->box.size.x =
-        150 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
+        150 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
+    searchField->setFontSize(BrowserHeader::HEADER_WIDGETS_FONT_SIZE);
     searchField->setPlaceholder(string::translate("Browser.searchModules"));
     headerLayout->addChild(searchField);
 
     brandButton = new BrandButton(*this);
     brandButton->box.size.x =
-        150 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
+        150 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(brandButton);
 
     tagButton = new TagButton(*this);
     tagButton->box.size.x =
-        150 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
+        150 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(tagButton);
 
     favoriteButton = new FavoriteButton(*this);
     favoriteButton->box.size.x =
-        110 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
+        110 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(favoriteButton);
 
     clearButton = new ClearButton(*this);
     clearButton->box.size.x =
-        90 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
+        120 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(clearButton);
 
     // can see the modules. And it takes up precious space. Plus there are
@@ -467,19 +468,19 @@ Browser::Browser() {
     if (!settings::isNotVCVRack) {
         countLabel = new ui::Label;
         countLabel->box.size.x =
-            110 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
+            110 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
         headerLayout->addChild(countLabel);
     }
 
     SortButton* sortButton = new SortButton(*this);
     sortButton->box.size.x =
-        130 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
+        140 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(sortButton);
 
     // For zooming in or out on the modules in the Browser
     ZoomButton* zoomButton = new ZoomButton(*this);
     zoomButton->box.size.x =
-        100 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
+        140 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(zoomButton);
 
     // For adding modules from VCV Rack to the users' library
@@ -487,7 +488,7 @@ Browser::Browser() {
         new UrlButton("https://library.vcvrack.com/",
                       string::translate("Browser.browseLibrary"));
     libraryButton->box.size.x =
-        170 * BrowserHeader::HEADER_FONT_SIZE / BND_LABEL_FONT_SIZE;
+        170 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
     headerLayout->addChild(libraryButton);
 
     // Restore original height
@@ -591,8 +592,7 @@ void Browser::draw(const DrawArgs& args) {
                           0.1)  // Light outline for dark background
             : color::lerp(bg_color, color::BLACK,
                           0.1);  // Dark outline for light background
-    float radius =
-        10.0;  // Use a noticable radius to further differentiate browser window
+    float radius = 10.0;  // Use noticeable radius to differentiate window
     bndBackgroundColor(args.vg, 0.0, 0.0, box.size.x, box.size.y, radius,
                        bg_color, outline_color);
 

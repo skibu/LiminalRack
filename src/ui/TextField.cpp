@@ -56,37 +56,62 @@ TextField::TextField() {
 }
 
 void TextField::draw(const DrawArgs& args) {
-	nvgScissor(args.vg, RECT_ARGS(args.clipBox));
+    // Make sure single line text fields don't have text that
+    // would be too long to fit in the box. If it does then trunacate the text.
+    if (!multiline) {
+        // Add exptra character to make sure we have room for cursor
+        while (bndTextNeedsMultipleLines(args.vg, box.size.x, fontSize,
+                                         (text+"X").c_str())) {
+            // Truncate last character and try again
+            text.resize(text.size() - 1);
 
-	BNDwidgetState state;
-	if (this == APP->event->selectedWidget)
-		state = BND_ACTIVE;
-	else if (this == APP->event->hoveredWidget)
-		state = BND_HOVER;
-	else
-		state = BND_DEFAULT;
+            // Make sure cursor and selection are still valid
+            if (cursor > (int)text.size()) {
+                cursor = text.size();
+            }
+            if (selection > (int)text.size()) {
+                selection = text.size();
+            }
+        }
+    }
 
-	int begin = std::min(cursor, selection);
-	int end = std::max(cursor, selection);
+    nvgScissor(args.vg, RECT_ARGS(args.clipBox));
 
-	std::string drawText;
-	if (password) {
-		drawText = std::string(string::UTF8Length(text), '*');
-		begin = string::UTF8CodepointIndex(text, begin);
-		end = string::UTF8CodepointIndex(text, end);
-	}
-	else {
-		drawText = text;
-	}
+    BNDwidgetState state;
+    if (this == APP->event->selectedWidget)
+        state = BND_ACTIVE;
+    else if (this == APP->event->hoveredWidget)
+        state = BND_HOVER;
+    else
+        state = BND_DEFAULT;
 
+    int begin = std::min(cursor, selection);
+    int end = std::max(cursor, selection);
+
+    std::string drawText;
+    if (password) {
+        drawText = std::string(string::UTF8Length(text), '*');
+        begin = string::UTF8CodepointIndex(text, begin);
+        end = string::UTF8CodepointIndex(text, end);
+    } else {
+        drawText = text;
+    }
+
+    // Draw the text field and associated text if any
+    int font_size = settings::getLabelFontSize();
     bndTextField(args.vg, 0.0, 0.0, box.size.x, box.size.y, BND_CORNER_NONE, state, -1,
                     drawText.c_str(), begin, end);
 
-    // Draw placeholder text
+    // Draw dimmed placeholder text if no text entered
     if (text.empty()) {
-        bndIconLabelCaret(args.vg, 0.0, 0.0, box.size.x, box.size.y, -1,
-                            bndGetTheme()->textFieldTheme.itemColor, 13, placeholder.c_str(),
-                            bndGetTheme()->textFieldTheme.itemColor, 0, -1);
+        auto theme = bndGetTheme()->textFieldTheme;
+        NVGcolor dim_text_color =
+            color::lerp(theme.innerColor, theme.textColor, 0.4);
+        float y_offset = -BND_TEXT_PAD_DOWN + (box.size.y - font_size) / 2.0f;
+        bndIconLabelCaret(args.vg, 0.0, y_offset, box.size.x, box.size.y,
+                          -1 /* no icon */, dim_text_color,
+                          -1 /* use already set font size */,
+                          placeholder.c_str(), dim_text_color, 0, -1);
     }
 
     nvgResetScissor(args.vg);
@@ -299,7 +324,9 @@ void TextField::onSelectKey(const SelectKeyEvent& e) {
 }
 
 int TextField::getTextPosition(math::Vec mousePos) {
-	return bndTextFieldTextPosition(APP->window->vg, 0.0, 0.0, box.size.x, box.size.y, -1, text.c_str(), mousePos.x, mousePos.y);
+    return bndTextFieldTextPosition(APP->window->vg, 0.0, 0.0, box.size.x,
+                                    box.size.y, -1, fontSize, text.c_str(),
+                                    mousePos.x, mousePos.y);
 }
 
 void TextField::setText(std::string text) {

@@ -61,14 +61,15 @@ void setTheme(NVGcolor bg, NVGcolor fg) {
 	t.sliderTheme.innerColor = color::lerp(bg, fg, 0.0);
 	t.sliderTheme.innerSelectedColor = color::lerp(bg, fg, 0.1);
 
-	// Text field background
+	// Text field background. Make it lighter than normal background
+    // so that user can easily tell it apart from other widgets
 	t.textFieldTheme.innerColor = color::lerp(bg, fg, 0.7);
 	t.textFieldTheme.innerSelectedColor = color::lerp(bg, fg, 0.8);
 	// Text
-	t.textFieldTheme.textColor = color::lerp(bg, fg, -0.2);
+	t.textFieldTheme.textColor = color::lerp(bg, fg, 0.0);
 	t.textFieldTheme.textSelectedColor = t.textFieldTheme.textColor;
-	// Placeholder text and highlight background
-	t.textFieldTheme.itemColor = color::lerp(bg, fg, 0.3);
+	// Highlight selectedtext background
+	t.textFieldTheme.itemColor = color::lerp(bg, fg, 0.5);
 
     // Scrollbar handle color and alpha
 	t.scrollBarTheme.itemColor = color::lerp(bg, fg, 0.7);

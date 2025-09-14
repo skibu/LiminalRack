@@ -268,7 +268,7 @@
 	"Browser.sort.random": "Random",
 	"Browser.sort": "Sort: ",
 	"Browser.zoom": "Zoom: ",
-	"Browser.searchModules": "Search modules",
+	"Browser.searchModules": "Search modules...",
 	"Browser.favorites": "Favorites Only",
 	"Browser.resetFilters": "Reset filters",
 	"Browser.browseLibrary": "Add new module from VCV",

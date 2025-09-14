@@ -57,11 +57,19 @@ public:
         this->multiline = multiline;
     }
 
+    void setFontSize(int fontSize) {
+        this->fontSize = fontSize;
+    }
+
     /** These action event functions are used externally so need to be public */
     void selectAll();
+
+    /** Handles key presses and mouse clicks */
     void onSelectKey(const SelectKeyEvent& e) override;
+
     /** Inserts text at the cursor, replacing the selection if necessary */
     void insertText(std::string text);
+
     void copyClipboard();
     void cutClipboard();
     void pasteClipboard();
@@ -71,14 +79,23 @@ private:
     std::string text;
     std::string placeholder;
     bool multiline = false;
+
     /** Masks text with "*". */
     bool password = false;
+
     /** The index of the text cursor */
     int cursor = 0;
+
     /** The index of the other end of the selection.
     If nothing is selected, this is equal to `cursor`.
     */
     int selection = 0;
+
+    /** Need to keep track of font size since it might be different from
+     * the bnd default font size. This is important for calculating
+     * text positions.
+    */
+    int fontSize = bndGetLabelFontSize();
 
     /** For Tab and Shift-Tab focusing.
     */
@@ -87,11 +104,24 @@ private:
 
     void draw(const DrawArgs& args) override;
     void onDragHover(const DragHoverEvent& e) override;
+
+    /** Called when user clicks on text area. Sets the cursor position. */
     void onButton(const ButtonEvent& e) override;
+
+    /** Called when user types a regular character. */
     void onSelectText(const SelectTextEvent& e) override;
+
+    /** Returns the text position corresponding to the given mouse position. 
+     * Useful for setting the cursor position when the user clicks.
+     */
     virtual int getTextPosition(math::Vec mousePos);
+
     void cursorToPrevWord();
     void cursorToNextWord();
+
+    /** Called when user right-clicks the text field. Pops up a context menu
+     * that allows copy, cut, paste, and select all.
+     */
     void createContextMenu();
 };
 
