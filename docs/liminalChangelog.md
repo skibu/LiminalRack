@@ -1,5 +1,10 @@
 # Liminal Rack Change Log
 
+- 9/13/25
+  - Big refactoring of Browser and TextWidget
+    - Now have control over colors and font size used for TextField
+    - For single line TextField it limits user to text that will on line.
+    - Greatly cleaned up code to make it more C++ like. Added lots of comments.
 - 9/6/25
   - Can now use any font face for a label. Nice so that can make a header label bold.
   - Tooltips no positioned out of the way of a finger if using a touch screen. Also, finished cleaning up of tooltip related code.
