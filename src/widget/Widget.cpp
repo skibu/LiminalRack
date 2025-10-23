@@ -21,20 +21,20 @@ math::Rect Widget::getBox() {
 
 
 void Widget::setBox(math::Rect box) {
-	setPosition(box.pos);
-	setSize(box.size);
+	setPos(box.getPos());
+	setSize(box.getSize());
 }
 
 
-math::Vec Widget::getPosition() {
-	return box.pos;
+math::Vec Widget::getPos() {
+	return box.getPos();
 }
 
 
-void Widget::setPosition(math::Vec pos) {
-	if (pos.equals(box.pos))
+void Widget::setPos(const math::Vec& pos) {
+	if (pos.equals(getPos()))
 		return;
-	box.pos = pos;
+	box.setPos(pos);
 	// Dispatch Reposition event
 	RepositionEvent eReposition;
 	onReposition(eReposition);
@@ -42,29 +42,19 @@ void Widget::setPosition(math::Vec pos) {
 
 
 math::Vec Widget::getSize() {
-	return box.size;
+	return box.getSize();
 }
 
 
 void Widget::setSize(math::Vec size) {
-	if (size.equals(box.size))
+	if (size.equals(box.getSize()))
 		return;
-	box.size = size;
+	box.setSize(size);
+
 	// Dispatch Resize event
 	ResizeEvent eResize;
 	onResize(eResize);
 }
-
-
-widget::Widget *Widget::getParent() {
-	return parent;
-}
-
-
-bool Widget::isVisible() {
-	return visible;
-}
-
 
 void Widget::setVisible(bool visible) {
 	if (visible == this->visible)
@@ -125,7 +115,7 @@ math::Vec Widget::getRelativeOffset(math::Vec v, Widget* ancestor) {
 	if (this == ancestor)
 		return v;
 	// Translate offset
-	v = v.plus(box.pos);
+	v = v.plus(box.getPos());
 	if (!parent)
 		return v;
 	return parent->getRelativeOffset(v, ancestor);
@@ -149,7 +139,7 @@ math::Rect Widget::getViewport(math::Rect r) {
 	else {
 		bound = box;
 	}
-	bound.pos = bound.pos.minus(box.pos);
+	bound.setPos(bound.getPos().minus(box.getPos()));
 	return r.clamp(bound);
 }
 
@@ -223,7 +213,7 @@ void Widget::removeChild(Widget* child) {
 	RemoveEvent eRemove;
 	child->onRemove(eRemove);
 	// Prepare to remove widget from the event state
-	APP->event->finalizeWidget(child);
+	getEvent()->finalizeWidget(child);
 	// Delete child from children list
 	auto it = std::find(children.begin(), children.end(), child);
 	assert(it != children.end());
@@ -238,7 +228,7 @@ void Widget::clearChildren() {
 		// Dispatch Remove event
 		RemoveEvent eRemove;
 		child->onRemove(eRemove);
-		APP->event->finalizeWidget(child);
+		getEvent()->finalizeWidget(child);
 		child->parent = NULL;
 		delete child;
 	}
@@ -254,7 +244,7 @@ void Widget::step() {
 			// Dispatch Remove event
 			RemoveEvent eRemove;
 			child->onRemove(eRemove);
-			APP->event->finalizeWidget(child);
+			getEvent()->finalizeWidget(child);
 			it = children.erase(it);
 			child->parent = NULL;
 			delete child;
@@ -299,13 +289,15 @@ void Widget::drawLayer(const DrawArgs& args, int layer) {
 
 void Widget::drawChild(Widget* child, const DrawArgs& args, int layer) {
 	DrawArgs childArgs = args;
+
 	// Intersect child clip box with self
 	childArgs.clipBox = childArgs.clipBox.intersect(child->box);
+
 	// Offset clip box by child pos
-	childArgs.clipBox.pos = childArgs.clipBox.pos.minus(child->box.pos);
+	childArgs.clipBox.setPos(childArgs.clipBox.getPos().minus(child->box.getPos()));
 
 	nvgSave(args.vg);
-	nvgTranslate(args.vg, child->box.pos.x, child->box.pos.y);
+	nvgTranslate(args.vg, child->box.getX(), child->box.getY());
 
 	if (layer == 0) {
 		child->draw(childArgs);

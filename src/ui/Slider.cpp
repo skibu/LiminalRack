@@ -10,14 +10,14 @@ static const float SENSITIVITY = 0.001f;
 
 
 Slider::Slider() {
-    box.size.y = rack::settings::bndWidgetHeight;
+    setHeight(settings::bndWidgetHeight);
 }
 
 void Slider::draw(const DrawArgs& args) {
 	BNDwidgetState state = BND_DEFAULT;
-	if (APP->event->hoveredWidget == this)
+	if (getEvent()->hoveredWidget == this)
 		state = BND_HOVER;
-	if (APP->event->draggedWidget == this)
+	if (getEvent()->draggedWidget == this)
 		state = BND_ACTIVE;
 
 	float progress = quantity ? quantity->getScaledValue() : 0.f;
@@ -26,24 +26,24 @@ void Slider::draw(const DrawArgs& args) {
 	// If parent is a Menu, make corners sharp
 	ui::Menu* parentMenu = dynamic_cast<ui::Menu*>(getParent());
 	int flags = parentMenu ? BND_CORNER_ALL : BND_CORNER_NONE;
-	bndSlider(args.vg, 0.0, 0.0, box.size.x, box.size.y - 4.0, flags, state, progress, text.c_str(), NULL);
+	bndSlider(args.vg, 0.0, 0.0, getWidth(), getHeight() - 4.0, flags, state, progress, text.c_str(), NULL);
 }
 
 void Slider::onDragStart(const DragStartEvent& e) {
 	if (e.button != GLFW_MOUSE_BUTTON_LEFT)
 		return;
 
-	APP->window->cursorLock();
+	getWindow()->cursorLock();
 }
 
 void Slider::onDragMove(const DragMoveEvent& e) {
     if (quantity == nullptr) return;
 
-    quantity->moveScaledValue(SENSITIVITY * e.mouseDelta.x);
+    quantity->moveScaledValue(SENSITIVITY * e.mouseDelta.getX());
 }
 
 void Slider::onDragEnd(const DragEndEvent& e) {
-	APP->window->cursorUnlock();
+	getWindow()->cursorUnlock();
 }
 
 void Slider::onDoubleClick(const DoubleClickEvent& e) {

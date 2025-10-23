@@ -13,20 +13,23 @@ When maxValue is reached, the next click resets to minValue.
 In momentary mode, the value is instead set to maxValue when the mouse is held and minValue when released.
 */
 struct Switch : ParamWidget {
-	struct Internal;
-	Internal* internal;
+   private:
+    struct Internal;
+    Internal* internal_;
 
-	/** Instead of incrementing values on each click, sets maxValue on press and minValue on release.
-	*/
-	bool momentary = false;
+   public:
+    /** Instead of incrementing values on each click, sets maxValue on press and
+     * minValue on release.
+     */
+    bool momentary = false;
 
-	Switch();
-	~Switch();
-	void initParamQuantity() override;
-	void step() override;
-	void onDoubleClick(const DoubleClickEvent& e) override;
-	void onDragStart(const DragStartEvent& e) override;
-	void onDragEnd(const DragEndEvent& e) override;
+    Switch();
+    ~Switch();
+    void initParamQuantity() override;
+    void step() override;
+    void onDoubleClick(const DoubleClickEvent& e) override;
+    void onDragStart(const DragStartEvent& e) override;
+    void onDragEnd(const DragEndEvent& e) override;
 };
 
 

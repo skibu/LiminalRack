@@ -8,7 +8,7 @@ namespace ui {
 
 void RadioButton::draw(const DrawArgs& args) {
 	BNDwidgetState state = BND_DEFAULT;
-	if (APP->event->getHoveredWidget() == this)
+	if (getEvent()->getHoveredWidget() == this)
 		state = BND_HOVER;
 
 	if (quantity) {
@@ -19,7 +19,7 @@ void RadioButton::draw(const DrawArgs& args) {
 	std::string text = this->text;
 	if (text.empty() && quantity)
 		text = quantity->getLabel();
-	bndRadioButton(args.vg, 0.0, 0.0, box.size.x, box.size.y, BND_CORNER_NONE, state, -1, text.c_str());
+	bndRadioButton(args.vg, 0.0, 0.0, getWidth(), getHeight(), BND_CORNER_NONE, state, -1, text.c_str());
 }
 
 

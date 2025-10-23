@@ -13,7 +13,7 @@ MenuOverlay::MenuOverlay() {
 void MenuOverlay::draw(const DrawArgs& args) {
 	if (bgColor.a > 0.f) {
 		nvgBeginPath(args.vg);
-		nvgRect(args.vg, 0, 0, VEC_ARGS(box.size));
+		nvgRect(args.vg, 0, 0, VEC_ARGS(getSize()));
 		nvgFillColor(args.vg, bgColor);
 		nvgFill(args.vg);
 	}
@@ -24,7 +24,7 @@ void MenuOverlay::draw(const DrawArgs& args) {
 
 void MenuOverlay::step() {
 	// Adopt parent's size
-	box = parent->box.zeroPos();
+	setBox(getParent()->getBox().zeroPos());
 
 	Widget::step();
 }

@@ -12,23 +12,23 @@ namespace ui {
 
 /** So can clamp tooltip width to half the window width */
 static float maxTooltipWidth() {
-    return settings::windowSize.x / 3.0; // Third the window width
+    return settings::windowSize.getX() / 3.0; // Third the window width
 }
 
 void Tooltip::step() {
     // Save the current render state
-    nvgSave(APP->window->vg);
+    nvgSave(getWindow()->vg);
 
     // Set line height to reasonable value
-    nvgTextLineHeight(APP->window->vg, 1.2);
+    nvgTextLineHeight(getWindow()->vg, 1.2);
 
     // Set size of tooltip to fit contents
-    box.size.x = std::min(maxTooltipWidth(), bndLabelWidthForFontSize(
-        APP->window->vg, -1, settings::tooltipFontSize, text.c_str()));
-    box.size.y = bndLabelHeightForFontSize(
-        APP->window->vg, -1, settings::tooltipFontSize, text.c_str(), maxTooltipWidth());
+    setWidth(std::min(maxTooltipWidth(), bndLabelWidthForFontSize(
+        getWindow()->vg, -1, settings::tooltipFontSize, text.c_str())));
+    setHeight(bndLabelHeightForFontSize(
+        getWindow()->vg, -1, settings::tooltipFontSize, text.c_str(), maxTooltipWidth()));
     // add bit of vertical padding
-    box.size.y += 2;
+    setHeight(getHeight() + 2);
 
     // Position tooltip near cursor. This assumes that the Tooltip is added
     // to the root widget.
@@ -36,18 +36,18 @@ void Tooltip::step() {
                            ?
                            // For touchscreen don't want finger to cover tooltip
                            // so place it above finger
-                           math::Vec(12, -12 - box.size.y)
+                           math::Vec(12, -12 - getHeight())
                            :
                            // Default tooltip offset
                            math::Vec(15, 15);
-    box.pos = APP->scene->mousePos.plus(offset);
+    setPos(getScene()->getMousePos().plus(offset));
 
     // Fit tooltop inside parent's box
-    assert(parent);
-    box = box.nudge(parent->box.zeroPos());
+    assert(getParent());
+    setBox(getBox().nudge(getParent()->getBox().zeroPos()));
 
     // Restore the previous render state
-    nvgRestore(APP->window->vg);
+    nvgRestore(getWindow()->vg);
 
     Widget::step();
 }
@@ -111,7 +111,7 @@ static std::string formatFloatingPoints(const std::string& inputString) {
 }
 
 void Tooltip::draw(const DrawArgs& args) {
-    bndTooltipBackground(args.vg, 0.0, 0.0, box.size.x, box.size.y);
+    bndTooltipBackground(args.vg, 0.0, 0.0, getWidth(), getHeight());
     nvgTextLineHeight(args.vg, 1.2);
 
     // Because there is no bndThemeLabel() function, temporarily replace the
@@ -122,7 +122,7 @@ void Tooltip::draw(const DrawArgs& args) {
 
     // Format floating point numbers
     text = formatFloatingPoints(text);
-    bndTooltipLabel(args.vg, 0.0, 0.0, maxTooltipWidth(), box.size.y,
+    bndTooltipLabel(args.vg, 0.0, 0.0, maxTooltipWidth(), getHeight(),
                     settings::tooltipFontSize, text.c_str());
     theme->menuTheme.textColor = menuTextColor;
 

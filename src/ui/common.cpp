@@ -4,6 +4,7 @@
 
 #include <ui/common.hpp>
 #include <settings.hpp>
+#include <context.hpp>
 
 
 namespace rack {
@@ -11,8 +12,17 @@ namespace ui {
 
 
 void init() {
+    INFO("Initializing low-level UI");
+
 	settings::initBlendish();
 
+    // The browser window should be initially hidden.
+    // Yes, it is unfortunate that it has to be done here instead
+    // of in Browser() constructor where it is created. But doing it there
+    // prevents the Browser window from every showing.
+    getScene()->getBrowser()->hide();
+
+    // Set the initial theme: light, dark, or hcdark
 	refreshTheme();
 }
 

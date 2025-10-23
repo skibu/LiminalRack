@@ -13,7 +13,7 @@ struct TextFieldCopyItem : ui::MenuItem {
 		if (!textField)
 			return;
 		textField->copyClipboard();
-		APP->event->setSelectedWidget(textField);
+		getEvent()->setSelectedWidget(textField);
 	}
 };
 
@@ -24,7 +24,7 @@ struct TextFieldCutItem : ui::MenuItem {
 		if (!textField)
 			return;
 		textField->cutClipboard();
-		APP->event->setSelectedWidget(textField);
+		getEvent()->setSelectedWidget(textField);
 	}
 };
 
@@ -35,7 +35,7 @@ struct TextFieldPasteItem : ui::MenuItem {
 		if (!textField)
 			return;
 		textField->pasteClipboard();
-		APP->event->setSelectedWidget(textField);
+		getEvent()->setSelectedWidget(textField);
 	}
 };
 
@@ -46,13 +46,13 @@ struct TextFieldSelectAllItem : ui::MenuItem {
 		if (!textField)
 			return;
 		textField->selectAll();
-		APP->event->setSelectedWidget(textField);
+		getEvent()->setSelectedWidget(textField);
 	}
 };
 
 
 TextField::TextField() {
-    box.size.y = rack::settings::bndWidgetHeight;
+    setHeight(rack::settings::bndWidgetHeight);
 }
 
 void TextField::draw(const DrawArgs& args) {
@@ -60,7 +60,7 @@ void TextField::draw(const DrawArgs& args) {
     // would be too long to fit in the box. If it does then trunacate the text.
     if (!multiline) {
         // Add exptra character to make sure we have room for cursor
-        while (bndTextNeedsMultipleLines(args.vg, box.size.x, fontSize,
+        while (bndTextNeedsMultipleLines(args.vg, getWidth(), fontSize,
                                          (text+"X").c_str())) {
             // Truncate last character and try again
             text.resize(text.size() - 1);
@@ -78,9 +78,9 @@ void TextField::draw(const DrawArgs& args) {
     nvgScissor(args.vg, RECT_ARGS(args.clipBox));
 
     BNDwidgetState state;
-    if (this == APP->event->selectedWidget)
+    if (this == getEvent()->selectedWidget)
         state = BND_ACTIVE;
-    else if (this == APP->event->hoveredWidget)
+    else if (this == getEvent()->hoveredWidget)
         state = BND_HOVER;
     else
         state = BND_DEFAULT;
@@ -99,7 +99,7 @@ void TextField::draw(const DrawArgs& args) {
 
     // Draw the text field and associated text if any
     int font_size = settings::getLabelFontSize();
-    bndTextField(args.vg, 0.0, 0.0, box.size.x, box.size.y, BND_CORNER_NONE, state, -1,
+    bndTextField(args.vg, 0.0, 0.0, getWidth(), getHeight() - 4.0, BND_CORNER_NONE, state, -1,
                     drawText.c_str(), begin, end);
 
     // Draw dimmed placeholder text if no text entered
@@ -107,8 +107,8 @@ void TextField::draw(const DrawArgs& args) {
         auto theme = bndGetTheme()->textFieldTheme;
         NVGcolor dim_text_color =
             color::lerp(theme.innerColor, theme.textColor, 0.4);
-        float y_offset = -BND_TEXT_PAD_DOWN + (box.size.y - font_size) / 2.0f;
-        bndIconLabelCaret(args.vg, 0.0, y_offset, box.size.x, box.size.y,
+        float y_offset = -BND_TEXT_PAD_DOWN + (getHeight() - font_size) / 2.0f;
+        bndIconLabelCaret(args.vg, 0.0, y_offset, getWidth(), getHeight(),
                           -1 /* no icon */, dim_text_color,
                           -1 /* use already set font size */,
                           placeholder.c_str(), dim_text_color, 0, -1);
@@ -302,13 +302,13 @@ void TextField::onSelectKey(const SelectKeyEvent& e) {
 		// Tab
 		if (e.isKeyCommand(GLFW_KEY_TAB)) {
 			if (nextField)
-				APP->event->setSelectedWidget(nextField);
+				getEvent()->setSelectedWidget(nextField);
 			e.consume(this);
 		}
 		// Shift+Tab
 		if (e.isKeyCommand(GLFW_KEY_TAB, GLFW_MOD_SHIFT)) {
 			if (prevField)
-				APP->event->setSelectedWidget(prevField);
+				getEvent()->setSelectedWidget(prevField);
 			e.consume(this);
 		}
 		// Consume all printable keys unless Ctrl is held
@@ -324,9 +324,9 @@ void TextField::onSelectKey(const SelectKeyEvent& e) {
 }
 
 int TextField::getTextPosition(math::Vec mousePos) {
-    return bndTextFieldTextPosition(APP->window->vg, 0.0, 0.0, box.size.x,
-                                    box.size.y, -1, fontSize, text.c_str(),
-                                    mousePos.x, mousePos.y);
+    return bndTextFieldTextPosition(getWindow()->vg, 0.0, 0.0, getWidth(),
+                                    getHeight(), -1, fontSize, text.c_str(),
+                                    mousePos.getX(), mousePos.getY());
 }
 
 void TextField::setText(std::string text) {
@@ -378,7 +378,7 @@ void TextField::insertText(std::string text) {
 void TextField::copyClipboard() {
 	if (cursor == selection)
 		return;
-	glfwSetClipboardString(APP->window->win, getSelectedText().c_str());
+	glfwSetClipboardString(getWindow()->win, getSelectedText().c_str());
 }
 
 void TextField::cutClipboard() {
@@ -387,7 +387,7 @@ void TextField::cutClipboard() {
 }
 
 void TextField::pasteClipboard() {
-	const char* newText = glfwGetClipboardString(APP->window->win);
+	const char* newText = glfwGetClipboardString(getWindow()->win);
 	if (!newText)
 		return;
 	insertText(newText);

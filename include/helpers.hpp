@@ -51,7 +51,7 @@ plugin::Model* createModel(std::string slug) {
 template <class TWidget>
 TWidget* createWidget(math::Vec pos) {
 	TWidget* o = new TWidget;
-	o->box.pos = pos;
+	o->setPos(pos);
 	return o;
 }
 
@@ -86,7 +86,7 @@ TPanel* createPanel(std::string lightSvgPath, std::string darkSvgPath) {
 template <class TParamWidget>
 TParamWidget* createParam(math::Vec pos, engine::Module* module, int paramId) {
 	TParamWidget* o = new TParamWidget;
-	o->box.pos = pos;
+	o->setPos(pos);
 	o->app::ParamWidget::module = module;
 	o->app::ParamWidget::paramId = paramId;
 	o->initParamQuantity();
@@ -97,7 +97,7 @@ TParamWidget* createParam(math::Vec pos, engine::Module* module, int paramId) {
 template <class TParamWidget>
 TParamWidget* createParamCentered(math::Vec pos, engine::Module* module, int paramId) {
 	TParamWidget* o = createParam<TParamWidget>(pos, module, paramId);
-	o->box.pos = o->box.pos.minus(o->box.size.div(2));
+	o->setPos(o->getPos().minus(o->getSize().div(2)));
 	return o;
 }
 
@@ -105,7 +105,7 @@ TParamWidget* createParamCentered(math::Vec pos, engine::Module* module, int par
 template <class TPortWidget>
 TPortWidget* createInput(math::Vec pos, engine::Module* module, int inputId) {
 	TPortWidget* o = new TPortWidget;
-	o->box.pos = pos;
+	o->setPos(pos);
 	o->app::PortWidget::module = module;
 	o->app::PortWidget::type = engine::Port::INPUT;
 	o->app::PortWidget::portId = inputId;
@@ -116,7 +116,7 @@ TPortWidget* createInput(math::Vec pos, engine::Module* module, int inputId) {
 template <class TPortWidget>
 TPortWidget* createInputCentered(math::Vec pos, engine::Module* module, int inputId) {
 	TPortWidget* o = createInput<TPortWidget>(pos, module, inputId);
-	o->box.pos = o->box.pos.minus(o->box.size.div(2));
+	o->setPos(o->getPos().minus(o->getSize().div(2)));
 	return o;
 }
 
@@ -124,7 +124,7 @@ TPortWidget* createInputCentered(math::Vec pos, engine::Module* module, int inpu
 template <class TPortWidget>
 TPortWidget* createOutput(math::Vec pos, engine::Module* module, int outputId) {
 	TPortWidget* o = new TPortWidget;
-	o->box.pos = pos;
+	o->setPos(pos);
 	o->app::PortWidget::module = module;
 	o->app::PortWidget::type = engine::Port::OUTPUT;
 	o->app::PortWidget::portId = outputId;
@@ -135,7 +135,7 @@ TPortWidget* createOutput(math::Vec pos, engine::Module* module, int outputId) {
 template <class TPortWidget>
 TPortWidget* createOutputCentered(math::Vec pos, engine::Module* module, int outputId) {
 	TPortWidget* o = createOutput<TPortWidget>(pos, module, outputId);
-	o->box.pos = o->box.pos.minus(o->box.size.div(2));
+	o->setPos(o->getPos().minus(o->getSize().div(2)));
 	return o;
 }
 
@@ -143,7 +143,7 @@ TPortWidget* createOutputCentered(math::Vec pos, engine::Module* module, int out
 template <class TModuleLightWidget>
 TModuleLightWidget* createLight(math::Vec pos, engine::Module* module, int firstLightId) {
 	TModuleLightWidget* o = new TModuleLightWidget;
-	o->box.pos = pos;
+	o->setPos(pos);
 	o->app::ModuleLightWidget::module = module;
 	o->app::ModuleLightWidget::firstLightId = firstLightId;
 	return o;
@@ -153,7 +153,7 @@ TModuleLightWidget* createLight(math::Vec pos, engine::Module* module, int first
 template <class TModuleLightWidget>
 TModuleLightWidget* createLightCentered(math::Vec pos, engine::Module* module, int firstLightId) {
 	TModuleLightWidget* o = createLight<TModuleLightWidget>(pos, module, firstLightId);
-	o->box.pos = o->box.pos.minus(o->box.size.div(2));
+	o->setPos(o->getPos().minus(o->getSize().div(2)));
 	return o;
 }
 
@@ -182,12 +182,12 @@ TParamWidget* createLightParamCentered(math::Vec pos, engine::Module* module, in
 template <class TMenu = ui::Menu>
 TMenu* createMenu() {
 	TMenu* menu = new TMenu;
-	menu->box.pos = APP->scene->mousePos;
+	menu->setPos(getScene()->getMousePos());
 
 	ui::MenuOverlay* menuOverlay = new ui::MenuOverlay;
 	menuOverlay->addChild(menu);
 
-	APP->scene->addChild(menuOverlay);
+	getScene()->addChild(menuOverlay);
 	return menu;
 }
 

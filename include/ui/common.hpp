@@ -2,7 +2,7 @@
  * For managing colors of the various UI components. 
  */
 
- #pragma once
+#pragma once
 #include <nanovg.h>
 #include <blendish.h>
 

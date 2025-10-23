@@ -9,7 +9,7 @@ namespace app {
 
 
 void LedDisplay::draw(const DrawArgs& args) {
-	math::Rect r = box.zeroPos();
+	math::Rect r = getBox().zeroPos();
 
 	// Black background
 	nvgBeginPath(args.vg);
@@ -23,14 +23,14 @@ void LedDisplay::draw(const DrawArgs& args) {
 	// Outer strokes
 	nvgBeginPath(args.vg);
 	nvgMoveTo(args.vg, 0.0, -0.5);
-	nvgLineTo(args.vg, box.size.x, -0.5);
+	nvgLineTo(args.vg, getWidth(), -0.5);
 	nvgStrokeColor(args.vg, nvgRGBAf(0, 0, 0, 0.24));
 	nvgStrokeWidth(args.vg, 1.0);
 	nvgStroke(args.vg);
 
 	nvgBeginPath(args.vg);
-	nvgMoveTo(args.vg, 0.0, box.size.y + 0.5);
-	nvgLineTo(args.vg, box.size.x, box.size.y + 0.5);
+	nvgMoveTo(args.vg, 0.0, getHeight() + 0.5);
+	nvgLineTo(args.vg, getWidth(), getHeight() + 0.5);
 	nvgStrokeColor(args.vg, nvgRGBAf(1, 1, 1, 0.25));
 	nvgStrokeWidth(args.vg, 1.0);
 	nvgStroke(args.vg);
@@ -38,14 +38,14 @@ void LedDisplay::draw(const DrawArgs& args) {
 	// Inner strokes
 	nvgBeginPath(args.vg);
 	nvgMoveTo(args.vg, 0.0, 2.5);
-	nvgLineTo(args.vg, box.size.x, 2.5);
+	nvgLineTo(args.vg, getWidth(), 2.5);
 	nvgStrokeColor(args.vg, nvgRGBAf(1, 1, 1, 0.20));
 	nvgStrokeWidth(args.vg, 1.0);
 	nvgStroke(args.vg);
 
 	nvgBeginPath(args.vg);
-	nvgMoveTo(args.vg, 0.0, box.size.y - 2.5);
-	nvgLineTo(args.vg, box.size.x, box.size.y - 2.5);
+	nvgMoveTo(args.vg, 0.0, getHeight() - 2.5);
+	nvgLineTo(args.vg, getWidth(), getHeight() - 2.5);
 	nvgStrokeColor(args.vg, nvgRGBAf(1, 1, 1, 0.20));
 	nvgStrokeWidth(args.vg, 1.0);
 	nvgStroke(args.vg);
@@ -74,14 +74,14 @@ void LedDisplay::drawLayer(const DrawArgs& args, int layer) {
 
 
 LedDisplaySeparator::LedDisplaySeparator() {
-	box.size = math::Vec();
+	setSize(math::Vec());
 }
 
 
 void LedDisplaySeparator::draw(const DrawArgs& args) {
 	nvgBeginPath(args.vg);
 	nvgMoveTo(args.vg, 0, 0);
-	nvgLineTo(args.vg, box.size.x, box.size.y);
+	nvgLineTo(args.vg, getWidth(), getHeight());
 	nvgStrokeWidth(args.vg, 1.0);
 	nvgStrokeColor(args.vg, nvgRGB(0x33, 0x33, 0x33));
 	nvgStroke(args.vg);
@@ -89,7 +89,7 @@ void LedDisplaySeparator::draw(const DrawArgs& args) {
 
 
 LedDisplayChoice::LedDisplayChoice() {
-	box.size = window::mm2px(math::Vec(0, 28.0 / 3));
+	setSize(window::mm2px(math::Vec(0, 28.0 / 3)));
 	fontPath = asset::system("res/fonts/ShareTechMono-Regular.ttf");
 	textOffset = math::Vec(10, 18);
 	color = nvgRGB(0xff, 0xd7, 0x14);
@@ -100,7 +100,7 @@ LedDisplayChoice::LedDisplayChoice() {
 void LedDisplayChoice::draw(const DrawArgs& args) {
 	if (bgColor.a > 0.0) {
 		nvgBeginPath(args.vg);
-		nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
+		nvgRect(args.vg, 0, 0, getWidth(), getHeight());
 		nvgFillColor(args.vg, bgColor);
 		nvgFill(args.vg);
 	}
@@ -113,14 +113,14 @@ void LedDisplayChoice::drawLayer(const DrawArgs& args, int layer) {
 	nvgScissor(args.vg, RECT_ARGS(args.clipBox));
 
 	if (layer == 1) {
-		std::shared_ptr<window::Font> font = APP->window->loadFont(fontPath);
+		std::shared_ptr<window::Font> font = getWindow()->loadFont(fontPath);
 		if (font && font->handle >= 0) {
 			nvgFillColor(args.vg, color);
 			nvgFontFaceId(args.vg, font->handle);
 			nvgTextLetterSpacing(args.vg, 0.0);
 
 			nvgFontSize(args.vg, 12);
-			nvgText(args.vg, textOffset.x, textOffset.y, text.c_str(), NULL);
+			nvgText(args.vg, textOffset.getX(), textOffset.getY(), text.c_str(), NULL);
 		}
 	}
 
@@ -158,7 +158,7 @@ void LedDisplayTextField::drawLayer(const DrawArgs& args, int layer) {
 
 	if (layer == 1) {
 		// Text
-		std::shared_ptr<window::Font> font = APP->window->loadFont(fontPath);
+		std::shared_ptr<window::Font> font = getWindow()->loadFont(fontPath);
 		if (font && font->handle >= 0) {
 			bndSetFont(font->handle);
 
@@ -167,13 +167,13 @@ void LedDisplayTextField::drawLayer(const DrawArgs& args, int layer) {
             int cursor = getCursor();
             int selection = getSelection();
 			int begin = std::min(cursor, selection);
-			int end = (this == APP->event->selectedWidget) ? std::max(cursor, selection) : -1;
+			int end = (this == getEvent()->selectedWidget) ? std::max(cursor, selection) : -1;
 			bndIconLabelCaret(args.vg,
-				textOffset.x, textOffset.y,
-				box.size.x - 2 * textOffset.x, box.size.y - 2 * textOffset.y,
+				textOffset.getX(), textOffset.getY(),
+				getWidth() - 2 * textOffset.getX(), getHeight() - 2 * textOffset.getY(),
 				-1, color, 12, getTextCStr(), highlightColor, begin, end);
 
-			bndSetFont(APP->window->uiFont->handle);
+			bndSetFont(getWindow()->uiFont->handle);
 		}
 	}
 
@@ -181,21 +181,18 @@ void LedDisplayTextField::drawLayer(const DrawArgs& args, int layer) {
 	nvgResetScissor(args.vg);
 }
 
-
 int LedDisplayTextField::getTextPosition(math::Vec mousePos) {
-	std::shared_ptr<window::Font> font = APP->window->loadFont(fontPath);
-	if (!font || !font->handle)
-		return 0;
+    std::shared_ptr<window::Font> font = getWindow()->loadFont(fontPath);
+    if (!font || !font->handle) return 0;
 
-	bndSetFont(font->handle);
-	int textPos = bndIconLabelTextPosition(APP->window->vg,
-		textOffset.x, textOffset.y,
-		box.size.x - 2 * textOffset.x, box.size.y - 2 * textOffset.y,
-		-1, 12, getTextCStr(), mousePos.x, mousePos.y);
-	bndSetFont(APP->window->uiFont->handle);
-	return textPos;
+    bndSetFont(font->handle);
+    int textPos = bndIconLabelTextPosition(
+        getWindow()->vg, textOffset.getX(), textOffset.getY(),
+        getWidth() - 2 * textOffset.getX(), getHeight() - 2 * textOffset.getY(),
+        -1, 12, getTextCStr(), mousePos.getX(), mousePos.getY());
+    bndSetFont(getWindow()->uiFont->handle);
+    return textPos;
 }
-
 
 } // namespace app
 } // namespace rack

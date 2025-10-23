@@ -11,10 +11,17 @@ namespace app {
 
 
 /** Manages an engine::Port on a ModuleWidget. */
-struct PortWidget : widget::OpaqueWidget {
+struct PortWidget : widget::OpaqueWidget { 
+   private:
+    friend struct PortCloneCableItem;
+    friend struct PortCableItem;
+    friend struct PortAllCablesItem;
+    friend struct PortCreateCableItem;
+    friend struct PortCreateCableColorItem;
 	struct Internal;
-	Internal* internal;
-
+	Internal* internal_;
+    
+    public:
 	engine::Module* module = NULL;
 	// Whether this port is input or output
 	engine::Port::Type type = engine::Port::INPUT;

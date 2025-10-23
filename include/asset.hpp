@@ -6,7 +6,7 @@ namespace rack {
 
 
 namespace plugin {
-struct Plugin;
+class Plugin;
 } // namespace plugin
 
 

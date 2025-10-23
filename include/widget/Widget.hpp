@@ -13,49 +13,128 @@ namespace rack {
 /** Base UI widget types */
 namespace widget {
 
-
 /** A node in the 2D [scene graph](https://en.wikipedia.org/wiki/Scene_graph).
-The bounding box of a Widget is a rectangle specified by `box` relative to their parent.
-The appearance is defined by overriding `draw()`, and the behavior is defined by overriding `step()` and `on*()` event handlers.
+The bounding box of a Widget is a rectangle specified by `box` relative to their
+parent. The appearance is defined by overriding `draw()`, and the behavior is
+defined by overriding `step()` and `on*()` event handlers.
 */
-struct Widget : WeakBase {
-	/** Position relative to parent and size of widget. */
-	math::Rect box = math::Rect(math::Vec(), math::Vec(INFINITY, INFINITY));
-	/** Automatically set when Widget is added as a child to another Widget */
-	Widget* parent = NULL;
-	std::list<Widget*> children;
-	/** Disables rendering but allow stepping.
-	Use isVisible(), setVisible(), show(), or hide() instead of using this variable directly.
-	*/
-	bool visible = true;
-	/** If set to true, parent will delete Widget in the next step().
-	Use requestDelete() instead of using this variable directly.
-	*/
-	bool requestedDelete = false;
-
+class Widget : public WeakBase {
+    public:
 	virtual ~Widget();
 
+    /** Returns the bounding box of the widget in its parent's coordinate system. */
 	math::Rect getBox();
-	/** Calls setPosition() and then setSize(). */
+
+	/** Calls setPos() and then setSize(). */
 	void setBox(math::Rect box);
-	math::Vec getPosition();
+
+    /** Returns the position of the widget. */
+	math::Vec getPos();
+
+    /** Alias for getPos(). getPosition() might be used by modules. */
+    math::Vec getPosition() {
+        return getPos();
+    }
+
 	/** Sets position and triggers RepositionEvent if position changed. */
-	void setPosition(math::Vec pos);
+	void setPos(const math::Vec& pos);
+
+    /** Alias for setPos(). setPosition() might be used by modules. */
+    void setPosition(const math::Vec& pos) {
+        setPos(pos);
+    }
+
+    /** Sets the X position of the widget. */
+    void setX(float x) {
+        math::Vec pos = getPos();
+        pos.setX(x);
+        setPos(pos);
+    }   
+
+    /** Returns the X position of the widget. */
+    float getX() {
+        return getPos().getX();
+    }
+
+    /** Sets the Y position of the widget. */
+    void setY(float y) {
+        math::Vec pos = getPos();
+        pos.setY(y);
+        setPos(pos);
+    }
+
+    /** Returns the Y position of the widget. */
+    float getY() {
+        return getPos().getY();
+    }
+
+    /** Gets the size of the widget. */
 	math::Vec getSize();
-	/** Sets size and triggers ResizeEvent if size changed. */
+
+	/** Sets size of the widget and triggers ResizeEvent if size changed. */
 	void setSize(math::Vec size);
-	widget::Widget* getParent();
-	bool isVisible();
+
+    /** Sets size of the widget and triggers ResizeEvent if size changed. */
+    void setSize(float width, float height) {
+        setSize(math::Vec(width, height));
+    }
+
+    /** Returns the width of the widget. */
+    float getWidth() {
+        return getSize().getWidth();
+    }
+
+    /** Sets the width of the widget. */
+    void setWidth(float width) {
+        box.setWidth(width);
+    }
+
+    /** Returns the height of the widget. */
+    float getHeight() {
+        return getSize().getHeight();
+    }
+
+    /** Sets the height of the widget. */
+    void setHeight(float height) {
+        box.setHeight(height);
+    }
+
+    /** Returns the parent widget of this widget */
+	widget::Widget* getParent() {
+        return parent;
+    }
+
+    /** Returns the list of child widgets */
+    std::list<Widget*> getChildren() {
+        return children;
+    }   
+
+    /** Returns whether the widget is visible. */
+	bool isVisible() {
+        return visible;
+    }
+
 	/** Sets `visible` and triggers ShowEvent or HideEvent if changed. */
 	void setVisible(bool visible);
+
 	/** Makes Widget visible and triggers ShowEvent if changed. */
 	void show() {
 		setVisible(true);
 	}
+
 	/** Makes Widget not visible and triggers HideEvent if changed. */
 	void hide() {
 		setVisible(false);
 	}
+
+    /** Sets visibility to false without triggering an event. This
+     * can be in constructor of deired Widget subclasses to have the
+     * Widget initially hidden.
+     */
+    void hideInitially() {
+        // The widget should be initially hidden
+        visible = false;
+    }
 
 	/** Requests this Widget's parent to delete it in the next step(). */
 	void requestDelete();
@@ -65,17 +144,21 @@ struct Widget : WeakBase {
 	*/
 	virtual math::Rect getChildrenBoundingBox();
 	virtual math::Rect getVisibleChildrenBoundingBox();
+
 	/** Returns whether `ancestor` is a parent or distant parent of this widget.
 	*/
 	bool isDescendantOf(Widget* ancestor);
+
 	/**  Returns `v` (given in local coordinates) transformed into the coordinate system of `ancestor`.
 	*/
 	virtual math::Vec getRelativeOffset(math::Vec v, Widget* ancestor);
+
 	/** Returns `v` transformed into world/root/global/absolute coordinates.
 	*/
 	math::Vec getAbsoluteOffset(math::Vec v) {
 		return getRelativeOffset(v, NULL);
 	}
+
 	/** Returns the zoom level in the coordinate system of `ancestor`.
 	Only `ZoomWidget` should override this to return value other than 1.
 	*/
@@ -83,6 +166,7 @@ struct Widget : WeakBase {
 	float getAbsoluteZoom() {
 		return getRelativeZoom(NULL);
 	}
+
 	/** Returns a subset of the given Rect bounded by the box of this widget and all ancestors.
 	*/
 	virtual math::Rect getViewport(math::Rect r = math::Rect::inf());
@@ -113,23 +197,28 @@ struct Widget : WeakBase {
 	/** Checks if the given widget is a child of `this` widget.
 	*/
 	bool hasChild(Widget* child);
+
 	/** Adds widget to the top of the children.
 	Gives ownership of widget to this widget instance.
 	*/
 	void addChild(Widget* child);
+
 	/** Adds widget to the bottom of the children.
 	*/
 	void addChildBottom(Widget* child);
+
 	/** Adds widget directly below another widget.
 	The sibling widget must already be a child of `this` widget.
 	*/
 	void addChildBelow(Widget* child, Widget* sibling);
 	void addChildAbove(Widget* child, Widget* sibling);
+
 	/** Removes widget from list of children if it exists.
 	Triggers RemoveEvent of child.
 	Does not delete widget but transfers ownership to caller
 	*/
 	void removeChild(Widget* child);
+    
 	/** Removes and deletes all child Widgets.
 	Triggers RemoveEvent of all children.
 	*/
@@ -147,10 +236,10 @@ struct Widget : WeakBase {
 	};
 
 	/** Draws the widget to the NanoVG context.
-
 	When overriding, call the superclass's `draw(args)` to recurse to children.
 	*/
 	virtual void draw(const DrawArgs& args);
+
 	/** Override draw(const DrawArgs &args) instead */
 	DEPRECATED virtual void draw(NVGcontext* vg) {}
 
@@ -205,7 +294,7 @@ struct Widget : WeakBase {
 
 			// Clone event and adjust its position
 			TEvent e2 = e;
-			e2.pos = e.pos.minus(child->box.pos);
+			e2.pos = e.pos.minus(child->getPos());
 			// Call child event handler
 			(child->*f)(e2);
 		}
@@ -466,7 +555,7 @@ struct Widget : WeakBase {
 		recurseEvent(&Widget::onDirty, e);
 	}
 
-	/** Occurs after a Widget's position is set by Widget::setPosition().
+	/** Occurs after a Widget's position is set by Widget::setPos().
 	*/
 	struct RepositionEvent : BaseEvent {};
 	virtual void onReposition(const RepositionEvent& e) {}
@@ -521,7 +610,28 @@ struct Widget : WeakBase {
 	virtual void onContextDestroy(const ContextDestroyEvent& e) {
 		recurseEvent(&Widget::onContextDestroy, e);
 	}
-};
+
+   private:
+    /** Position relative to parent and size of widget. */
+	math::Rect box = math::Rect(math::Vec(), math::Vec(INFINITY, INFINITY));
+
+	/** Automatically set when Widget is added as a child to another Widget */
+	Widget* parent = NULL;
+
+    /** Lazily created children */
+	std::list<Widget*> children;
+
+    /** Disables rendering but allow stepping.
+    Use isVisible(), setVisible(), show(), or hide() instead of using this
+    variable directly. 
+    */
+    bool visible = true;
+
+	/** If set to true, parent will delete Widget in the next step().
+	Use requestDelete() instead of using this variable directly.
+	*/
+	bool requestedDelete = false;
+};  // end of class Widget
 
 
 } // namespace widget

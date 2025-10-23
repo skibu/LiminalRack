@@ -90,15 +90,15 @@ static ModuleWidget* chooseModel(plugin::Model* model) {
     // Create Module and ModuleWidget
     INFO("Creating module %s", model->getFullName().c_str());
     engine::Module* module = model->createModule();
-    APP->engine->addModule(module);
+    getEngine()->addModule(module);
 
     INFO("Creating module widget %s", model->getFullName().c_str());
     ModuleWidget* moduleWidget = model->createModuleWidget(module);
 
-    APP->scene->rack->deselectAll();
-    APP->scene->rack->updateModuleOldPositions();
-    APP->scene->rack->addModuleAtMouse(moduleWidget);
-    h->push(APP->scene->rack->getModuleDragAction());
+    getRack()->deselectAll();
+    getRack()->updateModuleOldPositions();
+    getRack()->addModuleAtMouse(moduleWidget);
+    h->push(getRack()->getModuleDragAction());
 
     // Load template preset
     moduleWidget->loadTemplate();
@@ -109,10 +109,10 @@ static ModuleWidget* chooseModel(plugin::Model* model) {
     ha->setModule(moduleWidget);
     h->push(ha);
 
-    APP->history->push(h);
+    getHistory()->push(h);
 
     // Hide Module Browser
-    APP->scene->browser->hide();
+    getScene()->getBrowser()->hide();
 
     return moduleWidget;
 }
@@ -174,15 +174,15 @@ struct ModelBox : widget::OpaqueWidget {
         if (previewWidget) {
             fb->setDirty();
             zoomWidget->setZoom(zoom);
-            box.size.x = moduleWidget->box.size.x * zoom;
+            setWidth(moduleWidget->getWidth() * zoom);
         } else {
             // Approximate size as 12HP before we know the actual size.
             // We need a nonzero size, otherwise too many ModelBoxes will lazily
             // render in the same frame.
-            box.size.x = 12 * RACK_GRID_WIDTH * zoom;
+            setWidth(12 * RACK_GRID_WIDTH * zoom);
         }
-		box.size.y = RACK_GRID_HEIGHT * zoom;
-		box.size = box.size.ceil();
+		setHeight(RACK_GRID_HEIGHT * zoom);
+		setSize(getSize().ceil());
 	}
 
 	void createPreview() {
@@ -196,7 +196,7 @@ struct ModelBox : widget::OpaqueWidget {
 		previewWidget->addChild(zoomWidget);
 
 		fb = new widget::FramebufferWidget;
-		if (APP->window->pixelRatio < 2.0) {
+		if (getWindow()->pixelRatio < 2.0) {
 			// Small details draw poorly at low DPI, so oversample when drawing to the framebuffer
 			fb->oversample = 2.0;
 		}
@@ -208,7 +208,7 @@ struct ModelBox : widget::OpaqueWidget {
 		INFO("Creating module widget %s", model->getFullName().c_str());
 		moduleWidget = model->createModuleWidget(NULL);
 		mwc->addChild(moduleWidget);
-		mwc->box.size = moduleWidget->box.size;
+		mwc->setSize(moduleWidget->getSize());
 
 		// Step ModuleWidget so it can set its default appearance.
 		moduleWidget->step();
@@ -216,39 +216,43 @@ struct ModelBox : widget::OpaqueWidget {
 		updateZoom();
 	}
 
-	void draw(const DrawArgs& args) override {
-		// Lazily create preview when drawn
-		createPreview();
+    void draw(const DrawArgs& args) override {
+        // Lazily create preview when drawn
+        createPreview();
 
-		// Draw shadow
-		nvgBeginPath(args.vg);
-		float r = 10; // Blur radius
-		float c = 5; // Corner radius
-		math::Rect shadowBox = box.zeroPos().grow(math::Vec(r, r));
-		nvgRect(args.vg, RECT_ARGS(shadowBox));
-		NVGcolor shadowColor = nvgRGBAf(0, 0, 0, 0.5);
-		nvgFillPaint(args.vg, nvgBoxGradient(args.vg, 0, 0, box.size.x, box.size.y, c, r, shadowColor, color::BLACK_TRANSPARENT));
-		nvgFill(args.vg);
+        // Draw shadow
+        nvgBeginPath(args.vg);
+        float r = 10;  // Blur radius
+        float c = 5;   // Corner radius
+        math::Rect shadowBox = getBox().zeroPos().grow(math::Vec(r, r));
+        nvgRect(args.vg, RECT_ARGS(shadowBox));
+        NVGcolor shadowColor = nvgRGBAf(0, 0, 0, 0.5);
+        nvgFillPaint(args.vg, nvgBoxGradient(args.vg, 0, 0, getWidth(),
+                                                getHeight(), c, r, shadowColor,
+                                                color::BLACK_TRANSPARENT));
+        nvgFill(args.vg);
 
-		// To avoid blinding the user when rack brightness is low, draw framebuffer with the same brightness.
-		float b = math::clamp(settings::rackBrightness + 0.2f, 0.f, 1.f);
-		nvgGlobalTint(args.vg, nvgRGBAf(b, b, b, 1));
+        // To avoid blinding the user when rack brightness is low, draw
+        // framebuffer with the same brightness.
+        float b = math::clamp(settings::rackBrightness + 0.2f, 0.f, 1.f);
+        nvgGlobalTint(args.vg, nvgRGBAf(b, b, b, 1));
 
-		OpaqueWidget::draw(args);
+        OpaqueWidget::draw(args);
 
-		// Draw favorite border if module has been favorited
-		const settings::ModuleInfo* mi = settings::getModuleInfo(model->plugin->slug, model->slug);
-		if (mi && mi->favorite) {
-			nvgBeginPath(args.vg);
-			math::Rect borderBox = box.zeroPos();
-			nvgRect(args.vg, RECT_ARGS(borderBox));
-			nvgStrokeWidth(args.vg, 2);
-			nvgStrokeColor(args.vg, componentlibrary::SCHEME_YELLOW);
-			nvgStroke(args.vg);
-		}
-	}
+        // Draw favorite border if module has been favorited
+        const settings::ModuleInfo* mi =
+            settings::getModuleInfo(model->plugin->slug, model->slug);
+        if (mi && mi->favorite) {
+            nvgBeginPath(args.vg);
+            math::Rect borderBox = getBox().zeroPos();
+            nvgRect(args.vg, RECT_ARGS(borderBox));
+            nvgStrokeWidth(args.vg, 2);
+            nvgStrokeColor(args.vg, componentlibrary::SCHEME_YELLOW);
+            nvgStroke(args.vg);
+        }
+    }
 
-	void step() override {
+        void step() override {
 		OpaqueWidget::step();
 	}
 
@@ -259,7 +263,7 @@ struct ModelBox : widget::OpaqueWidget {
 		}
 
 		if (tooltip) {
-			APP->scene->addChild(tooltip);
+			getScene()->addChild(tooltip);
 			this->tooltip = tooltip;
 		}
 	}
@@ -272,7 +276,7 @@ struct ModelBox : widget::OpaqueWidget {
 			e.consume(mw);
 
 			// Set the drag position at the center of the module
-			mw->dragOffset() = mw->box.size.div(2);
+			mw->dragOffset() = mw->getSize().div(2);
 			// Disable dragging temporarily until the mouse has moved a bit.
 			mw->dragEnabled() = false;
 		}
@@ -409,18 +413,22 @@ Browser::Browser() {
     // Browser bit title label at the top
     titleLabel = new ui::Label(string::translate("Browser.title"));
     titleLabel->setFontSize(40);
-    titleLabel->setColor(
-        color::BLACK);  // Set text color to contrast well with the background
+
+    // Set color to contrast with background
+    titleLabel->setColor(color::BLACK);
     titleLabel->setAlignment(ui::Label::Alignment::CENTER_ALIGNMENT);
-    titleLabel->box.pos.x = MARGIN;
-    titleLabel->box.pos.y = MARGIN + 2.0;
-    titleLabel->box.size.y = titleLabel->getFontSize() * 0.7 +
-                             2.0;  // Don't need full height for label
+
+    titleLabel->setX(MARGIN);
+    titleLabel->setY(MARGIN + 2.0);
+
+    // Don't need full font height for label
+    titleLabel->setHeight(titleLabel->getFontSize() * 0.7 + 2.0);
     addChild(titleLabel);
 
-    // Header
+    // Create header below the label. It contains the selectors.
     headerLayout = new BrowserHeader();
-    headerLayout->box.pos = math::Vec(0, titleLabel->box.size.y + 2 * MARGIN);
+    headerLayout->setPos(
+        math::Vec(0, titleLabel->getBox().getBottom() + MARGIN));
     headerLayout->setMargin(math::Vec(MARGIN, MARGIN));
     headerLayout->setMinSpacing(math::Vec(MARGIN, MARGIN));
     addChild(headerLayout);
@@ -436,30 +444,30 @@ Browser::Browser() {
     // HeaderFontSize.
 
     searchField = new BrowserSearchField(*this);
-    searchField->box.size.x =
-        150 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
+    searchField->setWidth(
+        150 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE);
     searchField->setFontSize(BrowserHeader::HEADER_WIDGETS_FONT_SIZE);
     searchField->setPlaceholder(string::translate("Browser.searchModules"));
     headerLayout->addChild(searchField);
 
     brandButton = new BrandButton(*this);
-    brandButton->box.size.x =
-        150 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
+    brandButton->setWidth(
+        150 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE);
     headerLayout->addChild(brandButton);
 
     tagButton = new TagButton(*this);
-    tagButton->box.size.x =
-        150 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
+    tagButton->setWidth(
+        150 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE);
     headerLayout->addChild(tagButton);
 
     favoriteButton = new FavoriteButton(*this);
-    favoriteButton->box.size.x =
-        110 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
+    favoriteButton->setWidth(
+        110 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE);
     headerLayout->addChild(favoriteButton);
 
     clearButton = new ClearButton(*this);
-    clearButton->box.size.x =
-        120 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
+    clearButton->setWidth(
+        120 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE);
     headerLayout->addChild(clearButton);
 
     // can see the modules. And it takes up precious space. Plus there are
@@ -467,28 +475,28 @@ Browser::Browser() {
     // don't display it unless VCV Rack where want UI to be consistent.
     if (!settings::isNotVCVRack) {
         countLabel = new ui::Label;
-        countLabel->box.size.x =
-            110 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
+        countLabel->setWidth(
+            110 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE);
         headerLayout->addChild(countLabel);
     }
 
     SortButton* sortButton = new SortButton(*this);
-    sortButton->box.size.x =
-        140 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
+    sortButton->setWidth(
+        140 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE);
     headerLayout->addChild(sortButton);
 
     // For zooming in or out on the modules in the Browser
     ZoomButton* zoomButton = new ZoomButton(*this);
-    zoomButton->box.size.x =
-        140 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
+    zoomButton->setWidth(
+        140 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE);
     headerLayout->addChild(zoomButton);
 
     // For adding modules from VCV Rack to the users' library
     UrlButton* libraryButton =
         new UrlButton("https://library.vcvrack.com/",
                       string::translate("Browser.browseLibrary"));
-    libraryButton->box.size.x =
-        170 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE;
+    libraryButton->setWidth(
+        170 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE);
     headerLayout->addChild(libraryButton);
 
     // Restore original height
@@ -534,7 +542,7 @@ void Browser::resetModuleBoxes() {
 void Browser::updateZoom() {
     moduleScroll->offset = math::Vec();
 
-    for (Widget* w : moduleLayoutContainer->children) {
+    for (Widget* w : moduleLayoutContainer->getChildren()) {
         ModelBox* mb = reinterpret_cast<ModelBox*>(w);
         assert(mb);
         mb->updateZoom();
@@ -545,31 +553,31 @@ void Browser::step() {
     // Determine size of the Browser window. Make it 40 units smaller than
     // the main window so that can see that the window is on top of the rack
     // display
-    box = parent->box.zeroPos().grow(math::Vec(-36, -36));
+    setBox(getParent()->getBox().zeroPos().grow(math::Vec(-36, -36)));
 
     // Determine horizontal layout of titleLabel
-    titleLabel->box.size.x = box.size.x;
+    titleLabel->setWidth(getWidth());
 
     // The modules to edges of window margin
     const float rightAndBottomMargin = MARGIN;
 
     // Now that know how big enclosing window is can set position and sizes
     // of the containers. First, set width of the headerLayout widget.
-    headerLayout->box.size.x = box.size.x;
+    headerLayout->setWidth(getWidth());
 
     // Set the position and size of the scrollable container that contains
     // all the modules. Make it so there is a margin at the bottom.
-    moduleScroll->box.pos =
-        headerLayout->box.getBottomLeft() + math::Vec(0, 2 * MARGIN);
-    moduleScroll->box.size =
-        box.size.minus(moduleScroll->box.pos) - math::Vec(0, MARGIN);
+    moduleScroll->setPos(
+        headerLayout->getBox().getBottomLeft() + math::Vec(0, 2 * MARGIN));
+    moduleScroll->setSize(
+        getSize().minus(moduleScroll->getPos()) - math::Vec(0, MARGIN));
 
     // Set the size of the moduleMargin which is inside of the moduleScroll
-    moduleMargin->box.size.x = moduleScroll->box.size.x;
-    moduleMargin->box.size.y =
-        moduleLayoutContainer->box.size.y + rightAndBottomMargin;
-    moduleLayoutContainer->box.size.x =
-        moduleMargin->box.size.x - rightAndBottomMargin;
+    moduleMargin->setSize(
+        moduleScroll->getWidth(),
+        moduleLayoutContainer->getHeight() + rightAndBottomMargin);
+    moduleLayoutContainer->setWidth(
+        moduleMargin->getWidth() - rightAndBottomMargin);
 
     // Check if preferDarkPanels has changed
     if (settings::preferDarkPanels != lastPreferDarkPanels) {
@@ -593,7 +601,7 @@ void Browser::draw(const DrawArgs& args) {
             : color::lerp(bg_color, color::BLACK,
                           0.1);  // Dark outline for light background
     float radius = 10.0;  // Use noticeable radius to differentiate window
-    bndBackgroundColor(args.vg, 0.0, 0.0, box.size.x, box.size.y, radius,
+    bndBackgroundColor(args.vg, 0.0, 0.0, getWidth(), getHeight(), radius,
                        bg_color, outline_color);
 
     Widget::draw(args);
@@ -643,7 +651,7 @@ bool Browser::hasVisibleModel(const std::string& brand, std::set<int> tagIds,
 
 template <typename F>
 void Browser::sortModels(F f) {
-    moduleLayoutContainer->children.sort([&](Widget* w1, Widget* w2) {
+    moduleLayoutContainer->getChildren().sort([&](Widget* w1, Widget* w2) {
         ModelBox* m1 = reinterpret_cast<ModelBox*>(w1);
         ModelBox* m2 = reinterpret_cast<ModelBox*>(w2);
         return f(m1) < f(m2);
@@ -657,7 +665,7 @@ void Browser::refresh() {
     prefilteredModelScores.clear();
 
     // Filter ModelBoxes by brand and tag
-    for (Widget* w : moduleLayoutContainer->children) {
+    for (Widget* w : moduleLayoutContainer->getChildren()) {
         ModelBox* m = reinterpret_cast<ModelBox*>(w);
         m->setVisible(isModelVisible(m->model, brand, tagIds,
                                      favoriteButton->isEnabled()));
@@ -666,7 +674,7 @@ void Browser::refresh() {
     // Filter and sort by search results
     if (search.empty()) {
         // Add all models to prefilteredModelScores with scores of 1
-        for (Widget* w : moduleLayoutContainer->children) {
+        for (Widget* w : moduleLayoutContainer->getChildren()) {
             ModelBox* m = reinterpret_cast<ModelBox*>(w);
             prefilteredModelScores[m->model] = 1.f;
         }
@@ -714,7 +722,7 @@ void Browser::refresh() {
             });
         } else if (settings::browserSort == settings::BROWSER_SORT_RANDOM) {
             std::map<ModelBox*, uint64_t> randomOrder;
-            for (Widget* w : moduleLayoutContainer->children) {
+            for (Widget* w : moduleLayoutContainer->getChildren()) {
                 ModelBox* m = reinterpret_cast<ModelBox*>(w);
                 randomOrder[m] = random::u64();
             }
@@ -734,7 +742,7 @@ void Browser::refresh() {
             return -get(prefilteredModelScores, m->model, 0.f);
         });
         // Filter by whether the score is above the threshold
-        for (Widget* w : moduleLayoutContainer->children) {
+        for (Widget* w : moduleLayoutContainer->getChildren()) {
             ModelBox* m = reinterpret_cast<ModelBox*>(w);
             assert(m);
             if (m->isVisible()) {
@@ -749,7 +757,7 @@ void Browser::refresh() {
     if (countLabel) {
         // Count visible modules
         int count = 0;
-        for (Widget* w : moduleLayoutContainer->children) {
+        for (Widget* w : moduleLayoutContainer->getChildren()) {
             if (w->isVisible()) count++;
         }
         countLabel->setText(
@@ -781,10 +789,10 @@ void Browser::onHoverKey(const HoverKeyEvent& e) {
         if (e.isKeyCommand(GLFW_KEY_F2,
                            RACK_MOD_CTRL | GLFW_MOD_SHIFT | GLFW_MOD_ALT)) {
             int count = 0;
-            for (widget::Widget* w : moduleLayoutContainer->children) {
+            for (widget::Widget* w : moduleLayoutContainer->getChildren()) {
                 ModelBox* mb = dynamic_cast<ModelBox*>(w);
                 if (!mb) continue;
-                if (!mb->visible) continue;
+                if (!mb->isVisible()) continue;
                 count++;
                 DEBUG("Dumping into rack (%d): %s/%s", count,
                       mb->model->plugin->slug.c_str(), mb->model->slug.c_str());
@@ -877,7 +885,7 @@ void Browser::BrowserSearchField::onChange(const ChangeEvent& e) {
 void Browser::BrowserSearchField::onAction(const ActionEvent& e) {
 	// Get first ModelBox
 	ModelBox* mb = NULL;
-	for (Widget* w : browser.getModuleLayoutContainer()->children) {
+	for (Widget* w : browser.getModuleLayoutContainer()->getChildren()) {
 		if (w->isVisible()) {
 			mb = reinterpret_cast<ModelBox*>(w);
 			break;
@@ -907,8 +915,8 @@ void Browser::BrandItem::step() {
 
 void Browser::BrandButton::onAction(const ActionEvent& e) {
     ui::Menu* menu = createMenu();
-    menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
-    menu->box.size.x = box.size.x;
+    menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
+    menu->setWidth(getWidth());
 
     BrandItem* noneItem =
         new BrandItem(browser, string::translate("Browser.allBrands"));
@@ -987,8 +995,8 @@ void Browser::TagItem::step() {
 
 void Browser::TagButton::onAction(const ActionEvent& e) {
     ui::Menu* menu = createMenu();
-    menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
-    menu->box.size.x = box.size.x;
+    menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
+    menu->setWidth(getWidth());
 
     // So user can select no tags/types
     TagItem* noneItem = new TagItem(browser);
@@ -1038,8 +1046,8 @@ void Browser::TagButton::step() {
 
 void Browser::SortButton::onAction(const ActionEvent& e) {
 	ui::Menu* menu = createMenu();
-	menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
-	menu->box.size.x = box.size.x;
+    menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
+    menu->setWidth(getWidth());
 
 	for (int sortId = 0; sortId <= settings::BROWSER_SORT_RANDOM; sortId++) {
 		menu->addChild(createCheckMenuItem(getSortNames()[sortId], "",
@@ -1055,8 +1063,8 @@ void Browser::SortButton::onAction(const ActionEvent& e) {
 /** Called when user clicks on the zoom button. Shows possible choices. */
 void Browser::ZoomButton::onAction(const ActionEvent& e) {
 	ui::Menu* menu = createMenu();
-	menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
-	menu->box.size.x = box.size.x;
+    menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
+    menu->setWidth(getWidth());
 
     if (!settings::isNotVCVRack) {
         // Use standard VCV Rack zoom level choices

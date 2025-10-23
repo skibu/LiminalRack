@@ -20,13 +20,13 @@ struct RackScrollWidget::Internal {
 
 
 RackScrollWidget::RackScrollWidget() {
-	internal = new Internal;
+	internal_ = new Internal;
 
 	zoomWidget = new widget::ZoomWidget;
 	container->addChild(zoomWidget);
 
 	rackWidget = new RackWidget;
-	rackWidget->box.size = RACK_OFFSET.mult(2);
+	rackWidget->setSize(RACK_OFFSET.mult(2));
 	zoomWidget->addChild(rackWidget);
 
 	reset();
@@ -34,7 +34,7 @@ RackScrollWidget::RackScrollWidget() {
 
 
 RackScrollWidget::~RackScrollWidget() {
-	delete internal;
+	delete internal_;
 }
 
 
@@ -82,7 +82,7 @@ void RackScrollWidget::zoomToModules() {
 
 
 void RackScrollWidget::zoomToBound(math::Rect bound) {
-	if (!bound.pos.isFinite())
+	if (!bound.getPos().isFinite())
 		return;
 
 	// Originally the boundary was expanded by 24 units, presumably to show extra rails
@@ -93,7 +93,7 @@ void RackScrollWidget::zoomToBound(math::Rect bound) {
 	}
 	
 	math::Vec size = getSize();
-	float zoom = std::min(size.x / bound.size.x, size.y / bound.size.y);
+	float zoom = std::min(size.getX() / bound.getWidth(), size.getY() / bound.getHeight());
 	offset = bound.getCenter() * zoom - size / 2;
 	zoomWidget->setZoom(zoom);
 }
@@ -104,52 +104,59 @@ void RackScrollWidget::step() {
 
 	// Compute module bounding box
 	math::Rect moduleBox = rackWidget->getModuleContainer()->getChildrenBoundingBox();
-	if (!moduleBox.size.isFinite())
+	if (!moduleBox.getSize().isFinite())
 		moduleBox = math::Rect(RACK_OFFSET, math::Vec(0, 0));
 
 	// Expand moduleBox by a screen size
 	math::Rect scrollBox = moduleBox;
-	scrollBox.pos = scrollBox.pos.mult(zoom);
-	scrollBox.size = scrollBox.size.mult(zoom);
-	scrollBox = scrollBox.grow(box.size.mult(0.9));
+	scrollBox.setPos(scrollBox.getPos().mult(zoom));
+	scrollBox.setSize(scrollBox.getSize().mult(zoom));
+	scrollBox = scrollBox.grow(getSize().mult(0.9));
 
 	// Expand to the current viewport box so that moving modules (and thus changing the module bounding box) doesn't clamp the scroll offset.
-	if (zoom == internal->oldZoom) {
+	if (zoom == internal_->oldZoom) {
 		math::Rect viewportBox;
-		viewportBox.pos = internal->oldOffset;
-		viewportBox.size = box.size;
+		viewportBox.setPos(internal_->oldOffset);
+		viewportBox.setSize(getSize());
 		scrollBox = scrollBox.expand(viewportBox);
 	}
 
 	// Reposition widgets
-	zoomWidget->box = scrollBox;
-	rackWidget->box.pos = scrollBox.pos.div(zoom).neg();
+	zoomWidget->setBox(scrollBox);
+	rackWidget->setPos(scrollBox.getPos().div(zoom).neg());
 
 	// Scroll rack if dragging certain widgets near the edge of the screen
-	math::Vec pos = APP->scene->mousePos - box.pos;
-	math::Rect viewport = getViewport(box.zeroPos());
-	widget::Widget* dw = APP->event->getDraggedWidget();
-	if (dw && APP->event->dragButton == GLFW_MOUSE_BUTTON_LEFT &&
+	math::Vec pos = getScene()->getMousePos() - getPos();
+	math::Rect viewport = getViewport(getBox().zeroPos());
+	widget::Widget* dw = getEvent()->getDraggedWidget();
+	if (dw && getEvent()->dragButton == GLFW_MOUSE_BUTTON_LEFT &&
 		(dynamic_cast<RackWidget*>(dw) || dynamic_cast<ModuleWidget*>(dw) || dynamic_cast<PortWidget*>(dw))) {
 		float margin = 1.0;
 		float speed = 15.0;
-		if (pos.x <= viewport.pos.x + margin)
-			offset.x -= speed;
-		if (pos.x >= viewport.pos.x + viewport.size.x - margin)
-			offset.x += speed;
-		if (pos.y <= viewport.pos.y + margin)
-			offset.y -= speed;
-		if (pos.y >= viewport.pos.y + viewport.size.y - margin)
-			offset.y += speed;
+		if (pos.getX() <= viewport.getPosX() + margin)
+			offset = math::Vec(offset.getX() - speed, offset.getY());
+		if (pos.getX() >= viewport.getPosX() + viewport.getWidth() - margin)
+			offset = math::Vec(offset.getX() + speed, offset.getY());
+		if (pos.getY() <= viewport.getPosY() + margin)
+			offset = math::Vec(offset.getX(), offset.getY() - speed);
+		if (pos.getY() >= viewport.getPosY() + viewport.getHeight() - margin)
+			offset = math::Vec(offset.getX(), offset.getY() + speed);
 	}
 
 	// Hide scrollbars if fullscreen
-	hideScrollbars = APP->window->isFullScreen();
+	hideScrollbars = getWindow()->isFullScreen();
+
+    //FIXME
+    static int count = 0;
+    if (count++ % 180 == 0) {
+        math::Vec gridOffset = getGridOffset();
+        INFO("RackScrollWidget: zoom %f, offset %f,%f, gridOffset %f,%f", zoom, offset.getX(), offset.getY(), gridOffset.getX(), gridOffset.getY());
+    }
 
 	ScrollWidget::step();
 
-	internal->oldOffset = offset;
-	internal->oldZoom = zoom;
+	internal_->oldOffset = offset;
+	internal_->oldZoom = zoom;
 }
 
 
@@ -164,7 +171,7 @@ void RackScrollWidget::onHoverKey(const HoverKeyEvent& e) {
 
 
 void RackScrollWidget::onHoverScroll(const HoverScrollEvent& e) {
-	int mods = APP->window->getMods();
+	int mods = getWindow()->getMods();
 	bool doZoom = mods & RACK_MOD_CTRL;
 	if (settings::mouseWheelZoom)
 		doZoom ^= true;
@@ -175,7 +182,7 @@ void RackScrollWidget::onHoverScroll(const HoverScrollEvent& e) {
 		if (e.isConsumed())
 			return;
 		// Increase zoom
-		float zoomDelta = e.scrollDelta.y / 50 / 4;
+		float zoomDelta = e.scrollDelta.getY() / 50 / 4;
 		if (settings::invertZoom)
 			zoomDelta *= -1;
 		float zoom = getZoom() * std::pow(2.f, zoomDelta);
@@ -192,8 +199,8 @@ void RackScrollWidget::onHover(const HoverEvent& e) {
 	ScrollWidget::onHover(e);
 
 	// Hide menu bar if fullscreen and moving mouse over the RackScrollWidget
-	if (APP->window->isFullScreen()) {
-		APP->scene->menuBar->hide();
+	if (getWindow()->isFullScreen()) {
+		getScene()->getMenuBar()->hide();
 	}
 }
 

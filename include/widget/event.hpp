@@ -39,8 +39,8 @@ Example usage:
 namespace rack {
 namespace widget {
 
-
-struct Widget;
+// Forward declaration
+class Widget;
 
 
 /** Returns the name of a GLFW key macro.
@@ -121,7 +121,10 @@ struct BaseEvent {
 };
 
 
-struct EventState {
+class EventState {
+    public:
+    EventState() {}
+
 	Widget* rootWidget = NULL;
 	/** State widgets
 	Don't set these directly unless you know what you're doing. Use the set*() methods instead.

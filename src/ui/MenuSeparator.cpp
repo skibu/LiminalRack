@@ -7,7 +7,7 @@ namespace ui {
 
 MenuSeparator::MenuSeparator() {
 	// Set the size of the separator. It can be much smaller than other menu items.
-    box.size.y = rack::settings::bndWidgetHeight / 4;
+    setHeight(rack::settings::bndWidgetHeight / 4);
 }
 
 void MenuSeparator::draw(const DrawArgs& args) {
@@ -17,7 +17,7 @@ void MenuSeparator::draw(const DrawArgs& args) {
 	float stroke_width = 3.0;
 	float y = stroke_width / 2.0;
 	nvgMoveTo(args.vg, horizontal_indent, y);
-	nvgLineTo(args.vg, box.size.x - horizontal_indent, y);
+	nvgLineTo(args.vg, getWidth() - horizontal_indent, y);
 	nvgStrokeWidth(args.vg, stroke_width);
 	nvgStrokeColor(args.vg, color::alpha(bndGetTheme()->menuTheme.textColor, 0.25));
 	nvgStroke(args.vg);

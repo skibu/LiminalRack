@@ -37,7 +37,7 @@ struct TintWidget : widget::Widget {
  */
 struct PlugLight : componentlibrary::TRedGreenBlueLight<app::MultiLightWidget> {
 	PlugLight() {
-		box.size = math::Vec(9, 9);
+		setSize(math::Vec(9, 9));
 	}
 };
 
@@ -91,7 +91,7 @@ PlugWidget::PlugWidget(const CableWidget* cableWidget, engine::Port::Type type) 
     plugInternals->plugPort = new widget::SvgWidget;
     plugInternals->plugPort->setSvg(
         window::Svg::load(asset::system("res/ComponentLibrary/PlugPort.svg")));
-    plugInternals->plugPort->setPosition(plugInternals->plugPort->getSize().mult(-0.5));
+    plugInternals->plugPort->setPos(plugInternals->plugPort->getSize().mult(-0.5));
     plugInternals->fb->addChild(plugInternals->plugPort);
 
     // Setup for drawing of the plug
@@ -101,12 +101,12 @@ PlugWidget::PlugWidget(const CableWidget* cableWidget, engine::Port::Type type) 
     plugInternals->plug->setSvg(window::Svg::load(asset::system(plus_svg_filename)));
     plugInternals->plugTint->addChild(plugInternals->plug);
     plugInternals->plugTransform->setSize(plugInternals->plug->getSize());
-    plugInternals->plugTransform->setPosition(plugInternals->plug->getSize().mult(-0.5));
+    plugInternals->plugTransform->setPos(plugInternals->plug->getSize().mult(-0.5));
     plugInternals->plugTint->setSize(plugInternals->plug->getSize());
 
 	// Setup for drawing of the light indicating state/voltage of the plug
     plugInternals->plugLight = new PlugLight;
-    plugInternals->plugLight->setPosition(plugInternals->plugLight->getSize().mult(-0.5));
+    plugInternals->plugLight->setPos(plugInternals->plugLight->getSize().mult(-0.5));
     addChild(plugInternals->plugLight);
 
     setSize(plugInternals->plug->getSize());
@@ -197,7 +197,7 @@ bool CableWidget::isComplete() {
 void CableWidget::updateCable() {
 	// Clean up existing cable if it exists
 	if (cable) {
-		APP->engine->removeCable(cable);
+		getEngine()->removeCable(cable);
 		delete cable;
 		cable = NULL;
 	}
@@ -212,7 +212,7 @@ void CableWidget::updateCable() {
 	cable->inputId = inputPort->portId;
 	cable->outputModule = outputPort->module;
 	cable->outputId = outputPort->portId;
-	APP->engine->addCable(cable);
+	getEngine()->addCable(cable);
 	cableInternals->cableId = cable->id;
 
 	// Make sure cable color is correct. It was originally set based
@@ -225,20 +225,20 @@ void CableWidget::updateCable() {
 
 void CableWidget::setCable(engine::Cable* cable) {
 	if (this->cable) {
-		APP->engine->removeCable(this->cable);
+		getEngine()->removeCable(this->cable);
 		delete this->cable;
 		this->cable = NULL;
 		cableInternals->cableId = -1;
 	}
 	if (cable) {
-		app::ModuleWidget* outputMw = APP->scene->rack->getModule(cable->outputModule->id);
+		app::ModuleWidget* outputMw = getRack()->getModule(cable->outputModule->id);
 		if (!outputMw)
 			throw Exception("Cable cannot find output ModuleWidget %lld", (long long) cable->outputModule->id);
 		outputPort = outputMw->getOutput(cable->outputId);
 		if (!outputPort)
 			throw Exception("Cable cannot find output port %d", cable->outputId);
 
-		app::ModuleWidget* inputMw = APP->scene->rack->getModule(cable->inputModule->id);
+		app::ModuleWidget* inputMw = getRack()->getModule(cable->inputModule->id);
 		if (!inputMw)
 			throw Exception("Cable cannot find input ModuleWidget %lld", (long long) cable->inputModule->id);
 		inputPort = inputMw->getInput(cable->inputId);
@@ -259,29 +259,27 @@ engine::Cable* CableWidget::getCable() {
 	return cable;
 }
 
-
 math::Vec CableWidget::getInputPos() {
-	if (inputPort) {
-		return inputPort->getRelativeOffset(inputPort->box.zeroPos().getCenter(), APP->scene->rack);
-	}
-	else if (hoveredInputPort) {
-		return hoveredInputPort->getRelativeOffset(hoveredInputPort->box.zeroPos().getCenter(), APP->scene->rack);
-	}
-	else {
-		return APP->scene->rack->getMousePos();
-	}
+    if (inputPort) {
+		return inputPort->getRelativeOffset(
+			inputPort->getBox().zeroPos().getCenter(), getRack());
+    } else if (hoveredInputPort) {
+		return hoveredInputPort->getRelativeOffset(
+			hoveredInputPort->getBox().zeroPos().getCenter(), getRack());
+    } else {
+        return getRack()->getMousePos();
+    }
 }
-
 
 math::Vec CableWidget::getOutputPos() {
 	if (outputPort) {
-		return outputPort->getRelativeOffset(outputPort->box.zeroPos().getCenter(), APP->scene->rack);
+		return outputPort->getRelativeOffset(outputPort->getBox().zeroPos().getCenter(), getRack());
 	}
 	else if (hoveredOutputPort) {
-		return hoveredOutputPort->getRelativeOffset(hoveredOutputPort->box.zeroPos().getCenter(), APP->scene->rack);
+		return hoveredOutputPort->getRelativeOffset(hoveredOutputPort->getBox().zeroPos().getCenter(), getRack());
 	}
 	else {
-		return APP->scene->rack->getMousePos();
+		return getRack()->getMousePos();
 	}
 }
 
@@ -300,7 +298,7 @@ void CableWidget::fromJson(json_t* rootJ) {
 	else {
 		// In <v0.6.0, cables used JSON objects instead of hex strings. Just ignore them if so and use the existing cable color.
 		// In <=v1, cable colors were not serialized.
-		color = APP->scene->rack->getNextCableColor();
+		color = getRack()->getNextCableColor();
 	}
 }
 
@@ -312,29 +310,48 @@ static math::Vec getSlumpPos(math::Vec pos1, math::Vec pos2) {
 	// Originally droopage was 150 but there is no good reason for
 	// the cables to hang so low.
 	double droopage = 50.0;
-	avg.y += (1.0 - settings::cableTension) * (droopage + 1.0 * dist);
+	avg.setY(avg.getY() + (1.0 - settings::cableTension) * (droopage + 1.0 * dist));
 	return avg;
 }
 
+static int c = 0;
 
 void CableWidget::step() {
 	math::Vec outputPos = getOutputPos();
 	math::Vec inputPos = getInputPos();
 	math::Vec slump = getSlumpPos(outputPos, inputPos);
 
-	NVGcolor colorOpaque = color;
+    // FIXME for debugging coordinates : Remove debug output
+    if (c++ % 180 == 0) {
+        DEBUG(
+            "step: outputPos=(%.1f, %.1f) inputPos=(%.1f, "
+            "%.1f) slump=(%.1f, %.1f)",
+            outputPos.getX(), outputPos.getY(), inputPos.getX(), inputPos.getY(), slump.getX(),
+            slump.getY());
+
+        DEBUG("Scene box: x=%f, y=%f w=%f, h=%f", getScene()->getX(),
+             getScene()->getY(), getScene()->getWidth(),
+             getScene()->getHeight());
+
+        // FIXME for debugging coordinates trying using getAbsoluteOffset() to convert to absolute coords
+        math::Vec initialVec = slump;
+        math::Vec absoluteVec = getAbsoluteOffset(initialVec);
+        DEBUG("--absoluteVecOfSlump=(%f, %f)",  absoluteVec.getX(), absoluteVec.getY());
+    }
+
+    NVGcolor colorOpaque = color;
 	colorOpaque.a = 1.f;
 
 	// Setup drawing of output plug
-	outputPlug->setPosition(outputPos);
-	bool outputTop = outputPort && (APP->scene->rack->getTopPlug(outputPort) == outputPlug);
+	outputPlug->setPos(outputPos);
+	bool outputTop = outputPort && (getRack()->getTopPlug(outputPort) == outputPlug);
 	outputPlug->setTop(outputTop);
 	outputPlug->setAngle(slump.minus(outputPos).arg());
 	outputPlug->setColor(colorOpaque);
 
 	// Setup drawing of input plug
-	inputPlug->setPosition(inputPos);
-	bool inputTop = inputPort && (APP->scene->rack->getTopPlug(inputPort) == inputPlug);
+	inputPlug->setPos(inputPos);
+	bool inputTop = inputPort && (getRack()->getTopPlug(inputPort) == inputPlug);
 	inputPlug->setTop(inputTop);
 	inputPlug->setAngle(slump.minus(inputPos).arg());
 	inputPlug->setColor(colorOpaque);
@@ -365,7 +382,7 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
 		}
 
 		// Draw opaque if mouse is hovering over a connected port
-		Widget* hoveredWidget = APP->event->hoveredWidget;
+		Widget* hoveredWidget = getEvent()->hoveredWidget;
 		if (outputPort == hoveredWidget || inputPort == hoveredWidget) {
 			opacity = 1.0;
 		}
@@ -458,7 +475,7 @@ engine::Cable* CableWidget::releaseCable() {
 
 
 void CableWidget::onAdd(const AddEvent& e) {
-	Widget* plugContainer = APP->scene->rack->getPlugContainer();
+	Widget* plugContainer = getRack()->getPlugContainer();
 	plugContainer->addChild(outputPlug);
 	plugContainer->addChild(inputPlug);
 	Widget::onAdd(e);
@@ -466,7 +483,7 @@ void CableWidget::onAdd(const AddEvent& e) {
 
 
 void CableWidget::onRemove(const RemoveEvent& e) {
-	Widget* plugContainer = APP->scene->rack->getPlugContainer();
+	Widget* plugContainer = getRack()->getPlugContainer();
 	plugContainer->removeChild(outputPlug);
 	plugContainer->removeChild(inputPlug);
 	Widget::onRemove(e);

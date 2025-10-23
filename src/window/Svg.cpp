@@ -131,11 +131,11 @@ static float getLineCrossing(math::Vec p0, math::Vec p1, math::Vec p2, math::Vec
 	math::Vec b = p2.minus(p0);
 	math::Vec d = p1.minus(p0);
 	math::Vec e = p3.minus(p2);
-	float m = d.x * e.y - d.y * e.x;
+	float m = d.getX() * e.getY() - d.getY() * e.getX();
 	// Check if lines are parallel, or if either pair of points are equal
 	if (std::abs(m) < 1e-6)
 		return NAN;
-	return -(d.x * b.y - d.y * b.x) / m;
+	return -(d.getX() * b.getY() - d.getY() * b.getX()) / m;
 }
 
 void svgDraw(NVGcontext* vg, NSVGimage* svg) {

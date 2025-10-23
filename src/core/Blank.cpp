@@ -40,13 +40,13 @@ struct BlankPanel : Widget {
 	}
 
 	void step() override {
-		panelBorder->box.size = box.size;
+		panelBorder->setSize(getSize());
 		Widget::step();
 	}
 
 	void draw(const DrawArgs& args) override {
 		nvgBeginPath(args.vg);
-		nvgRect(args.vg, 0.0, 0.0, box.size.x, box.size.y);
+		nvgRect(args.vg, 0.0, 0.0, getWidth(), getHeight());
 		NVGcolor bg = settings::preferDarkPanels ? nvgRGB(42, 42, 42) : nvgRGB(235, 235, 235);
 		nvgFillColor(args.vg, bg);
 		nvgFill(args.vg);
@@ -62,47 +62,50 @@ struct ModuleResizeHandle : OpaqueWidget {
 	BlankModule* module;
 
 	ModuleResizeHandle() {
-		box.size = Vec(RACK_GRID_WIDTH * 1, RACK_GRID_HEIGHT);
+		setSize(RACK_GRID_WIDTH * 1, RACK_GRID_HEIGHT);
 	}
 
 	void onDragStart(const DragStartEvent& e) override {
 		if (e.button != GLFW_MOUSE_BUTTON_LEFT)
 			return;
 
-		dragPos = APP->scene->rack->getMousePos();
+		dragPos = getRack()->getMousePos();
 		ModuleWidget* mw = getAncestorOfType<ModuleWidget>();
 		assert(mw);
-		originalBox = mw->box;
+		originalBox = mw->getBox();
 	}
 
 	void onDragMove(const DragMoveEvent& e) override {
 		ModuleWidget* mw = getAncestorOfType<ModuleWidget>();
 		assert(mw);
 
-		Vec newDragPos = APP->scene->rack->getMousePos();
-		float deltaX = newDragPos.x - dragPos.x;
+		Vec newDragPos = getRack()->getMousePos();
+		float deltaX = newDragPos.getX() - dragPos.getX();
 
 		Rect newBox = originalBox;
-		Rect oldBox = mw->box;
+		Rect oldBox = mw->getBox();
 		const float minWidth = 3 * RACK_GRID_WIDTH;
 		if (right) {
-			newBox.size.x += deltaX;
-			newBox.size.x = std::fmax(newBox.size.x, minWidth);
-			newBox.size.x = std::round(newBox.size.x / RACK_GRID_WIDTH) * RACK_GRID_WIDTH;
+			float targetWidth = newBox.getWidth() + deltaX;
+			targetWidth = std::fmax(targetWidth, minWidth);
+			targetWidth = std::round(targetWidth / RACK_GRID_WIDTH) * RACK_GRID_WIDTH;
+			newBox.setWidth(targetWidth);
 		}
 		else {
-			newBox.size.x -= deltaX;
-			newBox.size.x = std::fmax(newBox.size.x, minWidth);
-			newBox.size.x = std::round(newBox.size.x / RACK_GRID_WIDTH) * RACK_GRID_WIDTH;
-			newBox.pos.x = originalBox.pos.x + originalBox.size.x - newBox.size.x;
+			float targetWidth = newBox.getWidth() - deltaX;
+			targetWidth = std::fmax(targetWidth, minWidth);
+			targetWidth = std::round(targetWidth / RACK_GRID_WIDTH) * RACK_GRID_WIDTH;
+			newBox.setWidth(targetWidth);
+			float newPosX = originalBox.getPosX() + originalBox.getWidth() - targetWidth;
+			newBox.setPosX(newPosX);
 		}
 
 		// Set box and test whether it's valid
-		mw->box = newBox;
-		if (!APP->scene->rack->requestModulePos(mw, newBox.pos)) {
-			mw->box = oldBox;
+		mw->setBox(newBox);
+		if (!getRack()->requestModulePos(mw, newBox.getPos())) {
+			mw->setBox(oldBox);
 		}
-		module->width = std::round(mw->box.size.x / RACK_GRID_WIDTH);
+		module->width = std::round(mw->getWidth() / RACK_GRID_WIDTH);
 	}
 
 	void draw(const DrawArgs& args) override {
@@ -110,7 +113,7 @@ struct ModuleResizeHandle : OpaqueWidget {
 			nvgBeginPath(args.vg);
 			const float margin = 5.0;
 			nvgMoveTo(args.vg, x + 0.5, margin + 0.5);
-			nvgLineTo(args.vg, x + 0.5, box.size.y - margin + 0.5);
+			nvgLineTo(args.vg, x + 0.5, getHeight() - margin + 0.5);
 			nvgStrokeWidth(args.vg, 1.0);
 			nvgStrokeColor(args.vg, nvgRGBAf(0.5, 0.5, 0.5, 0.5));
 			nvgStroke(args.vg);
@@ -127,7 +130,7 @@ struct BlankWidget : ModuleWidget {
 
 	BlankWidget(BlankModule* module) {
 		setModule(module);
-		box.size = Vec(RACK_GRID_WIDTH * 10, RACK_GRID_HEIGHT);
+		setSize(Vec(RACK_GRID_WIDTH * 10, RACK_GRID_HEIGHT));
 
 		blankPanel = new BlankPanel;
 		addChild(blankPanel);
@@ -144,27 +147,27 @@ struct BlankWidget : ModuleWidget {
 
 		addChild(createWidget<ThemedScrew>(Vec(15, 0)));
 		addChild(createWidget<ThemedScrew>(Vec(15, 365)));
-		topRightScrew = createWidget<ThemedScrew>(Vec(box.size.x - 30, 0));
-		bottomRightScrew = createWidget<ThemedScrew>(Vec(box.size.x - 30, 365));
+		topRightScrew = createWidget<ThemedScrew>(Vec(getWidth() - 30, 0));
+		bottomRightScrew = createWidget<ThemedScrew>(Vec(getWidth() - 30, 365));
 		addChild(topRightScrew);
 		addChild(bottomRightScrew);
 
 		// Set box width from loaded Module before adding to the RackWidget, so modules aren't unnecessarily shoved around.
 		if (module) {
-			box.size.x = module->width * RACK_GRID_WIDTH;
+			setWidth(module->width * RACK_GRID_WIDTH);
 		}
 	}
 
 	void step() override {
 		BlankModule* module = dynamic_cast<BlankModule*>(this->module);
 		if (module) {
-			box.size.x = module->width * RACK_GRID_WIDTH;
+			setWidth(module->width * RACK_GRID_WIDTH);
 		}
 
-		blankPanel->box.size = box.size;
-		topRightScrew->box.pos.x = box.size.x - 30;
-		bottomRightScrew->box.pos.x = box.size.x - 30;
-		if (box.size.x < RACK_GRID_WIDTH * 6) {
+		blankPanel->setSize(getSize());
+		topRightScrew->setX(getWidth() - 30);
+		bottomRightScrew->setX(getWidth() - 30);
+		if (getWidth() < RACK_GRID_WIDTH * 6) {
 			topRightScrew->hide();
 			bottomRightScrew->hide();
 		}
@@ -172,7 +175,7 @@ struct BlankWidget : ModuleWidget {
 			topRightScrew->show();
 			bottomRightScrew->show();
 		}
-		rightHandle->box.pos.x = box.size.x - rightHandle->box.size.x;
+		rightHandle->setX(getWidth() - rightHandle->getWidth());
 		ModuleWidget::step();
 	}
 };

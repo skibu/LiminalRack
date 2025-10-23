@@ -4,7 +4,9 @@
 namespace rack {
 namespace core {
 
-
+/** Notes module allows users to make text notes. The module doesn't
+ * actually do any audio processing.
+ */
 struct NotesModule : Module {
 	std::string text;
 	bool dirty = false;
@@ -60,30 +62,37 @@ struct NotesDisplay : LedDisplay {
 	void setModule(NotesModule* module) {
 		NotesTextField* textField = createWidget<NotesTextField>(Vec(0, 0));
 		textField->setMultiline(true);
-		textField->box.size = box.size;
+		textField->setBox(getBox());
 		textField->module = module;
 		addChild(textField);
 	}
 };
 
-
 struct NotesWidget : ModuleWidget {
-	NotesWidget(NotesModule* module) {
-		setModule(module);
-		setPanel(createPanel(asset::system("res/Core/Notes.svg"), asset::system("res/Core/Notes-dark.svg")));
+    NotesWidget(NotesModule* module) {
+        // Create module and set the panels
+        setModule(module);
+        setPanel(createPanel(asset::system("res/Core/Notes.svg"),
+                             asset::system("res/Core/Notes-dark.svg")));
 
-		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        // Create the 4 screws
+        addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ThemedScrew>(
+            Vec(getWidth() - 2 * RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ThemedScrew>(
+            Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(
+            createWidget<ThemedScrew>(Vec(getWidth() - 2 * RACK_GRID_WIDTH,
+                                          RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		NotesDisplay* notesDisplay = createWidget<NotesDisplay>(mm2px(Vec(0.0, 12.869)));
-		notesDisplay->box.size = mm2px(Vec(81.28, 105.059));
-		notesDisplay->setModule(module);
-		addChild(notesDisplay);
-	}
+        // Create the text area where notes can be entered
+        NotesDisplay* notesDisplay =
+            createWidget<NotesDisplay>(mm2px(Vec(0.0, 12.869)));
+        notesDisplay->setSize(mm2px(Vec(81.28, 105.059)));
+        notesDisplay->setModule(module);
+        addChild(notesDisplay);
+    }
 };
-
 
 Model* modelNotes = createModel<NotesModule, NotesWidget>("Notes");
 

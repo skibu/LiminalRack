@@ -31,7 +31,7 @@ struct Module::Internal {
 
 
 Module::Module() {
-	internal = new Internal;
+	internal_ = new Internal;
 }
 
 
@@ -52,7 +52,7 @@ Module::~Module() {
 		if (lightInfo)
 			delete lightInfo;
 	}
-	delete internal;
+	delete internal_;
 }
 
 
@@ -92,7 +92,7 @@ std::string Module::createPatchStorageDirectory() {
 std::string Module::getPatchStorageDirectory() {
 	if (id < 0)
 		throw Exception("getPatchStorageDirectory() cannot be called unless Module belongs to Engine and thus has a valid ID");
-	return system::join(APP->patch->autosavePath, "modules", std::to_string(id));
+	return system::join(getPatch()->autosavePath, "modules", std::to_string(id));
 }
 
 
@@ -132,7 +132,7 @@ json_t* Module::toJson() {
 		json_object_set_new(rootJ, "params", paramsJ);
 
 	// bypass
-	if (internal->bypassed)
+	if (internal_->bypassed)
 		json_object_set_new(rootJ, "bypass", json_boolean(true));
 
 	// leftModuleId
@@ -187,7 +187,7 @@ void Module::fromJson(json_t* rootJ) {
 	if (!bypassJ)
 		bypassJ = json_object_get(rootJ, "disabled");
 	if (bypassJ)
-		internal->bypassed = json_boolean_value(bypassJ);
+		internal_->bypassed = json_boolean_value(bypassJ);
 
 	// leftModuleId
 	json_t *leftModuleIdJ = json_object_get(rootJ, "leftModuleId");
@@ -284,17 +284,17 @@ void Module::onRandomize(const RandomizeEvent& e) {
 
 
 bool Module::isBypassed() {
-	return internal->bypassed;
+	return internal_->bypassed;
 }
 
 
 void Module::setBypassed(bool bypassed) {
-	internal->bypassed = bypassed;
+	internal_->bypassed = bypassed;
 }
 
 
 const float* Module::meterBuffer() {
-	return internal->meterBuffer;
+	return internal_->meterBuffer;
 }
 
 
@@ -304,7 +304,7 @@ int Module::meterLength() {
 
 
 int Module::meterIndex() {
-	return internal->meterIndex;
+	return internal_->meterIndex;
 }
 
 
@@ -341,7 +341,7 @@ void Module::doProcess(const ProcessArgs& args) {
 	}
 
 	// Step module
-	if (!internal->bypassed)
+	if (!internal_->bypassed)
 		process(args);
 	else
 		processBypass(args);
@@ -353,22 +353,22 @@ void Module::doProcess(const ProcessArgs& args) {
 		double endTime2 = system::getTime();
 		float duration = (endTime - startTime) - (endTime2 - endTime);
 
-		internal->meterSamples++;
-		internal->meterDurationTotal += duration;
+		internal_->meterSamples++;
+		internal_->meterDurationTotal += duration;
 
 		// Seconds we've been measuring
-		float meterTime = internal->meterSamples * METER_DIVIDER * args.sampleTime;
+		float meterTime = internal_->meterSamples * METER_DIVIDER * args.sampleTime;
 
 		if (meterTime >= METER_TIME) {
 			// Push time to buffer
-			if (internal->meterSamples > 0) {
-				internal->meterIndex++;
-				internal->meterIndex %= METER_BUFFER_LEN;
-				internal->meterBuffer[internal->meterIndex] = internal->meterDurationTotal / internal->meterSamples;
+			if (internal_->meterSamples > 0) {
+				internal_->meterIndex++;
+				internal_->meterIndex %= METER_BUFFER_LEN;
+				internal_->meterBuffer[internal_->meterIndex] = internal_->meterDurationTotal / internal_->meterSamples;
 			}
 			// Reset total
-			internal->meterSamples = 0;
-			internal->meterDurationTotal = 0.f;
+			internal_->meterSamples = 0;
+			internal_->meterDurationTotal = 0.f;
 		}
 	}
 

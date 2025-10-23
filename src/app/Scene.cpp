@@ -13,37 +13,51 @@
 #include <settings.hpp>
 #include <patch.hpp>
 #include <asset.hpp>
+#include <app/Scene.hpp>
 
 
 namespace rack {
 namespace app {
 
+/** ResizeHandle is a triangular handle placed in lower right side
+ * of window for changing window size. But it isn't currently being used.
+ */
+class ResizeHandle : public widget::OpaqueWidget {
+    public:
+	ResizeHandle() {
+		setSize(math::Vec(15, 15));
 
-struct ResizeHandle : widget::OpaqueWidget {
-	math::Vec size;
+		// Currently not used so hide it
+		hide();
+	}
+
+   private:
+    math::Vec size;
 
 	void draw(const DrawArgs& args) override {
 		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, box.size.x, box.size.y);
-		nvgLineTo(args.vg, 0, box.size.y);
-		nvgLineTo(args.vg, box.size.x, 0);
+		math::Vec s = getSize();
+		nvgMoveTo(args.vg, s.getX(), s.getY());
+		nvgLineTo(args.vg, 0, s.getY());
+		nvgLineTo(args.vg, s.getX(), 0);
 		nvgClosePath(args.vg);
+		// To show that resize handle not actually used color is set to green
 		nvgFillColor(args.vg, nvgRGBAf(1, 1, 1, 0.15));
 		nvgFill(args.vg);
 	}
 
-	void onDragStart(const DragStartEvent& e) override {
-		size = APP->window->getSize();
-	}
+    void onDragStart(const DragStartEvent& e) override {
+        size = getWindow()->getSize();
+    }
 
-	void onDragMove(const DragMoveEvent& e) override {
-		size = size.plus(e.mouseDelta);
-		APP->window->setSize(size.round());
-	}
+    void onDragMove(const DragMoveEvent& e) override {
+        size = size.plus(e.mouseDelta);
+        getWindow()->setSize(size.round());
+    }
 };
 
-
 struct Scene::Internal {
+    // Note: not currently used
 	ResizeHandle* resizeHandle;
 
 	double lastAutosaveTime = 0.0;
@@ -53,99 +67,112 @@ struct Scene::Internal {
 
 
 Scene::Scene() {
-	internal = new Internal;
+	internal_ = new Internal;
 
+    // Create the scrolled rack area
 	rackScroll = new RackScrollWidget;
 	addChild(rackScroll);
-
 	rack = rackScroll->rackWidget;
 
+    // Create menu bar
 	menuBar = createMenuBar();
 	addChild(menuBar);
 
+    // Create module browser window but keep it hidden for now
 	browser = browserCreate();
-	browser->hide();
 	addChild(browser);
 
+    // Create tip window if enabled in settings
 	if (settings::showTipsOnLaunch) {
 		addChild(tipWindowCreate());
 	}
 
-	internal->resizeHandle = new ResizeHandle;
-	internal->resizeHandle->box.size = math::Vec(15, 15);
-	internal->resizeHandle->hide();
-	addChild(internal->resizeHandle);
+    // Note: resizeHandle is created but hidden and never unhidden. Therefore
+    // it is not actually needed.
+	internal_->resizeHandle = new ResizeHandle;
+	addChild(internal_->resizeHandle);
 }
 
 
 Scene::~Scene() {
-	delete internal;
+	delete internal_;
 }
-
 
 math::Vec Scene::getMousePos() {
 	return mousePos;
 }
 
-
-void Scene::step() {
-	if (APP->window->isFullScreen()) {
-		// Expand RackScrollWidget to cover entire screen if fullscreen
-		rackScroll->box.pos.y = 0;
-	}
-	else {
-		// Always show MenuBar if not fullscreen
-		menuBar->show();
-		rackScroll->box.pos.y = menuBar->box.size.y;
-	}
-
-	internal->resizeHandle->box.pos = box.size.minus(internal->resizeHandle->box.size);
-
-	// Resize owned descendants
-	menuBar->box.size.x = box.size.x;
-	rackScroll->box.size = box.size.minus(rackScroll->box.pos);
-
-	// Autosave periodically
-	if (settings::autosaveInterval > 0.0) {
-		double time = system::getTime();
-		if (time - internal->lastAutosaveTime >= settings::autosaveInterval) {
-			internal->lastAutosaveTime = time;
-			APP->patch->saveAutosave();
-			settings::save();
-		}
-	}
-
-	// Scroll RackScrollWidget with arrow keys
-	math::Vec arrowDelta;
-	if (internal->heldArrowKeys[0]) {
-		arrowDelta.x -= 1;
-	}
-	if (internal->heldArrowKeys[1]) {
-		arrowDelta.x += 1;
-	}
-	if (internal->heldArrowKeys[2]) {
-		arrowDelta.y -= 1;
-	}
-	if (internal->heldArrowKeys[3]) {
-		arrowDelta.y += 1;
-	}
-
-	if (!arrowDelta.isZero()) {
-		int mods = APP->window->getMods();
-		float arrowSpeed = 32.f;
-		if ((mods & RACK_MOD_MASK) == RACK_MOD_CTRL)
-			arrowSpeed /= 4.f;
-		if ((mods & RACK_MOD_MASK) == GLFW_MOD_SHIFT)
-			arrowSpeed *= 4.f;
-		if ((mods & RACK_MOD_MASK) == (RACK_MOD_CTRL | GLFW_MOD_SHIFT))
-			arrowSpeed /= 16.f;
-
-		rackScroll->offset += arrowDelta * arrowSpeed;
-	}
-
-	Widget::step();
+widget::Widget* Scene::getMenuBar() {
+    return menuBar;
 }
 
+RackWidget* Scene::getRack() {
+    return rack;
+}
+
+RackScrollWidget* Scene::getRackScroll() {
+    return rackScroll;
+}
+
+widget::Widget* Scene::getBrowser() {
+    return browser;
+}
+
+void Scene::step() {
+	if (getWindow()->isFullScreen()) {
+		// Expand RackScrollWidget to cover entire screen if fullscreen
+		rackScroll->setPos(math::Vec(rackScroll->getPos().getX(), 0));
+	} else {
+		// Always show MenuBar if not fullscreen
+		menuBar->show();
+		rackScroll->setPos(math::Vec(rackScroll->getPos().getX(), menuBar->getSize().getY()));
+	}
+
+	internal_->resizeHandle->setPos(getSize().minus(internal_->resizeHandle->getSize()));
+
+	// Resize owned descendants
+	menuBar->setSize(math::Vec(getSize().getX(), menuBar->getSize().getY()));
+	rackScroll->setSize(getSize().minus(rackScroll->getPos()));
+    rackScroll->setSize(getSize().minus(rackScroll->getPos()));
+
+    // Autosave periodically
+    if (settings::autosaveInterval > 0.0) {
+        double time = system::getTime();
+        if (time - internal_->lastAutosaveTime >= settings::autosaveInterval) {
+            internal_->lastAutosaveTime = time;
+            getPatch()->saveAutosave();
+            settings::save();
+        }
+    }
+
+	// Scroll RackScrollWidget with arrow keys
+	math::Vec arrowDelta(0,0);
+	if (internal_->heldArrowKeys[0]) {
+		arrowDelta.setX(arrowDelta.getX() - 1);
+	}
+	if (internal_->heldArrowKeys[1]) {
+		arrowDelta.setX(arrowDelta.getX() + 1);
+	}
+	if (internal_->heldArrowKeys[2]) {
+		arrowDelta.setY(arrowDelta.getY() - 1);
+	}
+	if (internal_->heldArrowKeys[3]) {
+		arrowDelta.setY(arrowDelta.getY() + 1);
+	}
+
+    if (!arrowDelta.isZero()) {
+        int mods = getWindow()->getMods();
+        float arrowSpeed = 32.f;
+        if ((mods & RACK_MOD_MASK) == RACK_MOD_CTRL) arrowSpeed /= 4.f;
+        if ((mods & RACK_MOD_MASK) == GLFW_MOD_SHIFT) arrowSpeed *= 4.f;
+        if ((mods & RACK_MOD_MASK) == (RACK_MOD_CTRL | GLFW_MOD_SHIFT))
+            arrowSpeed /= 16.f;
+
+        rackScroll->offset += arrowDelta * arrowSpeed;
+    }
+
+    Widget::step();
+}
 
 void Scene::draw(const DrawArgs& args) {
 	Widget::draw(args);
@@ -154,7 +181,7 @@ void Scene::draw(const DrawArgs& args) {
 
 void Scene::onHover(const HoverEvent& e) {
 	mousePos = e.pos;
-	if (mousePos.y < menuBar->box.size.y) {
+	if (mousePos.getY() < menuBar->getHeight()) {
 		menuBar->show();
 	}
 	OpaqueWidget::onHover(e);
@@ -172,43 +199,43 @@ void Scene::onHoverKey(const HoverKeyEvent& e) {
 	if (e.action == GLFW_PRESS || e.action == GLFW_REPEAT) {
 		// DEBUG("key %d '%c' scancode %d keyName '%s' mods %02x", e.key, e.key, e.scancode, e.keyName.c_str(), e.mods);
 		if (e.isKeyCommand(GLFW_KEY_N, RACK_MOD_CTRL)) {
-			APP->patch->loadTemplateDialog();
+			getPatch()->loadTemplateDialog();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_Q, RACK_MOD_CTRL)) {
-			APP->window->close();
+			getWindow()->close();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_O, RACK_MOD_CTRL)) {
-			APP->patch->loadDialog();
+			getPatch()->loadDialog();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_O, RACK_MOD_CTRL | GLFW_MOD_SHIFT)) {
-			APP->patch->revertDialog();
+			getPatch()->revertDialog();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_S, RACK_MOD_CTRL)) {
-			APP->patch->saveDialog();
+			getPatch()->saveDialog();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_S, RACK_MOD_CTRL | GLFW_MOD_SHIFT)) {
-			APP->patch->saveAsDialog();
+			getPatch()->saveAsDialog();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_Z, RACK_MOD_CTRL)) {
-			APP->history->undo();
+			getHistory()->undo();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_Z, RACK_MOD_CTRL | GLFW_MOD_SHIFT)) {
-			APP->history->redo();
+			getHistory()->redo();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_MINUS, RACK_MOD_CTRL) || e.isKeyCommand(GLFW_KEY_KP_SUBTRACT, RACK_MOD_CTRL)) {
-			float zoom = std::log2(APP->scene->rackScroll->getZoom());
+			float zoom = std::log2(getScene()->getRackScroll()->getZoom());
 			zoom *= 2;
 			zoom = std::ceil(zoom - 0.01f) - 1;
 			zoom /= 2;
-			APP->scene->rackScroll->setZoom(std::pow(2.f, zoom));
+			getScene()->rackScroll->setZoom(std::pow(2.f, zoom));
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_EQUAL, RACK_MOD_CTRL)
@@ -218,15 +245,15 @@ void Scene::onHoverKey(const HoverKeyEvent& e) {
 			|| e.isKeyCommand(GLFW_KEY_KP_ADD, RACK_MOD_CTRL)
 			// Some layouts (e.g. QWERTZ) have a + key, but GLFW doesn't have a macro for it
 			|| e.isKeyCommand('+', RACK_MOD_CTRL)) {
-			float zoom = std::log2(APP->scene->rackScroll->getZoom());
+			float zoom = std::log2(getScene()->rackScroll->getZoom());
 			zoom *= 2;
 			zoom = std::floor(zoom + 0.01f) + 1;
 			zoom /= 2;
-			APP->scene->rackScroll->setZoom(std::pow(2.f, zoom));
+			getScene()->rackScroll->setZoom(std::pow(2.f, zoom));
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_0, RACK_MOD_CTRL) || e.isKeyCommand(GLFW_KEY_KP_0, RACK_MOD_CTRL)) {
-			APP->scene->rackScroll->setZoom(1.f);
+			getScene()->rackScroll->setZoom(1.f);
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_F1)) {
@@ -238,11 +265,11 @@ void Scene::onHoverKey(const HoverKeyEvent& e) {
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_F4)) {
-			APP->scene->rackScroll->zoomToModules();
+			getScene()->rackScroll->zoomToModules();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_F11)) {
-			APP->window->setFullScreen(!APP->window->isFullScreen());
+			getWindow()->setFullScreen(!getWindow()->isFullScreen());
 			// The MenuBar will be hidden when the mouse moves over the RackScrollWidget.
 			// menuBar->hide();
 			e.consume(this);
@@ -310,19 +337,19 @@ void Scene::onHoverKey(const HoverKeyEvent& e) {
 	// Scroll RackScrollWidget with arrow keys
 	if (e.action == GLFW_PRESS || e.action == GLFW_RELEASE) {
 		if (e.key == GLFW_KEY_LEFT) {
-			internal->heldArrowKeys[0] = (e.action == GLFW_PRESS);
+			internal_->heldArrowKeys[0] = (e.action == GLFW_PRESS);
 			e.consume(this);
 		}
 		if (e.key == GLFW_KEY_RIGHT) {
-			internal->heldArrowKeys[1] = (e.action == GLFW_PRESS);
+			internal_->heldArrowKeys[1] = (e.action == GLFW_PRESS);
 			e.consume(this);
 		}
 		if (e.key == GLFW_KEY_UP) {
-			internal->heldArrowKeys[2] = (e.action == GLFW_PRESS);
+			internal_->heldArrowKeys[2] = (e.action == GLFW_PRESS);
 			e.consume(this);
 		}
 		if (e.key == GLFW_KEY_DOWN) {
-			internal->heldArrowKeys[3] = (e.action == GLFW_PRESS);
+			internal_->heldArrowKeys[3] = (e.action == GLFW_PRESS);
 			e.consume(this);
 		}
 	}
@@ -337,8 +364,8 @@ void Scene::onHoverKey(const HoverKeyEvent& e) {
 	if (e.action == GLFW_PRESS || e.action == GLFW_REPEAT) {
 		// Alternative key command for exiting fullscreen, since F11 doesn't work reliably on Mac due to "Show desktop" OS binding.
 		if (e.isKeyCommand(GLFW_KEY_ESCAPE, 0)) {
-			if (APP->window->isFullScreen()) {
-				APP->window->setFullScreen(false);
+			if (getWindow()->isFullScreen()) {
+				getWindow()->setFullScreen(false);
 				e.consume(this);
 			}
 		}
@@ -360,12 +387,12 @@ void Scene::onPathDrop(const PathDropEvent& e) {
 		std::string extension = system::getExtension(path);
 
 		if (extension == ".vcv") {
-			APP->patch->loadPathDialog(path);
+			getPatch()->loadPathDialog(path);
 			e.consume(this);
 			return;
 		}
 		if (extension == ".vcvs") {
-			APP->scene->rack->loadSelection(path);
+			getRack()->loadSelection(path);
 			e.consume(this);
 			return;
 		}

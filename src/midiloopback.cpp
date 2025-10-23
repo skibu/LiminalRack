@@ -11,7 +11,8 @@ static const int DRIVER_ID = -12;
 static const size_t NUM_DEVICES = 16;
 
 
-struct Device : midi::InputDevice, midi::OutputDevice {
+class Device : public midi::InputDevice, public midi::OutputDevice {
+    public:
 	int id = -1;
 
 	std::string getName() override {
@@ -24,7 +25,8 @@ struct Device : midi::InputDevice, midi::OutputDevice {
 };
 
 
-struct Driver : midi::Driver {
+class Driver : public midi::Driver {
+    public:
 	std::string getName() override {
 		return "Loopback";
 	}
@@ -37,12 +39,15 @@ struct Driver : midi::Driver {
 		}
 		return deviceIds;
 	}
+
 	int getDefaultInputDeviceId() override {
 		return 0;
 	}
+
 	std::string getInputDeviceName(int deviceId) override {
 		return getDevice(deviceId)->getName();
 	}
+
 	midi::InputDevice* subscribeInput(int deviceId, midi::Input* input) override {
 		midi::InputDevice* inputDevice = getDevice(deviceId);
 		if (!inputDevice)
@@ -50,6 +55,7 @@ struct Driver : midi::Driver {
 		inputDevice->subscribe(input);
 		return inputDevice;
 	}
+
 	void unsubscribeInput(int deviceId, midi::Input* input) override {
 		midi::InputDevice* inputDevice = getDevice(deviceId);
 		if (!inputDevice)
@@ -62,12 +68,15 @@ struct Driver : midi::Driver {
 		// Output IDs match input IDs
 		return getInputDeviceIds();
 	}
+
 	int getDefaultOutputDeviceId() override {
 		return getDefaultInputDeviceId();
 	}
+
 	std::string getOutputDeviceName(int deviceId) override {
 		return getInputDeviceName(deviceId);
 	}
+
 	midi::OutputDevice* subscribeOutput(int deviceId, midi::Output* output) override {
 		midi::OutputDevice* outputDevice = getDevice(deviceId);
 		if (!outputDevice)
@@ -75,6 +84,7 @@ struct Driver : midi::Driver {
 		outputDevice->subscribe(output);
 		return outputDevice;
 	}
+
 	void unsubscribeOutput(int deviceId, midi::Output* output) override {
 		midi::OutputDevice* outputDevice = getDevice(deviceId);
 		if (!outputDevice)
@@ -84,11 +94,11 @@ struct Driver : midi::Driver {
 
 	// Custom methods
 	Device* getDevice(int deviceId) {
-		if (!APP->midiLoopbackContext)
+		if (!getMidiLoopbackContext())
 			return NULL;
 		if (!(0 <= deviceId && (size_t) deviceId < NUM_DEVICES))
 			return NULL;
-		Context* context = APP->midiLoopbackContext;
+		Context* context = getMidiLoopbackContext();
 		return context->devices[deviceId];
 	}
 };
@@ -96,7 +106,7 @@ struct Driver : midi::Driver {
 
 Context::Context() {
 	for (size_t i = 0; i < NUM_DEVICES; i++) {
-		Device* device = new Device;
+		Device* device = new Device();
 		device->id = i;
 		devices.push_back(device);
 	}

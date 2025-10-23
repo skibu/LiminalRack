@@ -162,29 +162,29 @@ void MidiDisplay::setMidiPort(midi::Port* port) {
 	math::Vec pos;
 
 	MidiDriverChoice* driverChoice = createWidget<MidiDriverChoice>(pos);
-	driverChoice->box.size.x = box.size.x;
+	driverChoice->setWidth(getWidth());
 	driverChoice->port = port;
 	addChild(driverChoice);
-	pos = driverChoice->box.getBottomLeft();
+	pos = driverChoice->getBox().getBottomLeft();
 	this->driverChoice = driverChoice;
 
 	this->driverSeparator = createWidget<LedDisplaySeparator>(pos);
-	this->driverSeparator->box.size.x = box.size.x;
+	this->driverSeparator->setWidth(getWidth());
 	addChild(this->driverSeparator);
 
 	MidiDeviceChoice* deviceChoice = createWidget<MidiDeviceChoice>(pos);
-	deviceChoice->box.size.x = box.size.x;
+	deviceChoice->setWidth(getWidth());
 	deviceChoice->port = port;
 	addChild(deviceChoice);
-	pos = deviceChoice->box.getBottomLeft();
+	pos = deviceChoice->getBox().getBottomLeft();
 	this->deviceChoice = deviceChoice;
 
 	this->deviceSeparator = createWidget<LedDisplaySeparator>(pos);
-	this->deviceSeparator->box.size.x = box.size.x;
+	this->deviceSeparator->setWidth(getWidth());
 	addChild(this->deviceSeparator);
 
 	MidiChannelChoice* channelChoice = createWidget<MidiChannelChoice>(pos);
-	channelChoice->box.size.x = box.size.x;
+	channelChoice->setWidth(getWidth());
 	channelChoice->port = port;
 	addChild(channelChoice);
 	this->channelChoice = channelChoice;

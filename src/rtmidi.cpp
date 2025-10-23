@@ -151,12 +151,12 @@ struct RtMidiOutputDevice : midi::OutputDevice {
 		// Schedule message to be sent by worker thread
 		MessageSchedule ms;
 		ms.message = message;
-		int64_t deltaFrames = message.getFrame() - APP->engine->getBlockFrame();
+		int64_t deltaFrames = message.getFrame() - getEngine()->getBlockFrame();
 		// Delay message by current Engine block size
-		deltaFrames += APP->engine->getBlockFrames();
+		deltaFrames += getEngine()->getBlockFrames();
 		// Compute time in next Engine block to send message
-		double deltaTime = deltaFrames * APP->engine->getSampleTime();
-		ms.timestamp = APP->engine->getBlockTime() + deltaTime;
+		double deltaTime = deltaFrames * getEngine()->getSampleTime();
+		ms.timestamp = getEngine()->getBlockTime() + deltaTime;
 
 		std::lock_guard<decltype(mutex)> lock(mutex);
 		messageQueue.push(ms);

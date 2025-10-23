@@ -186,7 +186,7 @@ void Model::appendContextMenu(ui::Menu* menu, bool inBrowser) {
 	// author email
 	if (plugin->authorEmail != "") {
 		menu->addChild(createMenuItem(string::translate("Model.authorEmail"), string::translate("Model.authorEmailCopy"), [=]() {
-			glfwSetClipboardString(APP->window->win, plugin->authorEmail.c_str());
+			glfwSetClipboardString(getWindow()->win, plugin->authorEmail.c_str());
 		}));
 	}
 

@@ -10,9 +10,11 @@ namespace ui {
 
 /** Handles a container with Scrollbar */
 struct ScrollWidget : widget::OpaqueWidget {
+    private:
 	struct Internal;
-	Internal* internal;
+	Internal* internal_;
 
+    public:
 	widget::Widget* container;
 	Scrollbar* horizontalScrollbar;
 	Scrollbar* verticalScrollbar;

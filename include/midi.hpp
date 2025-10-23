@@ -9,11 +9,16 @@
 
 
 namespace rack {
+
+// Forward declaration
+class Context;
+
 /** Abstraction for all MIDI drivers in Rack */
 namespace midi {
 
 
-struct Message {
+class Message {
+    public:
 	/** Initialized to 3 empty bytes. */
 	std::vector<uint8_t> bytes;
 	/** The Engine frame timestamp of the Message.
@@ -91,19 +96,21 @@ struct Message {
 // Driver
 ////////////////////
 
-struct InputDevice;
-struct Input;
-struct OutputDevice;
-struct Output;
+// Forward declarations
+class InputDevice;
+class Input;
+class OutputDevice;
+class Output;
 
 /** Wraps a MIDI driver API containing any number of MIDI devices.
 */
-struct Driver {
-	virtual ~Driver() {}
-	/** Returns the name of the driver. E.g. "ALSA". */
-	virtual std::string getName() {
-		return "";
-	}
+class Driver {
+   public:
+    virtual ~Driver() {}
+    /** Returns the name of the driver. E.g. "ALSA". */
+    virtual std::string getName() {
+        return "";
+    }
 	/** Returns a list of all input device IDs that can be subscribed to. */
 	virtual std::vector<int> getInputDeviceIds() {
 		return {};
@@ -154,31 +161,34 @@ Modules and the UI should not interact with this API directly. Use Port instead.
 
 Methods throw `rack::Exception` if the driver API has an exception.
 */
-struct Device {
+class Device {
+   public:
 	virtual ~Device() {}
 	virtual std::string getName() {
 		return "";
 	}
 };
 
-struct InputDevice : Device {
-	std::set<Input*> subscribed;
-	/** Not public. Use Driver::subscribeInput(). */
-	void subscribe(Input* input);
-	/** Not public. Use Driver::unsubscribeInput(). */
-	void unsubscribe(Input* input);
-	/** Called when a MIDI message is received from the device. */
-	void onMessage(const Message& message);
+class InputDevice : public Device {
+   public:
+    std::set<Input*> subscribed;
+    /** Not public. Use Driver::subscribeInput(). */
+    void subscribe(Input* input);
+    /** Not public. Use Driver::unsubscribeInput(). */
+    void unsubscribe(Input* input);
+    /** Called when a MIDI message is received from the device. */
+    void onMessage(const Message& message);
 };
 
-struct OutputDevice : Device {
-	std::set<Output*> subscribed;
-	/** Not public. Use Driver::subscribeOutput(). */
-	void subscribe(Output* output);
-	/** Not public. Use Driver::unsubscribeOutput(). */
-	void unsubscribe(Output* output);
-	/** Sends a MIDI message to the device. */
-	virtual void sendMessage(const Message& message) {}
+class OutputDevice : public Device {
+   public:
+    std::set<Output*> subscribed;
+    /** Not public. Use Driver::subscribeOutput(). */
+    void subscribe(Output* output);
+    /** Not public. Use Driver::unsubscribeOutput(). */
+    void unsubscribe(Output* output);
+    /** Sends a MIDI message to the device. */
+    virtual void sendMessage(const Message& message) {}
 };
 
 ////////////////////
@@ -192,7 +202,8 @@ That is, if the active Device throws a `rack::Exception`, it is caught and logge
 
 Use Input or Output subclasses in your module, not Port directly.
 */
-struct Port {
+class Port {
+    public:
 	/** For MIDI output, the channel to automatically set outbound messages.
 	If -1, the channel is not overwritten and must be set by MIDI generator.
 
@@ -204,6 +215,7 @@ struct Port {
 	// private
 	int driverId = -1;
 	int deviceId = -1;
+
 	/** Not owned */
 	Driver* driver = NULL;
 	Device* device = NULL;
@@ -233,7 +245,8 @@ struct Port {
 };
 
 
-struct Input : Port {
+class Input : public Port {
+    public:
 	/** Not owned */
 	InputDevice* inputDevice = NULL;
 
@@ -251,25 +264,27 @@ struct Input : Port {
 	virtual void onMessage(const Message& message) {}
 };
 
+/** An Input port that stores incoming MIDI messages and releases them when
+ * ready according to their frame timestamp.
+ */
+class InputQueue : public Input {
+   private:
+    struct Internal;
+    Internal* internal_;
 
-/** An Input port that stores incoming MIDI messages and releases them when ready according to their frame timestamp.
-*/
-struct InputQueue : Input {
-	struct Internal;
-	Internal* internal;
-
-	InputQueue();
-	~InputQueue();
-	void onMessage(const Message& message) override;
-	/** Pops and returns the next message (by setting `messageOut`) if its frame timestamp is `maxFrame` or earlier.
-	Returns whether a message was returned.
-	*/
-	bool tryPop(Message* messageOut, int64_t maxFrame);
-	size_t size();
+   public:
+    InputQueue();
+    ~InputQueue();
+    void onMessage(const Message& message) override;
+    /** Pops and returns the next message (by setting `messageOut`) if its frame
+    timestamp is `maxFrame` or earlier. Returns whether a message was returned.
+    */
+    bool tryPop(Message* messageOut, int64_t maxFrame);
+    size_t size();
 };
 
-
-struct Output : Port {
+class Output : public Port {
+    public:
 	/** Not owned */
 	OutputDevice* outputDevice = NULL;
 

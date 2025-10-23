@@ -26,9 +26,9 @@ void ParamQuantity::setValue(float value) {
 	if (snapEnabled)
 		value = std::round(value);
 	if (smoothEnabled)
-		APP->engine->setParamSmoothValue(module, paramId, value);
+		getEngine()->setParamSmoothValue(module, paramId, value);
 	else
-		APP->engine->setParamValue(module, paramId, value);
+		getEngine()->setParamValue(module, paramId, value);
 }
 
 
@@ -37,7 +37,7 @@ float ParamQuantity::getValue() {
 		return 0.f;
 	// Get smoothing target value regardless of `smoothEnabled`.
 	// If smoothing is enabled, value is set, and smoothing is then disabled, calling getParamValue() will return the incorrect value.
-	return APP->engine->getParamSmoothValue(module, paramId);
+	return getEngine()->getParamSmoothValue(module, paramId);
 }
 
 
@@ -47,14 +47,14 @@ void ParamQuantity::setImmediateValue(float value) {
 	value = math::clampSafe(value, getMinValue(), getMaxValue());
 	if (snapEnabled)
 		value = std::round(value);
-	APP->engine->setParamValue(module, paramId, value);
+	getEngine()->setParamValue(module, paramId, value);
 }
 
 
 float ParamQuantity::getImmediateValue() {
 	if (!module)
 		return 0.f;
-	return APP->engine->getParamValue(module, paramId);
+	return getEngine()->getParamValue(module, paramId);
 }
 
 

@@ -50,20 +50,20 @@ class LightTooltip : public ui::Tooltip {
 		Tooltip::step();
 
 		// Fit inside parent (copied from Tooltip.cpp)
-		assert(parent);
-		box = box.nudge(parent->box.zeroPos());
+		assert(getParent());
+		setBox(getBox().nudge(getParent()->getBox().zeroPos()));
 	}
 };
 
 
 ModuleLightWidget::ModuleLightWidget() {
-	internal = new Internal;
+	internal_ = new Internal;
 }
 
 
 ModuleLightWidget::~ModuleLightWidget() {
 	destroyTooltip();
-	delete internal;
+	delete internal_;
 }
 
 
@@ -88,24 +88,24 @@ engine::LightInfo* ModuleLightWidget::getLightInfo() {
 void ModuleLightWidget::createTooltip() {
 	if (!settings::tooltips)
 		return;
-	if (internal->tooltip)
+	if (internal_->tooltip)
 		return;
 	// If the LightInfo is null, don't show a tooltip
 	if (!getLightInfo())
 		return;
 	LightTooltip* tooltip = new LightTooltip();
 	tooltip->lightWidget = this;
-	APP->scene->addChild(tooltip);
-	internal->tooltip = tooltip;
+	getScene()->addChild(tooltip);
+	internal_->tooltip = tooltip;
 }
 
 
 void ModuleLightWidget::destroyTooltip() {
-	if (!internal->tooltip)
+	if (!internal_->tooltip)
 		return;
-	APP->scene->removeChild(internal->tooltip);
-	delete internal->tooltip;
-	internal->tooltip = NULL;
+	getScene()->removeChild(internal_->tooltip);
+	delete internal_->tooltip;
+	internal_->tooltip = NULL;
 }
 
 

@@ -12,7 +12,7 @@ struct ScrollWidget::Internal {
 
 
 ScrollWidget::ScrollWidget() {
-	internal = new Internal;
+	internal_ = new Internal;
 
 	container = new widget::Widget;
 	addChild(container);
@@ -30,36 +30,36 @@ ScrollWidget::ScrollWidget() {
 
 
 ScrollWidget::~ScrollWidget() {
-	delete internal;
+	delete internal_;
 }
 
 
 void ScrollWidget::scrollTo(math::Rect r) {
-	math::Rect bound = math::Rect::fromMinMax(r.getBottomRight().minus(box.size), r.pos);
+	math::Rect bound = math::Rect::fromMinMax(r.getBottomRight().minus(getSize()), r.getPos());
 	offset = offset.clampSafe(bound);
 }
 
 
 math::Rect ScrollWidget::getContainerOffsetBound() {
 	math::Rect r;
-	r.pos = containerBox.pos;
-	r.size = containerBox.size.minus(box.size);
+	r.setPos(containerBox.getPos());
+	r.setSize(containerBox.getSize().minus(getSize()));
 	return r;
 }
 
 
 math::Vec ScrollWidget::getHandleOffset() {
-	return offset.minus(containerBox.pos).div(getContainerOffsetBound().size);
+	return offset.minus(containerBox.getPos()).div(getContainerOffsetBound().getSize());
 }
 
 
 math::Vec ScrollWidget::getHandleSize() {
-	return box.size.div(containerBox.size);
+	return getSize().div(containerBox.getSize());
 }
 
 
 bool ScrollWidget::isScrolling() {
-	return internal->scrolling;
+	return internal_->scrolling;
 }
 
 
@@ -81,7 +81,7 @@ void ScrollWidget::step() {
 	offset = offset.clamp(offsetBounds);
 
 	// Update the container's position from the offset
-	container->box.pos = offset.neg().round();
+	container->setPos(offset.neg().round());
 
 	// Make scrollbars visible only if there is a positive range to scroll.
 	if (hideScrollbars) {
@@ -89,16 +89,16 @@ void ScrollWidget::step() {
 		verticalScrollbar->setVisible(false);
 	}
 	else {
-		horizontalScrollbar->setVisible(offsetBounds.size.x > 0.f);
-		verticalScrollbar->setVisible(offsetBounds.size.y > 0.f);
+		horizontalScrollbar->setVisible(offsetBounds.getWidth() > 0.f);
+		verticalScrollbar->setVisible(offsetBounds.getHeight() > 0.f);
 	}
 
 	// Reposition and resize scroll bars
-	math::Vec inner = box.size.minus(math::Vec(verticalScrollbar->box.size.x, horizontalScrollbar->box.size.y));
-	horizontalScrollbar->box.pos.y = inner.y;
-	verticalScrollbar->box.pos.x = inner.x;
-	horizontalScrollbar->box.size.x = verticalScrollbar->isVisible() ? inner.x : box.size.x;
-	verticalScrollbar->box.size.y = horizontalScrollbar->isVisible() ? inner.y : box.size.y;
+	math::Vec inner = getSize().minus(math::Vec(verticalScrollbar->getWidth(), horizontalScrollbar->getHeight()));
+	horizontalScrollbar->setY(inner.getY());
+	verticalScrollbar->setX(inner.getX());
+	horizontalScrollbar->setWidth(verticalScrollbar->isVisible() ? inner.getX() : getWidth());
+	verticalScrollbar->setHeight(horizontalScrollbar->isVisible() ? inner.getY() : getHeight());
 }
 
 
@@ -106,7 +106,7 @@ void ScrollWidget::onHover(const HoverEvent& e) {
 	OpaqueWidget::onHover(e);
 
 	if (!e.mouseDelta.isZero()) {
-		internal->scrolling = false;
+		internal_->scrolling = false;
 	}
 }
 
@@ -114,7 +114,7 @@ void ScrollWidget::onHover(const HoverEvent& e) {
 void ScrollWidget::onButton(const ButtonEvent& e) {
 	math::Rect offsetBound = getContainerOffsetBound();
 	// Check if scrollable
-	if (offsetBound.size.x > 0.f || offsetBound.size.y > 0.f) {
+	if (offsetBound.getWidth() > 0.f || offsetBound.getHeight() > 0.f) {
 		// Handle Alt-click before children, since most widgets consume Alt-click without needing to.
 		if (e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == GLFW_MOD_ALT) {
 			e.consume(this);
@@ -149,21 +149,21 @@ void ScrollWidget::onHoverScroll(const HoverScrollEvent& e) {
 
 	// Check if scrollable
 	math::Rect offsetBound = getContainerOffsetBound();
-	if (offsetBound.size.x <= 0.f && offsetBound.size.y <= 0.f)
+	if (offsetBound.getWidth() <= 0.f && offsetBound.getHeight() <= 0.f)
 		return;
 
 	math::Vec scrollDelta = e.scrollDelta;
 	// Flip coordinates if shift is held
 	// Mac (or GLFW?) already does this for us.
 #if !defined ARCH_MAC
-	int mods = APP->window->getMods();
+	int mods = getWindow()->getMods();
 	if ((mods & RACK_MOD_MASK) & GLFW_MOD_SHIFT)
 		scrollDelta = scrollDelta.flip();
 #endif
 
 	offset = offset.minus(scrollDelta);
 	e.consume(this);
-	internal->scrolling = true;
+	internal_->scrolling = true;
 }
 
 
@@ -174,44 +174,44 @@ void ScrollWidget::onHoverKey(const HoverKeyEvent& e) {
 
 	// Check if scrollable
 	math::Rect offsetBound = getContainerOffsetBound();
-	if (offsetBound.size.x <= 0.f && offsetBound.size.y <= 0.f)
+	if (offsetBound.getWidth() <= 0.f && offsetBound.getHeight() <= 0.f)
 		return;
 
 	if (e.action == GLFW_PRESS || e.action == GLFW_REPEAT) {
 		if (e.isKeyCommand(GLFW_KEY_PAGE_UP)) {
-			offset.y -= box.size.y * 0.5;
+			offset.setY(offset.getY() - getHeight() * 0.5);
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_PAGE_UP, GLFW_MOD_SHIFT)) {
-			offset.x -= box.size.x * 0.5;
+			offset.setX(offset.getX() - getWidth() * 0.5);
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_PAGE_DOWN)) {
-			offset.y += box.size.y * 0.5;
+			offset.setY(offset.getY() + getHeight() * 0.5);
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_PAGE_DOWN, GLFW_MOD_SHIFT)) {
-			offset.x += box.size.x * 0.5;
+			offset.setX(offset.getX() + getWidth() * 0.5);
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_HOME)) {
 			math::Rect containerBox = container->getVisibleChildrenBoundingBox();
-			offset.y = containerBox.getTop();
+			offset.setY(containerBox.getTop());
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_HOME, GLFW_MOD_SHIFT)) {
 			math::Rect containerBox = container->getVisibleChildrenBoundingBox();
-			offset.x = containerBox.getLeft();
+			offset.setX(containerBox.getLeft());
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_END)) {
 			math::Rect containerBox = container->getVisibleChildrenBoundingBox();
-			offset.y = containerBox.getBottom();
+			offset.setY(containerBox.getBottom());
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_END, GLFW_MOD_SHIFT)) {
 			math::Rect containerBox = container->getVisibleChildrenBoundingBox();
-			offset.x = containerBox.getRight();
+			offset.setX(containerBox.getRight());
 			e.consume(this);
 		}
 	}

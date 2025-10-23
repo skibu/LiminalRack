@@ -7,16 +7,16 @@ namespace widget {
 
 
 SvgWidget::SvgWidget() {
-	box.size = math::Vec();
+	setSize(math::Vec());
 }
 
 
 void SvgWidget::wrap() {
 	if (svg) {
-		box.size = svg->getSize();
+		setSize(svg->getSize());
 	}
 	else {
-		box.size = math::Vec();
+		setSize(math::Vec());
 	}
 }
 

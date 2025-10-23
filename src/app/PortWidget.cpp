@@ -54,7 +54,7 @@ struct PortTooltip : ui::Tooltip {
 				text += string::f("% .3fV", math::normalizeZero(v));
 			}
 			// From/To
-			std::vector<CableWidget*> cables = APP->scene->rack->getCompleteCablesOnPort(portWidget);
+			std::vector<CableWidget*> cables = getRack()->getCompleteCablesOnPort(portWidget);
 			for (auto it = cables.rbegin(); it != cables.rend(); it++) {
 				CableWidget* cable = *it;
 				PortWidget* otherPw = (portWidget->type == engine::Port::INPUT) ? cable->outputPort : cable->inputPort;
@@ -77,8 +77,8 @@ struct PortTooltip : ui::Tooltip {
 		Tooltip::step();
 
 		// Fit inside parent (copied from Tooltip.cpp)
-		assert(parent);
-		box = box.nudge(parent->box.zeroPos());
+		assert(getParent());
+		setBox(getBox().nudge(getParent()->getBox().zeroPos()));
 	}
 };
 
@@ -93,7 +93,7 @@ struct PortCloneCableItem : ui::MenuItem {
 			return;
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
 			// Set PortWidget::onDragStart overrides
-			pw->internal->overrideCloneCw = cw;
+			pw->internal_->overrideCloneCw = cw;
 
 			// Pretend the PortWidget was clicked
 			e.consume(pw);
@@ -113,7 +113,7 @@ struct CableColorItem : ui::ColorDotMenuItem {
 		h->setCable(cw);
 		h->newColor = color;
 		h->oldColor = cw->color;
-		APP->history->push(h);
+		getHistory()->push(h);
 
 		cw->color = color;
 	}
@@ -130,7 +130,7 @@ struct PortCableItem : ui::ColorDotMenuItem {
 			return;
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
 			// Set PortWidget::onDragStart overrides
-			pw->internal->overrideCws.push_back(cw);
+			pw->internal_->overrideCws.push_back(cw);
 
 			// Pretend the PortWidget was clicked
 			e.consume(pw);
@@ -166,7 +166,7 @@ struct PortAllCablesItem : ui::MenuItem {
 		OpaqueWidget::onButton(e);
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
 			// Set PortWidget::onDragStart overrides
-			pw->internal->overrideCws = cws;
+			pw->internal_->overrideCws = cws;
 
 			// Pretend the PortWidget was clicked
 			e.consume(pw);
@@ -186,7 +186,7 @@ struct PortCreateCableItem : ui::MenuItem {
 			return;
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
 			// Set PortWidget::onDragStart overrides
-			pw->internal->overrideCreateCable = true;
+			pw->internal_->overrideCreateCable = true;
 
 			// Pretend the PortWidget was clicked
 			e.consume(pw);
@@ -206,9 +206,9 @@ struct PortCreateCableColorItem : ui::ColorDotMenuItem {
 		if (isDisabled())
 			return;
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
-			APP->scene->rack->setNextCableColorId(colorId);
+			getRack()->setNextCableColorId(colorId);
 			// Set PortWidget::onDragStart overrides
-			pw->internal->overrideCreateCable = true;
+			pw->internal_->overrideCreateCable = true;
 
 			// Pretend the PortWidget was clicked
 			e.consume(pw);
@@ -220,17 +220,17 @@ struct PortCreateCableColorItem : ui::ColorDotMenuItem {
 
 
 PortWidget::PortWidget() {
-	internal = new Internal;
+	internal_ = new Internal;
 }
 
 
 PortWidget::~PortWidget() {
 	// The port shouldn't have any cables when destroyed, but just to make sure.
 	if (module)
-		APP->scene->rack->clearCablesOnPort(this);
+		getRack()->clearCablesOnPort(this);
 	// HACK: In case onDragDrop() is called but not onLeave() afterwards...
 	destroyTooltip();
-	delete internal;
+	delete internal_;
 }
 
 
@@ -260,7 +260,7 @@ void PortWidget::createTooltip() {
 		return;
 
 	// If tooltip already exists, do not create another one
-	if (internal->tooltip)
+	if (internal_->tooltip)
 		return;
 
 	if (!module)
@@ -269,20 +269,20 @@ void PortWidget::createTooltip() {
 	// Create tooltip
 	PortTooltip* tooltip = new PortTooltip;
 	tooltip->portWidget = this;
-	APP->scene->addChild(tooltip);
-	internal->tooltip = tooltip;
+	getScene()->addChild(tooltip);
+	internal_->tooltip = tooltip;
 }
 
 
 void PortWidget::destroyTooltip() {
 	// If no tooltip don't need to destroy it
-	if (!internal->tooltip)
+	if (!internal_->tooltip)
 		return;
 
 	// Actually destroy the tooltip
-	APP->scene->removeChild(internal->tooltip);
-	delete internal->tooltip;
-	internal->tooltip = NULL;
+	getScene()->removeChild(internal_->tooltip);
+	delete internal_->tooltip;
+	internal_->tooltip = NULL;
 }
 
 
@@ -294,7 +294,7 @@ void PortWidget::createContextMenu() {
 	assert(portInfo);
 	menu->addChild(createMenuLabel(portInfo->getFullName()));
 
-	std::vector<CableWidget*> cws = APP->scene->rack->getCompleteCablesOnPort(this);
+	std::vector<CableWidget*> cws = getRack()->getCompleteCablesOnPort(this);
 	CableWidget* topCw = cws.empty() ? NULL : cws.back();
 
 	menu->addChild(createMenuItem(string::translate("PortWidget.deleteTopCable"), widget::getKeyCommandName(0, RACK_MOD_SHIFT) + string::translate("key.click"),
@@ -365,16 +365,16 @@ void PortWidget::createContextMenu() {
 
 
 void PortWidget::deleteTopCableAction() {
-	CableWidget* cw = APP->scene->rack->getTopCable(this);
+	CableWidget* cw = getRack()->getTopCable(this);
 	if (!cw)
 		return;
 
 	// history::CableRemove
 	history::CableRemove* h = new history::CableRemove;
 	h->setCable(cw);
-	APP->history->push(h);
+	getHistory()->push(h);
 
-	APP->scene->rack->removeCable(cw);
+	getRack()->removeCable(cw);
 	delete cw;
 }
 
@@ -385,18 +385,18 @@ void PortWidget::step() {
 
 void PortWidget::draw(const DrawArgs& args) {
     // Check if left-dragging a PortWidget
-    PortWidget* draggedPw = dynamic_cast<PortWidget*>(APP->event->getDraggedWidget());
-    if (draggedPw && APP->event->dragButton == GLFW_MOUSE_BUTTON_LEFT) {
+    PortWidget* draggedPw = dynamic_cast<PortWidget*>(getEvent()->getDraggedWidget());
+    if (draggedPw && getEvent()->dragButton == GLFW_MOUSE_BUTTON_LEFT) {
         // Dragging a cable, which means should emphasize ports that can be connected to
         // and deemphasize ports that cannot be connected to. Use nvtTint to change the
         // colors and alpha used to draw the ports.
-        if (draggedPw->internal->draggedType != type) {
+        if (draggedPw->internal_->draggedType != type) {
             // Cannot make a connection to the port so deemphasize it. This is accomplished
             // by reducing alpha to 0.4, which basically makes the port fade out
             nvgTint(args.vg, nvgRGBAf(1.0, 1.0, 1.0, 0.5));
         } else {
             // Can make a connection to the port so emphasize it
-            if (draggedPw->internal->draggedType == engine::Port::OUTPUT) {
+            if (draggedPw->internal_->draggedType == engine::Port::OUTPUT) {
                 // It is an output port so emphasize it with a gold color.
 				// Note: if instead want to emphasize red then should use
                 // nvgTint(args.vg, nvgRGBAf(1.0, 0.7, 0.7, 1.0));
@@ -449,30 +449,30 @@ void PortWidget::onDragStart(const DragStartEvent& e) {
 
 	DEFER({
 		// Reset overrides
-		internal->overrideCws.clear();
-		internal->overrideCloneCw = NULL;
-		internal->overrideCreateCable = false;
+		internal_->overrideCws.clear();
+		internal_->overrideCloneCw = NULL;
+		internal_->overrideCreateCable = false;
 	});
 
 	// Create ComplexAction
-	if (internal->history) {
-		delete internal->history;
-		internal->history = NULL;
+	if (internal_->history) {
+		delete internal_->history;
+		internal_->history = NULL;
 	}
-	internal->history = new history::ComplexAction;
-	internal->history->name = string::translate("PortWidget.history.moveCable");
+	internal_->history = new history::ComplexAction;
+	internal_->history->name = string::translate("PortWidget.history.moveCable");
 
 	std::vector<CableWidget*> cws;
-	int mods = APP->window->getMods();
-	if (internal->overrideCreateCable || (mods & RACK_MOD_MASK) == RACK_MOD_CTRL) {
+	int mods = getWindow()->getMods();
+	if (internal_->overrideCreateCable || (mods & RACK_MOD_MASK) == RACK_MOD_CTRL) {
 		// Create cable with Ctrl+drag or PortCreateCableItem
 		// Keep cable NULL. Will be created below
 	}
-	else if (internal->overrideCloneCw || (mods & RACK_MOD_MASK) == (RACK_MOD_CTRL | GLFW_MOD_SHIFT)) {
+	else if (internal_->overrideCloneCw || (mods & RACK_MOD_MASK) == (RACK_MOD_CTRL | GLFW_MOD_SHIFT)) {
 		// Clone top cable with Ctrl+shift+drag or PortCloneCableItem
-		CableWidget* cloneCw = internal->overrideCloneCw;
+		CableWidget* cloneCw = internal_->overrideCloneCw;
 		if (!cloneCw)
-			cloneCw = APP->scene->rack->getTopCable(this);
+			cloneCw = getRack()->getTopCable(this);
 
 		if (cloneCw) {
 			CableWidget* cw = new CableWidget;
@@ -481,16 +481,16 @@ void PortWidget::onDragStart(const DragStartEvent& e) {
 				cw->inputPort = cloneCw->inputPort;
 			else
 				cw->outputPort = cloneCw->outputPort;
-			internal->draggedType = type;
-			APP->scene->rack->addCable(cw);
+			internal_->draggedType = type;
+			getRack()->addCable(cw);
 			cws.push_back(cw);
 		}
 	}
 	else {
 		// Grab cable on top of stack
-		cws = internal->overrideCws;
+		cws = internal_->overrideCws;
 		if (cws.empty()) {
-			CableWidget* cw = APP->scene->rack->getTopCable(this);
+			CableWidget* cw = getRack()->getTopCable(this);
 			if (cw)
 				cws.push_back(cw);
 		}
@@ -499,18 +499,18 @@ void PortWidget::onDragStart(const DragStartEvent& e) {
 			// history::CableRemove
 			history::CableRemove* h = new history::CableRemove;
 			h->setCable(cw);
-			internal->history->push(h);
+			internal_->history->push(h);
 
 			// Reuse existing cable
 			cw->getPort(type) = NULL;
 			cw->updateCable();
-			internal->draggedType = type;
+			internal_->draggedType = type;
 
 			// Move grabbed plug to top of stack
 			PlugWidget* plug = cw->getPlug(type);
 			assert(plug);
-			APP->scene->rack->getPlugContainer()->removeChild(plug);
-			APP->scene->rack->getPlugContainer()->addChild(plug);
+			getRack()->getPlugContainer()->removeChild(plug);
+			getRack()->getPlugContainer()->addChild(plug);
 		}
 	}
 
@@ -523,8 +523,8 @@ void PortWidget::onDragStart(const DragStartEvent& e) {
 
         // Set port
 		cw->getPort(type) = this;
-		internal->draggedType = (type == engine::Port::INPUT) ? engine::Port::OUTPUT : engine::Port::INPUT;
-		APP->scene->rack->addCable(cw);
+		internal_->draggedType = (type == engine::Port::INPUT) ? engine::Port::OUTPUT : engine::Port::INPUT;
+		getRack()->addCable(cw);
 	}
 }
 
@@ -534,30 +534,30 @@ void PortWidget::onDragEnd(const DragEndEvent& e) {
 		return;
 
 	// Remove all incomplete cables
-	for (CableWidget* cw : APP->scene->rack->getIncompleteCables()) {
-		APP->scene->rack->removeCable(cw);
+	for (CableWidget* cw : getRack()->getIncompleteCables()) {
+		getRack()->removeCable(cw);
 		delete cw;
 	}
 
 	// Push history
-	if (!internal->history) {
+	if (!internal_->history) {
 		// This shouldn't happen since it's created in onDragStart()
 	}
-	else if (internal->history->isEmpty()) {
+	else if (internal_->history->isEmpty()) {
 		// No history actions, don't push anything
-		delete internal->history;
+		delete internal_->history;
 	}
-	else if (internal->history->actions.size() == 1) {
+	else if (internal_->history->actions.size() == 1) {
 		// Push single history action
-		APP->history->push(internal->history->actions[0]);
-		internal->history->actions.clear();
-		delete internal->history;
+		getHistory()->push(internal_->history->actions[0]);
+		internal_->history->actions.clear();
+		delete internal_->history;
 	}
 	else {
 		// Push ComplexAction
-		APP->history->push(internal->history);
+		getHistory()->push(internal_->history);
 	}
-	internal->history = NULL;
+	internal_->history = NULL;
 }
 
 
@@ -574,13 +574,13 @@ void PortWidget::onDragDrop(const DragDropEvent& e) {
 		createTooltip();
 	}
 
-	for (CableWidget* cw : APP->scene->rack->getIncompleteCables()) {
+	for (CableWidget* cw : getRack()->getIncompleteCables()) {
 		// These should already be NULL because onDragLeave() is called immediately before onDragDrop().
 		cw->hoveredOutputPort = NULL;
 		cw->hoveredInputPort = NULL;
 		if (type == engine::Port::OUTPUT) {
 			// Check that similar cable doesn't exist
-			if (cw->inputPort && !APP->scene->rack->getCable(this, cw->inputPort)) {
+			if (cw->inputPort && !getRack()->getCable(this, cw->inputPort)) {
 				// Connecting to output port so remember this port
 				cw->outputPort = this;
 			}
@@ -590,7 +590,7 @@ void PortWidget::onDragDrop(const DragDropEvent& e) {
 			}
 		}
 		else {
-			if (cw->outputPort && !APP->scene->rack->getCable(cw->outputPort, this)) {
+			if (cw->outputPort && !getRack()->getCable(cw->outputPort, this)) {
 				// Connecting to input port so remember this port
 				cw->inputPort = this;
 			}
@@ -604,7 +604,7 @@ void PortWidget::onDragDrop(const DragDropEvent& e) {
 		cw->updateCable();
 
 		// This should always be true since the ComplexAction is created in onDragStart()
-		history::ComplexAction* history = pwOrigin->internal->history;
+		history::ComplexAction* history = pwOrigin->internal_->history;
 		if (history) {
 			// Reject history if plugging into same port
 			auto& actions = history->actions;
@@ -641,15 +641,15 @@ void PortWidget::onDragEnter(const DragEnterEvent& e) {
 	createTooltip();
 
 	// Make all incomplete cables hover this port
-	for (CableWidget* cw : APP->scene->rack->getIncompleteCables()) {
+	for (CableWidget* cw : getRack()->getIncompleteCables()) {
 		if (type == engine::Port::OUTPUT) {
 			// Check that similar cable doesn't exist
-			if (cw->inputPort && !APP->scene->rack->getCable(this, cw->inputPort)) {
+			if (cw->inputPort && !getRack()->getCable(this, cw->inputPort)) {
 				cw->hoveredOutputPort = this;
 			}
 		}
 		else {
-			if (cw->outputPort && !APP->scene->rack->getCable(cw->outputPort, this)) {
+			if (cw->outputPort && !getRack()->getCable(cw->outputPort, this)) {
 				cw->hoveredInputPort = this;
 			}
 		}
@@ -667,7 +667,7 @@ void PortWidget::onDragLeave(const DragLeaveEvent& e) {
 	if (!pwOrigin)
 		return;
 
-	for (CableWidget* cw : APP->scene->rack->getIncompleteCables()) {
+	for (CableWidget* cw : getRack()->getIncompleteCables()) {
 		cw->getHoveredPort(type) = NULL;
 	}
 }

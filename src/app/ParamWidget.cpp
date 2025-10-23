@@ -20,7 +20,7 @@ struct ParamField : ui::TextField {
 
 	void step() override {
 		// Keep selected
-		APP->event->setSelectedWidget(this);
+		getEvent()->setSelectedWidget(this);
 		TextField::step();
 	}
 
@@ -48,7 +48,7 @@ struct ParamField : ui::TextField {
 				h->paramId = paramWidget->paramId;
 				h->oldValue = oldValue;
 				h->newValue = newValue;
-				APP->history->push(h);
+				getHistory()->push(h);
 			}
 
 			ui::MenuOverlay* overlay = getAncestorOfType<ui::MenuOverlay>();
@@ -93,7 +93,7 @@ private:
                 h->paramId = paramWidget->paramId;
                 h->oldValue = oldValue;
                 h->newValue = newValue;
-                APP->history->push(h);
+                getHistory()->push(h);
             }
         }
     }
@@ -122,8 +122,8 @@ class ParamTooltip : public ui::Tooltip {
 
         // Fit inside parent (copied from Tooltip.cpp).
         // Seems to not actually do anything though.
-        assert(parent);
-        box = box.nudge(parent->box.zeroPos());
+        assert(getParent());
+        setBox(getBox().nudge(getParent()->getBox().zeroPos()));
     }
 
    private:
@@ -159,34 +159,34 @@ struct ParamWidget::Internal {
 
 
 ParamWidget::ParamWidget() {
-	internal = new Internal;
+	internal_ = new Internal;
 }
 
 
 ParamWidget::~ParamWidget() {
-	delete internal;
+	delete internal_;
 }
 
 
 void ParamWidget::createTooltip() {
 	if (!settings::tooltips)
 		return;
-	if (internal->tooltip)
+	if (internal_->tooltip)
 		return;
 	if (!module)
 		return;
 	ParamTooltip* tooltip = new ParamTooltip(*this);
-	APP->scene->addChild(tooltip);
-	internal->tooltip = tooltip;
+	getScene()->addChild(tooltip);
+	internal_->tooltip = tooltip;
 }
 
 
 void ParamWidget::destroyTooltip() {
-	if (!internal->tooltip)
+	if (!internal_->tooltip)
 		return;
-	APP->scene->removeChild(internal->tooltip);
-	delete internal->tooltip;
-	internal->tooltip = NULL;
+	getScene()->removeChild(internal_->tooltip);
+	delete internal_->tooltip;
+	internal_->tooltip = NULL;
 }
 
 void ParamWidget::step() {
@@ -194,10 +194,10 @@ void ParamWidget::step() {
 	if (pq) {
 		float value = pq->getValue();
 		// Dispatch change event when the ParamQuantity value changes
-		if (value != internal->lastValue) {
+		if (value != internal_->lastValue) {
 			ChangeEvent eChange;
 			onChange(eChange);
-			internal->lastValue = value;
+			internal_->lastValue = value;
 		}
 	}
 
@@ -209,13 +209,13 @@ void ParamWidget::draw(const DrawArgs& args) {
 	Widget::draw(args);
 
 	// Param map indicator
-	engine::ParamHandle* paramHandle = module ? APP->engine->getParamHandle(module->id, paramId) : NULL;
+	engine::ParamHandle* paramHandle = module ? getEngine()->getParamHandle(module->id, paramId) : NULL;
 	if (paramHandle) {
 		NVGcolor color = paramHandle->color;
 		nvgBeginPath(args.vg);
 		const float radius = 6;
 		// nvgCircle(args.vg, box.size.x / 2, box.size.y / 2, radius);
-		nvgRect(args.vg, box.size.x - radius, box.size.y - radius, radius, radius);
+		nvgRect(args.vg, getWidth() - radius, getHeight() - radius, radius, radius);
 		nvgFillColor(args.vg, color);
 		nvgFill(args.vg);
 		nvgStrokeColor(args.vg, color::mult(color, 0.5));
@@ -231,7 +231,7 @@ void ParamWidget::onButton(const ButtonEvent& e) {
 	// Touch parameter
 	if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
 		if (module) {
-			APP->scene->rack->touchedParam = this;
+			getRack()->touchedParam = this;
 		}
 		e.consume(this);
 	}
@@ -286,7 +286,7 @@ void ParamWidget::createContextMenu() {
 	}
 	else {
 		ParamField* paramField = new ParamField;
-		paramField->box.size.x = 100;
+		paramField->setWidth(100);
 		paramField->setParamWidget(this);
 		menu->addChild(paramField);
 	}
@@ -304,10 +304,10 @@ void ParamWidget::createContextMenu() {
 	}
 
 	// Unmap
-	engine::ParamHandle* paramHandle = module ? APP->engine->getParamHandle(module->id, paramId) : NULL;
+	engine::ParamHandle* paramHandle = module ? getEngine()->getParamHandle(module->id, paramId) : NULL;
 	if (paramHandle) {
 		menu->addChild(createMenuItem(string::translate("ParamWidget.unmap"), paramHandle->text, [=]() {
-			APP->engine->updateParamHandle(paramHandle, -1, 0);
+			getEngine()->updateParamHandle(paramHandle, -1, 0);
 		}));
 	}
 
@@ -330,7 +330,7 @@ void ParamWidget::resetAction() {
 			h->paramId = paramId;
 			h->oldValue = oldValue;
 			h->newValue = newValue;
-			APP->history->push(h);
+			getHistory()->push(h);
 		}
 	}
 }

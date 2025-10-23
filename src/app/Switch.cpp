@@ -12,17 +12,18 @@ namespace app {
 struct Switch::Internal {
 	/** Whether momentary switch was pressed this frame. */
 	bool momentaryPressed = false;
+
 	/** Whether momentary switch was released this frame. */
 	bool momentaryReleased = false;
 };
 
 
 Switch::Switch() {
-	internal = new Internal;
+	internal_ = new Internal;
 }
 
 Switch::~Switch() {
-	delete internal;
+	delete internal_;
 }
 
 void Switch::initParamQuantity() {
@@ -40,12 +41,12 @@ void Switch::initParamQuantity() {
 
 void Switch::step() {
 	engine::ParamQuantity* pq = getParamQuantity();
-	if (internal->momentaryPressed) {
-		internal->momentaryPressed = false;
+	if (internal_->momentaryPressed) {
+		internal_->momentaryPressed = false;
 		// Wait another frame.
 	}
-	else if (internal->momentaryReleased) {
-		internal->momentaryReleased = false;
+	else if (internal_->momentaryReleased) {
+		internal_->momentaryReleased = false;
 		if (pq) {
 			// Set to minimum value
 			pq->setMin();
@@ -67,7 +68,7 @@ void Switch::onDragStart(const DragStartEvent& e) {
 
 	engine::ParamQuantity* pq = getParamQuantity();
 	if (momentary) {
-		internal->momentaryPressed = true;
+		internal_->momentaryPressed = true;
 		if (pq) {
 			// Set to maximum value
 			pq->setMax();
@@ -77,7 +78,7 @@ void Switch::onDragStart(const DragStartEvent& e) {
 		if (pq) {
 			float oldValue = pq->getValue();
 
-			int mods = APP->window->getMods();
+			int mods = getWindow()->getMods();
 			if ((mods & RACK_MOD_MASK) == 0) {
 				if (pq->isMax()) {
 					// Reset value back to minimum
@@ -108,7 +109,7 @@ void Switch::onDragStart(const DragStartEvent& e) {
 				h->paramId = paramId;
 				h->oldValue = oldValue;
 				h->newValue = newValue;
-				APP->history->push(h);
+				getHistory()->push(h);
 			}
 		}
 	}
@@ -121,7 +122,7 @@ void Switch::onDragEnd(const DragEndEvent& e) {
 		return;
 
 	if (momentary) {
-		internal->momentaryReleased = true;
+		internal_->momentaryReleased = true;
 	}
 }
 

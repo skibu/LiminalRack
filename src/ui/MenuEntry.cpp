@@ -6,7 +6,7 @@ namespace ui {
 
 
 MenuEntry::MenuEntry() {
-    box.size = math::Vec(0, rack::settings::bndWidgetHeight);
+    setSize(0, rack::settings::bndWidgetHeight);
 }
 
 

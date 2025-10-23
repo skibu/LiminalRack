@@ -28,7 +28,7 @@ struct Manager::Internal {
 
 
 Manager::Manager() {
-	internal = new Internal;
+	internal_ = new Internal;
 
 	autosavePath = asset::user("autosave");
 
@@ -50,15 +50,15 @@ Manager::~Manager() {
 	}
 	else {
 		// Dispatch onSave to all Modules so they save their patch storage, etc.
-		APP->engine->prepareSave();
+		getEngine()->prepareSave();
 		// Save autosave if not headless
 		if (!settings::headless) {
-			APP->patch->saveAutosave();
+			getPatch()->saveAutosave();
 		}
 		cleanAutosave();
 	}
 
-	delete internal;
+	delete internal_;
 }
 
 
@@ -92,21 +92,21 @@ void Manager::launch(std::string pathArg) {
 
 void Manager::clear() {
 	path = "";
-	if (APP->scene) {
-		APP->scene->rack->clear();
-		APP->scene->rackScroll->reset();
+	if (getScene()) {
+		getRack()->clear();
+		getScene()->getRackScroll()->reset();
 	}
-	if (APP->history) {
-		APP->history->clear();
+	if (getHistory()) {
+		getHistory()->clear();
 	}
-	APP->engine->clear();
+	getEngine()->clear();
 }
 
 
 static bool promptClear(std::string text) {
-	if (APP->history->isSaved())
+	if (getHistory()->isSaved())
 		return true;
-	if (APP->scene->rack->hasModules())
+	if (getRack()->hasModules())
 		return true;
 	return osdialog_message(OSDIALOG_INFO, OSDIALOG_OK_CANCEL, text.c_str());
 }
@@ -115,7 +115,7 @@ static bool promptClear(std::string text) {
 void Manager::save(std::string path) {
 	INFO("Saving patch %s", path.c_str());
 	// Dispatch SaveEvent to modules
-	APP->engine->prepareSave();
+	getEngine()->prepareSave();
 
 	// Omit the patch path from the patch archive, so sharing their patch doesn't leak the user's home dir name, which is their OS username.
 	// Then restore it so it is saved to <Rack user dir>/autosave/patch.json on the next autosave.
@@ -129,7 +129,7 @@ void Manager::save(std::string path) {
 	cleanAutosave();
 
 	// Take screenshot (disabled because there is currently no way to quickly view them on any OS or website.)
-	// APP->window->screenshot(system::join(autosavePath, "screenshot.png"));
+	// getWindow()->screenshot(system::join(autosavePath, "screenshot.png"));
 
 	double startTime = system::getTime();
 	// Set compression level to 1 so that a 500MB/s SSD is almost bottlenecked
@@ -146,7 +146,7 @@ void Manager::saveDialog() {
 	}
 
 	// Note: If save() fails below, this should probably be reset. But we need it so toJson() doesn't set the "unsaved" property.
-	APP->history->setSaved();
+	getHistory()->setSaved();
 
 	try {
 		save(path);
@@ -209,7 +209,7 @@ void Manager::saveAsDialog(bool setPath) {
 	}
 
 	// Commit patch path
-	APP->history->setSaved();
+	getHistory()->setSaved();
 	if (setPath) {
 		this->path = path;
 		settings::lastPatchDirectory = system::getDirectory(path);
@@ -270,7 +270,7 @@ void Manager::cleanAutosave() {
 			try {
 				int64_t moduleId = std::stoll(system::getFilename(entry));
 				// Ignore modules that exist in the rack
-				if (APP->engine->getModule(moduleId))
+				if (getEngine()->getModule(moduleId))
 					continue;
 			}
 			catch (std::invalid_argument& e) {}
@@ -339,7 +339,7 @@ void Manager::loadTemplate() {
 
 	// load() sets the patch's original patch, but we don't want to use that.
 	this->path = "";
-	APP->history->setSaved();
+	getHistory()->setSaved();
 }
 
 
@@ -392,7 +392,7 @@ void Manager::loadAction(std::string path) {
 	}
 
 	this->path = path;
-	APP->history->setSaved();
+	getHistory()->setSaved();
 	pushRecentPath(path);
 }
 
@@ -462,7 +462,7 @@ void Manager::pushRecentPath(std::string path) {
 
 
 void Manager::disconnectDialog() {
-	APP->scene->rack->clearCablesAction();
+	getRack()->clearCablesAction();
 }
 
 
@@ -481,28 +481,28 @@ json_t* Manager::toJson() {
 	}
 
 	// unsaved
-	if (!APP->history->isSaved())
+	if (!getHistory()->isSaved())
 		json_object_set_new(rootJ, "unsaved", json_boolean(true));
 
-	if (APP->scene) {
+	if (getScene()) {
 		// zoom
-		float zoom = APP->scene->rackScroll->getZoom();
+		float zoom = getScene()->getRackScroll()->getZoom();
 		json_object_set_new(rootJ, "zoom", json_real(zoom));
 
 		// gridOffset
-		math::Vec gridOffset = APP->scene->rackScroll->getGridOffset();
-		json_t* gridOffsetJ = json_pack("[f, f]", gridOffset.x, gridOffset.y);
+		math::Vec gridOffset = getScene()->getRackScroll()->getGridOffset();
+		json_t* gridOffsetJ = json_pack("[f, f]", gridOffset.getX(), gridOffset.getY());
 		json_object_set_new(rootJ, "gridOffset", gridOffsetJ);
 	}
 
 	// Merge with Engine JSON
-	json_t* engineJ = APP->engine->toJson();
+	json_t* engineJ = getEngine()->toJson();
 	json_object_update(rootJ, engineJ);
 	json_decref(engineJ);
 
 	// Merge with RackWidget JSON
-	if (APP->scene) {
-		APP->scene->rack->mergeJson(rootJ);
+	if (getScene()) {
+		getRack()->mergeJson(rootJ);
 	}
 
 	return rootJ;
@@ -529,28 +529,28 @@ void Manager::fromJson(json_t* rootJ) {
 	// unsaved
 	json_t* unsavedJ = json_object_get(rootJ, "unsaved");
 	if (!unsavedJ)
-		APP->history->setSaved();
+		getHistory()->setSaved();
 
-	if (APP->scene) {
+	if (getScene()) {
 		// zoom
 		json_t* zoomJ = json_object_get(rootJ, "zoom");
 		if (zoomJ)
-			APP->scene->rackScroll->setZoom(json_number_value(zoomJ));
+			getScene()->getRackScroll()->setZoom(json_number_value(zoomJ));
 
 		// gridOffset
 		json_t* gridOffsetJ = json_object_get(rootJ, "gridOffset");
 		if (gridOffsetJ) {
 			double x, y;
 			json_unpack(gridOffsetJ, "[F, F]", &x, &y);
-			APP->scene->rackScroll->setGridOffset(math::Vec(x, y));
+			getScene()->getRackScroll()->setGridOffset(math::Vec(x, y));
 		}
 	}
 
 	// Pass JSON to Engine and RackWidget
 	try {
-		APP->engine->fromJson(rootJ);
-		if (APP->scene) {
-			APP->scene->rack->fromJson(rootJ);
+		getEngine()->fromJson(rootJ);
+		if (getScene()) {
+			getRack()->fromJson(rootJ);
 		}
 	}
 	catch (Exception& e) {

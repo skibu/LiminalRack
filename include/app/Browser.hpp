@@ -46,7 +46,7 @@ class Browser : public widget::OpaqueWidget {
 
         void step() override {
             // Steal focus when step is called
-            APP->event->setSelectedWidget(this);
+            getEvent()->setSelectedWidget(this);
             TextField::step();
         }
 
@@ -55,7 +55,7 @@ class Browser : public widget::OpaqueWidget {
         void onAction(const ActionEvent& e) override;
 
         void onHide(const HideEvent& e) override {
-            APP->event->setSelectedWidget(NULL);
+            getEvent()->setSelectedWidget(NULL);
             ui::TextField::onHide(e);
         }
 

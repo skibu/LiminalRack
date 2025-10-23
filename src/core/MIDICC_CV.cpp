@@ -225,55 +225,76 @@ struct MIDICC_CV : Module {
 	}
 };
 
-
 struct MIDICC_CVWidget : ModuleWidget {
-	MIDICC_CVWidget(MIDICC_CV* module) {
-		setModule(module);
-		setPanel(createPanel(asset::system("res/Core/MIDICC_CV.svg"), asset::system("res/Core/MIDICC_CV-dark.svg")));
+    MIDICC_CVWidget(MIDICC_CV* module) {
+        setModule(module);
+        setPanel(createPanel(asset::system("res/Core/MIDICC_CV.svg"),
+                             asset::system("res/Core/MIDICC_CV-dark.svg")));
 
-		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ThemedScrew>(
+            Vec(getWidth() - 2 * RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ThemedScrew>(
+            Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(
+            createWidget<ThemedScrew>(Vec(getWidth() - 2 * RACK_GRID_WIDTH,
+                                          RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(8.189, 78.431)), module, MIDICC_CV::CC_OUTPUT + 0));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(19.739, 78.431)), module, MIDICC_CV::CC_OUTPUT + 1));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(31.289, 78.431)), module, MIDICC_CV::CC_OUTPUT + 2));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(42.838, 78.431)), module, MIDICC_CV::CC_OUTPUT + 3));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(8.189, 89.946)), module, MIDICC_CV::CC_OUTPUT + 4));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(19.739, 89.946)), module, MIDICC_CV::CC_OUTPUT + 5));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(31.289, 89.946)), module, MIDICC_CV::CC_OUTPUT + 6));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(42.838, 89.946)), module, MIDICC_CV::CC_OUTPUT + 7));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(8.189, 101.466)), module, MIDICC_CV::CC_OUTPUT + 8));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(19.739, 101.466)), module, MIDICC_CV::CC_OUTPUT + 9));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(31.289, 101.466)), module, MIDICC_CV::CC_OUTPUT + 10));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(42.838, 101.466)), module, MIDICC_CV::CC_OUTPUT + 11));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(8.19, 112.998)), module, MIDICC_CV::CC_OUTPUT + 12));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(19.739, 112.984)), module, MIDICC_CV::CC_OUTPUT + 13));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(31.289, 112.984)), module, MIDICC_CV::CC_OUTPUT + 14));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(42.839, 112.984)), module, MIDICC_CV::CC_OUTPUT + 15));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(8.189, 78.431)), module, MIDICC_CV::CC_OUTPUT + 0));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(19.739, 78.431)), module, MIDICC_CV::CC_OUTPUT + 1));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(31.289, 78.431)), module, MIDICC_CV::CC_OUTPUT + 2));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(42.838, 78.431)), module, MIDICC_CV::CC_OUTPUT + 3));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(8.189, 89.946)), module, MIDICC_CV::CC_OUTPUT + 4));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(19.739, 89.946)), module, MIDICC_CV::CC_OUTPUT + 5));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(31.289, 89.946)), module, MIDICC_CV::CC_OUTPUT + 6));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(42.838, 89.946)), module, MIDICC_CV::CC_OUTPUT + 7));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(8.189, 101.466)), module, MIDICC_CV::CC_OUTPUT + 8));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(19.739, 101.466)), module, MIDICC_CV::CC_OUTPUT + 9));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(31.289, 101.466)), module, MIDICC_CV::CC_OUTPUT + 10));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(42.838, 101.466)), module, MIDICC_CV::CC_OUTPUT + 11));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(8.19, 112.998)), module, MIDICC_CV::CC_OUTPUT + 12));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(19.739, 112.984)), module, MIDICC_CV::CC_OUTPUT + 13));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(31.289, 112.984)), module, MIDICC_CV::CC_OUTPUT + 14));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(42.839, 112.984)), module, MIDICC_CV::CC_OUTPUT + 15));
 
-		typedef Grid16MidiDisplay<CcChoice<MIDICC_CV>> TMidiDisplay;
-		TMidiDisplay* display = createWidget<TMidiDisplay>(mm2px(Vec(0.0, 13.039)));
-		display->box.size = mm2px(Vec(50.8, 55.88));
-		display->setMidiPort(module ? &module->midiInput : NULL);
-		display->setModule(module);
-		addChild(display);
-	}
+        typedef Grid16MidiDisplay<CcChoice<MIDICC_CV>> TMidiDisplay;
+        TMidiDisplay* display =
+            createWidget<TMidiDisplay>(mm2px(Vec(0.0, 13.039)));
+        display->setSize(mm2px(Vec(50.8, 55.88)));
+        display->setMidiPort(module ? &module->midiInput : NULL);
+        display->setModule(module);
+        addChild(display);
+    }
 
-	void appendContextMenu(Menu* menu) override {
-		MIDICC_CV* module = dynamic_cast<MIDICC_CV*>(this->module);
+    void appendContextMenu(Menu* menu) override {
+        MIDICC_CV* module = dynamic_cast<MIDICC_CV*>(this->module);
 
-		menu->addChild(new MenuSeparator);
+        menu->addChild(new MenuSeparator);
 
-		menu->addChild(createBoolPtrMenuItem("Smooth CC", "", &module->smooth));
+        menu->addChild(createBoolPtrMenuItem("Smooth CC", "", &module->smooth));
 
-		menu->addChild(createBoolPtrMenuItem("MPE mode", "", &module->mpeMode));
+        menu->addChild(createBoolPtrMenuItem("MPE mode", "", &module->mpeMode));
 
-		menu->addChild(createBoolPtrMenuItem("14-bit CC 0-31 / 32-63", "", &module->lsbMode));
-	}
+        menu->addChild(createBoolPtrMenuItem("14-bit CC 0-31 / 32-63", "",
+                                             &module->lsbMode));
+    }
 };
-
 
 // Use legacy slug for compatibility
 Model* modelMIDICC_CV = createModel<MIDICC_CV, MIDICC_CVWidget>("MIDICCToCVInterface");

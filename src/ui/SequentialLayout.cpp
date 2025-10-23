@@ -18,7 +18,7 @@ void SequentialLayout::step() {
 	Widget::step();
 
     // Determine how much space is available horizontally for the children
-	available_width_ = X(box.size) - 2 * X(margin_);
+	available_width_ = X(getSize()) - 2 * X(margin_);
 
     // Go through all the children and add them to the current row. When a row
     // fills up create a new one.
@@ -26,12 +26,12 @@ void SequentialLayout::step() {
     Row row = Row();
     float current_row_width = 0.0f;
 
-    for (widget::Widget* child : children) {
+    for (widget::Widget* child : getChildren()) {
         // Skip invisible children
         if (!child->isVisible()) continue;
 
         // Determine minimum space needed for child
-        float space_needed_for_child = X(child->box.size);
+        float space_needed_for_child = X(child->getSize());
         if (row.size() > 0) {
             space_needed_for_child += X(min_spacing_);
         }
@@ -47,7 +47,7 @@ void SequentialLayout::step() {
             rows_.push_back(row);
             row = Row();
             row.push_back(child);
-            current_row_width = X(child->box.size);
+            current_row_width = X(child->getSize());
         }
     }
 
@@ -64,7 +64,7 @@ void SequentialLayout::step() {
 float SequentialLayout::rowWidth(const Row& row) {
     float width = 0.0f;
     for (widget::Widget* child : row) {
-        width += X(child->box.size);
+        width += X(child->getSize());
     }
     return width;
 }
@@ -72,7 +72,7 @@ float SequentialLayout::rowWidth(const Row& row) {
 float SequentialLayout::rowHeight(const Row& row) {
     float height = 0.0f;
     for (widget::Widget* child : row) {
-        height = std::max(height, Y(child->box.size));
+        height = std::max(height, Y(child->getSize()));
     }
     return height;
 }
@@ -80,14 +80,14 @@ float SequentialLayout::rowHeight(const Row& row) {
 float SequentialLayout::rowWidth(const Row& row, float spacing) {
     float width = 0.0f;
     for (widget::Widget* child : row) {
-        width += X(child->box.size) + spacing;
+        width += X(child->getSize()) + spacing;
     }
     return width - spacing; // Remove last spacing
 }
 
 void SequentialLayout::makeSecondRowEven() {
     // If nothing to do then done
-    if (!if_two_rows_make_even_ || rows_.size() != 2 || children.size() < 2)
+    if (!if_two_rows_make_even_ || rows_.size() != 2 || getChildren().size() < 2)
         return;
 
     Row& first_row = rows_[0];
@@ -141,20 +141,25 @@ void SequentialLayout::updateLayout() {
         float left_pos = left_starting_point + X(margin_);
         for (widget::Widget* child : row) {
             // Set horizontal position of child
-            setX(child->box.pos, left_pos);
+            auto child_pos = child->getPos();
+            setX(child_pos, left_pos);
+            child->setPos(child_pos);
 
             // Update left position for next child
-            left_pos += X(child->box.size) + spacing_to_use;
+            left_pos += X(child->getSize()) + spacing_to_use;
 
             // Set vertical position of child
-            setY(child->box.pos, y_position_of_child);
+            setY(child_pos, y_position_of_child);
+            child->setPos(child_pos);
         }
 
         // Done with this row so update y_position_of_child for next row
         y_position_of_child += rowHeight(row) + Y(min_spacing_);
 
         // Update the height of the container
-        setY(box.size, y_position_of_child - Y(min_spacing_)) ;
+        auto size = getSize();
+        setY(size, y_position_of_child - Y(min_spacing_));
+        setSize(size);
     }
 }
 

@@ -182,140 +182,353 @@ inline void complexMult(float ar, float ai, float br, float bi, float* cr, float
 // 2D vector and rectangle
 ////////////////////
 
-struct Rect;
+// Forward dedlaration
+class Rect;
 
 /** 2-dimensional vector of floats, representing a point on the plane for graphics.
 */
-struct Vec {
-	float x = 0.f;
-	float y = 0.f;
+class Vec {
+   private:
+    float x_ = 0.f;
+    float y_ = 0.f;
 
-	Vec() {}
-	Vec(float xy) : x(xy), y(xy) {}
-	Vec(float x, float y) : x(x), y(y) {}
+   public:
+    Vec() {}
+    Vec(float xy) : x_(xy), y_(xy) {}
+    Vec(float x, float y) : x_(x), y_(y) {}
 
-	float& operator[](int i) {
-		return (i == 0) ? x : y;
-	}
-	const float& operator[](int i) const {
-		return (i == 0) ? x : y;
-	}
-	/** Negates the vector.
-	Equivalent to a reflection across the `y = -x` line.
-	*/
-	Vec neg() const {
-		return Vec(-x, -y);
-	}
-	Vec plus(Vec b) const {
-		return Vec(x + b.x, y + b.y);
-	}
-	Vec minus(Vec b) const {
-		return Vec(x - b.x, y - b.y);
-	}
-	Vec mult(float s) const {
-		return Vec(x * s, y * s);
-	}
-	Vec mult(Vec b) const {
-		return Vec(x * b.x, y * b.y);
-	}
-	Vec div(float s) const {
-		return Vec(x / s, y / s);
-	}
-	Vec div(Vec b) const {
-		return Vec(x / b.x, y / b.y);
-	}
-	float dot(Vec b) const {
-		return x * b.x + y * b.y;
-	}
-	float arg() const {
-		return std::atan2(y, x);
-	}
-	float norm() const {
-		return std::hypot(x, y);
-	}
-	Vec normalize() const {
-		return div(norm());
-	}
-	float square() const {
-		return x * x + y * y;
-	}
-	float area() const {
-		return x * y;
-	}
-	/** Rotates counterclockwise in radians. */
-	Vec rotate(float angle) {
-		float sin = std::sin(angle);
-		float cos = std::cos(angle);
-		return Vec(x * cos - y * sin, x * sin + y * cos);
-	}
-	/** Swaps the coordinates.
-	Equivalent to a reflection across the `y = x` line.
-	*/
-	Vec flip() const {
-		return Vec(y, x);
-	}
-	Vec min(Vec b) const {
-		return Vec(std::fmin(x, b.x), std::fmin(y, b.y));
-	}
-	Vec max(Vec b) const {
-		return Vec(std::fmax(x, b.x), std::fmax(y, b.y));
-	}
-	Vec abs() const {
-		return Vec(std::fabs(x), std::fabs(y));
-	}
-	Vec round() const {
-		return Vec(std::round(x), std::round(y));
-	}
-	Vec floor() const {
-		return Vec(std::floor(x), std::floor(y));
-	}
-	Vec ceil() const {
-		return Vec(std::ceil(x), std::ceil(y));
-	}
-	bool equals(Vec b) const {
-		return x == b.x && y == b.y;
-	}
-	bool isZero() const {
-		return x == 0.f && y == 0.f;
-	}
-	bool isFinite() const {
-		return std::isfinite(x) && std::isfinite(y);
-	}
-	Vec clamp(Rect bound) const;
-	Vec clampSafe(Rect bound) const;
-	Vec crossfade(Vec b, float p) {
-		return this->plus(b.minus(*this).mult(p));
-	}
+    /** Sets x, y of the vector. */
+    void set(float x, float y) {
+        this->x_ = x;
+        this->y_ = y;
+    }
 
-	// Method aliases
-	bool isEqual(Vec b) const {
-		return equals(b);
-	}
+    /** For when vec is used as position. Simply returns x value as the x
+     * position. */
+    float getX() const {
+        return x_;
+    }
+
+    /** Sets the x value of the vector. */
+    void setX(float x) {
+        this->x_ = x;
+    }
+
+    /** For when vec is used as position. Simply returns y value as the y
+     * position. */
+    float getY() const {
+        return y_;
+    }
+
+    /** Sets the y value of the vector. */
+    void setY(float y) {
+        this->y_ = y;
+    }
+
+    /** For when vec is used as size. Simply returns x value as the width. */
+    float getWidth() const {
+        return x_;
+    }
+
+    /** Sets the width/x value of the vector. */
+    void setWidth(float width) {
+        this->x_ = width;
+    }
+
+    /** For when vec is used as size. Simply returns y value as the height. */
+    float getHeight() const {
+        return y_;
+    }
+
+    /** Sets the height/y value of the vector. */
+    void setHeight(float height) {
+        this->y_ = height;
+    }
+
+    float& operator[](int i) {
+        return (i == 0) ? x_ : y_;
+    }
+    const float& operator[](int i) const {
+        return (i == 0) ? x_ : y_;
+    }
+    /** Returns a copy of the vector, but negated.
+    Equivalent to a reflection across the `y = -x` line.
+    */
+    Vec neg() const {
+        return Vec(-x_, -y_);
+    }
+
+    /** Returns copy of this vector with b added */
+    Vec plus(Vec b) const {
+        return Vec(x_ + b.x_, y_ + b.y_);
+    }
+
+    /** Returns copy of this vector with b subtracted */
+    Vec minus(Vec b) const {
+        return Vec(x_ - b.x_, y_ - b.y_);
+    }
+
+    /** Returns copy of this vector scaled by s */
+    Vec mult(float s) const {
+        return Vec(x_ * s, y_ * s);
+    }
+
+    /** Returns copy of this vector multiplied component-wise by b,
+     * Vec(x * b.x, y * b.y)
+     */
+    Vec mult(Vec b) const {
+        return Vec(x_ * b.x_, y_ * b.y_);
+    }
+
+    /** Returns copy of this vector divided by s, Vec(x / s, y / s) */
+    Vec div(float s) const {
+        return Vec(x_ / s, y_ / s);
+    }
+
+    /** Returns copy of this vector divided component-wise by b,
+     * Vec(x / b.x, y / b.y)
+     */
+    Vec div(Vec b) const {
+        return Vec(x_ / b.x_, y_ / b.y_);
+    }
+
+    /** Returns the dot product of this vector and b, x * b.x + y * b.y*/
+    float dot(Vec b) const {
+        return x_ * b.x_ + y_ * b.y_;
+    }
+
+    /** Returns the angle of the vector in radians from the positive X axis */
+    float arg() const {
+        return std::atan2(y_, x_);
+    }
+
+    /** Returns the magnitude (length) of the vector */
+    float norm() const {
+        return std::hypot(x_, y_);
+    }
+
+    /** Returns copy of this vector, but normalized (length = 1) */
+    Vec normalize() const {
+        return div(norm());
+    }
+
+    /** Returns the squared magnitude of the vector, x * x + y * y */
+    float square() const {
+        return x_ * x_ + y_ * y_;
+    }
+
+    /** Returns the area represented by the vector, x * y */
+    float area() const {
+        return x_ * y_;
+    }
+
+    /** Rotates counterclockwise in radians. */
+    Vec rotate(float angle) {
+        float sin = std::sin(angle);
+        float cos = std::cos(angle);
+        return Vec(x_ * cos - y_ * sin, x_ * sin + y_ * cos);
+    }
+
+    /** Swaps the coordinates.
+    Equivalent to a reflection across the `y = x` line.
+    */
+    Vec flip() const {
+        return Vec(y_, x_);
+    }
+
+    /** Returns minimum of the x, y values of this vector and b. */
+    Vec min(Vec b) const {
+        return Vec(std::fmin(x_, b.x_), std::fmin(y_, b.y_));
+    }
+
+    /** Returns maximum of the x, y values of this vector and b. */
+    Vec max(Vec b) const {
+        return Vec(std::fmax(x_, b.x_), std::fmax(y_, b.y_));
+    }
+
+    /** Returns copy of this vector with each component replaced by its absolute
+     * value. */
+    Vec abs() const {
+        return Vec(std::fabs(x_), std::fabs(y_));
+    }
+
+    /** Returns copy of this vector with each component rounded to the nearest
+     * integer. */
+    Vec round() const {
+        return Vec(std::round(x_), std::round(y_));
+    }
+
+    /** Returns copy of this vector with each component rounded down to the
+     * nearest integer. */
+    Vec floor() const {
+        return Vec(std::floor(x_), std::floor(y_));
+    }
+
+    /** Returns copy of this vector with each component rounded up to the
+     * nearest integer. */
+    Vec ceil() const {
+        return Vec(std::ceil(x_), std::ceil(y_));
+    }
+
+    /** Returns whether this vector is equal to vector b. */
+    bool equals(Vec b) const {
+        return x_ == b.x_ && y_ == b.y_;
+    }
+
+    /** Alias for equals() */
+    bool isEqual(Vec b) const {
+        return equals(b);
+    }
+
+    /** Returns whether this vector is the zero vector (0, 0). */
+    bool isZero() const {
+        return x_ == 0.f && y_ == 0.f;
+    }
+
+    /** Returns whether both components are finite (not infinite or NaN). */
+    bool isFinite() const {
+        return std::isfinite(x_) && std::isfinite(y_);
+    }
+
+    /** Returns copy of this vector, clamped to the given bounds. */
+    Vec clamp(Rect bound) const;
+
+    /** Returns copy of this vector, safe clamped to the given bounds. */
+    Vec clampSafe(Rect bound) const;
+
+    /** Linearly interpolates between this vector and b, from p = 0 to p = 1. */
+    Vec crossfade(Vec b, float p) {
+        return this->plus(b.minus(*this).mult(p));
+    }
 };
-
 
 /** 2-dimensional rectangle for graphics.
 Mathematically, Rects include points on its left/top edge but *not* its right/bottom edge.
 The infinite Rect (equal to the entire plane) is defined using pos=-inf and size=inf.
 */
-struct Rect {
-	Vec pos;
-	Vec size;
+class Rect {
+   private:
+    Vec pos_;
+    Vec size_;
 
-	Rect() {}
-	Rect(Vec pos, Vec size) : pos(pos), size(size) {}
-	Rect(float posX, float posY, float sizeX, float sizeY) : pos(Vec(posX, posY)), size(Vec(sizeX, sizeY)) {}
-	/** Constructs a Rect from a top-left and bottom-right vector.
-	*/
+   public:
+    Rect() {}
+    Rect(Vec pos, Vec size) : pos_(pos), size_(size) {}
+    Rect(float posX, float posY, float sizeX, float sizeY)
+        : pos_(Vec(posX, posY)), size_(Vec(sizeX, sizeY)) {}
+
+    /** Sets the x, y position of the rectangle to values of the pos parameter
+     */
+    void setPos(const Vec& pos) {
+        this->pos_ = pos;
+    }
+
+    /** Sets the x, y position of the rectangle to values of the rect parameter */
+    void setPos(float x, float y) {
+        this->pos_ = Vec(x, y);
+    }
+
+    /** Sets x, y position of the rectangle to values of the rect parameter */
+    void setPos(const Rect& rect) {
+        this->pos_ = rect.pos_;
+    }
+
+    /** Returns the x, y position of the rectangle. */
+    Vec getPos() const {
+        return pos_;
+    }
+
+    /** Sets the x position of the rectangle. */
+    void setPosX(float x) {
+        pos_.setX(x);
+    }   
+
+    /** Sets the y position of the rectangle. */
+    void setPosY(float y) {
+        pos_.setY(y);
+    }
+
+    /** Returns the x position of the rectangle. */
+    float getPosX() const {
+        return pos_.getX();
+    }
+
+    /** Returns the y position of the rectangle. */
+    float getPosY() const {
+        return pos_.getY();
+    }
+
+    /** Returns the x position of the rectangle. */
+    float getX() const {
+        return getPosX();
+    }
+
+    /** Returns the y position of the rectangle. */
+    float getY() const {
+        return getPosY();
+    }
+
+    /** Sets the width & height size of the rectangle to values of the size parameter */
+    void setSize(const Vec& size) {
+        this->size_ = size;
+    }
+
+    /** Sets the width & height size of the rectangle to values of the rect parameter */
+    void setSize(float width, float height) {
+        this->size_ = Vec(width, height);
+    }
+
+    /** Sets the width & height size of the rectangle to values of the rect parameter */
+    void setSize(const Rect& rect) {
+        this->size_ = rect.size_;
+    }
+
+    /** Returns the width & height size of the rectangle. */
+    Vec getSize() const {
+        return size_;
+    }
+
+    /** Returns the width size of the rectangle. */
+    float getSizeX() const {
+        return size_.getWidth();
+    }
+
+    /** Returns the height size of the rectangle. */
+    float getSizeY() const {
+        return size_.getHeight();
+    }
+
+    /** Returns the width size of the rectangle. */
+    float getWidth() const {
+        return size_.getWidth();
+    }
+
+    /** Sets the width size of the rectangle. */
+    void setWidth(float width) {
+        size_.setWidth(width);
+    }
+
+    /** Returns the height size of the rectangle. */
+    float getHeight() const {
+        return size_.getHeight();
+    }
+
+    /** Sets the height size of the rectangle. */
+    void setHeight(float height) {
+        size_.setHeight(height);
+    }
+
+	/** Constructs a Rect from a top-left and bottom-right vector. */
 	static Rect fromMinMax(Vec a, Vec b) {
 		return Rect(a, b.minus(a));
 	}
-	/** Constructs a Rect from any two opposite corners.
-	*/
+
+	/** Constructs a Rect from any two opposite corners. */
 	static Rect fromCorners(Vec a, Vec b) {
 		return fromMinMax(a.min(b), a.max(b));
 	}
-	/** Returns the infinite Rect. */
+
+	/** Returns Rect where pos=-inf and size=inf */
 	static Rect inf() {
 		return Rect(Vec(-INFINITY, -INFINITY), Vec(INFINITY, INFINITY));
 	}
@@ -324,127 +537,187 @@ struct Rect {
 	Correctly handles infinite Rects.
 	*/
 	bool contains(Vec v) const {
-		return (pos.x <= v.x) && (size.x == INFINITY || v.x < pos.x + size.x)
-		    && (pos.y <= v.y) && (size.y == INFINITY || v.y < pos.y + size.y);
+		return (pos_.getX() <= v.getX()) && (size_.getX() == INFINITY || v.getX() < pos_.getX() + size_.getX())
+		    && (pos_.getY() <= v.getY()) && (size_.getY() == INFINITY || v.getY() < pos_.getY() + size_.getY());
 	}
+
 	/** Returns whether this Rect contains (is a superset of) a Rect.
 	Correctly handles infinite Rects.
 	*/
 	bool contains(Rect r) const {
-		return (pos.x <= r.pos.x) && (r.pos.x - size.x <= pos.x - r.size.x)
-		    && (pos.y <= r.pos.y) && (r.pos.y - size.y <= pos.y - r.size.y);
+		return (pos_.getX() <= r.pos_.getX()) && (r.pos_.getX() - size_.getX() <= pos_.getX() - r.size_.getX())
+		    && (pos_.getY() <= r.pos_.getY()) && (r.pos_.getY() - size_.getY() <= pos_.getY() - r.size_.getY());
 	}
-	/** Returns whether this Rect overlaps with another Rect.
-	Correctly handles infinite Rects.
-	*/
-	bool intersects(Rect r) const {
-		return (r.size.x == INFINITY || pos.x < r.pos.x + r.size.x) && (size.x == INFINITY || r.pos.x < pos.x + size.x)
-		    && (r.size.y == INFINITY || pos.y < r.pos.y + r.size.y) && (size.y == INFINITY || r.pos.y < pos.y + size.y);
-	}
+
+    /** Returns whether this Rect overlaps with another Rect.
+    Correctly handles infinite Rects.
+    */
+    bool intersects(Rect r) const {
+        return (r.getWidth() == INFINITY ||
+                pos_.getX() < r.pos_.getX() + r.getWidth()) &&
+                (size_.getWidth() == INFINITY ||
+                r.pos_.getX() < pos_.getX() + size_.getWidth()) &&
+                (r.getHeight() == INFINITY ||
+                pos_.getY() < r.pos_.getY() + r.getHeight()) &&
+                (size_.getHeight() == INFINITY ||
+                r.pos_.getY() < pos_.getY() + size_.getHeight());
+    }
+
+    /** Returns whether this Rect is equal to another Rect. */
 	bool equals(Rect r) const {
-		return pos.equals(r.pos) && size.equals(r.size);
+		return pos_.equals(r.pos_) && size_.equals(r.size_);
 	}
+
+    /** Returns the x position of the rectangle, pos.x. */
 	float getLeft() const {
-		return pos.x;
+		return pos_.getX();
 	}
-	float getRight() const {
-		return (size.x == INFINITY) ? INFINITY : (pos.x + size.x);
-	}
-	float getTop() const {
-		return pos.y;
-	}
-	float getBottom() const {
-		return (size.y == INFINITY) ? INFINITY : (pos.y + size.y);
-	}
-	float getWidth() const {
-		return size.x;
-	}
-	float getHeight() const {
-		return size.y;
-	}
-	/** Returns the center point of the rectangle.
+
+    /** Returns the position of the right side of the rectangle, pos.x +
+     * size.x. */
+    float getRight() const {
+        return (size_.getWidth() == INFINITY)
+                    ? INFINITY
+                    : (pos_.getX() + size_.getWidth());
+    }
+
+    /** Returns the position of the top side of the rectangle, pos.y. */
+    float getTop() const {
+        return pos_.getY();
+    }
+
+    /** Returns the position of the bottom side of the rectangle, pos.y +
+     * size.y. */
+    float getBottom() const {
+        return (size_.getHeight() == INFINITY)
+                    ? INFINITY
+                    : (pos_.getY() + size_.getHeight());
+    }
+
+    /** Returns the center point of the rectangle.
 	Returns a NaN coordinate if pos=-inf and size=inf.
 	*/
 	Vec getCenter() const {
-		return pos.plus(size.mult(0.5f));
+		return pos_.plus(size_.mult(0.5f));
 	}
+
+    /** Returns the x, y position of the top-left corner of the rectangle. */
 	Vec getTopLeft() const {
-		return pos;
+		return pos_;
 	}
+
+    /** Returns the x, y position of the top-right corner of the rectangle. */
 	Vec getTopRight() const {
 		return Vec(getRight(), getTop());
 	}
+
+    /** Returns the x, y position of the bottom-left corner of the rectangle. */
 	Vec getBottomLeft() const {
 		return Vec(getLeft(), getBottom());
 	}
+
+    /** Returns the x, y position of the bottom-right corner of the rectangle. */
 	Vec getBottomRight() const {
 		return Vec(getRight(), getBottom());
-	}
-	/** Clamps the edges of the rectangle to fit within a bound. */
-	Rect clamp(Rect bound) const {
-		Rect r;
-		r.pos.x = math::clampSafe(pos.x, bound.pos.x, bound.pos.x + bound.size.x);
-		r.pos.y = math::clampSafe(pos.y, bound.pos.y, bound.pos.y + bound.size.y);
-		r.size.x = math::clamp(pos.x + size.x, bound.pos.x, bound.pos.x + bound.size.x) - r.pos.x;
-		r.size.y = math::clamp(pos.y + size.y, bound.pos.y, bound.pos.y + bound.size.y) - r.pos.y;
-		return r;
-	}
-	/** Nudges the position to fix inside a bounding box. */
-	Rect nudge(Rect bound) const {
-		Rect r;
-		r.size = size;
-		r.pos.x = math::clampSafe(pos.x, bound.pos.x, bound.pos.x + bound.size.x - size.x);
-		r.pos.y = math::clampSafe(pos.y, bound.pos.y, bound.pos.y + bound.size.y - size.y);
-		return r;
-	}
-	/** Returns the bounding box of the union of `this` and `b`. */
-	Rect expand(Rect b) const {
-		Rect r;
-		r.pos.x = std::fmin(pos.x, b.pos.x);
-		r.pos.y = std::fmin(pos.y, b.pos.y);
-		r.size.x = std::fmax(pos.x + size.x, b.pos.x + b.size.x) - r.pos.x;
-		r.size.y = std::fmax(pos.y + size.y, b.pos.y + b.size.y) - r.pos.y;
-		return r;
-	}
-	/** Returns the intersection of `this` and `b`. */
-	Rect intersect(Rect b) const {
-		Rect r;
-		r.pos.x = std::fmax(pos.x, b.pos.x);
-		r.pos.y = std::fmax(pos.y, b.pos.y);
-		r.size.x = std::fmin(pos.x + size.x, b.pos.x + b.size.x) - r.pos.x;
-		r.size.y = std::fmin(pos.y + size.y, b.pos.y + b.size.y) - r.pos.y;
-		return r;
-	}
-	/** Returns a Rect with its position set to zero. */
+    }
+
+    /** Clamps the edges of the rectangle to fit within a bound. */
+    Rect clamp(Rect bound) const {
+        Rect r;
+        r.setPos(math::clampSafe(getX(), bound.getX(),
+                                 bound.getX() + bound.getWidth()),
+                 math::clampSafe(getY(), bound.getY(),
+                                 bound.getY() + bound.getHeight()));
+
+        r.setSize(math::clamp(getX() + getWidth(), bound.getX(),
+                              bound.getX() + bound.getWidth()) -
+                      r.getX(),
+                  math::clamp(getY() + size_.getHeight(), bound.getY(),
+                              bound.getY() + bound.getHeight()) -
+                      r.getY());
+        return r;
+    }
+
+    /** Updates the x, y position so rectangle fits inside the bound box
+     * parameter. */
+    Rect nudge(Rect bound) const {
+        Rect r;
+        r.size_ = size_;
+        r.setPos(
+            math::clampSafe(pos_.getX(), bound.getX(),
+                            bound.getX() + bound.getWidth() - size_.getWidth()),
+            math::clampSafe(
+                pos_.getY(), bound.getY(),
+                bound.getY() + bound.getHeight() - size_.getHeight()));
+        return r;
+    }
+
+    /** Returns the bounding box of the union of `this` rectangle and the `b`
+     * rectangle. */
+    Rect expand(Rect b) const {
+        Rect r;
+        r.setPos(std::fmin(pos_.getX(), b.pos_.getX()),
+                 std::fmin(pos_.getY(), b.pos_.getY()));
+        r.setSize(std::fmax(pos_.getX() + size_.getWidth(), b.pos_.getX() + b.size_.getWidth()) - r.getX(),
+                  std::fmax(pos_.getY() + size_.getHeight(), b.pos_.getY() + b.size_.getHeight()) - r.getY());
+        return r;
+    }
+
+    /** Returns the intersection of `this` rectangle and the `b` rectangle. */
+    Rect intersect(Rect b) const {
+        Rect r;
+        r.setPos(std::fmax(pos_.getX(), b.pos_.getX()),
+                 std::fmax(pos_.getY(), b.pos_.getY()));
+        r.setSize(std::fmin(pos_.getX() + size_.getWidth(),
+                            b.pos_.getX() + b.size_.getWidth()) -
+                      r.getX(),
+                  std::fmin(pos_.getY() + size_.getHeight(),
+                            b.pos_.getY() + b.size_.getHeight()) -
+                      r.getY());
+        return r;
+    }
+
+    /** Returns this Rect but with its position set to zero. */
 	Rect zeroPos() const {
-		return Rect(Vec(), size);
+		return Rect(Vec(), size_);
 	}
-	/** Expands each corner. */
-	Rect grow(Vec delta) const {
-		Rect r;
-		r.pos = pos.minus(delta);
-		r.size = size.plus(delta.mult(2.f));
-		return r;
+
+    /** Returns copy of this rectangle, expands=ed each corner by the delta
+     * parameter. */
+    Rect grow(Vec delta) const {
+        Rect r;
+        r.pos_ = pos_.minus(delta);
+        r.size_ = size_.plus(delta.mult(2.f));
+        return r;
+    }
+
+    /** Returns copy of this rectangle, contracted each corner by the delta
+     * parameter. */
+    Rect shrink(Vec delta) const {
+        Rect r;
+        r.pos_ = pos_.plus(delta);
+        r.size_ = size_.minus(delta.mult(2.f));
+        return r;
 	}
-	/** Contracts each corner. */
-	Rect shrink(Vec delta) const {
-		Rect r;
-		r.pos = pos.plus(delta);
-		r.size = size.minus(delta.mult(2.f));
-		return r;
-	}
+    
 	/** Returns `pos + size * p` */
 	Vec interpolate(Vec p) {
-		return pos.plus(size.mult(p));
+		return pos_.plus(size_.mult(p));
 	}
 
 	// Method aliases
+
+    /** Alias for contains() */
 	bool isContaining(Vec v) const {
 		return contains(v);
 	}
+
+    /** Alias for intersects() */
 	bool isIntersecting(Rect r) const {
 		return intersects(r);
 	}
+    
+    /** Alias for equals() */
 	bool isEqual(Rect r) const {
 		return equals(r);
 	}
@@ -453,15 +726,15 @@ struct Rect {
 
 inline Vec Vec::clamp(Rect bound) const {
 	return Vec(
-		math::clamp(x, bound.pos.x, bound.pos.x + bound.size.x),
-		math::clamp(y, bound.pos.y, bound.pos.y + bound.size.y)
+		math::clamp(x_, bound.getPosX(), bound.getPosX() + bound.getSizeX()),
+		math::clamp(y_, bound.getPosY(), bound.getPosY() + bound.getSizeY())
 	);
 }
 
 inline Vec Vec::clampSafe(Rect bound) const {
 	return Vec(
-		math::clampSafe(x, bound.pos.x, bound.pos.x + bound.size.x),
-		math::clampSafe(y, bound.pos.y, bound.pos.y + bound.size.y)
+		math::clampSafe(x_, bound.getPosX(), bound.getPosX() + bound.getSizeX()),
+		math::clampSafe(y_, bound.getPosY(), bound.getPosY() + bound.getSizeY())
 	);
 }
 
@@ -538,8 +811,8 @@ Or passing the values to a C function.
 
 	nvgRect(vg, RECT_ARGS(r));
 */
-#define VEC_ARGS(v) (v).x, (v).y
-#define RECT_ARGS(r) (r).pos.x, (r).pos.y, (r).size.x, (r).size.y
+#define VEC_ARGS(v) (v).getX(), (v).getY()
+#define RECT_ARGS(r) (r).getX(), (r).getY(), (r).getWidth(), (r).getHeight()
 
 
 } // namespace math

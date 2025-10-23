@@ -8,6 +8,7 @@
 #include <engine/Engine.hpp>
 #include <plugin/Plugin.hpp>
 #include <app/SvgPanel.hpp>
+#include <ui/liminal.hpp>
 #include <ui/MenuSeparator.hpp>
 #include <system.hpp>
 #include <asset.hpp>
@@ -41,14 +42,14 @@ struct ModuleWidget::Internal {
 
 
 ModuleWidget::ModuleWidget() {
-	internal = new Internal;
-	box.size = math::Vec(0, RACK_GRID_HEIGHT);
+	internal_ = new Internal;
+	setSize(math::Vec(0, RACK_GRID_HEIGHT));
 }
 
 ModuleWidget::~ModuleWidget() {
 	clearChildren();
 	setModule(NULL);
-	delete internal;
+	delete internal_;
 }
 
 plugin::Model* ModuleWidget::getModel() {
@@ -66,7 +67,7 @@ engine::Module* ModuleWidget::getModule() {
 
 void ModuleWidget::setModule(engine::Module* module) {
 	if (this->module) {
-		APP->engine->removeModule(this->module);
+		getEngine()->removeModule(this->module);
 		delete this->module;
 		this->module = NULL;
 	}
@@ -74,24 +75,24 @@ void ModuleWidget::setModule(engine::Module* module) {
 }
 
 widget::Widget* ModuleWidget::getPanel() {
-	return internal->panel;
+	return internal_->panel;
 }
 
 void ModuleWidget::setPanel(widget::Widget* panel) {
 	// Remove existing panel
-	if (internal->panel) {
-		removeChild(internal->panel);
-		delete internal->panel;
-		internal->panel = NULL;
+	if (internal_->panel) {
+		removeChild(internal_->panel);
+		delete internal_->panel;
+		internal_->panel = NULL;
 	}
 
 	if (panel) {
 		addChildBottom(panel);
-		internal->panel = panel;
-		box.size.x = std::round(panel->box.size.x / RACK_GRID_WIDTH) * RACK_GRID_WIDTH;
+		internal_->panel = panel;
+		setWidth(std::round(panel->getWidth() / RACK_GRID_WIDTH) * RACK_GRID_WIDTH);
 		// If width is zero, set it to 12HP for sanity
-		if (box.size.x == 0.0)
-			box.size.x = 12 * RACK_GRID_WIDTH;
+		if (getWidth() == 0.0)
+			setWidth(12 * RACK_GRID_WIDTH);
 	}
 }
 
@@ -132,7 +133,7 @@ T* getFirstDescendantOfTypeWithCondition(widget::Widget* w, F f) {
 	if (t && f(t))
 		return t;
 
-	for (widget::Widget* child : w->children) {
+	for (widget::Widget* child : w->getChildren()) {
 		T* foundT = getFirstDescendantOfTypeWithCondition<T>(child, f);
 		if (foundT)
 			return foundT;
@@ -164,7 +165,7 @@ void doIfTypeRecursive(widget::Widget* w, F f) {
 	if (t)
 		f(t);
 
-	for (widget::Widget* child : w->children) {
+	for (widget::Widget* child : w->getChildren()) {
 		doIfTypeRecursive<T>(child, f);
 	}
 }
@@ -204,87 +205,88 @@ std::vector<PortWidget*> ModuleWidget::getOutputs() {
 }
 
 void ModuleWidget::draw(const DrawArgs& args) {
-	nvgScissor(args.vg, RECT_ARGS(args.clipBox));
+    nvgScissor(args.vg, RECT_ARGS(args.clipBox));
 
-	if (module && module->isBypassed()) {
-		nvgAlpha(args.vg, 0.33);
-	}
+    if (module && module->isBypassed()) {
+        nvgAlpha(args.vg, 0.33);
+    }
 
-	Widget::draw(args);
+    Widget::draw(args);
 
-	// Meter
-	if (module && settings::cpuMeter) {
-		float sampleRate = APP->engine->getSampleRate();
-		const float* meterBuffer = module->meterBuffer();
-		int meterLength = module->meterLength();
-		int meterIndex = module->meterIndex();
+    // Meter
+    if (module && settings::cpuMeter) {
+        float sampleRate = getEngine()->getSampleRate();
+        const float* meterBuffer = module->meterBuffer();
+        int meterLength = module->meterLength();
+        int meterIndex = module->meterIndex();
 
-		// // Text background
-		// nvgBeginPath(args.vg);
-		// nvgRect(args.vg, 0.0, box.size.y - infoHeight, box.size.x, infoHeight);
-		// nvgFillColor(args.vg, nvgRGBAf(0, 0, 0, 0.75));
-		// nvgFill(args.vg);
+        // // Text background
+        // nvgBeginPath(args.vg);
+        // nvgRect(args.vg, 0.0, box.size.y - infoHeight, box.size.x,
+        // infoHeight); nvgFillColor(args.vg, nvgRGBAf(0, 0, 0, 0.75));
+        // nvgFill(args.vg);
 
-		// Draw time plot
-		const float plotHeight = box.size.y - rack::settings::bndWidgetHeight;
-		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, 0.0, plotHeight);
-		math::Vec p1;
-		for (int i = 0; i < meterLength; i++) {
-			int index = math::eucMod(meterIndex + i + 1, meterLength);
-			float meter = math::clamp(meterBuffer[index] * sampleRate, 0.f, 1.f);
-			meter = std::max(0.f, meter);
-			math::Vec p;
-			p.x = (float) i / (meterLength - 1) * box.size.x;
-			p.y = (1.f - meter) * plotHeight;
-			if (i == 0) {
-				nvgLineTo(args.vg, VEC_ARGS(p));
-			}
-			else {
-				math::Vec p2 = p;
-				p2.x -= 0.5f / (meterLength - 1) * box.size.x;
-				nvgBezierTo(args.vg, VEC_ARGS(p1), VEC_ARGS(p2), VEC_ARGS(p));
-			}
-			p1 = p;
-			p1.x += 0.5f / (meterLength - 1) * box.size.x;
-		}
-		nvgLineTo(args.vg, box.size.x, plotHeight);
-		nvgClosePath(args.vg);
-		NVGcolor color = componentlibrary::SCHEME_ORANGE;
-		nvgFillColor(args.vg, color::alpha(color, 0.75));
-		nvgFill(args.vg);
-		nvgStrokeWidth(args.vg, 2.0);
-		nvgStrokeColor(args.vg, color);
-		nvgStroke(args.vg);
+        // Draw time plot
+        const float plotHeight = getHeight() - rack::settings::bndWidgetHeight;
+        nvgBeginPath(args.vg);
+        nvgMoveTo(args.vg, 0.0, plotHeight);
+        math::Vec p1;
+        for (int i = 0; i < meterLength; i++) {
+            int index = math::eucMod(meterIndex + i + 1, meterLength);
+            float meter =
+                math::clamp(meterBuffer[index] * sampleRate, 0.f, 1.f);
+            meter = std::max(0.f, meter);
+            math::Vec p;
+            p.set((float)i / (meterLength - 1) * getWidth(),
+                  (1.f - meter) * plotHeight);
+            if (i == 0) {
+                nvgLineTo(args.vg, VEC_ARGS(p));
+            } else {
+                math::Vec p2 = p;
+                p2.setX(p2.getX() - 0.5f / (meterLength - 1) * getWidth());
+                nvgBezierTo(args.vg, VEC_ARGS(p1), VEC_ARGS(p2), VEC_ARGS(p));
+            }
+            p1 = p;
+            p1.setX(p1.getX() + 0.5f / (meterLength - 1) * getWidth());
+        }
+        nvgLineTo(args.vg, getWidth(), plotHeight);
+        nvgClosePath(args.vg);
+        NVGcolor color = componentlibrary::SCHEME_ORANGE;
+        nvgFillColor(args.vg, color::alpha(color, 0.75));
+        nvgFill(args.vg);
+        nvgStrokeWidth(args.vg, 2.0);
+        nvgStrokeColor(args.vg, color);
+        nvgStroke(args.vg);
 
-		// Text background
-		bndMenuBackground(args.vg, 0.0, plotHeight, box.size.x, rack::settings::bndWidgetHeight, BND_CORNER_ALL);
+        // Text background
+        bndMenuBackground(args.vg, 0.0, plotHeight, getWidth(),
+                          rack::settings::bndWidgetHeight, BND_CORNER_ALL);
 
-		// Text
-		float percent = meterBuffer[meterIndex] * sampleRate * 100.f;
-		// float microseconds = meterBuffer[meterIndex] * 1e6f;
-		std::string meterText = string::f("%.1f", percent);
-		// Only append "%" if wider than 2 HP
-		if (box.getWidth() > RACK_GRID_WIDTH * 2)
-			meterText += "%";
-		math::Vec pt;
-		pt.x = box.size.x - bndLabelWidth(args.vg, -1, meterText.c_str()) + 3;
-		pt.y = plotHeight + 0.5;
-		bndMenuLabel(args.vg, VEC_ARGS(pt), INFINITY, rack::settings::bndWidgetHeight, -1, meterText.c_str());
-	}
+        // Text
+        float percent = meterBuffer[meterIndex] * sampleRate * 100.f;
+        // float microseconds = meterBuffer[meterIndex] * 1e6f;
+        std::string meterText = string::f("%.1f", percent);
+        // Only append "%" if wider than 2 HP
+        if (getWidth() > RACK_GRID_WIDTH * 2) meterText += "%";
+        math::Vec pt(
+            getWidth() - bndLabelWidth(args.vg, -1, meterText.c_str()) + 3,
+            plotHeight + 0.5);
+        bndMenuLabel(args.vg, VEC_ARGS(pt), INFINITY,
+                     rack::settings::bndWidgetHeight, -1, meterText.c_str());
+    }
 
-	// Selection
-	if (APP->scene->rack->isSelected(this)) {
-		nvgBeginPath(args.vg);
-		nvgRect(args.vg, 0.0, 0.0, VEC_ARGS(box.size));
-		nvgFillColor(args.vg, nvgRGBAf(1, 0, 0, 0.25));
-		nvgFill(args.vg);
-		nvgStrokeWidth(args.vg, 2.0);
-		nvgStrokeColor(args.vg, nvgRGBAf(1, 0, 0, 0.5));
-		nvgStroke(args.vg);
-	}
+    // Selection
+    if (getRack()->isSelected(this)) {
+        nvgBeginPath(args.vg);
+        nvgRect(args.vg, 0.0, 0.0, VEC_ARGS(getSize()));
+        nvgFillColor(args.vg, nvgRGBAf(1, 0, 0, 0.25));
+        nvgFill(args.vg);
+        nvgStrokeWidth(args.vg, 2.0);
+        nvgStrokeColor(args.vg, nvgRGBAf(1, 0, 0, 0.5));
+        nvgStroke(args.vg);
+    }
 
-	nvgResetScissor(args.vg);
+    nvgResetScissor(args.vg);
 }
 
 void ModuleWidget::drawLayer(const DrawArgs& args, int layer) {
@@ -292,7 +294,7 @@ void ModuleWidget::drawLayer(const DrawArgs& args, int layer) {
 		nvgBeginPath(args.vg);
 		float r = 20; // Blur radius
 		float c = 20; // Corner radius
-		math::Rect shadowBox = box.zeroPos().grow(math::Vec(10, -30));
+		math::Rect shadowBox = getBox().zeroPos().grow(math::Vec(10, -30));
 		math::Rect shadowOutsideBox = shadowBox.grow(math::Vec(r, r));
 		nvgRect(args.vg, RECT_ARGS(shadowOutsideBox));
 		NVGcolor shadowColor = nvgRGBAf(0, 0, 0, 0.2);
@@ -306,7 +308,7 @@ void ModuleWidget::drawLayer(const DrawArgs& args, int layer) {
 }
 
 void ModuleWidget::onHover(const HoverEvent& e) {
-	if (APP->scene->rack->isSelected(this)) {
+	if (getRack()->isSelected(this)) {
 		e.consume(this);
 	}
 
@@ -361,7 +363,7 @@ void ModuleWidget::onHoverKey(const HoverKeyEvent& e) {
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_F4, RACK_MOD_CTRL)) {
-			APP->scene->rackScroll->zoomToBound(getBox());
+			getScene()->getRackScroll()->zoomToBound(getBox());
 			e.consume(this);
 		}
 	}
@@ -372,14 +374,14 @@ void ModuleWidget::onHoverKey(const HoverKeyEvent& e) {
 }
 
 void ModuleWidget::onButton(const ButtonEvent& e) {
-	bool selected = APP->scene->rack->isSelected(this);
+	bool selected = getRack()->isSelected(this);
 
 	if (selected) {
 		if (e.button == GLFW_MOUSE_BUTTON_RIGHT) {
 			if (e.action == GLFW_PRESS) {
 				// Open selection context menu on right-click
 				ui::Menu* menu = createMenu();
-				APP->scene->rack->appendSelectionContextMenu(menu);
+				getRack()->appendSelectionContextMenu(menu);
 			}
 			e.consume(this);
 		}
@@ -388,7 +390,7 @@ void ModuleWidget::onButton(const ButtonEvent& e) {
 			if (e.action == GLFW_PRESS) {
 				// Toggle selection on Shift-click
 				if ((e.mods & RACK_MOD_MASK) == GLFW_MOD_SHIFT) {
-					APP->scene->rack->select(this, false);
+					getRack()->select(this, false);
 					e.consume(NULL);
 					return;
 				}
@@ -399,7 +401,7 @@ void ModuleWidget::onButton(const ButtonEvent& e) {
 					return;
 				}
 
-				internal->dragOffset = e.pos;
+				internal_->dragOffset = e.pos;
 			}
 
 			e.consume(this);
@@ -418,7 +420,7 @@ void ModuleWidget::onButton(const ButtonEvent& e) {
 		if (e.action == GLFW_PRESS) {
 			// Toggle selection on Shift-click
 			if ((e.mods & RACK_MOD_MASK) == GLFW_MOD_SHIFT) {
-				APP->scene->rack->select(this, true);
+				getRack()->select(this, true);
 				e.consume(NULL);
 				return;
 			}
@@ -429,7 +431,7 @@ void ModuleWidget::onButton(const ButtonEvent& e) {
 				return;
 			}
 
-			internal->dragOffset = e.pos;
+			internal_->dragOffset = e.pos;
 		}
 		e.consume(this);
 	}
@@ -444,26 +446,26 @@ void ModuleWidget::onButton(const ButtonEvent& e) {
 void ModuleWidget::onDragStart(const DragStartEvent& e) {
 	if (e.button == GLFW_MOUSE_BUTTON_LEFT) {
 		// HACK Disable FramebufferWidget redrawing subpixels while dragging
-		APP->window->fbDirtyOnSubpixelChange() = false;
+		getWindow()->fbDirtyOnSubpixelChange() = false;
 
 		// Clear dragRack so dragging in not enabled until mouse is moved a bit.
-		internal->dragRackPos = math::Vec(NAN, NAN);
+		internal_->dragRackPos = math::Vec(NAN, NAN);
 
 		// Prepare initial position of modules for history.
-		APP->scene->rack->updateModuleOldPositions();
+		getRack()->updateModuleOldPositions();
 	}
 }
 
 void ModuleWidget::onDragEnd(const DragEndEvent& e) {
 	if (e.button == GLFW_MOUSE_BUTTON_LEFT) {
-		APP->window->fbDirtyOnSubpixelChange() = true;
+		getWindow()->fbDirtyOnSubpixelChange() = true;
 
 		// The next time the module is dragged, it should always move immediately
-		internal->dragEnabled = true;
+		internal_->dragEnabled = true;
 
-		history::ComplexAction* h = APP->scene->rack->getModuleDragAction();
+		history::ComplexAction* h = getRack()->getModuleDragAction();
 		if (!h->isEmpty())
-			APP->history->push(h);
+			getHistory()->push(h);
 		else
 			delete h;
 	}
@@ -471,39 +473,38 @@ void ModuleWidget::onDragEnd(const DragEndEvent& e) {
 
 void ModuleWidget::onDragMove(const DragMoveEvent& e) {
 	if (e.button == GLFW_MOUSE_BUTTON_LEFT) {
-		math::Vec mousePos = APP->scene->rack->getMousePos();
+		math::Vec mousePos = getRack()->getMousePos();
 
-		if (!internal->dragEnabled) {
+		if (!internal_->dragEnabled) {
 			// Set dragRackPos on the first time after dragging
-			if (!internal->dragRackPos.isFinite())
-				internal->dragRackPos = mousePos;
+			if (!internal_->dragRackPos.isFinite())
+				internal_->dragRackPos = mousePos;
 			// Check if the mouse has moved enough to start dragging the module.
 			const float minDist = RACK_GRID_WIDTH;
-			if (internal->dragRackPos.minus(mousePos).square() >= std::pow(minDist, 2))
-				internal->dragEnabled = true;
+			if (internal_->dragRackPos.minus(mousePos).square() >= std::pow(minDist, 2))
+				internal_->dragEnabled = true;
 		}
 
 		// Move module
-		if (internal->dragEnabled) {
+		if (internal_->dragEnabled) {
 			// Round y coordinate to nearest rack height
 			math::Vec pos = mousePos;
-			pos.x -= internal->dragOffset.x;
-			pos.y -= RACK_GRID_HEIGHT / 2;
+			pos.set(pos.getX() - internal_->dragOffset.getX(), pos.getY() - RACK_GRID_HEIGHT / 2);
 
-			if (APP->scene->rack->isSelected(this)) {
+			if (getRack()->isSelected(this)) {
 				pos = (pos / RACK_GRID_SIZE).round() * RACK_GRID_SIZE;
-				math::Vec delta = pos.minus(box.pos);
-				APP->scene->rack->setSelectionPosNearest(delta);
+				math::Vec delta = pos.minus(getPos());
+				getRack()->setSelectionPosNearest(delta);
 			}
 			else {
 				if (settings::squeezeModules) {
-					APP->scene->rack->setModulePosSqueeze(this, pos);
+					getRack()->setModulePosSqueeze(this, pos);
 				}
 				else {
-					if ((APP->window->getMods() & RACK_MOD_MASK) == RACK_MOD_CTRL)
-						APP->scene->rack->setModulePosForce(this, pos);
+					if ((getWindow()->getMods() & RACK_MOD_MASK) == RACK_MOD_CTRL)
+						getRack()->setModulePosForce(this, pos);
 					else
-						APP->scene->rack->setModulePosNearest(this, pos);
+						getRack()->setModulePosNearest(this, pos);
 				}
 			}
 		}
@@ -511,7 +512,7 @@ void ModuleWidget::onDragMove(const DragMoveEvent& e) {
 }
 
 void ModuleWidget::onDragHover(const DragHoverEvent& e) {
-	if (APP->scene->rack->isSelected(this)) {
+	if (getRack()->isSelected(this)) {
 		e.consume(this);
 	}
 
@@ -519,12 +520,12 @@ void ModuleWidget::onDragHover(const DragHoverEvent& e) {
 }
 
 json_t* ModuleWidget::toJson() {
-	json_t* moduleJ = APP->engine->moduleToJson(module);
+	json_t* moduleJ = getEngine()->moduleToJson(module);
 	return moduleJ;
 }
 
 void ModuleWidget::fromJson(json_t* moduleJ) {
-	APP->engine->moduleFromJson(module, moduleJ);
+	getEngine()->moduleFromJson(module, moduleJ);
 }
 
 bool ModuleWidget::pasteJsonAction(json_t* moduleJ) {
@@ -549,7 +550,7 @@ bool ModuleWidget::pasteJsonAction(json_t* moduleJ) {
 	h->oldModuleJ = oldModuleJ;
 	json_incref(moduleJ);
 	h->newModuleJ = moduleJ;
-	APP->history->push(h);
+	getHistory()->push(h);
 	return true;
 }
 
@@ -560,11 +561,11 @@ void ModuleWidget::copyClipboard() {
 	DEFER({json_decref(moduleJ);});
 	char* json = json_dumps(moduleJ, JSON_INDENT(2));
 	DEFER({std::free(json);});
-	glfwSetClipboardString(APP->window->win, json);
+	glfwSetClipboardString(getWindow()->win, json);
 }
 
 bool ModuleWidget::pasteClipboardAction() {
-	const char* json = glfwGetClipboardString(APP->window->win);
+	const char* json = glfwGetClipboardString(getWindow()->win);
 	if (!json) {
 		WARN("Could not get text from clipboard.");
 		return false;
@@ -616,7 +617,7 @@ void ModuleWidget::loadAction(std::string filename) {
 
 	// TODO We can use `moduleJ` here instead to save a toJson() call.
 	h->newModuleJ = toJson();
-	APP->history->push(h);
+	getHistory()->push(h);
 }
 
 void ModuleWidget::loadTemplate() {
@@ -752,7 +753,7 @@ void ModuleWidget::saveDialog() {
 
 void ModuleWidget::disconnect() {
 	for (PortWidget* pw : getPorts()) {
-		APP->scene->rack->clearCablesOnPort(pw);
+		getRack()->clearCablesOnPort(pw);
 	}
 }
 
@@ -765,10 +766,10 @@ void ModuleWidget::resetAction() {
 	h->moduleId = module->id;
 	h->oldModuleJ = toJson();
 
-	APP->engine->resetModule(module);
+	getEngine()->resetModule(module);
 
 	h->newModuleJ = toJson();
-	APP->history->push(h);
+	getHistory()->push(h);
 }
 
 void ModuleWidget::randomizeAction() {
@@ -780,21 +781,21 @@ void ModuleWidget::randomizeAction() {
 	h->moduleId = module->id;
 	h->oldModuleJ = toJson();
 
-	APP->engine->randomizeModule(module);
+	getEngine()->randomizeModule(module);
 
 	h->newModuleJ = toJson();
-	APP->history->push(h);
+	getHistory()->push(h);
 }
 
 void ModuleWidget::appendDisconnectActions(history::ComplexAction* complexAction) {
 	for (PortWidget* pw : getPorts()) {
-		for (CableWidget* cw : APP->scene->rack->getCompleteCablesOnPort(pw)) {
+		for (CableWidget* cw : getRack()->getCompleteCablesOnPort(pw)) {
 			// history::CableRemove
 			history::CableRemove* h = new history::CableRemove;
 			h->setCable(cw);
 			complexAction->push(h);
 			// Delete cable
-			APP->scene->rack->removeCable(cw);
+			getRack()->removeCable(cw);
 			delete cw;
 		}
 	};
@@ -806,7 +807,7 @@ void ModuleWidget::disconnectAction() {
 	appendDisconnectActions(complexAction);
 
 	if (!complexAction->isEmpty())
-		APP->history->push(complexAction);
+		getHistory()->push(complexAction);
 	else
 		delete complexAction;
 }
@@ -817,7 +818,7 @@ void ModuleWidget::cloneAction(bool cloneCables) {
 	h->name = string::translate("ModuleWidget.history.duplicateModule");
 
 	// Save patch store in this module so we can copy it below
-	APP->engine->prepareSaveModule(module);
+	getEngine()->prepareSaveModule(module);
 
 	// JSON serialization is the obvious way to do this
 	json_t* moduleJ = toJson();
@@ -841,22 +842,22 @@ void ModuleWidget::cloneAction(bool cloneCables) {
 	catch (Exception& e) {
 		WARN("%s", e.what());
 	}
-	APP->engine->addModule(clonedModule);
+	getEngine()->addModule(clonedModule);
 
 	// Clone ModuleWidget
 	INFO("Creating module widget %s", model->getFullName().c_str());
 	ModuleWidget* clonedModuleWidget = model->createModuleWidget(clonedModule);
-	APP->scene->rack->updateModuleOldPositions();
-	APP->scene->rack->addModule(clonedModuleWidget);
+	getRack()->updateModuleOldPositions();
+	getRack()->addModule(clonedModuleWidget);
 	// Place module to the right of `this` module, by forcing it to 1 HP to the right.
-	math::Vec clonedPos = box.pos;
-	clonedPos.x += clonedModuleWidget->box.getWidth();
+	math::Vec clonedPos = getPos();
+	clonedPos.setX(clonedPos.getX() + clonedModuleWidget->getWidth());
 	if (settings::squeezeModules)
-		APP->scene->rack->squeezeModulePos(clonedModuleWidget, clonedPos);
+		getRack()->squeezeModulePos(clonedModuleWidget, clonedPos);
 	else
-		APP->scene->rack->setModulePosNearest(clonedModuleWidget, clonedPos);
-	h->push(APP->scene->rack->getModuleDragAction());
-	APP->scene->rack->updateExpanders();
+		getRack()->setModulePosNearest(clonedModuleWidget, clonedPos);
+	h->push(getRack()->getModuleDragAction());
+	getRack()->updateExpanders();
 
 	// history::ModuleAdd
 	history::ModuleAdd* hma = new history::ModuleAdd;
@@ -866,7 +867,7 @@ void ModuleWidget::cloneAction(bool cloneCables) {
 	if (cloneCables) {
 		// Clone cables attached to input/output ports
 		for (PortWidget* pw : getPorts()) {
-			for (CableWidget* cw : APP->scene->rack->getCompleteCablesOnPort(pw)) {
+			for (CableWidget* cw : getRack()->getCompleteCablesOnPort(pw)) {
 				// Skip input ports self-patched to this module's outputs, to avoid double-cloning them.
 				if (pw->type == engine::Port::OUTPUT && cw->cable->inputModule == module)
 					continue;
@@ -888,12 +889,12 @@ void ModuleWidget::cloneAction(bool cloneCables) {
 					clonedCable->outputModule = clonedModule;
 				}
 
-				APP->engine->addCable(clonedCable);
+				getEngine()->addCable(clonedCable);
 
 				app::CableWidget* clonedCw = new app::CableWidget;
 				clonedCw->setCable(clonedCable);
 				clonedCw->color = cw->color;
-				APP->scene->rack->addCable(clonedCw);
+				getRack()->addCable(clonedCw);
 
 				// history::CableAdd
 				history::CableAdd* hca = new history::CableAdd;
@@ -903,7 +904,7 @@ void ModuleWidget::cloneAction(bool cloneCables) {
 		}
 	}
 
-	APP->history->push(h);
+	getHistory()->push(h);
 }
 
 void ModuleWidget::bypassAction(bool bypassed) {
@@ -915,9 +916,9 @@ void ModuleWidget::bypassAction(bool bypassed) {
 	h->bypassed = bypassed;
 	if (!bypassed)
 		h->name = string::translate("ModuleWidget.history.unbypassModule");
-	APP->history->push(h);
+	getHistory()->push(h);
 
-	APP->engine->bypassModule(module, bypassed);
+	getEngine()->bypassModule(module, bypassed);
 }
 
 void ModuleWidget::removeAction() {
@@ -928,23 +929,23 @@ void ModuleWidget::removeAction() {
 	appendDisconnectActions(h);
 
 	// Unset module position from rack.
-	APP->scene->rack->updateModuleOldPositions();
+	getRack()->updateModuleOldPositions();
 	if (settings::squeezeModules)
-		APP->scene->rack->unsqueezeModulePos(this);
-	h->push(APP->scene->rack->getModuleDragAction());
+		getRack()->unsqueezeModulePos(this);
+	h->push(getRack()->getModuleDragAction());
 
 	// history::ModuleRemove
 	history::ModuleRemove* moduleRemove = new history::ModuleRemove;
 	moduleRemove->setModule(this);
 	h->push(moduleRemove);
 
-	APP->history->push(h);
+	getHistory()->push(h);
 
 	// This removes the module and transfers ownership to caller
-	APP->scene->rack->removeModule(this);
+	getRack()->removeModule(this);
 	delete this;
 
-	APP->scene->rack->updateExpanders();
+	getRack()->updateExpanders();
 }
 
 
@@ -991,146 +992,169 @@ static void appendPresetItems(ui::Menu* menu, WeakPtr<ModuleWidget> moduleWidget
 	}
 };
 
-
 void ModuleWidget::createContextMenu() {
-	ui::Menu* menu = createMenu();
-	assert(model);
+    ui::Menu* menu = createMenu();
+    assert(model);
 
-	WeakPtr<ModuleWidget> weakThis = this;
+    WeakPtr<ModuleWidget> weakThis = this;
 
-	// Brand and module name
-	menu->addChild(createMenuLabel(model->name));
-	menu->addChild(createMenuLabel(model->plugin->brand));
+    // Brand and module name
+    menu->addChild(createMenuLabel(model->name));
+    menu->addChild(createMenuLabel(model->plugin->brand));
 
-	// Info
-	menu->addChild(createSubmenuItem(string::translate("ModuleWidget.info"), "", [=](ui::Menu* menu) {
-		model->appendContextMenu(menu);
+    // Info
+    menu->addChild(createSubmenuItem(
+        string::translate("ModuleWidget.info"), "", [=](ui::Menu* menu) {
+            model->appendContextMenu(menu);
 
-		if (!weakThis)
-			return;
-		menu->addChild(new ui::MenuSeparator);
-		menu->addChild(createMenuLabel(string::translate("ModuleWidget.moduleId")));
-		menu->addChild(createMenuLabel(string::f("%lld", (long long) weakThis->module->getId())));
-	}));
+            if (!weakThis) return;
+            menu->addChild(new ui::MenuSeparator);
+            menu->addChild(
+                createMenuLabel(string::translate("ModuleWidget.moduleId")));
+            menu->addChild(createMenuLabel(
+                string::f("%lld", (long long)weakThis->module->getId())));
+        }));
 
-	// Preset
-	menu->addChild(createSubmenuItem(string::translate("ModuleWidget.preset"), "", [=](ui::Menu* menu) {
-		menu->addChild(createMenuItem(string::translate("ModuleWidget.copy"), widget::getKeyCommandName(GLFW_KEY_C, RACK_MOD_CTRL), [=]() {
-			if (!weakThis)
-				return;
-			weakThis->copyClipboard();
-		}));
+    // Preset
+    menu->addChild(createSubmenuItem(
+        string::translate("ModuleWidget.preset"), "", [=](ui::Menu* menu) {
+            menu->addChild(createMenuItem(
+                string::translate("ModuleWidget.copy"),
+                widget::getKeyCommandName(GLFW_KEY_C, RACK_MOD_CTRL), [=]() {
+                    if (!weakThis) return;
+                    weakThis->copyClipboard();
+                }));
 
-		menu->addChild(createMenuItem(string::translate("ModuleWidget.paste"), widget::getKeyCommandName(GLFW_KEY_V, RACK_MOD_CTRL), [=]() {
-			if (!weakThis)
-				return;
-			weakThis->pasteClipboardAction();
-		}));
+            menu->addChild(createMenuItem(
+                string::translate("ModuleWidget.paste"),
+                widget::getKeyCommandName(GLFW_KEY_V, RACK_MOD_CTRL), [=]() {
+                    if (!weakThis) return;
+                    weakThis->pasteClipboardAction();
+                }));
 
-		menu->addChild(createMenuItem(string::translate("ModuleWidget.load"), "", [=]() {
-			if (!weakThis)
-				return;
-			weakThis->loadDialog();
-		}));
+            menu->addChild(createMenuItem(
+                string::translate("ModuleWidget.load"), "", [=]() {
+                    if (!weakThis) return;
+                    weakThis->loadDialog();
+                }));
 
-		menu->addChild(createMenuItem(string::translate("ModuleWidget.saveAs"), "", [=]() {
-			if (!weakThis)
-				return;
-			weakThis->saveDialog();
-		}));
+            menu->addChild(createMenuItem(
+                string::translate("ModuleWidget.saveAs"), "", [=]() {
+                    if (!weakThis) return;
+                    weakThis->saveDialog();
+                }));
 
-		menu->addChild(createMenuItem(string::translate("ModuleWidget.saveTemplate"), "", [=]() {
-			if (!weakThis)
-				return;
-			weakThis->saveTemplateDialog();
-		}));
+            menu->addChild(createMenuItem(
+                string::translate("ModuleWidget.saveTemplate"), "", [=]() {
+                    if (!weakThis) return;
+                    weakThis->saveTemplateDialog();
+                }));
 
-		menu->addChild(createMenuItem(string::translate("ModuleWidget.clearTemplate"), "", [=]() {
-			if (!weakThis)
-				return;
-			weakThis->clearTemplateDialog();
-		}, !weakThis->hasTemplate()));
+            menu->addChild(createMenuItem(
+                string::translate("ModuleWidget.clearTemplate"), "",
+                [=]() {
+                    if (!weakThis) return;
+                    weakThis->clearTemplateDialog();
+                },
+                !weakThis->hasTemplate()));
 
-		// Scan `<user dir>/presets/<plugin slug>/<module slug>` for presets.
-		menu->addChild(new ui::MenuSeparator);
-		menu->addChild(createMenuLabel(string::translate("ModuleWidget.userPresets")));
-		appendPresetItems(menu, weakThis, weakThis->model->getUserPresetDirectory());
+            // Scan `<user dir>/presets/<plugin slug>/<module slug>` for
+            // presets.
+            menu->addChild(new ui::MenuSeparator);
+            menu->addChild(
+                createMenuLabel(string::translate("ModuleWidget.userPresets")));
+            appendPresetItems(menu, weakThis,
+                              weakThis->model->getUserPresetDirectory());
 
-		// Scan `<plugin dir>/presets/<module slug>` for presets.
-		menu->addChild(new ui::MenuSeparator);
-		menu->addChild(createMenuLabel(string::translate("ModuleWidget.factoryPresets")));
-		appendPresetItems(menu, weakThis, weakThis->model->getFactoryPresetDirectory());
-	}));
+            // Scan `<plugin dir>/presets/<module slug>` for presets.
+            menu->addChild(new ui::MenuSeparator);
+            menu->addChild(createMenuLabel(
+                string::translate("ModuleWidget.factoryPresets")));
+            appendPresetItems(menu, weakThis,
+                              weakThis->model->getFactoryPresetDirectory());
+        }));
 
-	// Initialize
-	menu->addChild(createMenuItem(string::translate("ModuleWidget.initialize"), widget::getKeyCommandName(GLFW_KEY_I, RACK_MOD_CTRL), [=]() {
-		if (!weakThis)
-			return;
-		weakThis->resetAction();
-	}));
+    // Initialize
+    menu->addChild(createMenuItem(
+        string::translate("ModuleWidget.initialize"),
+        widget::getKeyCommandName(GLFW_KEY_I, RACK_MOD_CTRL), [=]() {
+            if (!weakThis) return;
+            weakThis->resetAction();
+        }));
 
-	// Randomize
-	menu->addChild(createMenuItem(string::translate("ModuleWidget.randomize"), widget::getKeyCommandName(GLFW_KEY_R, RACK_MOD_CTRL), [=]() {
-		if (!weakThis)
-			return;
-		weakThis->randomizeAction();
-	}));
+    // Randomize
+    menu->addChild(createMenuItem(
+        string::translate("ModuleWidget.randomize"),
+        widget::getKeyCommandName(GLFW_KEY_R, RACK_MOD_CTRL), [=]() {
+            if (!weakThis) return;
+            weakThis->randomizeAction();
+        }));
 
-	// Disconnect cables
-	menu->addChild(createMenuItem(string::translate("ModuleWidget.disconnectCables"), widget::getKeyCommandName(GLFW_KEY_U, RACK_MOD_CTRL), [=]() {
-		if (!weakThis)
-			return;
-		weakThis->disconnectAction();
-	}));
+    // Disconnect cables
+    menu->addChild(createMenuItem(
+        string::translate("ModuleWidget.disconnectCables"),
+        widget::getKeyCommandName(GLFW_KEY_U, RACK_MOD_CTRL), [=]() {
+            if (!weakThis) return;
+            weakThis->disconnectAction();
+        }));
 
-	// Bypass
-	std::string bypassText = widget::getKeyCommandName(GLFW_KEY_E, RACK_MOD_CTRL);
-	bool bypassed = module && module->isBypassed();
-	if (bypassed)
-		bypassText += " " CHECKMARK_STRING;
-	menu->addChild(createMenuItem(string::translate("ModuleWidget.bypass"), bypassText, [=]() {
-		if (!weakThis)
-			return;
-		weakThis->bypassAction(!bypassed);
-	}));
+    // Bypass
+    std::string bypassText =
+        widget::getKeyCommandName(GLFW_KEY_E, RACK_MOD_CTRL);
+    bool bypassed = module && module->isBypassed();
+    if (bypassed) bypassText += " " CHECKMARK_STRING;
+    menu->addChild(createMenuItem(string::translate("ModuleWidget.bypass"),
+                                  bypassText, [=]() {
+                                      if (!weakThis) return;
+                                      weakThis->bypassAction(!bypassed);
+                                  }));
 
-	// Duplicate
-	menu->addChild(createMenuItem(string::translate("ModuleWidget.duplicate"), widget::getKeyCommandName(GLFW_KEY_D, RACK_MOD_CTRL), [=]() {
-		if (!weakThis)
-			return;
-		weakThis->cloneAction(false);
-	}));
+    // Duplicate
+    menu->addChild(createMenuItem(
+        string::translate("ModuleWidget.duplicate"),
+        widget::getKeyCommandName(GLFW_KEY_D, RACK_MOD_CTRL), [=]() {
+            if (!weakThis) return;
+            weakThis->cloneAction(false);
+        }));
 
-	// Duplicate with cables
-	menu->addChild(createMenuItem("└ " + string::translate("ModuleWidget.duplicateWithCables"), widget::getKeyCommandName(GLFW_KEY_D, RACK_MOD_CTRL | GLFW_MOD_SHIFT), [=]() {
-		if (!weakThis)
-			return;
-		weakThis->cloneAction(true);
-	}));
+    // Duplicate with cables
+    menu->addChild(createMenuItem(
+        "└ " + string::translate("ModuleWidget.duplicateWithCables"),
+        widget::getKeyCommandName(GLFW_KEY_D, RACK_MOD_CTRL | GLFW_MOD_SHIFT),
+        [=]() {
+            if (!weakThis) return;
+            weakThis->cloneAction(true);
+        }));
 
-	// Delete
-	menu->addChild(createMenuItem(string::translate("ModuleWidget.delete"), widget::getKeyCommandName(GLFW_KEY_BACKSPACE, 0) + "/" + widget::getKeyCommandName(GLFW_KEY_DELETE, 0), [=]() {
-		if (!weakThis)
-			return;
-		weakThis->removeAction();
-	}, false, true));
+    // Delete
+    menu->addChild(createMenuItem(
+        string::translate("ModuleWidget.delete"),
+        ui::Liminal::hasKeyboard() ? 
+        widget::getKeyCommandName(GLFW_KEY_BACKSPACE, 0) + "/" +
+            widget::getKeyCommandName(GLFW_KEY_DELETE, 0) : "",
+        [=]() {
+            if (!weakThis) return;
+            weakThis->removeAction();
+        },
+        false, true));
 
-	// Zoom to fit
-	menu->addChild(createMenuItem(string::translate("ModuleWidget.zoomFit"), widget::getKeyCommandName(GLFW_KEY_F4, RACK_MOD_CTRL), [=]() {
-		if (!weakThis)
-			return;
-		APP->scene->rackScroll->zoomToBound(weakThis->getBox());
-	}));
+    // Zoom to fit
+    menu->addChild(createMenuItem(
+        string::translate("ModuleWidget.zoomFit"),
+        widget::getKeyCommandName(GLFW_KEY_F4, RACK_MOD_CTRL), [=]() {
+            if (!weakThis) return;
+            getScene()->getRackScroll()->zoomToBound(weakThis->getBox());
+        }));
 
-	appendContextMenu(menu);
+    appendContextMenu(menu);
 }
 
 math::Vec ModuleWidget::getGridPosition() {
-	return ((getPosition() - RACK_OFFSET) / RACK_GRID_SIZE).round();
+	return ((getPos() - RACK_OFFSET) / RACK_GRID_SIZE).round();
 }
 
 void ModuleWidget::setGridPosition(math::Vec pos) {
-	setPosition(pos * RACK_GRID_SIZE + RACK_OFFSET);
+	setPos(pos * RACK_GRID_SIZE + RACK_OFFSET);
 }
 
 math::Vec ModuleWidget::getGridSize() {
@@ -1142,11 +1166,11 @@ math::Rect ModuleWidget::getGridBox() {
 }
 
 math::Vec& ModuleWidget::dragOffset() {
-	return internal->dragOffset;
+	return internal_->dragOffset;
 }
 
 bool& ModuleWidget::dragEnabled() {
-	return internal->dragEnabled;
+	return internal_->dragEnabled;
 }
 
 engine::Module* ModuleWidget::releaseModule() {

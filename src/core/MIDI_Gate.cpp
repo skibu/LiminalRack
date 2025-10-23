@@ -189,57 +189,76 @@ struct MIDI_Gate : Module {
 	}
 };
 
-
 struct MIDI_GateWidget : ModuleWidget {
-	MIDI_GateWidget(MIDI_Gate* module) {
-		setModule(module);
-		setPanel(createPanel(asset::system("res/Core/MIDI_Gate.svg"), asset::system("res/Core/MIDI_Gate-dark.svg")));
+    MIDI_GateWidget(MIDI_Gate* module) {
+        setModule(module);
+        setPanel(createPanel(asset::system("res/Core/MIDI_Gate.svg"),
+                             asset::system("res/Core/MIDI_Gate-dark.svg")));
 
-		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ThemedScrew>(
+            Vec(getWidth() - 2 * RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ThemedScrew>(
+            Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(
+            createWidget<ThemedScrew>(Vec(getWidth() - 2 * RACK_GRID_WIDTH,
+                                          RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(8.189, 78.431)), module, MIDI_Gate::GATE_OUTPUTS + 0));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(19.739, 78.431)), module, MIDI_Gate::GATE_OUTPUTS + 1));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(31.289, 78.431)), module, MIDI_Gate::GATE_OUTPUTS + 2));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(42.838, 78.431)), module, MIDI_Gate::GATE_OUTPUTS + 3));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(8.189, 89.946)), module, MIDI_Gate::GATE_OUTPUTS + 4));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(19.739, 89.946)), module, MIDI_Gate::GATE_OUTPUTS + 5));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(31.289, 89.946)), module, MIDI_Gate::GATE_OUTPUTS + 6));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(42.838, 89.946)), module, MIDI_Gate::GATE_OUTPUTS + 7));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(8.189, 101.466)), module, MIDI_Gate::GATE_OUTPUTS + 8));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(19.739, 101.466)), module, MIDI_Gate::GATE_OUTPUTS + 9));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(31.289, 101.466)), module, MIDI_Gate::GATE_OUTPUTS + 10));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(42.838, 101.466)), module, MIDI_Gate::GATE_OUTPUTS + 11));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(8.189, 112.998)), module, MIDI_Gate::GATE_OUTPUTS + 12));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(19.739, 112.984)), module, MIDI_Gate::GATE_OUTPUTS + 13));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(31.289, 112.984)), module, MIDI_Gate::GATE_OUTPUTS + 14));
-		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(42.838, 112.984)), module, MIDI_Gate::GATE_OUTPUTS + 15));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(8.189, 78.431)), module, MIDI_Gate::GATE_OUTPUTS + 0));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(19.739, 78.431)), module, MIDI_Gate::GATE_OUTPUTS + 1));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(31.289, 78.431)), module, MIDI_Gate::GATE_OUTPUTS + 2));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(42.838, 78.431)), module, MIDI_Gate::GATE_OUTPUTS + 3));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(8.189, 89.946)), module, MIDI_Gate::GATE_OUTPUTS + 4));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(19.739, 89.946)), module, MIDI_Gate::GATE_OUTPUTS + 5));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(31.289, 89.946)), module, MIDI_Gate::GATE_OUTPUTS + 6));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(42.838, 89.946)), module, MIDI_Gate::GATE_OUTPUTS + 7));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(8.189, 101.466)), module, MIDI_Gate::GATE_OUTPUTS + 8));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(19.739, 101.466)), module, MIDI_Gate::GATE_OUTPUTS + 9));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(31.289, 101.466)), module, MIDI_Gate::GATE_OUTPUTS + 10));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(42.838, 101.466)), module, MIDI_Gate::GATE_OUTPUTS + 11));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(8.189, 112.998)), module, MIDI_Gate::GATE_OUTPUTS + 12));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(19.739, 112.984)), module, MIDI_Gate::GATE_OUTPUTS + 13));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(31.289, 112.984)), module, MIDI_Gate::GATE_OUTPUTS + 14));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(
+            mm2px(Vec(42.838, 112.984)), module, MIDI_Gate::GATE_OUTPUTS + 15));
 
-		typedef Grid16MidiDisplay<NoteChoice<MIDI_Gate>> TMidiDisplay;
-		TMidiDisplay* display = createWidget<TMidiDisplay>(mm2px(Vec(0.0, 13.039)));
-		display->box.size = mm2px(Vec(50.8, 55.88));
-		display->setMidiPort(module ? &module->midiInput : NULL);
-		display->setModule(module);
-		addChild(display);
-	}
+        typedef Grid16MidiDisplay<NoteChoice<MIDI_Gate>> TMidiDisplay;
+        TMidiDisplay* display =
+            createWidget<TMidiDisplay>(mm2px(Vec(0.0, 13.039)));
+        display->setSize(mm2px(Vec(50.8, 55.88)));
+        display->setMidiPort(module ? &module->midiInput : NULL);
+        display->setModule(module);
+        addChild(display);
+    }
 
-	void appendContextMenu(Menu* menu) override {
-		MIDI_Gate* module = dynamic_cast<MIDI_Gate*>(this->module);
+    void appendContextMenu(Menu* menu) override {
+        MIDI_Gate* module = dynamic_cast<MIDI_Gate*>(this->module);
 
-		menu->addChild(new MenuSeparator);
+        menu->addChild(new MenuSeparator);
 
-		menu->addChild(createBoolPtrMenuItem("Velocity mode", "", &module->velocityMode));
+        menu->addChild(
+            createBoolPtrMenuItem("Velocity mode", "", &module->velocityMode));
 
-		menu->addChild(createBoolPtrMenuItem("MPE mode", "", &module->mpeMode));
+        menu->addChild(createBoolPtrMenuItem("MPE mode", "", &module->mpeMode));
 
-		menu->addChild(createMenuItem("Panic", "",
-			[=]() {module->panic();}
-		));
-	}
+        menu->addChild(createMenuItem("Panic", "", [=]() { module->panic(); }));
+    }
 };
-
 
 // Use legacy slug for compatibility
 Model* modelMIDI_Gate = createModel<MIDI_Gate, MIDI_GateWidget>("MIDITriggerToCVInterface");

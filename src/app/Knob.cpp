@@ -14,6 +14,7 @@ namespace app {
 struct Knob::Internal {
 	/** Value of the knob before dragging. */
 	float oldValue = NAN;
+
 	/** Fractional value between the param's value and the dragged knob position.
 	Using a "snapValue" variable and rounding is insufficient because the mouse needs to reach 1.0, not 0.5 to obtain the first increment.
 	*/
@@ -21,6 +22,7 @@ struct Knob::Internal {
 
 	/** Speed multiplier in speed knob mode */
 	float linearScale = 1.f;
+    
 	/** The mouse has once escaped from the knob while dragging. */
 	bool rotaryDragEnabled = false;
 	float dragAngle = NAN;
@@ -30,11 +32,11 @@ struct Knob::Internal {
 
 
 Knob::Knob() {
-	internal = new Internal;
+	internal_ = new Internal;
 }
 
 Knob::~Knob() {
-	delete internal;
+	delete internal_;
 }
 
 void Knob::initParamQuantity() {
@@ -51,17 +53,17 @@ void Knob::initParamQuantity() {
 
 void Knob::onHover(const HoverEvent& e) {
 	// Only call super if mouse position is in the circle
-	math::Vec c = box.size.div(2);
-	float dist = e.pos.minus(c).norm();
-	if (dist <= c.x) {
+	math::Vec c = getSize().div(2);
+    float dist = e.pos.minus(c).norm();
+	if (dist <= c.getX()) {
 		ParamWidget::onHover(e);
 	}
 }
 
 void Knob::onButton(const ButtonEvent& e) {
-	math::Vec c = box.size.div(2);
+	math::Vec c = getSize().div(2);
 	float dist = e.pos.minus(c).norm();
-	if (dist <= c.x) {
+	if (dist <= c.getX()) {
 		ParamWidget::onButton(e);
 	}
 }
@@ -72,22 +74,22 @@ void Knob::onDragStart(const DragStartEvent& e) {
 
 	engine::ParamQuantity* pq = getParamQuantity();
 	if (pq) {
-		internal->oldValue = pq->getValue();
-		internal->snapDelta = 0.f;
+		internal_->oldValue = pq->getValue();
+		internal_->snapDelta = 0.f;
 	}
 
 	settings::KnobMode km = settings::knobMode;
 	if (km == settings::KNOB_MODE_LINEAR || km == settings::KNOB_MODE_SCALED_LINEAR) {
-		APP->window->cursorLock();
+		getWindow()->cursorLock();
 	}
 	// Only changed for KNOB_MODE_LINEAR_*.
-	internal->linearScale = 1.f;
+	internal_->linearScale = 1.f;
 	// Only used for KNOB_MODE_ROTARY_*.
-	internal->rotaryDragEnabled = false;
-	internal->dragAngle = NAN;
+	internal_->rotaryDragEnabled = false;
+	internal_->dragAngle = NAN;
 
 	// Reset distance dragged
-	internal->distDragged = 0.f;
+	internal_->distDragged = 0.f;
 
 	ParamWidget::onDragStart(e);
 }
@@ -98,30 +100,30 @@ void Knob::onDragEnd(const DragEndEvent& e) {
 
 	settings::KnobMode km = settings::knobMode;
 	if (km == settings::KNOB_MODE_LINEAR || km == settings::KNOB_MODE_SCALED_LINEAR) {
-		APP->window->cursorUnlock();
+		getWindow()->cursorUnlock();
 	}
 
 	engine::ParamQuantity* pq = getParamQuantity();
 	if (pq) {
 		float newValue = pq->getValue();
-		if (!std::isnan(internal->oldValue) && internal->oldValue != newValue) {
+		if (!std::isnan(internal_->oldValue) && internal_->oldValue != newValue) {
 			// Push ParamChange history action
 			history::ParamChange* h = new history::ParamChange;
 			h->name = string::translate("Knob.history.move");
 			h->moduleId = module->id;
 			h->paramId = paramId;
-			h->oldValue = internal->oldValue;
+			h->oldValue = internal_->oldValue;
 			h->newValue = newValue;
-			APP->history->push(h);
+			getHistory()->push(h);
 		}
 		// Reset snap delta
-		internal->snapDelta = 0.f;
+		internal_->snapDelta = 0.f;
 	}
-	internal->oldValue = NAN;
+	internal_->oldValue = NAN;
 
 	// Dispatch Action event if mouse traveled less than a threshold distance
 	const float actionDistThreshold = 16.f;
-	if (internal->distDragged < actionDistThreshold) {
+	if (internal_->distDragged < actionDistThreshold) {
 		ActionEvent eAction;
 		onAction(eAction);
 	}
@@ -130,7 +132,7 @@ void Knob::onDragEnd(const DragEndEvent& e) {
 }
 
 static float getModSpeed() {
-	int mods = APP->window->getMods();
+	int mods = getWindow()->getMods();
 	if ((mods & RACK_MOD_MASK) == RACK_MOD_CTRL)
 		return 1 / 10.f;
 	else if ((mods & RACK_MOD_MASK) == GLFW_MOD_SHIFT)
@@ -163,7 +165,7 @@ void Knob::onDragMove(const DragMoveEvent& e) {
 		}
 
 		if (linearMode) {
-			float delta = (horizontal ? e.mouseDelta.x : -e.mouseDelta.y);
+			float delta = (horizontal ? e.mouseDelta.getX() : -e.mouseDelta.getY());
 			delta *= settings::knobLinearSensitivity;
 			delta *= speed;
 			delta *= getModSpeed();
@@ -171,25 +173,25 @@ void Knob::onDragMove(const DragMoveEvent& e) {
 
 			// Scale delta if in scaled linear knob mode
 			if (km == settings::KNOB_MODE_SCALED_LINEAR) {
-				float deltaY = (horizontal ? -e.mouseDelta.y : -e.mouseDelta.x);
+				float deltaY = (horizontal ? -e.mouseDelta.getY() : -e.mouseDelta.getX());
 				const float pixelTau = 200.f;
-				internal->linearScale *= std::pow(2.f, -deltaY / pixelTau);
-				delta *= internal->linearScale;
+				internal_->linearScale *= std::pow(2.f, -deltaY / pixelTau);
+				delta *= internal_->linearScale;
 			}
 
 			// Handle value snapping
 			if (pq->snapEnabled) {
 				// Replace delta with an accumulated delta since the last integer knob.
-				internal->snapDelta += delta;
-				delta = std::trunc(internal->snapDelta);
-				internal->snapDelta -= delta;
+				internal_->snapDelta += delta;
+				delta = std::trunc(internal_->snapDelta);
+				internal_->snapDelta -= delta;
 			}
 
 			value += delta;
 		}
-		else if (internal->rotaryDragEnabled) {
-			math::Vec origin = getAbsoluteOffset(box.size.div(2));
-			math::Vec deltaPos = APP->scene->mousePos.minus(origin);
+		else if (internal_->rotaryDragEnabled) {
+			math::Vec origin = getAbsoluteOffset(getSize().div(2));
+			math::Vec deltaPos = getScene()->getMousePos().minus(origin);
 			float angle = deltaPos.arg() + float(M_PI) / 2;
 
 			bool absoluteRotaryMode = (km == settings::KNOB_MODE_ROTARY_ABSOLUTE) && pq->isBounded();
@@ -200,23 +202,23 @@ void Knob::onDragMove(const DragMoveEvent& e) {
 				value = math::rescale(angle, minAngle, maxAngle, pq->getMinValue(), pq->getMaxValue());
 			}
 			else {
-				if (!std::isfinite(internal->dragAngle)) {
+				if (!std::isfinite(internal_->dragAngle)) {
 					// Set the starting angle
-					internal->dragAngle = angle;
+					internal_->dragAngle = angle;
 				}
 
 				// Find angle closest to last angle, mod 2*pi
-				float deltaAngle = math::eucMod(angle - internal->dragAngle + float(M_PI), float(2 * M_PI)) - float(M_PI);
-				internal->dragAngle = angle;
+				float deltaAngle = math::eucMod(angle - internal_->dragAngle + float(M_PI), float(2 * M_PI)) - float(M_PI);
+				internal_->dragAngle = angle;
 				float delta = deltaAngle / float(2 * M_PI) * rangeRatio;
 				delta *= getModSpeed();
 
 				// Handle value snapping
 				if (pq->snapEnabled) {
 					// Replace delta with an accumulated delta since the last integer knob.
-					internal->snapDelta += delta;
-					delta = std::trunc(internal->snapDelta);
-					internal->snapDelta -= delta;
+					internal_->snapDelta += delta;
+					delta = std::trunc(internal_->snapDelta);
+					internal_->snapDelta -= delta;
 				}
 
 				value += delta;
@@ -227,14 +229,14 @@ void Knob::onDragMove(const DragMoveEvent& e) {
 		pq->setValue(value);
 	}
 
-	internal->distDragged += e.mouseDelta.norm();
+	internal_->distDragged += e.mouseDelta.norm();
 
 	ParamWidget::onDragMove(e);
 }
 
 void Knob::onDragLeave(const DragLeaveEvent& e) {
 	if (e.origin == this) {
-		internal->rotaryDragEnabled = true;
+		internal_->rotaryDragEnabled = true;
 	}
 
 	ParamWidget::onDragLeave(e);
@@ -247,7 +249,7 @@ void Knob::onHoverScroll(const HoverScrollEvent& e) {
 	if (!settings::knobScroll)
 		return;
 
-	if (APP->scene->rackScroll->isScrolling())
+	if (getScene()->getRackScroll()->isScrolling())
 		return;
 
 	engine::ParamQuantity* pq = getParamQuantity();
@@ -256,8 +258,8 @@ void Knob::onHoverScroll(const HoverScrollEvent& e) {
 
 	float value = pq->getValue();
 	// Set old value if unset
-	if (std::isnan(internal->oldValue)) {
-		internal->oldValue = value;
+	if (std::isnan(internal_->oldValue)) {
+		internal_->oldValue = value;
 	}
 
 	float rangeRatio;
@@ -269,7 +271,7 @@ void Knob::onHoverScroll(const HoverScrollEvent& e) {
 	}
 
 	// Calculate delta value
-	float delta = e.scrollDelta.y;
+	float delta = e.scrollDelta.getY();
 	delta *= settings::knobScrollSensitivity;
 	delta *= speed;
 	delta *= getModSpeed();
@@ -278,9 +280,9 @@ void Knob::onHoverScroll(const HoverScrollEvent& e) {
 	// Handle value snapping
 	if (pq->snapEnabled) {
 		// Replace delta with an accumulated delta since the last integer knob.
-		internal->snapDelta += delta;
-		delta = std::trunc(internal->snapDelta);
-		internal->snapDelta -= delta;
+		internal_->snapDelta += delta;
+		delta = std::trunc(internal_->snapDelta);
+		internal_->snapDelta -= delta;
 	}
 
 	value += delta;
@@ -299,20 +301,20 @@ void Knob::onLeave(const LeaveEvent& e) {
 	engine::ParamQuantity* pq = getParamQuantity();
 	if (pq) {
 		float newValue = pq->getValue();
-		if (!std::isnan(internal->oldValue) && internal->oldValue != newValue) {
+		if (!std::isnan(internal_->oldValue) && internal_->oldValue != newValue) {
 			// Push ParamChange history action
 			history::ParamChange* h = new history::ParamChange;
 			h->name = string::translate("Knob.history.move");
 			h->moduleId = module->id;
 			h->paramId = paramId;
-			h->oldValue = internal->oldValue;
+			h->oldValue = internal_->oldValue;
 			h->newValue = newValue;
-			APP->history->push(h);
+			getHistory()->push(h);
 		}
 		// Reset snap delta
-		internal->snapDelta = 0.f;
+		internal_->snapDelta = 0.f;
 	}
-	internal->oldValue = NAN;
+	internal_->oldValue = NAN;
 }
 
 

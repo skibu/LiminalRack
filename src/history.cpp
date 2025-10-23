@@ -46,17 +46,17 @@ void ModuleAdd::setModule(app::ModuleWidget* mw) {
 	model = mw->getModel();
 	assert(mw->getModule());
 	moduleId = mw->getModule()->id;
-	pos = mw->box.pos;
+	pos = mw->getPos();
 	// ModuleAdd doesn't *really* need the state to be serialized, although ModuleRemove certainly does.
 	// However, creating a module may give it a nondeterministic initial state for whatever reason, so serialize anyway.
-	moduleJ = APP->engine->moduleToJson(mw->getModule());
+	moduleJ = getEngine()->moduleToJson(mw->getModule());
 }
 
 void ModuleAdd::undo() {
-	app::ModuleWidget* mw = APP->scene->rack->getModule(moduleId);
+	app::ModuleWidget* mw = getRack()->getModule(moduleId);
 	if (!mw)
 		return;
-	APP->scene->rack->removeModule(mw);
+	getRack()->removeModule(mw);
 	delete mw;
 }
 
@@ -70,44 +70,44 @@ void ModuleAdd::redo() {
 	catch (Exception& e) {
 		WARN("%s", e.what());
 	}
-	APP->engine->addModule(module);
+	getEngine()->addModule(module);
 
 	INFO("Creating module widget %s", model->getFullName().c_str());
 	app::ModuleWidget* mw = model->createModuleWidget(module);
-	mw->box.pos = pos;
-	APP->scene->rack->addModule(mw);
+	mw->setPos(pos);
+	getRack()->addModule(mw);
 }
 
 
 void ModuleMove::undo() {
-	app::ModuleWidget* mw = APP->scene->rack->getModule(moduleId);
+	app::ModuleWidget* mw = getRack()->getModule(moduleId);
 	if (!mw)
 		return;
-	mw->box.pos = oldPos;
-	APP->scene->rack->updateExpanders();
+	mw->setPos(oldPos);
+	getRack()->updateExpanders();
 }
 
 void ModuleMove::redo() {
-	app::ModuleWidget* mw = APP->scene->rack->getModule(moduleId);
+	app::ModuleWidget* mw = getRack()->getModule(moduleId);
 	if (!mw)
 		return;
-	mw->box.pos = newPos;
-	APP->scene->rack->updateExpanders();
+	mw->setPos(newPos);
+	getRack()->updateExpanders();
 }
 
 
 void ModuleBypass::undo() {
-	engine::Module* module = APP->engine->getModule(moduleId);
+	engine::Module* module = getEngine()->getModule(moduleId);
 	if (!module)
 		return;
-	APP->engine->bypassModule(module, !bypassed);
+	getEngine()->bypassModule(module, !bypassed);
 }
 
 void ModuleBypass::redo() {
-	engine::Module* module = APP->engine->getModule(moduleId);
+	engine::Module* module = getEngine()->getModule(moduleId);
 	if (!module)
 		return;
-	APP->engine->bypassModule(module, bypassed);
+	getEngine()->bypassModule(module, bypassed);
 }
 
 
@@ -117,32 +117,32 @@ ModuleChange::~ModuleChange() {
 }
 
 void ModuleChange::undo() {
-	engine::Module* module = APP->engine->getModule(moduleId);
+	engine::Module* module = getEngine()->getModule(moduleId);
 	if (!module)
 		return;
-	APP->engine->moduleFromJson(module, oldModuleJ);
+	getEngine()->moduleFromJson(module, oldModuleJ);
 }
 
 void ModuleChange::redo() {
-	engine::Module* module = APP->engine->getModule(moduleId);
+	engine::Module* module = getEngine()->getModule(moduleId);
 	if (!module)
 		return;
-	APP->engine->moduleFromJson(module, newModuleJ);
+	getEngine()->moduleFromJson(module, newModuleJ);
 }
 
 
 void ParamChange::undo() {
-	engine::Module* module = APP->engine->getModule(moduleId);
+	engine::Module* module = getEngine()->getModule(moduleId);
 	if (!module)
 		return;
-	APP->engine->setParamValue(module, paramId, oldValue);
+	getEngine()->setParamValue(module, paramId, oldValue);
 }
 
 void ParamChange::redo() {
-	engine::Module* module = APP->engine->getModule(moduleId);
+	engine::Module* module = getEngine()->getModule(moduleId);
 	if (!module)
 		return;
-	APP->engine->setParamValue(module, paramId, newValue);
+	getEngine()->setParamValue(module, paramId, newValue);
 }
 
 
@@ -168,34 +168,34 @@ bool CableAdd::isCable(app::CableWidget* cw) const {
 }
 
 void CableAdd::undo() {
-	app::CableWidget* cw = APP->scene->rack->getCable(cableId);
+	app::CableWidget* cw = getRack()->getCable(cableId);
 	if (!cw)
 		return;
-	APP->scene->rack->removeCable(cw);
+	getRack()->removeCable(cw);
 	delete cw;
 }
 
 void CableAdd::redo() {
 	engine::Cable* cable = new engine::Cable;
 	cable->id = cableId;
-	cable->inputModule = APP->engine->getModule(inputModuleId);
+	cable->inputModule = getEngine()->getModule(inputModuleId);
 	if (!cable->inputModule) {
 		delete cable;
 		return;
 	}
 	cable->inputId = inputId;
-	cable->outputModule = APP->engine->getModule(outputModuleId);
+	cable->outputModule = getEngine()->getModule(outputModuleId);
 	if (!cable->outputModule) {
 		delete cable;
 		return;
 	}
 	cable->outputId = outputId;
-	APP->engine->addCable(cable);
+	getEngine()->addCable(cable);
 
 	app::CableWidget* cw = new app::CableWidget;
 	cw->setCable(cable);
 	cw->color = color;
-	APP->scene->rack->addCable(cw);
+	getRack()->addCable(cw);
 }
 
 
@@ -207,14 +207,14 @@ void CableColorChange::setCable(app::CableWidget* cw) {
 }
 
 void CableColorChange::undo() {
-	app::CableWidget* cw = APP->scene->rack->getCable(cableId);
+	app::CableWidget* cw = getRack()->getCable(cableId);
 	if (!cw)
 		return;
 	cw->color = oldColor;
 }
 
 void CableColorChange::redo() {
-	app::CableWidget* cw = APP->scene->rack->getCable(cableId);
+	app::CableWidget* cw = getRack()->getCable(cableId);
 	if (!cw)
 		return;
 	cw->color = newColor;

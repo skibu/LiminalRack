@@ -42,7 +42,7 @@ class MenuButton : public ui::Button {
 
     // Handle actions
     void step() override {
-        box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str()) + 1.0;
+        setWidth(bndLabelWidth(getWindow()->vg, -1, text.c_str()) + 1.0);
         Widget::step();
     }
 
@@ -50,16 +50,16 @@ class MenuButton : public ui::Button {
     void draw(const DrawArgs& args) override {
         // Determine state to draw button
         BNDwidgetState state = BND_DEFAULT;  // Normal look
-        if (APP->event->hoveredWidget == this)
+        if (getEvent()->hoveredWidget == this)
             state = BND_HOVER;  // Mouse over button
-        if (APP->event->draggedWidget == this)
+        if (getEvent()->draggedWidget == this)
             state = BND_ACTIVE;  // Clicked on and menu pulled down
 
         // Draw the button. Found that using y=1.0 better centers the box
         // verticqlly due to a strange offset in bndMenuItem height
         // determination.
-        bndMenuItem(args.vg, 0.0, 1.0, box.size.x, box.size.y, state, -1,
-                    text.c_str());
+		bndMenuItem(args.vg, 0.0, 1.0, getWidth(), getHeight(), state, -1,
+					text.c_str());
 
         // Draw all the nodes
         Widget::draw(args);
@@ -97,19 +97,18 @@ class FileButton : public MenuButton {
     void onAction(const ActionEvent& e) override {
         ui::Menu* menu = createMenu();
         menu->cornerFlags = BND_CORNER_TOP;
-        menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
-
+        menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
         menu->addChild(new ui::MenuSeparator);
 
         menu->addChild(
             createMenuItem(string::translate("MenuBar.file.new"),
                            widget::getKeyCommandName(GLFW_KEY_N, RACK_MOD_CTRL),
-                           []() { APP->patch->loadTemplateDialog(); }));
+                           []() { getPatch()->loadTemplateDialog(); }));
 
         menu->addChild(
             createMenuItem(string::translate("MenuBar.file.open"),
                            widget::getKeyCommandName(GLFW_KEY_O, RACK_MOD_CTRL),
-                           []() { APP->patch->loadDialog(); }));
+                           []() { getPatch()->loadDialog(); }));
 
         menu->addChild(createSubmenuItem(
             string::translate("MenuBar.file.openRecent"), "",
@@ -117,7 +116,7 @@ class FileButton : public MenuButton {
                 for (const std::string& path : settings::recentPatchPaths) {
                     std::string name = system::getStem(path);
                     menu->addChild(createMenuItem(
-                        name, "", [=]() { APP->patch->loadPathDialog(path); }));
+                        name, "", [=]() { getPatch()->loadPathDialog(path); }));
                 }
             },
             settings::recentPatchPaths.empty()));
@@ -125,41 +124,41 @@ class FileButton : public MenuButton {
         menu->addChild(
             createMenuItem(string::translate("MenuBar.file.save"),
                            widget::getKeyCommandName(GLFW_KEY_S, RACK_MOD_CTRL),
-                           []() { APP->patch->saveDialog(); }));
+                           []() { getPatch()->saveDialog(); }));
 
         menu->addChild(
             createMenuItem(string::translate("MenuBar.file.saveAs"),
                            widget::getKeyCommandName(
                                GLFW_KEY_S, RACK_MOD_CTRL | GLFW_MOD_SHIFT),
-                           []() { APP->patch->saveAsDialog(); }));
+                           []() { getPatch()->saveAsDialog(); }));
 
         menu->addChild(
             createMenuItem(string::translate("MenuBar.file.saveCopy"), "",
-                           []() { APP->patch->saveAsDialog(false); }));
+                           []() { getPatch()->saveAsDialog(false); }));
 
         menu->addChild(createMenuItem(
             string::translate("MenuBar.file.revert"),
             widget::getKeyCommandName(GLFW_KEY_O,
                                       RACK_MOD_CTRL | GLFW_MOD_SHIFT),
-            []() { APP->patch->revertDialog(); }, APP->patch->path == ""));
+            []() { getPatch()->revertDialog(); }, getPatch()->path == ""));
 
         menu->addChild(
             createMenuItem(string::translate("MenuBar.file.overwriteTemplate"),
-                           "", []() { APP->patch->saveTemplateDialog(); }));
+                           "", []() { getPatch()->saveTemplateDialog(); }));
 
         menu->addChild(new ui::MenuSeparator);
 
         // Load selection
         menu->addChild(createMenuItem(
             string::translate("MenuBar.file.importSelection"), "",
-            [=]() { APP->scene->rack->loadSelectionDialog(); }, false, true));
+            [=]() { getRack()->loadSelectionDialog(); }, false, true));
 
         menu->addChild(new ui::MenuSeparator);
 
         menu->addChild(
             createMenuItem(string::translate("MenuBar.file.quit"),
                            widget::getKeyCommandName(GLFW_KEY_Q, RACK_MOD_CTRL),
-                           []() { APP->window->close(); }));
+                           []() { getWindow()->close(); }));
     }
 };
 
@@ -179,7 +178,7 @@ class EditButton : public MenuButton {
     void onAction(const ActionEvent& e) override {
         ui::Menu* menu = createMenu();
         menu->cornerFlags = BND_CORNER_TOP;
-        menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+        menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
 
 		menu->addChild(new ui::MenuSeparator);
 
@@ -189,13 +188,13 @@ class EditButton : public MenuButton {
 
             private:
 			void step() override {
-				bool canUndo = APP->history->canUndo();
-				setText(canUndo ? string::f(string::translate("MenuBar.edit.undoAction"), APP->history->getUndoName()) : string::translate("MenuBar.edit.undo"));
+				bool canUndo = getHistory()->canUndo();
+				setText(canUndo ? string::f(string::translate("MenuBar.edit.undoAction"), getHistory()->getUndoName()) : string::translate("MenuBar.edit.undo"));
 				setDisabled(!canUndo);
 				MenuItem::step();
 			}
 			void onAction(const ActionEvent& e) override {
-				APP->history->undo();
+				getHistory()->undo();
 			}
 		};
 		menu->addChild(createMenuItem<UndoItem>("", widget::getKeyCommandName(GLFW_KEY_Z, RACK_MOD_CTRL)));
@@ -206,39 +205,39 @@ class EditButton : public MenuButton {
 
             private:
 			void step() override {
-				bool canRedo = APP->history->canRedo();
-				setText(canRedo ? string::f(string::translate("MenuBar.edit.redoAction"), APP->history->getRedoName()) : string::translate("MenuBar.edit.redo"));
+				bool canRedo = getHistory()->canRedo();
+				setText(canRedo ? string::f(string::translate("MenuBar.edit.redoAction"), getHistory()->getRedoName()) : string::translate("MenuBar.edit.redo"));
 				setDisabled(!canRedo);
 				MenuItem::step();
 			}
 			void onAction(const ActionEvent& e) override {
-				APP->history->redo();
+				getHistory()->redo();
 			}
 		};
 		menu->addChild(createMenuItem<RedoItem>("", widget::getKeyCommandName(GLFW_KEY_Z, RACK_MOD_CTRL | GLFW_MOD_SHIFT)));
 
 		menu->addChild(createMenuItem(string::translate("MenuBar.edit.clearCables"), "", [=]() {
-			APP->patch->disconnectDialog();
+			getPatch()->disconnectDialog();
 		}));
 
 		menu->addChild(new ui::MenuSeparator);
 
 		// Add button for adding a module by opening up the local module browser
 		menu->addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "", [=]() {
-			APP->scene->browser->show();
+			getScene()->getBrowser()->show();
 		}));
 
 		// Add select all modules button
     	menu->addChild(createMenuItem(
         string::translate("RackWidget.selectAll"),
-        widget::getKeyCommandName(GLFW_KEY_A, RACK_MOD_CTRL), [=]() { APP->scene->rack->selectAll(); }, false, true));
+        widget::getKeyCommandName(GLFW_KEY_A, RACK_MOD_CTRL), [=]() { getRack()->selectAll(); }, false, true));
 
 		// Add module related menu items
 		menu->addChild(new ui::MenuSeparator);
 		menu->addChild(createMenuLabel(string::translate("MenuBar.edit.moduleContextMenuHeader")));
 
 		// Append context menu for the module so user can affect it
-		APP->scene->rack->appendSelectionContextMenu(menu);
+		getRack()->appendSelectionContextMenu(menu);
 	}
 };
 
@@ -250,10 +249,10 @@ class EditButton : public MenuButton {
 class ZoomQuantity : public Quantity {
    public:
     void setValue(float value) override {
-        APP->scene->rackScroll->setZoom(std::pow(2.f, value));
+        getScene()->getRackScroll()->setZoom(std::pow(2.f, value));
     }
     float getValue() override {
-        return std::log2(APP->scene->rackScroll->getZoom());
+        return std::log2(getScene()->getRackScroll()->getZoom());
     }
     float getMinValue() override {
         return -2.f;
@@ -494,26 +493,26 @@ class ViewButton : public MenuButton {
 	void onAction(const ActionEvent& e) override {
 		ui::Menu* menu = createMenu();
 		menu->cornerFlags = BND_CORNER_TOP;
-		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+        menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
 
         // Add Window category menu label (inactive)
 		menu->addChild(new ui::MenuSeparator);
 		menu->addChild(createMenuLabel(string::translate("MenuBar.view.window")));
 
         // Add fullscreen menu item
-		bool fullscreen = APP->window->isFullScreen();
+		bool fullscreen = getWindow()->isFullScreen();
 		std::string fullscreenText = widget::getKeyCommandName(GLFW_KEY_F11, 0);
 		if (fullscreen)
 			fullscreenText += " " CHECKMARK_STRING;
 		menu->addChild(createMenuItem(string::translate("MenuBar.view.fullscreen"), fullscreenText, [=]() {
-			APP->window->setFullScreen(!fullscreen);
+			getWindow()->setFullScreen(!fullscreen);
 		}));
 
         // Only provide frame rate option if not VCV rack because it is a obscure feature
 		if (!settings::isNotVCVRack) {
 			menu->addChild(createSubmenuItem(string::translate("MenuBar.view.frameRate"), string::f("%.0f Hz", settings::frameRateLimit), [=](ui::Menu* menu) {
 				for (int i = 1; i <= 6; i++) {
-					double frameRate = APP->window->getMonitorRefreshRate() / i;
+					double frameRate = getWindow()->getMonitorRefreshRate() / i;
 					menu->addChild(createCheckMenuItem(string::f("%.0f Hz", frameRate), "",
 						[=]() {return settings::frameRateLimit == frameRate;},
 						[=]() {settings::frameRateLimit = frameRate;}
@@ -541,12 +540,12 @@ class ViewButton : public MenuButton {
 
         // Add zoom slider
         ZoomSlider* zoomSlider = new ZoomSlider;
-		zoomSlider->box.size.x = 250.0;
+		zoomSlider->setWidth(250.0);
 		menu->addChild(zoomSlider);
 
 		// Add menu button to zoom fit to modules
 		menu->addChild(createMenuItem(string::translate("MenuBar.view.zoomFit"), widget::getKeyCommandName(GLFW_KEY_F4, 0), [=]() {
-			APP->scene->rackScroll->zoomToModules();
+			getScene()->getRackScroll()->zoomToModules();
 		}));
 
 		// Create zoom sub menu, if not in Liminal mode
@@ -582,19 +581,19 @@ class ViewButton : public MenuButton {
 
 		// Various sliders
 		CableOpacitySlider* cableOpacitySlider = new CableOpacitySlider();
-		cableOpacitySlider->box.size.x = 250.0;
+		cableOpacitySlider->setWidth(250.0);
 		menu->addChild(cableOpacitySlider);
 
 		CableTensionSlider* cableTensionSlider = new CableTensionSlider();
-		cableTensionSlider->box.size.x = 250.0;
+		cableTensionSlider->setWidth(250.0);
 		menu->addChild(cableTensionSlider);
 
 		RackBrightnessSlider* rackBrightnessSlider = new RackBrightnessSlider();
-		rackBrightnessSlider->box.size.x = 250.0;
+		rackBrightnessSlider->setWidth(250.0);
 		menu->addChild(rackBrightnessSlider);
 
 		HaloBrightnessSlider* haloBrightnessSlider = new HaloBrightnessSlider();
-		haloBrightnessSlider->box.size.x = 250.0;
+		haloBrightnessSlider->setWidth(250.0);
 		menu->addChild(haloBrightnessSlider);
 
 		// Cable colors
@@ -717,7 +716,8 @@ class ViewButton : public MenuButton {
 		// Usually want to hide cursor when turning a knob so don't need to make this settable.
 		// But if VCVRack best to not change the UI.
 		if (!settings::isNotVCVRack) {
-			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.lockCursor"), "", &settings::allowCursorLock));
+			menu->addChild(createBoolPtrMenuItem(
+                string::translate("MenuBar.view.lockCursor"), "", &settings::allowCursorLock));
 		}
 
 		static const std::vector<std::string> knobModeLabels = {
@@ -740,7 +740,7 @@ class ViewButton : public MenuButton {
 			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.knobScroll"), "", &settings::knobScroll));
 
 			KnobScrollSensitivitySlider* knobScrollSensitivitySlider = new KnobScrollSensitivitySlider();
-			knobScrollSensitivitySlider->box.size.x = 250.0;
+			knobScrollSensitivitySlider->setWidth(250.0);
 			menu->addChild(knobScrollSensitivitySlider);
 		}
 
@@ -752,7 +752,7 @@ class ViewButton : public MenuButton {
         if (settings::isNotVCVRack) {
             // Nice to be able to add modules within the View Modules section
             menu->addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "",
-                                          [=]() { APP->scene->browser->show(); }));
+                                          [=]() { getScene()->getBrowser()->show(); }));
             } else {
 			// These options not that useful so removed when not VCVRack but left in otherwise
 			// to keep the VCV Rack UI consistent				
@@ -776,7 +776,7 @@ struct SampleRateItem : ui::MenuItem {
 		// Auto sample rate
 		std::string rightText;
 		if (settings::sampleRate == 0) {
-			float sampleRate = APP->engine->getSampleRate();
+			float sampleRate = getEngine()->getSampleRate();
 			rightText += string::f("(%g kHz) ", sampleRate / 1000.f);
 		}
 		menu->addChild(createCheckMenuItem(string::translate("MenuBar.engine.sampleRate.auto"), rightText,
@@ -823,7 +823,7 @@ class EngineButton : public MenuButton {
     void onAction(const ActionEvent& e) override {
         ui::Menu* menu = createMenu();
         menu->cornerFlags = BND_CORNER_TOP;
-        menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+        menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
 
         menu->addChild(new ui::MenuSeparator);
 
@@ -963,7 +963,7 @@ struct SyncUpdateItem : ui::MenuItem {
 			}));
 		}
 
-		if (menu->children.empty()) {
+		if (menu->getChildren().empty()) {
 			delete menu;
 			return NULL;
 		}
@@ -1050,12 +1050,12 @@ struct LibraryMenu : ui::Menu {
 
 			ui::TextField* emailField = new ui::TextField;
 			emailField->setPlaceholder(string::translate("MenuBar.library.email"));
-			emailField->box.size.x = 240.0;
+			emailField->setWidth(240.0);
 			addChild(emailField);
 
 			AccountPasswordField* passwordField = new AccountPasswordField();
 			passwordField->setPlaceholder(string::translate("MenuBar.library.password"));
-			passwordField->box.size.x = 240.0;
+			passwordField->setWidth(240.0);
 			passwordField->setNextField(emailField);
 			emailField->setNextField(passwordField);
 			addChild(passwordField);
@@ -1069,7 +1069,7 @@ struct LibraryMenu : ui::Menu {
 		// The regular module library options for when user is logged in
 		else {
 			addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "", [=]() {
-				APP->scene->browser->show();
+				getScene()->getBrowser()->show();
 			}));
 
 			addChild(new ui::MenuSeparator);
@@ -1126,7 +1126,7 @@ class LibraryButton : public MenuButton {
 	void onAction(const ActionEvent& e) override {
 		ui::Menu* menu = createMenu<LibraryMenu>();
 		menu->cornerFlags = BND_CORNER_TOP;
-		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+		menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
 
 		menu->addChild(new ui::MenuSeparator);
 
@@ -1141,14 +1141,14 @@ class LibraryButton : public MenuButton {
 	}
 
 	void step() override {
-		notification->box.pos = math::Vec(0, 0);
-		notification->visible = library::hasUpdates();
+		notification->setPos(math::Vec(0, 0));
+		notification->setVisible(library::hasUpdates());
 
 		// Popup when updates finish downloading
 		if (library::restartRequested) {
 			library::restartRequested = false;
 			if (osdialog_message(OSDIALOG_INFO, OSDIALOG_OK_CANCEL, string::translate("MenuBar.library.restart").c_str())) {
-				APP->window->close();
+				getWindow()->close();
 				settings::restart = true;
 			}
 		}
@@ -1179,7 +1179,7 @@ class HelpButton : public MenuButton {
     void onAction(const ActionEvent& e) override {
         ui::Menu* menu = createMenu();
         menu->cornerFlags = BND_CORNER_TOP;
-        menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
+        menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
 
         menu->addChild(new ui::MenuSeparator);
 
@@ -1189,7 +1189,7 @@ class HelpButton : public MenuButton {
 
         menu->addChild(
             createMenuItem(string::translate("MenuBar.help.tips"), "",
-                           [=]() { APP->scene->addChild(tipWindowCreate()); }));
+                           [=]() { getScene()->addChild(tipWindowCreate()); }));
 
         menu->addChild(createMenuItem(
             string::translate("MenuBar.help.manual"),
@@ -1259,71 +1259,87 @@ class HelpButton : public MenuButton {
 		// For VCV Rack make getting updates easy. But this doesn't work for forks like Liminal
 		if (!settings::isNotVCVRack) {
 			// Light up red notification dot on Help button if an update is available
-			notification->box.pos = math::Vec(0, 0);
-			notification->visible = library::isAppUpdateAvailable();
+			notification->setPos(math::Vec(0, 0));
+			notification->setVisible(library::isAppUpdateAvailable());
 		} else {
 			// Not VCV rack so always hide notification since can't update app in usual way
-			notification->visible = false;
+			notification->setVisible(false);
 		}
 		MenuButton::step();
 	}
 };
 
+
+/** Utility function to replace all occurrences of a substring with another string */
+void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+    if (from.empty())
+        return;
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // Advance past the replaced substring
+    }
+}
+
 ////////////////////
 // InfoBar - displays frame rate, cpu, and app name/version info
 ////////////////////
 
-
 class InfoLabel : public ui::Label {
-	int frameCount = 0;
-	double frameDurationTotal = 0.0;
-	double frameDurationAvg = NAN;
-	// double uiLastTime = 0.0;
-	// double uiLastThreadTime = 0.0;
-	// double uiFrac = 0.0;
+    int frameCount = 0;
+    double frameDurationTotal = 0.0;
+    double frameDurationAvg = NAN;
+    // double uiLastTime = 0.0;
+    // double uiLastThreadTime = 0.0;
+    // double uiFrac = 0.0;
 
-	void step() override {
-		// Compute frame rate
-		double frameDuration = APP->window->getLastFrameDuration();
-		if (std::isfinite(frameDuration)) {
-			frameDurationTotal += frameDuration;
-			frameCount++;
-		}
-		if (frameDurationTotal >= 1.0) {
-			frameDurationAvg = frameDurationTotal / frameCount;
-			frameDurationTotal = 0.0;
-			frameCount = 0;
-		}
+    void step() override {
+        // Compute frame rate
+        double frameDuration = getWindow()->getLastFrameDuration();
+        if (std::isfinite(frameDuration)) {
+            frameDurationTotal += frameDuration;
+            frameCount++;
+        }
+        if (frameDurationTotal >= 1.0) {
+            frameDurationAvg = frameDurationTotal / frameCount;
+            frameDurationTotal = 0.0;
+            frameCount = 0;
+        }
 
-		// Compute UI thread CPU
-		// double time = system::getTime();
-		// double uiDuration = time - uiLastTime;
-		// if (uiDuration >= 1.0) {
-		// 	double threadTime = system::getThreadTime();
-		// 	uiFrac = (threadTime - uiLastThreadTime) / uiDuration;
-		// 	uiLastThreadTime = threadTime;
-		// 	uiLastTime = time;
-		// }
+        // Compute UI thread CPU
+        // double time = system::getTime();
+        // double uiDuration = time - uiLastTime;
+        // if (uiDuration >= 1.0) {
+        // 	double threadTime = system::getThreadTime();
+        // 	uiFrac = (threadTime - uiLastThreadTime) / uiDuration;
+        // 	uiLastThreadTime = threadTime;
+        // 	uiLastTime = time;
+        // }
 
         std::string label = "";
 
-		// If window wide enough display frame rate and CPU meter
-		if (box.size.x >= 460) {
-			double fps = std::isfinite(frameDurationAvg) ? 1.0 / frameDurationAvg : 0.0;
-			double meterAverage = APP->engine->getMeterAverage();
-			double meterMax = APP->engine->getMeterMax();
-            label += string::f(string::translate("MenuBar.infoLabel"), fps, meterAverage * 100, meterMax * 100);
-			label += "    ";
-		}
+        // If window wide enough display frame rate and CPU meter
+        if (getWidth() >= 460) {
+            double fps =
+                std::isfinite(frameDurationAvg) ? 1.0 / frameDurationAvg : 0.0;
+            double meterAverage = getEngine()->getMeterAverage();
+            double meterMax = getEngine()->getMeterMax();
+            label += string::f(string::translate("MenuBar.infoLabel"), fps,
+                               meterAverage * 100, meterMax * 100);
+            label += "   ";
+        }
 
-		// Add in app and OS name
-		label += APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION + " " + APP_OS_NAME + " " + APP_CPU_NAME;
+        // Add in app and OS name
+        std::string appAndOsName = APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION +
+                       " " + APP_OS_NAME + " " + APP_CPU_NAME;
+        // Remove double spaces from appAndOsName
+        replaceAll(appAndOsName, "  ", " ");
+        label += appAndOsName;
 
-		setText(label);
-		Label::step();
-	}
+        setText(label);
+        Label::step();
+    }
 };
-
 
 ////////////////////
 // MenuBar
@@ -1340,7 +1356,7 @@ struct MenuBar : widget::OpaqueWidget {
 
 	MenuBar() {
 		const float margin = 3.0;
-		box.size.y = rack::settings::bndWidgetHeight + 2 * margin;
+		setHeight(rack::settings::bndWidgetHeight + 2 * margin);
 
 		ui::SequentialLayout* layout = new ui::SequentialLayout;
 		layout->setMargin(math::Vec(margin, margin));
@@ -1368,21 +1384,24 @@ struct MenuBar : widget::OpaqueWidget {
 
         // To display CPU and other such info
 		infoLabel = new InfoLabel();
-		infoLabel->box.size.x = 600;
+		infoLabel->setWidth(600);
 		infoLabel->setAlignment(ui::Label::RIGHT_ALIGNMENT);
+        // Lower a bit so alignts vertically with menu buttons
+        infoLabel->setYOffset(3);
 		layout->addChild(infoLabel);
 	}
 
 	void draw(const DrawArgs& args) override {
-		bndMenuBackground(args.vg, 0.0, 0.0, box.size.x, box.size.y, BND_CORNER_ALL);
-		bndBevel(args.vg, 0.0, 0.0, box.size.x, box.size.y);
+		bndMenuBackground(args.vg, 0.0, 0.0, getWidth(), getHeight(), BND_CORNER_ALL);
+		bndBevel(args.vg, 0.0, 0.0, getWidth(), getHeight());
 
 		Widget::draw(args);
 	}
 
 	void step() override {
 		Widget::step();
-		infoLabel->box.size.x = box.size.x - infoLabel->box.pos.x - 5;
+		infoLabel->setWidth(getWidth() - infoLabel->getX() - 5);
+
 		// Setting 40% alpha prevents Label from using the default UI theme color, so set the color manually here.
 		infoLabel->setColor(color::alpha(bndGetTheme()->regularTheme.textColor, 0.4));
 	}
@@ -1409,7 +1428,7 @@ void appendLanguageMenu(ui::Menu* menu) {
 			// Request restart
 			std::string msg = string::f(string::translate("MenuBar.help.language.restart"), string::translate("language"));
 			if (osdialog_message(OSDIALOG_INFO, OSDIALOG_OK_CANCEL, msg.c_str())) {
-				APP->window->close();
+				getWindow()->close();
 				settings::restart = true;
 			}
 		}));

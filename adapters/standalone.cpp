@@ -71,22 +71,19 @@ static void fatalSignalHandler(int sig) {
  */
 static void initUI() {
 	// Initialize context. Needs to be done before Window created
-	contextSet(new Context);
+    Context* context = new Context();
+	contextSet(context);
 
 	// If in headless mode then don't need to create window, so done
     if (settings::headless) return;
 
-    INFO("Initializing UI");
+    // Initialize UI and create main window
     ui::init();
-
-    INFO("Initializing window");
     window::init();
-
-    INFO("Creating window");
-    APP->window = new window::Window;
+    context->createWindow();
 
     // If was in full screen mode previously go right into full screen mode
-    if (settings::windowMaximized) APP->window->setFullScreen(true);
+    if (settings::windowMaximized) getWindow()->setFullScreen(true);
 }
 
 /**
@@ -242,11 +239,16 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 	
-	// Initialize main UI window
-	initUI();
-
 	INFO("Initializing network");
 	network::init();
+
+    INFO("Initializing plugins");
+	plugin::init();
+
+	// Initialize main UI window
+    INFO("Initializing UI");
+	initUI();
+
 	INFO("Initializing audio");
 	audio::init();
 	rtaudioInit();
@@ -262,25 +264,11 @@ int main(int argc, char* argv[]) {
 	keyboard::init();
 	gamepad::init();
 	midiloopback::init();
-	INFO("Initializing plugins");
-	plugin::init();
+
 	INFO("Initializing browser");
 	app::browserInit();
 	INFO("Initializing library");
 	library::init();
-	INFO("Creating MIDI loopback");
-	APP->midiLoopbackContext = new midiloopback::Context;
-	INFO("Creating engine");
-	APP->engine = new engine::Engine;
-	INFO("Creating history state");
-	APP->history = new history::State;
-	INFO("Creating event state");
-	APP->event = new widget::EventState;
-	INFO("Creating scene");
-	APP->scene = new app::Scene;
-	APP->event->rootWidget = APP->scene;
-	INFO("Creating patch manager");
-	APP->patch = new patch::Manager;
 
 	// On Mac, use a hacked-in GLFW addition to get the launched path.
 #if defined ARCH_MAC
@@ -298,10 +286,8 @@ int main(int argc, char* argv[]) {
 		// Do nothing, which leaves a blank patch
 	}
 	else {
-		APP->patch->launch(patchPath);
+		getPatch()->launch(patchPath);
 	}
-
-	APP->engine->startFallbackThread();
 
 	// Run context
 	if (settings::headless) {
@@ -310,20 +296,11 @@ int main(int argc, char* argv[]) {
 	}
 	else if (screenshot) {
 		INFO("Taking screenshots of all modules at %gx zoom", screenshotZoom);
-		APP->window->screenshotModules(asset::user("screenshots"), screenshotZoom);
+		getWindow()->screenshotModules(asset::user("screenshots"), screenshotZoom);
 	}
 	else {
-		INFO("Running window loop");
 		// Run till user exits
-		APP->window->run();
-		INFO("Stopped window loop");
-
-		// INFO("Destroying window");
-		// delete APP->window;
-		// APP->window = NULL;
-		// INFO("Re-creating window");
-		// APP->window = new window::Window;
-		// APP->window->run();
+		getWindow()->mainLoop();
 	}
 
 	// Destroy context

@@ -8,29 +8,33 @@
 namespace rack {
 namespace app {
 
-
 struct RackScrollWidget : ui::ScrollWidget {
-	struct Internal;
-	Internal* internal;
+   private:
+    struct Internal;
+    Internal* internal_;
 
-	widget::ZoomWidget* zoomWidget;
-	RackWidget* rackWidget;
+   public:
+    widget::ZoomWidget* zoomWidget;
+    RackWidget* rackWidget;
 
-	PRIVATE RackScrollWidget();
-	PRIVATE ~RackScrollWidget();
+    PRIVATE RackScrollWidget();
+    PRIVATE ~RackScrollWidget();
 
-	void reset();
-	/** Gets the top-left scroll offset in grid coordinates.
-	*/
-	math::Vec getGridOffset();
-	void setGridOffset(math::Vec gridOffset);
-	float getZoom();
-	/** Sets the zoom level, with a pivot at the center of the scroll viewport.
-	*/
-	void setZoom(float zoom);
-	void setZoom(float zoom, math::Vec pivot);
-        /** Sets offset and zoom to just fit the existing modules into the view */
-        void zoomToModules();
+    void reset();
+    /** Gets the top-left scroll offset in grid coordinates.
+     */
+    math::Vec getGridOffset();
+
+    void setGridOffset(math::Vec gridOffset);
+    float getZoom();
+    /** Sets the zoom level, with a pivot at the center of the scroll viewport.
+     */
+    void setZoom(float zoom);
+    void setZoom(float zoom, math::Vec pivot);
+
+    /** Sets offset and zoom to just fit the existing modules into the view */
+    void zoomToModules();
+
 	/** Sets offset and zoom to the specified bouding box */
 	void zoomToBound(math::Rect bound);
 
@@ -41,7 +45,6 @@ struct RackScrollWidget : ui::ScrollWidget {
 	void onHover(const HoverEvent& e) override;
 	void onButton(const ButtonEvent& e) override;
 };
-
 
 } // namespace app
 } // namespace rack

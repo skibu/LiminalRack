@@ -19,9 +19,11 @@ namespace app {
 
 /** Container for ModuleWidget and CableWidget. */
 struct RackWidget : widget::OpaqueWidget {
+    private:
 	struct Internal;
-	Internal* internal;
+	Internal* internal_;
 
+    public:
 	/** DEPRECATED. Use get/setTouchedParam(). */
 	ParamWidget* touchedParam = NULL;
 

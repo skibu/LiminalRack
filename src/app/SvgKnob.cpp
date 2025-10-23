@@ -11,7 +11,7 @@ SvgKnob::SvgKnob() {
 
 	shadow = new CircularShadow;
 	fb->addChild(shadow);
-	shadow->box.size = math::Vec();
+	shadow->setSize(math::Vec());
 
 	tw = new widget::TransformWidget;
 	fb->addChild(tw);
@@ -25,14 +25,14 @@ void SvgKnob::setSvg(std::shared_ptr<window::Svg> svg) {
 		return;
 
 	sw->setSvg(svg);
-	tw->box.size = sw->box.size;
-	fb->box.size = sw->box.size;
-	box.size = sw->box.size;
+	tw->setSize(sw->getSize());
+	fb->setSize(sw->getSize());
+	setSize(sw->getSize());
 
-	shadow->box.size = sw->box.size;
+	shadow->setSize(sw->getSize());
+
 	// Move shadow downward by 10%
-	shadow->box.pos = math::Vec(0, sw->box.size.y * 0.10);
-	// shadow->box = shadow->box.grow(math::Vec(2, 2));
+	shadow->setPos(math::Vec(0, sw->getHeight() * 0.10));
 
 	fb->setDirty();
 }
@@ -61,7 +61,7 @@ void SvgKnob::onChange(const ChangeEvent& e) {
 
 	tw->identity();
 	// Rotate SVG
-	math::Vec center = sw->box.getCenter();
+	math::Vec center = sw->getBox().getCenter();
 	tw->translate(center);
 	tw->rotate(angle);
 	tw->translate(center.neg());

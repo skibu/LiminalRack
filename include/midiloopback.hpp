@@ -3,24 +3,21 @@
 #include <common.hpp>
 #include <midi.hpp>
 
-
 namespace rack {
 namespace midiloopback {
 
+// Forward declaration
+class Device;
 
-struct Device;
+class Context {
+   public:
+    std::vector<Device*> devices;
 
-
-struct Context {
-	std::vector<Device*> devices;
-
-	Context();
-	~Context();
+    Context();
+    ~Context();
 };
-
 
 PRIVATE void init();
 
-
-} // namespace midiloopback
-} // namespace rack
+}  // namespace midiloopback
+}  // namespace rack

@@ -36,7 +36,7 @@
 namespace rack {
 namespace window {
 
-
+// Specifies the minimum window size that can be set by the user
 static const math::Vec WINDOW_SIZE_MIN = math::Vec(640, 480);
 
 
@@ -62,7 +62,7 @@ void Font::loadFile(const std::string& filename, NVGcontext* vg) {
 
 
 std::shared_ptr<Font> Font::load(const std::string& filename) {
-	return APP->window->loadFont(filename);
+	return getWindow()->loadFont(filename);
 }
 
 
@@ -85,10 +85,14 @@ void Image::loadFile(const std::string& filename, NVGcontext* vg) {
 
 
 std::shared_ptr<Image> Image::load(const std::string& filename) {
-	return APP->window->loadImage(filename);
+	return getWindow()->loadImage(filename);
 }
 
-
+/** Note: since Window is used by the custom modules out there, definition
+ * of Internal must remain stable. This is because those modules are compiled against
+ * the standard VCVRack version of this file, and so the members in this
+ * header must remain exactly the same for binary compatibility.
+ */
 struct Window::Internal {
 	std::string lastWindowTitle;
 
@@ -105,13 +109,12 @@ struct Window::Internal {
 
 	math::Vec lastMousePos;
 
-	std::map<std::string, std::shared_ptr<Font>> fontCache;
-	std::map<std::string, std::shared_ptr<Image>> imageCache;
+    std::map<std::string, std::shared_ptr<Font>> fontCache;
+    std::map<std::string, std::shared_ptr<Image>> imageCache;
 
-	bool fbDirtyOnSubpixelChange = true;
+    bool fbDirtyOnSubpixelChange = true;
 	int fbCount = 0;
 };
-
 
 static void windowPosCallback(GLFWwindow* win, int x, int y) {
 	if (glfwGetWindowAttrib(win, GLFW_MAXIMIZED))
@@ -121,7 +124,7 @@ static void windowPosCallback(GLFWwindow* win, int x, int y) {
 	if (glfwGetWindowMonitor(win))
 		return;
 	settings::windowPos = math::Vec(x, y);
-	// DEBUG("windowPosCallback %d %d", x, y);
+	DEBUG("windowPosCallback %d %d", x, y);
 }
 
 
@@ -133,13 +136,13 @@ static void windowSizeCallback(GLFWwindow* win, int width, int height) {
 	if (glfwGetWindowMonitor(win))
 		return;
 	settings::windowSize = math::Vec(width, height);
-	// DEBUG("windowSizeCallback %d %d", width, height);
+	DEBUG("windowSizeCallback %d %d", width, height);
 }
 
 
 static void windowMaximizeCallback(GLFWwindow* win, int maximized) {
 	settings::windowMaximized = maximized;
-	// DEBUG("windowMaximizeCallback %d", maximized);
+	DEBUG("windowMaximizeCallback %d", maximized);
 }
 
 
@@ -158,27 +161,27 @@ static void mouseButtonCallback(GLFWwindow* win, int button, int action, int mod
 	}
 #endif
 
-	APP->event->handleButton(APP->window->internal->lastMousePos, button, action, mods);
+	getEvent()->handleButton(getWindow()->getLastMousePos(), button, action, mods);
 }
 
 
 static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
 	contextSet((Context*) glfwGetWindowUserPointer(win));
-	math::Vec mousePos = math::Vec(xpos, ypos).div(APP->window->pixelRatio / APP->window->windowRatio).round();
-	math::Vec mouseDelta = mousePos.minus(APP->window->internal->lastMousePos);
+	math::Vec mousePos = math::Vec(xpos, ypos).div(getWindow()->pixelRatio / getWindow()->windowRatio).round();
+	math::Vec mouseDelta = mousePos.minus(getWindow()->getLastMousePos());
 
 	// if (glfwGetInputMode(win, GLFW_CURSOR) != GLFW_CURSOR_NORMAL && std::fabs(mouseDelta.y) > 20.0) {
-	// 	DEBUG("%d (%f, %f) (%f, %f)", APP->window->internal->frame, VEC_ARGS(mousePos), VEC_ARGS(mouseDelta));
+	// 	DEBUG("%d (%f, %f) (%f, %f)", getWindow()->internal->frame, VEC_ARGS(mousePos), VEC_ARGS(mouseDelta));
 	// }
 
 	// Workaround for GLFW warping mouse to a different position when the cursor is locked or unlocked.
-	if (APP->window->internal->ignoreMouseDeltaUntil > APP->window->internal->frameTime) {
+	if (getWindow()->getIgnoreMouseDeltaUntil() > getWindow()->getFrameTime()) {
 		mouseDelta = math::Vec();
 	}
 
-	APP->window->internal->lastMousePos = mousePos;
+	getWindow()->setLastMousePos(mousePos);
 
-	APP->event->handleHover(mousePos, mouseDelta);
+	getEvent()->handleHover(mousePos, mouseDelta);
 
 	// Keyboard/mouse MIDI driver
 	int width, height;
@@ -191,7 +194,7 @@ static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
 static void cursorEnterCallback(GLFWwindow* win, int entered) {
 	contextSet((Context*) glfwGetWindowUserPointer(win));
 	if (!entered) {
-		APP->event->handleLeave();
+		getEvent()->handleLeave();
 	}
 }
 
@@ -205,20 +208,20 @@ static void scrollCallback(GLFWwindow* win, double x, double y) {
 	scrollDelta = scrollDelta.mult(50.0);
 #endif
 
-	APP->event->handleScroll(APP->window->internal->lastMousePos, scrollDelta);
+	getEvent()->handleScroll(getWindow()->getLastMousePos(), scrollDelta);
 }
 
 
 static void charCallback(GLFWwindow* win, unsigned int codepoint) {
 	contextSet((Context*) glfwGetWindowUserPointer(win));
-	if (APP->event->handleText(APP->window->internal->lastMousePos, codepoint))
+	if (getEvent()->handleText(getWindow()->getLastMousePos(), codepoint))
 		return;
 }
 
 
 static void keyCallback(GLFWwindow* win, int key, int scancode, int action, int mods) {
 	contextSet((Context*) glfwGetWindowUserPointer(win));
-	if (APP->event->handleKey(APP->window->internal->lastMousePos, key, scancode, action, mods))
+	if (getEvent()->handleKey(getWindow()->getLastMousePos(), key, scancode, action, mods))
 		return;
 
 	// Keyboard/mouse MIDI driver
@@ -237,7 +240,7 @@ static void dropCallback(GLFWwindow* win, int count, const char** paths) {
 	for (int i = 0; i < count; i++) {
 		pathsVec.push_back(paths[i]);
 	}
-	APP->event->handleDrop(APP->window->internal->lastMousePos, pathsVec);
+	getEvent()->handleDrop(getWindow()->getLastMousePos(), pathsVec);
 }
 
 
@@ -247,7 +250,7 @@ static void errorCallback(int error, const char* description) {
 
 
 Window::Window() {
-	internal = new Internal;
+	internal_ = new Internal();
 	int err;
 
 	// Set window hints
@@ -278,12 +281,12 @@ Window::Window() {
 	glfwGetWindowContentScale(win, &contentScale, NULL);
 	INFO("Window content scale: %f", contentScale);
 
-	glfwSetWindowSizeLimits(win, WINDOW_SIZE_MIN.x, WINDOW_SIZE_MIN.y, GLFW_DONT_CARE, GLFW_DONT_CARE);
-	if (settings::windowSize.x > 0 && settings::windowSize.y > 0) {
-		glfwSetWindowSize(win, settings::windowSize.x, settings::windowSize.y);
+	glfwSetWindowSizeLimits(win, WINDOW_SIZE_MIN.getX(), WINDOW_SIZE_MIN.getY(), GLFW_DONT_CARE, GLFW_DONT_CARE);
+	if (settings::windowSize.getX() > 0 && settings::windowSize.getY() > 0) {
+		glfwSetWindowSize(win, settings::windowSize.getX(), settings::windowSize.getY());
 	}
-	if (settings::windowPos.x > -32000 && settings::windowPos.y > -32000) {
-		glfwSetWindowPos(win, settings::windowPos.x, settings::windowPos.y);
+	if (settings::windowPos.getX() > -32000 && settings::windowPos.getY() > -32000) {
+		glfwSetWindowPos(win, settings::windowPos.getX(), settings::windowPos.getY());
 	}
 	if (settings::windowMaximized) {
 		glfwMaximizeWindow(win);
@@ -297,11 +300,11 @@ Window::Window() {
 	glfwSwapInterval(0);
 	const GLFWvidmode* monitorMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	if (monitorMode->refreshRate > 0) {
-		internal->monitorRefreshRate = monitorMode->refreshRate;
+		internal_->monitorRefreshRate = monitorMode->refreshRate;
 	}
 	else {
 		// Some monitors report 0Hz refresh rate for some reason, so as a workaround, assume 60Hz.
-		internal->monitorRefreshRate = 60;
+		internal_->monitorRefreshRate = 60;
 	}
 
 	// Set window callbacks
@@ -354,24 +357,24 @@ Window::Window() {
 	if (uiFont)
 		bndSetFont(uiFont->handle);
 
-	if (APP->scene) {
+	if (getScene()) {
 		widget::Widget::ContextCreateEvent e;
 		e.vg = vg;
-		APP->scene->onContextCreate(e);
+		getScene()->onContextCreate(e);
 	}
 }
 
 
 Window::~Window() {
-	if (APP->scene) {
+	if (getScene()) {
 		widget::Widget::ContextDestroyEvent e;
 		e.vg = vg;
-		APP->scene->onContextDestroy(e);
+		getScene()->onContextDestroy(e);
 	}
 
 	// Fonts and Images in the cache must be deleted before the NanoVG context is deleted
-	internal->fontCache.clear();
-	internal->imageCache.clear();
+	internal_->fontCache.clear();
+	internal_->imageCache.clear();
 
 	// nvgDeleteClone(fbVg);
 
@@ -385,7 +388,7 @@ Window::~Window() {
 #endif
 
 	glfwDestroyWindow(win);
-	delete internal;
+	delete internal_;
 }
 
 
@@ -398,25 +401,29 @@ math::Vec Window::getSize() {
 
 void Window::setSize(math::Vec size) {
 	size = size.max(WINDOW_SIZE_MIN);
-	glfwSetWindowSize(win, size.x, size.y);
+	glfwSetWindowSize(win, size.getX(), size.getY());
 }
 
 
-void Window::run() {
-	internal->frame = 0;
+void Window::mainLoop() {
+    INFO("Running window loop");
+
+	internal_->frame = 0;
 	while (!glfwWindowShouldClose(win)) {
 		step();
 	}
+
+    INFO("Stopped window loop");
 }
 
 
 void Window::step() {
 	double frameTime = system::getTime();
-	if (std::isfinite(internal->frameTime)) {
-		internal->lastFrameDuration = frameTime - internal->frameTime;
+	if (std::isfinite(internal_->frameTime)) {
+		internal_->lastFrameDuration = frameTime - internal_->frameTime;
 	}
-	internal->frameTime = frameTime;
-	internal->fbCount = 0;
+	internal_->frameTime = frameTime;
+	internal_->fbCount = 0;
 	// double t1 = 0.0, t2 = 0.0, t3 = 0.0, t4 = 0.0, t5 = 0.0;
 
 	// Make event handlers and step() have a clean NanoVG context
@@ -424,10 +431,11 @@ void Window::step() {
 
 	bndSetFont(uiFont->handle);
 
-	// Poll events
-	// Save and restore context because event handler set their own context based on which window they originate from.
-	Context* context = contextGet();
-	glfwPollEvents();
+    // Poll events
+    // Save and restore context because event handler set their own context
+    // based on which window they originate from.
+    Context* context = contextGet();
+    glfwPollEvents();
 	contextSet(context);
 
 	// In case glfwPollEvents() sets another OpenGL context
@@ -443,15 +451,15 @@ void Window::step() {
 
 	// Set window title
 	std::string windowTitle = APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION;
-	if (APP->patch->path != "") {
+	if (getPatch()->path != "") {
 		windowTitle += " - ";
-		if (!APP->history->isSaved())
+		if (!getHistory()->isSaved())
 			windowTitle += "*";
-		windowTitle += system::getFilename(APP->patch->path);
+		windowTitle += system::getFilename(getPatch()->path);
 	}
-	if (windowTitle != internal->lastWindowTitle) {
+	if (windowTitle != internal_->lastWindowTitle) {
 		glfwSetWindowTitle(win, windowTitle.c_str());
-		internal->lastWindowTitle = windowTitle;
+		internal_->lastWindowTitle = windowTitle;
 	}
 
 	// Get desired pixel ratio
@@ -465,7 +473,7 @@ void Window::step() {
 	}
 	if (newPixelRatio != pixelRatio) {
 		pixelRatio = newPixelRatio;
-		APP->event->handleDirty();
+		getEvent()->handleDirty();
 	}
 
 	// Get framebuffer/window ratio
@@ -476,13 +484,13 @@ void Window::step() {
 	windowRatio = (float)fbWidth / winWidth;
 	// t1 = system::getTime();
 
-	if (APP->scene) {
+	if (getScene()) {
 		// DEBUG("%f %f %d %d", pixelRatio, windowRatio, fbWidth, winWidth);
 		// Resize scene
-		APP->scene->box.size = math::Vec(fbWidth, fbHeight).div(pixelRatio);
+		getScene()->setSize(math::Vec(fbWidth, fbHeight).div(pixelRatio));
 
 		// Step scene
-		APP->scene->step();
+		getScene()->step();
 		// t2 = system::getTime();
 
 		// Render scene
@@ -495,8 +503,8 @@ void Window::step() {
 			// Draw scene
 			widget::Widget::DrawArgs args;
 			args.vg = vg;
-			args.clipBox = APP->scene->box.zeroPos();
-			APP->scene->draw(args);
+			args.clipBox = getScene()->getBox().zeroPos();
+			getScene()->draw(args);
 			// t3 = system::getTime();
 
 			glViewport(0, 0, fbWidth, fbHeight);
@@ -526,7 +534,7 @@ void Window::step() {
 	// 	(t5 - t4) * 1e3f,
 	// 	(t5 - frameTime) * 1e3f
 	// );
-	internal->frame++;
+	internal_->frame++;
 }
 
 
@@ -540,26 +548,25 @@ static void flipBitmap(uint8_t* pixels, int width, int height, int depth) {
 	}
 }
 
-
 void Window::screenshot(const std::string& screenshotPath) {
-	// Get window framebuffer size
-	int width, height;
-	glfwGetFramebufferSize(APP->window->win, &width, &height);
+    // Get window framebuffer size
+    int width, height;
+    glfwGetFramebufferSize(getWindow()->win, &width, &height);
 
-	// Allocate pixel color buffer
-	uint8_t* pixels = new uint8_t[height * width * 4];
+    // Allocate pixel color buffer
+    uint8_t* pixels = new uint8_t[height * width * 4];
 
-	// glReadPixels defaults to GL_BACK, but the back-buffer is unstable, so use the front buffer (what the user sees)
-	glReadBuffer(GL_FRONT);
-	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    // glReadPixels defaults to GL_BACK, but the back-buffer is unstable, so use
+    // the front buffer (what the user sees)
+    glReadBuffer(GL_FRONT);
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
-	// Write pixels to PNG
-	flipBitmap(pixels, width, height, 4);
-	stbi_write_png(screenshotPath.c_str(), width, height, 4, pixels, width * 4);
+    // Write pixels to PNG
+    flipBitmap(pixels, width, height, 4);
+    stbi_write_png(screenshotPath.c_str(), width, height, 4, pixels, width * 4);
 
-	delete[] pixels;
+    delete[] pixels;
 }
-
 
 void Window::screenshotModules(const std::string& screenshotsDir, float zoom) {
 	// Disable preferDarkPanels
@@ -595,8 +602,8 @@ void Window::screenshotModules(const std::string& screenshotsDir, float zoom) {
 			fbw->addChild(mwc);
 
 			app::ModuleWidget* mw = model->createModuleWidget(NULL);
-			mwc->box.size = mw->box.size;
-			fbw->box.size = mw->box.size;
+            mwc->setSize(mw->getSize());
+            fbw->setSize(mw->getSize());
 			mwc->addChild(mw);
 
 			// Step to allow the ModuleWidget state to set its default appearance.
@@ -629,21 +636,20 @@ void Window::close() {
 	glfwSetWindowShouldClose(win, GLFW_TRUE);
 }
 
-
 void Window::cursorLock() {
-	if (!settings::allowCursorLock)
-		return;
+    if (!settings::allowCursorLock) return;
 
-	glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	// Due to a bug in GLFW, setting GLFW_CURSOR_DISABLED causes a spurious mouse position delta after a few frames.
-	// https://github.com/glfw/glfw/issues/2523
-	// Emperically, this seems to be up to 3-6 frames at 60 Hz but in fewer frames at lower framerates.
+    // Due to a bug in GLFW, setting GLFW_CURSOR_DISABLED causes a spurious
+    // mouse position delta after a few frames.
+    // https://github.com/glfw/glfw/issues/2523
+    // Emperically, this seems to be up to 3-6 frames at 60 Hz but in fewer
+    // frames at lower framerates.
 #if defined ARCH_MAC
-	internal->ignoreMouseDeltaUntil = internal->frameTime + 0.09;
+    internal_->ignoreMouseDeltaUntil = internal_->frameTime + 0.09;
 #endif
 }
-
 
 void Window::cursorUnlock() {
 	if (!settings::allowCursorLock)
@@ -657,53 +663,51 @@ bool Window::isCursorLocked() {
 	return glfwGetInputMode(win, GLFW_CURSOR) != GLFW_CURSOR_NORMAL;
 }
 
-
 int Window::getMods() {
-	int mods = 0;
+    int mods = 0;
 #if defined ARCH_LIN
-	// On Linux X11, get mods directly from X11 display, to support X11 key remapping
-	Display* display = glfwGetX11Display();
-	XkbStateRec state;
-	XkbGetState(display, XkbUseCoreKbd, &state);
+    // On Linux X11, get mods directly from X11 display, to support X11 key
+    // remapping
+    Display* display = glfwGetX11Display();
+    XkbStateRec state;
+    XkbGetState(display, XkbUseCoreKbd, &state);
 
-	// Derived from GLFW's translateState() from x11_window.c
-	if (state.mods & ShiftMask)
-		mods |= GLFW_MOD_SHIFT;
-	if (state.mods & ControlMask)
-		mods |= GLFW_MOD_CONTROL;
-	if (state.mods & Mod1Mask)
-		mods |= GLFW_MOD_ALT;
-	if (state.mods & Mod4Mask)
-		mods |= GLFW_MOD_SUPER;
-	if (state.mods & LockMask)
-		mods |= GLFW_MOD_CAPS_LOCK;
-	if (state.mods & Mod2Mask)
-		mods |= GLFW_MOD_NUM_LOCK;
+    // Derived from GLFW's translateState() from x11_window.c
+    if (state.mods & ShiftMask) mods |= GLFW_MOD_SHIFT;
+    if (state.mods & ControlMask) mods |= GLFW_MOD_CONTROL;
+    if (state.mods & Mod1Mask) mods |= GLFW_MOD_ALT;
+    if (state.mods & Mod4Mask) mods |= GLFW_MOD_SUPER;
+    if (state.mods & LockMask) mods |= GLFW_MOD_CAPS_LOCK;
+    if (state.mods & Mod2Mask) mods |= GLFW_MOD_NUM_LOCK;
 #else
-	// Use GLFW key codes on other OS's
-	if (glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
-		mods |= GLFW_MOD_SHIFT;
-	if (glfwGetKey(win, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
-		mods |= GLFW_MOD_CONTROL;
-	if (glfwGetKey(win, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
-		mods |= GLFW_MOD_ALT;
-	if (glfwGetKey(win, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)
-		mods |= GLFW_MOD_SUPER;
+    // Use GLFW key codes on other OS's
+    if (glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+        glfwGetKey(win, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
+        mods |= GLFW_MOD_SHIFT;
+    if (glfwGetKey(win, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
+        glfwGetKey(win, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
+        mods |= GLFW_MOD_CONTROL;
+    if (glfwGetKey(win, GLFW_KEY_LEFT_ALT) == GLFW_PRESS ||
+        glfwGetKey(win, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
+        mods |= GLFW_MOD_ALT;
+    if (glfwGetKey(win, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS ||
+        glfwGetKey(win, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)
+        mods |= GLFW_MOD_SUPER;
 #endif
-	return mods;
+    return mods;
 }
 
 void Window::setFullScreen(bool fullScreen) {
     if (!fullScreen) {
         // Put window into non-full screen mode
         INFO("Taking main window out of full screen mode");
-        glfwSetWindowMonitor(win, NULL, internal->lastWindowX, internal->lastWindowY,
-                             internal->lastWindowWidth, internal->lastWindowHeight, GLFW_DONT_CARE);
+        glfwSetWindowMonitor(win, NULL, internal_->lastWindowX, internal_->lastWindowY,
+                             internal_->lastWindowWidth, internal_->lastWindowHeight, GLFW_DONT_CARE);
     } else {
         // Put window into full screen mode
         INFO("Putting main window into full screen mode");
-        glfwGetWindowPos(win, &internal->lastWindowX, &internal->lastWindowY);
-        glfwGetWindowSize(win, &internal->lastWindowWidth, &internal->lastWindowHeight);
+        glfwGetWindowPos(win, &internal_->lastWindowX, &internal_->lastWindowY);
+        glfwGetWindowSize(win, &internal_->lastWindowWidth, &internal_->lastWindowHeight);
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
         glfwSetWindowMonitor(win, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
@@ -716,37 +720,47 @@ bool Window::isFullScreen() {
 	return monitor != NULL;
 }
 
+math::Vec Window::getLastMousePos() {
+    return internal_->lastMousePos;
+}
+
+void Window::setLastMousePos(const math::Vec& pos) {
+    internal_->lastMousePos = pos;
+}
 
 double Window::getMonitorRefreshRate() {
-	return internal->monitorRefreshRate;
+	return internal_->monitorRefreshRate;
 }
 
 
-double Window::getFrameTime() {
-	return internal->frameTime;
+double Window::getFrameTime() const {
+	return internal_->frameTime;
 }
 
-
-double Window::getLastFrameDuration() {
-	return internal->lastFrameDuration;
+double Window::getIgnoreMouseDeltaUntil() const {
+    return internal_->ignoreMouseDeltaUntil;
 }
 
+double Window::getLastFrameDuration() const {
+	return internal_->lastFrameDuration;
+}
 
-double Window::getFrameDurationRemaining() {
+double Window::getFrameDurationRemaining() const {
 	double frameDuration = 1.f / settings::frameRateLimit;
-	return frameDuration - (system::getTime() - internal->frameTime);
+	return frameDuration - (system::getTime() - internal_->frameTime);
 }
 
 
 std::shared_ptr<Font> Window::loadFont(const std::string& filename) {
 	// If font is already cached, no need to add fallback fonts again.
-	const auto& it = internal->fontCache.find(filename);
-	if (it != internal->fontCache.end())
+	const auto& it = internal_->fontCache.find(filename);
+	if (it != internal_->fontCache.end())
 		return it->second;
 
-	// This redundantly searches the font cache, but it's not a performance issue because it only happens when font is first loaded.
-	std::shared_ptr<Font> font = loadFontWithoutFallbacks(filename);
-	if (!font)
+    // This redundantly searches the font cache, but it's not a performance
+    // issue because it only happens when font is first loaded.
+    std::shared_ptr<Font> font = loadFontWithoutFallbacks(filename);
+    if (!font)
 		return NULL;
 
     // Load fallback fonts for CJK and emoji characters
@@ -766,8 +780,8 @@ std::shared_ptr<Font> Window::loadFont(const std::string& filename) {
 
 std::shared_ptr<Font> Window::loadFontWithoutFallbacks(const std::string& filename) {
 	// Return cached font, even if null
-	const auto& it = internal->fontCache.find(filename);
-	if (it != internal->fontCache.end())
+	const auto& it = internal_->fontCache.find(filename);
+	if (it != internal_->fontCache.end())
 		return it->second;
 
 	// Load font
@@ -779,7 +793,7 @@ std::shared_ptr<Font> Window::loadFontWithoutFallbacks(const std::string& filena
 		WARN("%s", e.what());
 		font = NULL;
 	}
-	internal->fontCache[filename] = font;
+	internal_->fontCache[filename] = font;
 	return font;
 }
 
@@ -791,12 +805,12 @@ void Window::overrideFontFace(const std::string& filename) {
 }
 
 void Window::resetFontFace() {
-    bndSetFont(APP->window->uiFont->handle);
+    bndSetFont(getWindow()->uiFont->handle);
 }
 
 std::shared_ptr<Image> Window::loadImage(const std::string& filename) {
-	const auto& it = internal->imageCache.find(filename);
-	if (it != internal->imageCache.end())
+	const auto& it = internal_->imageCache.find(filename);
+	if (it != internal_->imageCache.end())
 		return it->second;
 
 	// Load image
@@ -809,22 +823,24 @@ std::shared_ptr<Image> Window::loadImage(const std::string& filename) {
 		WARN("%s", e.what());
 		image = NULL;
 	}
-	internal->imageCache[filename] = image;
+	internal_->imageCache[filename] = image;
 	return image;
 }
 
 
 bool& Window::fbDirtyOnSubpixelChange() {
-	return internal->fbDirtyOnSubpixelChange;
+	return internal_->fbDirtyOnSubpixelChange;
 }
 
 
 int& Window::fbCount() {
-	return internal->fbCount;
+	return internal_->fbCount;
 }
 
 
 void init() {
+    INFO("Initializing window");
+
 	int err;
 
 	// Set up GLFW

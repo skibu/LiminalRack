@@ -212,7 +212,7 @@ void EventState::finalizeWidget(widget::Widget* w) {
 }
 
 bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
-	bool cursorLocked = APP->window->isCursorLocked();
+	bool cursorLocked = getWindow()->isCursorLocked();
 
 	widget::Widget* clickedWidget = NULL;
 	if (!cursorLocked) {
@@ -275,11 +275,11 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 }
 
 bool EventState::handleHover(math::Vec pos, math::Vec mouseDelta) {
-	bool cursorLocked = APP->window->isCursorLocked();
+	bool cursorLocked = getWindow()->isCursorLocked();
 
 	// Fake a key RACK_HELD event for each held key
 	if (!cursorLocked) {
-		int mods = APP->window->getMods();
+		int mods = getWindow()->getMods();
 		for (int key : heldKeys) {
 			int scancode = glfwGetKeyScancode(key);
 			handleKey(pos, key, scancode, RACK_HELD, mods);

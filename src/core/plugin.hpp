@@ -27,31 +27,31 @@ struct Grid16MidiDisplay : MidiDisplay {
 
 	template <class TModule>
 	void setModule(TModule* module) {
-		Vec pos = channelChoice->box.getBottomLeft();
+		Vec pos = channelChoice->getBox().getBottomLeft();
 		// Add vSeparators
 		for (int x = 1; x < 4; x++) {
 			vSeparators[x] = createWidget<LedDisplaySeparator>(pos);
-			vSeparators[x]->box.pos.x = box.size.x / 4 * x;
+			vSeparators[x]->setX(getWidth() / 4 * x);
 			addChild(vSeparators[x]);
 		}
 		// Add hSeparators and choice widgets
 		for (int y = 0; y < 4; y++) {
 			hSeparators[y] = createWidget<LedDisplaySeparator>(pos);
-			hSeparators[y]->box.size.x = box.size.x;
+			hSeparators[y]->setWidth(getWidth());
 			addChild(hSeparators[y]);
 			for (int x = 0; x < 4; x++) {
 				choices[x][y] = new TChoice;
-				choices[x][y]->box.pos = pos;
+				choices[x][y]->setPos(pos);
 				choices[x][y]->setId(4 * y + x);
-				choices[x][y]->box.size.x = box.size.x / 4;
-				choices[x][y]->box.pos.x = box.size.x / 4 * x;
+				choices[x][y]->setWidth(getWidth() / 4);
+				choices[x][y]->setX(getWidth() / 4 * x);
 				choices[x][y]->setModule(module);
 				addChild(choices[x][y]);
 			}
-			pos = choices[0][y]->box.getBottomLeft();
+			pos = choices[0][y]->getBox().getBottomLeft();
 		}
 		for (int x = 1; x < 4; x++) {
-			vSeparators[x]->box.size.y = pos.y - vSeparators[x]->box.pos.y;
+			vSeparators[x]->setHeight(pos.getY() - vSeparators[x]->getBox().getY());
 		}
 	}
 };
@@ -64,8 +64,8 @@ struct CcChoice : LedDisplayChoice {
 	int focusCc;
 
 	CcChoice() {
-		box.size.y = mm2px(6.666);
-		textOffset.y -= 4;
+		setHeight(mm2px(6.666));
+		textOffset.setY(textOffset.getY() - 4);
 	}
 
 	void setModule(TModule* module) {
@@ -90,8 +90,8 @@ struct CcChoice : LedDisplayChoice {
 			color.a = 1.0;
 
 			// Cancel focus if no longer learning
-			if (APP->event->getSelectedWidget() == this)
-				APP->event->setSelectedWidget(NULL);
+			if (getEvent()->getSelectedWidget() == this)
+				getEvent()->setSelectedWidget(NULL);
 		}
 
 		// Set text
@@ -136,7 +136,7 @@ struct CcChoice : LedDisplayChoice {
 		if (e.action == GLFW_PRESS && (e.isKeyCommand(GLFW_KEY_ENTER) || e.isKeyCommand(GLFW_KEY_KP_ENTER))) {
 			DeselectEvent eDeselect;
 			onDeselect(eDeselect);
-			APP->event->selectedWidget = NULL;
+			getEvent()->selectedWidget = NULL;
 			e.consume(this);
 		}
 	}
@@ -150,9 +150,8 @@ struct NoteChoice : LedDisplayChoice {
 	int focusNote;
 
 	NoteChoice() {
-		box.size.y = mm2px(6.666);
-		textOffset.y -= 4;
-		textOffset.x -= 4;
+		setHeight(mm2px(6.666));
+		textOffset = Vec(textOffset.getX() - 4, textOffset.getY() - 4);
 	}
 
 	void setId(int id) {
@@ -177,8 +176,8 @@ struct NoteChoice : LedDisplayChoice {
 			color.a = 1.0;
 
 			// Cancel focus if no longer learning
-			if (APP->event->getSelectedWidget() == this)
-				APP->event->setSelectedWidget(NULL);
+			if (getEvent()->getSelectedWidget() == this)
+				getEvent()->setSelectedWidget(NULL);
 		}
 
 		// Set text
@@ -238,7 +237,7 @@ struct NoteChoice : LedDisplayChoice {
 		if (e.action == GLFW_PRESS && (e.isKeyCommand(GLFW_KEY_ENTER) || e.isKeyCommand(GLFW_KEY_KP_ENTER))) {
 			DeselectEvent eDeselect;
 			onDeselect(eDeselect);
-			APP->event->selectedWidget = NULL;
+			getEvent()->selectedWidget = NULL;
 			e.consume(this);
 		}
 	}

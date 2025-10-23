@@ -13,10 +13,11 @@ Label::Label(const std::string& initialText) : Label() {
 }
 
 Label::Label() {
-    fontSize = rack::settings::bndLabelFontSize;
-    box.size.y = fontSize + 12;
-    lineHeight = 1.2;
-    color = color::BLACK_TRANSPARENT;
+    fontSize_ = rack::settings::bndLabelFontSize;
+    setHeight(fontSize_ + 12);
+    lineHeight_ = 1.2;
+    yOffset_ = 0.0f;
+    color_ = color::BLACK_TRANSPARENT;
 }
 
 void Label::draw(const DrawArgs& args) {
@@ -26,34 +27,34 @@ void Label::draw(const DrawArgs& args) {
     // color::RED, color::GREEN);
 
     // Set font face to a bold one
-    APP->window->overrideFontFace(asset::system("res/fonts/Roboto-Bold.ttf"));
+    getWindow()->overrideFontFace(asset::system("res/fonts/Roboto-Bold.ttf"));
 
     // Align the text as specified.
     float x;
-    switch (alignment) {
+    switch (alignment_) {
         default:
         case LEFT_ALIGNMENT: {
             x = 0.0;
         } break;
         case RIGHT_ALIGNMENT: {
-            x = box.size.x -
-                bndLabelWidthForFontSize(args.vg, -1, fontSize, text.c_str());
+            x = getWidth() -
+                bndLabelWidthForFontSize(args.vg, -1, fontSize_, text_.c_str());
         } break;
         case CENTER_ALIGNMENT: {
-            x = (box.size.x - bndLabelWidthForFontSize(args.vg, -1, fontSize,
-                                                       text.c_str())) /
+            x = (getWidth() - bndLabelWidthForFontSize(args.vg, -1, fontSize_,
+                                                       text_.c_str())) /
                 2.0;
         } break;
     }
 
-    nvgTextLineHeight(args.vg, lineHeight);
+    nvgTextLineHeight(args.vg, lineHeight_);
     NVGcolor colorActual =
-        (color.a > 0.f) ? color : bndGetTheme()->regularTheme.textColor;
-    bndIconLabelValue(args.vg, x, 0.0, box.size.x, box.size.y, -1, colorActual,
-                      BND_LEFT, fontSize, text.c_str(), NULL);
+        (color_.a > 0.f) ? color_ : bndGetTheme()->regularTheme.textColor;
+    bndIconLabelValue(args.vg, x, yOffset_, getWidth(), getHeight(), -1, colorActual,
+                      BND_LEFT, fontSize_, text_.c_str(), NULL);
 
     // Restore the original font face
-    APP->window->resetFontFace();
+    getWindow()->resetFontFace();
 }
 
 }  // namespace ui

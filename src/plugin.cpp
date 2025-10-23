@@ -95,9 +95,10 @@ static void* loadLibrary(std::string libraryPath) {
 
 typedef void (*InitCallback)(Plugin*);
 
+/** Loads the plugin's library code and calls the init() function */
 static InitCallback loadPluginCallback(Plugin* plugin) {
-	// Load plugin library
-	std::string libraryExt;
+    // Load plugin library
+    std::string libraryExt;
 #if defined ARCH_LIN
 	libraryExt = "so";
 #elif defined ARCH_WIN
@@ -124,27 +125,26 @@ static InitCallback loadPluginCallback(Plugin* plugin) {
 	return initCallback;
 }
 
-
-/** If path is blank, loads Core */
+/** Loads in and returns the specified plugin (module). If path is blank, loads
+ * Core */
 static Plugin* loadPlugin(std::string path) {
-	if (path == "")
-		INFO("Loading Core plugin");
-	else
-		INFO("Loading plugin from %s", path.c_str());
+    if (path == "")
+        INFO("Loading Core plugin");
+    else
+        INFO("Loading plugin from %s", path.c_str());
 
-	Plugin* plugin = new Plugin;
+    Plugin* plugin = new Plugin;
 
-	try {
-		if (path == "")
-			plugin->version = APP_VERSION;
+    try {
+        if (path == "") plugin->version = APP_VERSION;
 
-		// Set plugin path
-		plugin->path = (path == "") ? asset::systemDir : path;
+        // Set plugin path
+        plugin->path = (path == "") ? asset::systemDir : path;
 
-		// Get modified timestamp
-		if (path != "") {
-			struct stat statbuf;
-			if (!stat(path.c_str(), &statbuf)) {
+        // Get modified timestamp
+        if (path != "") {
+            struct stat statbuf;
+            if (!stat(path.c_str(), &statbuf)) {
 #if defined ARCH_MAC
 				plugin->modifiedTimestamp = (double) statbuf.st_mtimespec.tv_sec + statbuf.st_mtimespec.tv_nsec * 1e-9;
 #elif defined ARCH_WIN
@@ -209,7 +209,6 @@ static Plugin* loadPlugin(std::string path) {
 	plugins.push_back(plugin);
 	return plugin;
 }
-
 
 static void loadPlugins(std::string path) {
 	for (std::string pluginPath : system::getEntries(path)) {

@@ -4,24 +4,23 @@
 namespace rack {
 namespace ui {
 
-
 void List::step() {
-	Widget::step();
+    Widget::step();
 
-	// Set positions of children
-	box.size.y = 0.0;
-	for (widget::Widget* child : children) {
-		if (!child->visible)
-			continue;
-		// Set position of child
-		child->box.pos = math::Vec(0.0, box.size.y);
-		// Increment height
-		box.size.y += child->box.size.y;
-		// Resize width of child
-		child->box.size.x = box.size.x;
-	}
+    // Set positions of children
+    setHeight(0.0);
+    for (widget::Widget* child : getChildren()) {
+        if (!child->isVisible()) continue;
+
+        // Set position of child
+        child->setPos(math::Vec(0.0, getHeight()));
+
+        // Increment height
+        setHeight(getHeight() + child->getHeight());
+        // Resize width of child
+        child->setWidth(getWidth());
+    }
 }
-
 
 } // namespace ui
 } // namespace rack

@@ -17,22 +17,22 @@ struct RailWidget::Internal {
 
 
 RailWidget::RailWidget() {
-	internal = new Internal;
+	internal_ = new Internal;
 
-	internal->railFb = new widget::FramebufferWidget;
+	internal_->railFb = new widget::FramebufferWidget;
 	// The rail renders fine without oversampling, and it would be too expensive anyway.
-	internal->railFb->oversample = 1.0;
+	internal_->railFb->oversample = 1.0;
 	// Don't redraw when the world offset of the rail FramebufferWidget changes its fractional value.
-	internal->railFb->dirtyOnSubpixelChange = false;
-	addChild(internal->railFb);
+	internal_->railFb->dirtyOnSubpixelChange = false;
+	addChild(internal_->railFb);
 
-	internal->railSw = new widget::SvgWidget;
-	internal->railFb->addChild(internal->railSw);
+	internal_->railSw = new widget::SvgWidget;
+	internal_->railFb->addChild(internal_->railSw);
 }
 
 
 RailWidget::~RailWidget() {
-	delete internal;
+	delete internal_;
 }
 
 
@@ -50,9 +50,9 @@ void RailWidget::step() {
 		railSvg = window::Svg::load(asset::system("res/ComponentLibrary/Rail.svg"));
 	}
 
-	if (internal->railSw->svg != railSvg) {
-		internal->railSw->setSvg(railSvg);
-		internal->railFb->setDirty();
+	if (internal_->railSw->svg != railSvg) {
+		internal_->railSw->setSvg(railSvg);
+		internal_->railFb->setDirty();
 	}
 
 	TransparentWidget::step();
@@ -60,10 +60,10 @@ void RailWidget::step() {
 
 
 void RailWidget::draw(const DrawArgs& args) {
-	if (!internal->railSw->svg)
+	if (!internal_->railSw->svg)
 		return;
 
-	math::Vec tileSize = internal->railSw->svg->getSize().div(RACK_GRID_SIZE).round().mult(RACK_GRID_SIZE);
+	math::Vec tileSize = internal_->railSw->svg->getSize().div(RACK_GRID_SIZE).round().mult(RACK_GRID_SIZE);
 	if (tileSize.area() == 0.f)
 		return;
 
@@ -72,10 +72,10 @@ void RailWidget::draw(const DrawArgs& args) {
 
 	// Draw the same FramebufferWidget repeatedly as a tile
 	math::Vec p;
-	for (p.y = min.y; p.y < max.y; p.y += tileSize.y) {
-		for (p.x = min.x; p.x < max.x; p.x += tileSize.x) {
-			internal->railFb->box.pos = p;
-			Widget::drawChild(internal->railFb, args);
+	for (p.setY(min.getY()); p.getY() < max.getY(); p.setY(p.getY() + tileSize.getY())) {
+		for (p.setX(min.getX()); p.getX() < max.getX(); p.setX(p.getX() + tileSize.getX())) {
+			internal_->railFb->setPos(p);
+			Widget::drawChild(internal_->railFb, args);
 		}
 	}
 }

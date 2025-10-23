@@ -204,10 +204,10 @@ json_t* toJson() {
 
 	json_object_set_new(rootJ, "windowMaximized", json_boolean(windowMaximized));
 
-    json_t* windowSizeJ = json_pack("[f, f]", windowSize.x, windowSize.y);
+    json_t* windowSizeJ = json_pack("[f, f]", windowSize.getX(), windowSize.getY());
 	json_object_set_new(rootJ, "windowSize", windowSizeJ);
 
-	json_t* windowPosJ = json_pack("[f, f]", windowPos.x, windowPos.y);
+	json_t* windowPosJ = json_pack("[f, f]", windowPos.getX(), windowPos.getY());
 	json_object_set_new(rootJ, "windowPos", windowPosJ);
 
 	json_object_set_new(rootJ, "invertZoom", json_boolean(invertZoom));

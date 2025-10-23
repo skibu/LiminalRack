@@ -182,9 +182,9 @@ struct MouseInputDevice : midi::InputDevice {
 
 	void onMouseMove(math::Vec pos) {
 		int16_t values[2];
-		values[0] = math::clamp((int) std::round(pos.x * 0x3f80), 0, 0x3f80);
+		values[0] = math::clamp((int) std::round(pos.getX() * 0x3f80), 0, 0x3f80);
 		// Flip Y values
-		values[1] = math::clamp((int) std::round((1.f - pos.y) * 0x3f80), 0, 0x3f80);
+		values[1] = math::clamp((int) std::round((1.f - pos.getY()) * 0x3f80), 0, 0x3f80);
 
 		for (int id = 0; id < 2; id++) {
 			if (values[id] != lastValues[id]) {

@@ -15,6 +15,7 @@ namespace rack {
 namespace midi {
 
 
+// drivers is used by several classes in this file so it is a file wide global
 static std::vector<std::pair<int, Driver*>> drivers;
 
 std::string Message::toString() const {
@@ -61,11 +62,11 @@ void InputDevice::onMessage(const Message& message) {
 		// Set timestamp to now if unset
 		if (message.getFrame() < 0) {
 			Message msg = message;
-			double deltaTime = system::getTime() - APP->engine->getBlockTime();
-			int64_t deltaFrames = std::floor(deltaTime * APP->engine->getSampleRate());
+			double deltaTime = system::getTime() - getEngine()->getBlockTime();
+			int64_t deltaFrames = std::floor(deltaTime * getEngine()->getSampleRate());
 			// Delay message by current Engine block size
-			deltaFrames += APP->engine->getBlockFrames();
-			msg.setFrame(APP->engine->getBlockFrame() + deltaFrames);
+			deltaFrames += getEngine()->getBlockFrames();
+			msg.setFrame(getEngine()->getBlockFrame() + deltaFrames);
 			// Pass message to Input port
 			input->onMessage(msg);
 		}
@@ -304,43 +305,43 @@ static const size_t InputQueue_maxSize = 8192;
 struct InputQueue::Internal {
 	std::priority_queue<SeqMessage> queue;
 	std::mutex mutex;
-	/** Index to preserve ordering for priority_queue since it's unstable.
-	*/
+
+	/** Index to preserve ordering for priority_queue since it's unstable. */
 	uint64_t nextSeq = 0;
 };
 
 InputQueue::InputQueue() {
-	internal = new Internal;
+	internal_ = new Internal;
 }
 
 InputQueue::~InputQueue() {
-	delete internal;
+	delete internal_;
 }
 
 void InputQueue::onMessage(const Message& message) {
-	std::lock_guard<std::mutex> lock(internal->mutex);
+	std::lock_guard<std::mutex> lock(internal_->mutex);
 	// Reject MIDI message if queue is full
-	if (internal->queue.size() >= InputQueue_maxSize)
+	if (internal_->queue.size() >= InputQueue_maxSize)
 		return;
 	// Push to queue
-	internal->queue.push({message, internal->nextSeq});
-	internal->nextSeq++;
+	internal_->queue.push({message, internal_->nextSeq});
+	internal_->nextSeq++;
 }
 
 bool InputQueue::tryPop(Message* messageOut, int64_t maxFrame) {
 	// Check if queue is empty before locking, to avoid frequent unnecessary locking
-	if (internal->queue.empty())
+	if (internal_->queue.empty())
 		return false;
 
-	std::lock_guard<std::mutex> lock(internal->mutex);
+	std::lock_guard<std::mutex> lock(internal_->mutex);
 
-	if (internal->queue.empty())
+	if (internal_->queue.empty())
 		return false;
 
-	const SeqMessage& s = internal->queue.top();
+	const SeqMessage& s = internal_->queue.top();
 	if (s.message.getFrame() <= maxFrame) {
 		*messageOut = s.message;
-		internal->queue.pop();
+		internal_->queue.pop();
 		return true;
 	}
 
@@ -348,7 +349,7 @@ bool InputQueue::tryPop(Message* messageOut, int64_t maxFrame) {
 }
 
 size_t InputQueue::size() {
-	return internal->queue.size();
+	return internal_->queue.size();
 }
 
 

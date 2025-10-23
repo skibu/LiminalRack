@@ -50,7 +50,7 @@ struct MIDIMap : Module {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		for (int id = 0; id < MAX_CHANNELS; id++) {
 			paramHandles[id].color = nvgRGB(0xff, 0xff, 0x40);
-			APP->engine->addParamHandle(&paramHandles[id]);
+			getEngine()->addParamHandle(&paramHandles[id]);
 		}
 		for (int i = 0; i < MAX_CHANNELS; i++) {
 			valueFilters[i].setTau(1 / 30.f);
@@ -61,7 +61,7 @@ struct MIDIMap : Module {
 
 	~MIDIMap() {
 		for (int id = 0; id < MAX_CHANNELS; id++) {
-			APP->engine->removeParamHandle(&paramHandles[id]);
+			getEngine()->removeParamHandle(&paramHandles[id]);
 		}
 	}
 
@@ -131,7 +131,7 @@ struct MIDIMap : Module {
 			if (paramQuantity->snapEnabled)
 				value = std::round(value);
 			// Set param value without Engine smoothing, since it is already filtered.
-			APP->engine->setParamValue(module, paramId, value);
+			getEngine()->setParamValue(module, paramId, value);
 		}
 	}
 
@@ -168,7 +168,7 @@ struct MIDIMap : Module {
 	void clearMap(int id) {
 		learningId = -1;
 		ccs[id] = -1;
-		APP->engine->updateParamHandle(&paramHandles[id], -1, 0, true);
+		getEngine()->updateParamHandle(&paramHandles[id], -1, 0, true);
 		valueFilters[id].reset();
 		updateMapLen();
 		refreshParamHandleText(id);
@@ -178,7 +178,7 @@ struct MIDIMap : Module {
 		learningId = -1;
 		for (int id = 0; id < MAX_CHANNELS; id++) {
 			ccs[id] = -1;
-			APP->engine->updateParamHandle_NoLock(&paramHandles[id], -1, 0, true);
+			getEngine()->updateParamHandle_NoLock(&paramHandles[id], -1, 0, true);
 			valueFilters[id].reset();
 			refreshParamHandleText(id);
 		}
@@ -231,7 +231,7 @@ struct MIDIMap : Module {
 	}
 
 	void learnParam(int id, int64_t moduleId, int paramId) {
-		APP->engine->updateParamHandle(&paramHandles[id], moduleId, paramId, true);
+		getEngine()->updateParamHandle(&paramHandles[id], moduleId, paramId, true);
 		learnedParam = true;
 		commitLearn();
 		updateMapLen();
@@ -281,7 +281,7 @@ struct MIDIMap : Module {
 				if (mapIndex >= MAX_CHANNELS)
 					continue;
 				ccs[mapIndex] = json_integer_value(ccJ);
-				APP->engine->updateParamHandle_NoLock(&paramHandles[mapIndex], json_integer_value(moduleIdJ), json_integer_value(paramIdJ), false);
+				getEngine()->updateParamHandle_NoLock(&paramHandles[mapIndex], json_integer_value(moduleIdJ), json_integer_value(paramIdJ), false);
 				refreshParamHandleText(mapIndex);
 			}
 		}
@@ -328,10 +328,10 @@ struct MIDIMapChoice : LedDisplayChoice {
 			return;
 
 		ScrollWidget* scroll = getAncestorOfType<ScrollWidget>();
-		scroll->scrollTo(box);
+		scroll->scrollTo(getBox());
 
 		// Reset touchedParam
-		APP->scene->rack->touchedParam = NULL;
+		getRack()->touchedParam = NULL;
 		module->enableLearn(id);
 	}
 
@@ -339,9 +339,9 @@ struct MIDIMapChoice : LedDisplayChoice {
 		if (!module)
 			return;
 		// Check if a ParamWidget was touched
-		ParamWidget* touchedParam = APP->scene->rack->touchedParam;
+		ParamWidget* touchedParam = getRack()->touchedParam;
 		if (touchedParam) {
-			APP->scene->rack->touchedParam = NULL;
+			getRack()->touchedParam = NULL;
 			int64_t moduleId = touchedParam->module->id;
 			int paramId = touchedParam->paramId;
 			module->learnParam(id, moduleId, paramId);
@@ -361,15 +361,15 @@ struct MIDIMapChoice : LedDisplayChoice {
 			bgColor.a = 0.15;
 
 			// HACK
-			if (APP->event->selectedWidget != this)
-				APP->event->setSelectedWidget(this);
+			if (getEvent()->selectedWidget != this)
+				getEvent()->setSelectedWidget(this);
 		}
 		else {
 			bgColor = nvgRGBA(0, 0, 0, 0);
 
 			// HACK
-			if (APP->event->selectedWidget == this)
-				APP->event->setSelectedWidget(NULL);
+			if (getEvent()->selectedWidget == this)
+				getEvent()->setSelectedWidget(NULL);
 		}
 
 		// Set text
@@ -406,7 +406,7 @@ struct MIDIMapChoice : LedDisplayChoice {
 		ParamHandle* paramHandle = &module->paramHandles[id];
 		if (paramHandle->moduleId < 0)
 			return "";
-		ModuleWidget* mw = APP->scene->rack->getModule(paramHandle->moduleId);
+		ModuleWidget* mw = getRack()->getModule(paramHandle->moduleId);
 		if (!mw)
 			return "";
 		// Get the Module from the ModuleWidget instead of the ParamHandle.
@@ -438,13 +438,12 @@ struct MIDIMapDisplay : MidiDisplay {
 		this->module = module;
 
 		scroll = new ScrollWidget;
-		scroll->box.pos = channelChoice->box.getBottomLeft();
-		scroll->box.size.x = box.size.x;
-		scroll->box.size.y = box.size.y - scroll->box.pos.y;
+		scroll->setPos(channelChoice->getBox().getBottomLeft());
+		scroll->setSize(getWidth(), getHeight() - scroll->getY());
 		addChild(scroll);
 
-		LedDisplaySeparator* separator = createWidget<LedDisplaySeparator>(scroll->box.pos);
-		separator->box.size.x = box.size.x;
+		LedDisplaySeparator* separator = createWidget<LedDisplaySeparator>(scroll->getPos());
+		separator->setX(getWidth());
 		addChild(separator);
 		separators[0] = separator;
 
@@ -452,19 +451,19 @@ struct MIDIMapDisplay : MidiDisplay {
 		for (int id = 0; id < MAX_CHANNELS; id++) {
 			if (id > 0) {
 				LedDisplaySeparator* separator = createWidget<LedDisplaySeparator>(pos);
-				separator->box.size.x = box.size.x;
+				separator->setWidth(getWidth());
 				scroll->container->addChild(separator);
 				separators[id] = separator;
 			}
 
 			MIDIMapChoice* choice = createWidget<MIDIMapChoice>(pos);
-			choice->box.size.x = box.size.x;
+			choice->setWidth(getWidth());
 			choice->id = id;
 			choice->setModule(module);
 			scroll->container->addChild(choice);
 			choices[id] = choice;
 
-			pos = choice->box.getBottomLeft();
+			pos = choice->getBox().getBottomLeft();
 		}
 	}
 
@@ -472,8 +471,8 @@ struct MIDIMapDisplay : MidiDisplay {
 		if (module) {
 			int mapLen = module->mapLen;
 			for (int id = 0; id < MAX_CHANNELS; id++) {
-				choices[id]->visible = (id < mapLen);
-				separators[id]->visible = (id < mapLen);
+				choices[id]->setVisible(id < mapLen);
+				separators[id]->setVisible(id < mapLen);
 			}
 		}
 
@@ -488,12 +487,12 @@ struct MIDIMapWidget : ModuleWidget {
 		setPanel(createPanel(asset::system("res/Core/MIDIMap.svg"), asset::system("res/Core/MIDIMap-dark.svg")));
 
 		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ThemedScrew>(Vec(getWidth() - 2 * RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ThemedScrew>(Vec(getWidth() - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		MIDIMapDisplay* display = createWidget<MIDIMapDisplay>(mm2px(Vec(0.0, 12.869)));
-		display->box.size = mm2px(Vec(50.8, 105.059));
+		display->setSize(mm2px(Vec(50.8, 105.059)));
 		display->setMidiPort(module ? &module->midiInput : NULL);
 		display->setModule(module);
 		addChild(display);

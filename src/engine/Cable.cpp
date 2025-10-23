@@ -33,7 +33,7 @@ void Cable::fromJson(json_t* rootJ) {
 	if (!inputModuleIdJ)
 		throw Exception("Input module ID not found for cable %lld", (long long) id);
 	int64_t inputModuleId = json_integer_value(inputModuleIdJ);
-	inputModule = APP->engine->getModule_NoLock(inputModuleId);
+	inputModule = getEngine()->getModule_NoLock(inputModuleId);
 	if (!inputModule)
 		throw Exception("Input module %lld not found for cable %lld", (long long) inputModuleId, (long long) id);
 
@@ -48,7 +48,7 @@ void Cable::fromJson(json_t* rootJ) {
 	if (!outputModuleIdJ)
 		throw Exception("Output module ID not found for cable %lld", (long long) id);
 	int64_t outputModuleId = json_integer_value(outputModuleIdJ);
-	outputModule = APP->engine->getModule_NoLock(outputModuleId);
+	outputModule = getEngine()->getModule_NoLock(outputModuleId);
 	if (!outputModule)
 		throw Exception("Output module %lld not found for cable %lld", (long long) outputModuleId, (long long) id);
 

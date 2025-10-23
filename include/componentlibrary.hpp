@@ -75,8 +75,8 @@ struct TSvgLight : TBase {
 
 	void setSvg(std::shared_ptr<Svg> svg) {
 		sw->setSvg(svg);
-		fb->box.size = sw->box.size;
-		this->box.size = sw->box.size;
+		fb->setSize(sw->getSize());
+		this->setSize(sw->getSize());
 	}
 };
 using SvgLight = TSvgLight<>;
@@ -202,7 +202,7 @@ struct MediumSimpleLight : TBase {
 template <typename TBase = GrayModuleLightWidget>
 struct SmallSimpleLight : TBase {
 	SmallSimpleLight() {
-		this->box.size = mm2px(math::Vec(2, 2));
+		this->setSize(mm2px(math::Vec(2, 2)));
 	}
 };
 
@@ -684,8 +684,8 @@ struct BefacoSlidePot : app::SvgSlider {
 		setHandleSvg(Svg::load(asset::system("res/ComponentLibrary/BefacoSlidePotHandle.svg")));
 		math::Vec margin = math::Vec(3.5, 3.5);
 		setHandlePos(math::Vec(-1, 87).plus(margin), math::Vec(-1, -2).plus(margin));
-		background->box.pos = margin;
-		box.size = background->box.size.plus(margin.mult(2));
+		background->setPos(margin);
+		setSize(background->getSize().plus(margin.mult(2)));
 	}
 };
 
@@ -720,9 +720,9 @@ struct LightSlider : TBase {
 	void step() override {
 		TBase::step();
 		// Move center of light to center of handle
-		light->box.pos = this->handle->box.pos
-			.plus(this->handle->box.size.div(2))
-			.minus(light->box.size.div(2));
+		light->setPos(this->handle->getPos()
+			.plus(this->handle->getSize().div(2))
+			.minus(light->getSize().div(2)));
 	}
 };
 
@@ -870,7 +870,7 @@ struct LightButton : TBase {
 	LightButton() {
 		light = new TLight;
 		// Move center of light to center of box
-		light->box.pos = this->box.size.div(2).minus(light->box.size.div(2));
+		light->setPos(this->box.size.div(2).minus(light->getSize().div(2)));
 		this->addChild(light);
 	}
 
@@ -932,7 +932,7 @@ struct VCVLightBezel : VCVBezel {
 	VCVLightBezel() {
 		light = new VCVBezelLight<TLightBase>;
 		// Move center of light to center of box
-		light->box.pos = box.size.div(2).minus(light->box.size.div(2));
+		light->setPos(getSize().div(2).minus(light->getSize().div(2)));
 		addChild(light);
 	}
 
@@ -989,7 +989,7 @@ struct SegmentDisplay : widget::Widget {
 	void draw(const DrawArgs& args) override {
 		// Background
 		nvgBeginPath(args.vg);
-		nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
+		nvgRect(args.vg, 0, 0, this->getWidth(), this->getHeight());
 		nvgFillColor(args.vg, color::BLACK);
 		nvgFill(args.vg);
 		Widget::draw(args);
@@ -999,19 +999,19 @@ struct SegmentDisplay : widget::Widget {
 	void setLights(engine::Module* module, int firstLightId, int lightsLen) {
 		clearChildren();
 		this->lightsLen = lightsLen;
-		float r = (vertical ? box.size.y : box.size.x) - margin;
+		float r = (vertical ? getHeight() : getWidth()) - margin;
 		for (int i = 0; i < lightsLen; i++) {
 			float p = float(i) / lightsLen;
 			app::ModuleLightWidget* light = new RectangleLight<TLightBase>;
 			if (vertical) {
-				light->box.pos.y = p * r + margin;
-				light->box.size.y = r / lightsLen - margin;
-				light->box.size.x = box.size.x;
+                light->setY(p * r + margin);
+				light->setHeight(r / lightsLen - margin);
+				light->setWidth(getWidth());
 			}
 			else {
-				light->box.pos.x = p * r + margin;
-				light->box.size.x = r / lightsLen - margin;
-				light->box.size.y = box.size.y;
+                light->setX(p * r + margin);
+				light->setWidth(r / lightsLen - margin);
+				light->setHeight(getHeight());
 			}
 			light->module = module;
 			light->firstLightId = firstLightId;

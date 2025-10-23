@@ -9,9 +9,12 @@ namespace ui {
 /** A Scrollbar. Uses blendish to actually draw the scrollbar. Parent must be a
  * ScrollWidget */
 struct Scrollbar : widget::OpaqueWidget {
+    // Note: Internal not actually used for Scrollbar. Just a placeholder.
+   private:
     struct Internal;
-    Internal* internal;
+    Internal* internal_;
 
+   public:
     bool vertical = false;
 
     Scrollbar();

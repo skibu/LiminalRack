@@ -24,8 +24,8 @@ void SvgSlider::setBackgroundSvg(std::shared_ptr<window::Svg> svg) {
 		return;
 
 	background->setSvg(svg);
-	box.size = background->box.size;
-	fb->box.size = background->box.size;
+	setSize(background->getBox().getSize());
+	fb->setSize(background->getBox().getSize());
 	fb->setDirty();
 }
 
@@ -35,7 +35,7 @@ void SvgSlider::setHandleSvg(std::shared_ptr<window::Svg> svg) {
 		return;
 
 	handle->setSvg(svg);
-	handle->box.pos = maxHandlePos;
+	handle->setPos(minHandlePos);
 	fb->setDirty();
 }
 
@@ -45,14 +45,14 @@ void SvgSlider::setHandlePos(math::Vec minHandlePos, math::Vec maxHandlePos) {
 	this->maxHandlePos = maxHandlePos;
 
 	// Set handle pos to maximum by default
-	handle->box.pos = maxHandlePos;
+	handle->setPos(maxHandlePos);
 }
 
 
 void SvgSlider::setHandlePosCentered(math::Vec minHandlePosCentered, math::Vec maxHandlePosCentered) {
 	setHandlePos(
-		minHandlePosCentered.minus(handle->box.size.div(2)),
-		maxHandlePosCentered.minus(handle->box.size.div(2))
+		minHandlePosCentered.minus(handle->getSize().div(2)),
+		maxHandlePosCentered.minus(handle->getSize().div(2))
 	);
 }
 
@@ -66,7 +66,7 @@ void SvgSlider::onChange(const ChangeEvent& e) {
 	}
 
 	// Interpolate handle position
-	handle->box.pos = minHandlePos.crossfade(maxHandlePos, v);
+	handle->setPos(minHandlePos.crossfade(maxHandlePos, v));
 	fb->setDirty();
 
 	ParamWidget::onChange(e);

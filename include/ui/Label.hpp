@@ -23,23 +23,54 @@ class Label : public widget::Widget {
         RIGHT_ALIGNMENT,
     };
 
-    void setText(const std::string& text) { this->text = text; }
-    void setAlignment(Alignment alignment) { this->alignment = alignment; }
-    void setColor(NVGcolor color) { this->color = color; }  
-    void setFontSize(float fontSize) { this->fontSize = fontSize; }
-    float getFontSize() const { return fontSize; }
+    void setText(const std::string& text) {
+        this->text_ = text;
+    }
+
+    /** Sets horizontal alignment for the text to leeft, center, or right */
+    void setAlignment(Alignment alignment) {
+        this->alignment_ = alignment;
+    }
+
+    /** Sets the color of the text. */
+    void setColor(NVGcolor color) {
+        this->color_ = color;
+    }
+
+    /** Sets the font size for the text of this label */
+    void setFontSize(float fontSize) {
+        this->fontSize_ = fontSize;
+    }
+
+    /** Gets the font size for the text of this label */
+    float getFontSize() const {
+        return fontSize_;
+    }
 
     /** Sets the font face to use for this label in place of default one */
-    void setFontFaceOverride(const std::string& fontFile) { this->fontFaceOverride = fontFile; }
+    void setFontFaceOverride(const std::string& fontFile) {
+        this->fontFaceOverride_ = fontFile;
+    }
+
+    /** Sets the line height for the text of this label */
+    void setLineHeight(float lineHeight) {
+        this->lineHeight_ = lineHeight;
+    }
+
+    /** To adjust y position to better align vertically */
+    void setYOffset(float yOffset) {
+        this->yOffset_ = yOffset;
+    }
 
    private:
-    std::string text;
-    NVGcolor color;
-    Alignment alignment = LEFT_ALIGNMENT;
-    float fontSize;
-    float lineHeight;
+    std::string text_;
+    NVGcolor color_;
+    Alignment alignment_ = LEFT_ALIGNMENT;
+    float yOffset_;
+    float fontSize_;
+    float lineHeight_;
     // For if want to use a different font face than the default
-    std::string fontFaceOverride = "";
+    std::string fontFaceOverride_ = "";
 
     void draw(const DrawArgs& args) override;
 };

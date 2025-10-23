@@ -13,22 +13,19 @@ namespace ui {
  * the button.
  */
 Button::Button() {
-    box.size.y = settings::bndWidgetHeight;
+    setHeight(settings::bndWidgetHeight);
 }
 
 void Button::draw(const DrawArgs& args) {
-	BNDwidgetState state = BND_DEFAULT;
-	if (APP->event->getHoveredWidget() == this)
-		state = BND_HOVER;
-	if (APP->event->getDraggedWidget() == this)
-		state = BND_ACTIVE;
+    BNDwidgetState state = BND_DEFAULT;
+    if (getEvent()->getHoveredWidget() == this) state = BND_HOVER;
+    if (getEvent()->getDraggedWidget() == this) state = BND_ACTIVE;
 
-	std::string text = this->text;
-	if (text.empty() && quantity)
-		text = quantity->getLabel();
-	bndToolButton(args.vg, 0.0, 0.0, box.size.x, box.size.y, BND_CORNER_NONE, state, -1, text.c_str());
+    std::string text = this->text;
+    if (text.empty() && quantity) text = quantity->getLabel();
+    bndToolButton(args.vg, 0.0, 0.0, getWidth(), getHeight(), BND_CORNER_NONE,
+                  state, -1, text.c_str());
 }
-
 
 void Button::onDragStart(const DragStartEvent& e) {
 	if (e.button != GLFW_MOUSE_BUTTON_LEFT)

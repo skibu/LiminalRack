@@ -39,7 +39,7 @@ struct TransformWidget : Widget {
 
 	void scale(math::Vec s) {
 		float t[6];
-		nvgTransformScale(t, s.x, s.y);
+		nvgTransformScale(t, s.getX(), s.getY());
 		nvgTransformPremultiply(transform, t);
 	}
 

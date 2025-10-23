@@ -9,6 +9,30 @@
 
 namespace rack {
 
+Context::Context() {
+    // window only gets created if not in headless mode
+    window = NULL;
+
+    INFO("Creating patch manager");
+	patch_ = new patch::Manager;
+
+    INFO("Creating scene");
+	scene_ = new app::Scene();
+
+	INFO("Creating event state");
+	event_ = new widget::EventState;
+    event_->rootWidget = getScene();
+
+	INFO("Creating history state");
+	history_ = new history::State;
+
+    INFO("Creating engine");
+	engine_ = new engine::Engine;
+	engine_->startFallbackThread();
+
+	INFO("Creating MIDI loopback");
+	midiLoopbackContext_ = new midiloopback::Context;    
+}
 
 Context::~Context() {
 	// Deleting NULL is safe in C++.
@@ -20,35 +44,104 @@ Context::~Context() {
 	window = NULL;
 
 	INFO("Deleting patch manager");
-	delete patch;
-	patch = NULL;
+	delete patch_;
+	patch_ = NULL;
 
 	INFO("Deleting scene");
-	delete scene;
-	scene = NULL;
+	delete scene_;
+	scene_ = NULL;
 
 	INFO("Deleting event state");
-	delete event;
-	event = NULL;
+	delete event_;
+	event_ = NULL;
 
 	INFO("Deleting history state");
-	delete history;
-	history = NULL;
+	delete history_;
+	history_ = NULL;
 
 	INFO("Deleting engine");
-	delete engine;
-	engine = NULL;
+	delete engine_;
+	engine_ = NULL;
 
 	INFO("Deleting MIDI loopback");
-	delete midiLoopbackContext;
-	midiLoopbackContext = NULL;
+	delete midiLoopbackContext_;
+	midiLoopbackContext_ = NULL;
 }
 
+void Context::createWindow() {
+    INFO("Creating window");
+    window = new window::Window;
+}
 
+// Global context pointer for the current thread
 static thread_local Context* threadContext = NULL;
 
 Context* contextGet() {
 	return threadContext;
+}
+
+widget::EventState* getEvent() {
+    Context* ctx = contextGet();
+    if (ctx) {
+        return ctx->getEvent();
+    }
+    return NULL;
+}
+
+app::Scene* getScene() {
+    Context* ctx = contextGet();
+    if (ctx) {
+        return ctx->getScene();
+    }
+    return NULL;
+}
+
+window::Window* getWindow() {
+    Context* ctx = contextGet();
+    if (ctx) {
+        return ctx->getWindow();
+    }
+    return NULL;
+}
+
+app::RackWidget* getRack() {
+    Context* ctx = contextGet();
+    if (ctx) {
+        return ctx->getRack();
+    }
+    return NULL;
+}
+
+engine::Engine* getEngine() {
+    Context* ctx = contextGet();
+    if (ctx) {
+        return ctx->getEngine();
+    }
+    return NULL;
+}
+
+history::State* getHistory() {
+    Context* ctx = contextGet();
+    if (ctx) {
+        return ctx->getHistory();
+    }
+    return NULL;
+}
+
+patch::Manager* getPatch() {
+    Context* ctx = contextGet();
+    if (ctx) {
+        return ctx->getPatch();
+    }
+    return NULL;
+}
+
+midiloopback::Context* getMidiLoopbackContext() {
+    Context* ctx = contextGet();
+    if (ctx) {
+        return ctx->getMidiLoopbackContext();
+    }
+    return NULL;
 }
 
 // Apple's clang incorrectly compiles this function when -O2 or higher is enabled.

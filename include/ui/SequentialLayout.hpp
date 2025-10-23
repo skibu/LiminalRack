@@ -9,14 +9,15 @@ namespace ui {
 
 /** A container of children widgets. Positions children in a row/column based on their widths/heights */
 class SequentialLayout : public widget::Widget {
-    public:
-
+   public:
+   
 	enum Orientation {
         // The default layout of horizontal rows
 		HORIZONTAL_ORIENTATION,
         // Layout of vertical columns
 		VERTICAL_ORIENTATION,
 	};
+
 	enum Alignment {
         // Children packed together on left
 		LEFT_ALIGNMENT,
@@ -92,28 +93,28 @@ class SequentialLayout : public widget::Widget {
 
     /** Helper function to access the correct axis based on orientation */
     float X(math::Vec v) {
-        return orientation_ == HORIZONTAL_ORIENTATION ? (v).x : (v).y;
+        return orientation_ == HORIZONTAL_ORIENTATION ? (v).getX() : (v).getY();
     }
 
     /** Helper function to access the correct axis based on orientation */
     float Y(math::Vec v) {
-        return orientation_ == HORIZONTAL_ORIENTATION ? (v).y : (v).x;
+        return orientation_ == HORIZONTAL_ORIENTATION ? (v).getY() : (v).getX();
     }
 
     /** Updates the X value of vec, depending on the orientation */
     void setX(math::Vec& vec, float value) {
         if (orientation_ == HORIZONTAL_ORIENTATION)
-            vec.x = value;
+            vec.setX(value);
         else
-            vec.y = value;
+            vec.setY(value);
     }
 
     /** Updates the Y value of vec, depending on the orientation */
     void setY(math::Vec& vec, float value) {
         if (orientation_ == HORIZONTAL_ORIENTATION)
-            vec.y = value;
+            vec.setY(value);
         else
-            vec.x = value;
+            vec.setX(value);
     }
 
     /** Returns minimum width needed for the children in the row, without spacing between the

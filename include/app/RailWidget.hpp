@@ -6,17 +6,17 @@
 namespace rack {
 namespace app {
 
-
 struct RailWidget : widget::TransparentWidget {
-	struct Internal;
-	Internal* internal;
+   private:
+    struct Internal;
+    Internal* internal_;
 
-	RailWidget();
-	~RailWidget();
-	void step() override;
-	void draw(const DrawArgs& args) override;
+   public:
+    RailWidget();
+    ~RailWidget();
+    void step() override;
+    void draw(const DrawArgs& args) override;
 };
-
 
 } // namespace app
 } // namespace rack

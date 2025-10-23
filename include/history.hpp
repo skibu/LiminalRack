@@ -171,10 +171,13 @@ struct CableColorChange : Action {
 };
 
 
-struct State {
+class State {
+    private:
+    // Note: internal_ is not defined or used for State. Just a placeholder.
 	struct Internal;
-	Internal* internal;
+	Internal* internal_;
 
+    public:
 	std::deque<Action*> actions;
 	int actionIndex;
 	/** Action index of saved patch state. */

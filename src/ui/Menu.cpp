@@ -6,7 +6,7 @@ namespace ui {
 
 
 Menu::Menu() {
-	box.size = math::Vec(0, 0);
+	setSize(0, 0);
 }
 
 Menu::~Menu() {
@@ -15,14 +15,15 @@ Menu::~Menu() {
 
 void Menu::setChildMenu(Menu* menu) {
 	if (childMenu) {
-		childMenu->parent->removeChild(childMenu);
+		childMenu->getParent()->removeChild(childMenu);
 		delete childMenu;
 		childMenu = NULL;
 	}
+
 	if (menu) {
 		childMenu = menu;
-		assert(parent);
-		parent->addChild(childMenu);
+		assert(getParent());
+		getParent()->addChild(childMenu);
 	}
 }
 
@@ -30,37 +31,38 @@ void Menu::step() {
 	Widget::step();
 
 	// Set positions of children
-	box.size = math::Vec(0, 0);
-	for (widget::Widget* child : children) {
-		if (!child->visible)
+	setSize(0, 0);
+	for (widget::Widget* child : getChildren()) {
+		if (!child->isVisible())
 			continue;
 		// Increment height, set position of child
-		child->box.pos = math::Vec(0, box.size.y);
-		box.size.y += child->box.size.y;
+		child->setPos(math::Vec(0, getHeight()));
+		setHeight(getHeight() + child->getHeight());
+        
 		// Increase width based on maximum width of child
-		if (child->box.size.x > box.size.x) {
-			box.size.x = child->box.size.x;
+		if (child->getWidth() > getWidth()) {
+			setWidth(child->getWidth());
 		}
 	}
 
 	// Set widths of all children to maximum width
-	for (widget::Widget* child : children) {
-		child->box.size.x = box.size.x;
+	for (widget::Widget* child : getChildren()) {
+		child->setWidth(getWidth());
 	}
 
 	// Fit inside parent
-	assert(parent);
-	box = box.nudge(parent->box.zeroPos());
+	assert(getParent());
+	setBox(getBox().nudge(getParent()->getBox().zeroPos()));
 }
 
 void Menu::draw(const DrawArgs& args) {
-	bndMenuBackground(args.vg, 0.0, 0.0, box.size.x, box.size.y, cornerFlags);
+	bndMenuBackground(args.vg, 0.0, 0.0, getWidth(), getHeight(), cornerFlags);
 	Widget::draw(args);
 }
 
 void Menu::onHoverScroll(const HoverScrollEvent& e) {
-	if (parent && !parent->box.contains(box))
-		box.pos.y += e.scrollDelta.y;
+	if (getParent() && !getParent()->getBox().contains(getBox()))
+		setY(getY() + e.scrollDelta.getY());
 }
 
 

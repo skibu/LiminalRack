@@ -30,9 +30,9 @@ void MenuLabel::draw(const DrawArgs& args) {
                 color::minus(theme_bg, nvgRGB(45, 45, 45));
 
         // Determine the box for drawing background of label
-        float width = box.size.x;
+        float width = getWidth();
         // Could add a bit more height but nice to have labels be a bit smaller
-        float height = box.size.y - 2.0;
+        float height = getHeight() - 2.0;
         float x = 0.0;
         // Need to adjust a bit so that box is vertically centered
         float y = -y_centering_offset;
@@ -43,15 +43,15 @@ void MenuLabel::draw(const DrawArgs& args) {
     }
 
     // Draw the label, centered verticially
-   bndMenuLabel(args.vg, 0.0, -y_centering_offset, box.size.x, box.size.y, -1,
+   bndMenuLabel(args.vg, 0.0, -y_centering_offset, getWidth(), getHeight(), -1,
                  text.c_str());
 }
 
 void MenuLabel::step() {
 	// Add 10 more pixels because Retina measurements are sometimes too small
 	const float rightPadding = 10.0;
-	// HACK use APP->window->vg from the window.
-	box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str()) + rightPadding;
+	// HACK use getWindow()->vg from the window.
+	setWidth(bndLabelWidth(getWindow()->vg, -1, text.c_str()) + rightPadding);
 	Widget::step();
 }
 

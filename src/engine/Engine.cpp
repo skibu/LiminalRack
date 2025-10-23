@@ -162,50 +162,6 @@ struct HybridBarrier {
 };
 
 
-struct EngineWorker {
-	Engine* engine;
-	int id;
-	pthread_t thread;
-	bool running = false;
-
-	void start() {
-		if (running) {
-			WARN("Engine worker already started");
-			return;
-		}
-		running = true;
-
-		// Launch thread with same scheduling policy and priority as current thread (ID 0)
-		int err;
-		err = pthread_create(&thread, NULL, [](void* p) -> void* {
-			EngineWorker* that = (EngineWorker*) p;
-
-			// int policy;
-			// sched_param param;
-			// if (!pthread_getschedparam(pthread_self(), &policy, &param)) {
-			// 	DEBUG("EngineWorker %d thread launched with policy %d priority %d", that->id, policy, param.sched_priority);
-			// }
-
-			that->run();
-			return NULL;
-		}, this);
-		if (err) {
-			WARN("EngineWorker %d thread could not be started: %s", id, strerror(err));
-		}
-	}
-
-	void requestStop() {
-		running = false;
-	}
-
-	void join() {
-		pthread_join(thread, NULL);
-	}
-
-	void run();
-};
-
-
 struct Engine::Internal {
 	std::vector<Module*> modules;
 	/** Sorted by (inputModule, inputId) tuple */
@@ -246,15 +202,17 @@ struct Engine::Internal {
 	Readers lock when using the engine's state.
 	*/
 	SharedMutex mutex;
+
 	/** Mutex that guards stepBlock() so it's not called simultaneously.
 	*/
 	std::mutex blockMutex;
 
 	int threadCount = 0;
 	std::vector<EngineWorker> workers;
-	SpinBarrier engineBarrier;
-	HybridBarrier workerBarrier;
+	rack::engine::SpinBarrier engineBarrier;
+	rack::engine::HybridBarrier workerBarrier;
 	std::atomic<int> workerModuleIndex;
+
 	// For worker threads
 	Context* context;
 
@@ -262,59 +220,121 @@ struct Engine::Internal {
 	std::thread fallbackThread;
 	std::mutex fallbackMutex;
 	std::condition_variable fallbackCv;
+
+    // Internal methods
+    float getParamSmoothValue(Module* module, int paramId) const;
+    void setParamSmoothValue(Module* module, int paramId, float value);
+    bool hasCable(Cable* cable);
+
+    /** Returns a vector of cable IDs in the rack. Share-locks. */
+    size_t getCableIds(int64_t* cableIds, size_t len);
+
+    /** Returns a vector of cable IDs in the rack. Share-locks. */
+    std::vector<int64_t> getCableIds();
 };
 
 
-static void Engine_updateExpander_NoLock(Engine* that, Module* module, uint8_t side) {
-	Module::Expander& expander = module->getExpander(side);
-
-	if (expander.moduleId >= 0) {
-		// Check if moduleId has changed from current module
-		if (!expander.module || expander.module->id != expander.moduleId) {
-			Module* expanderModule = that->getModule_NoLock(expander.moduleId);
-			module->setExpanderModule(expanderModule, side);
-		}
-	}
-	else {
-		// Check if moduleId has unset module
-		if (expander.module) {
-			module->setExpanderModule(NULL, side);
-		}
-	}
+float Engine::Internal::getParamSmoothValue(Module* module, int paramId) const {
+	if (smoothModule == module && smoothParamId == paramId)
+		return smoothValue;
+	return module->params[paramId].getValue();
 }
 
 
+void Engine::Internal::setParamSmoothValue(Module* module, int paramId,
+                                           float value) {
+    // If another param is being smoothed, jump value
+    if (smoothModule && !(smoothModule == module && smoothParamId == paramId)) {
+        smoothModule->params[smoothParamId].setValue(smoothValue);
+    }
+    smoothParamId = paramId;
+    smoothValue = value;
+    // Set this last so the above values are valid as soon as it is set
+    smoothModule = module;
+}
+
+bool Engine::Internal::hasCable(Cable* cable) {
+	SharedLock<SharedMutex> lock(mutex);
+	// TODO Performance could be improved by searching cablesCache, but more testing would be needed to make sure it's always valid.
+	auto it = std::find(cables.begin(), cables.end(), cable);
+	return it != cables.end();
+}
+
+
+size_t Engine::Internal::getCableIds(int64_t* cableIds, size_t len) {
+	SharedLock<SharedMutex> lock(mutex);
+	size_t i = 0;
+	for (Cable* c : cables) {
+		if (i >= len)
+			break;
+		cableIds[i] = c->id;
+		i++;
+	}
+	return i;
+}
+
+
+std::vector<int64_t> Engine::Internal::getCableIds() {
+	SharedLock<SharedMutex> lock(mutex);
+	std::vector<int64_t> cableIds;
+	cableIds.reserve(cables.size());
+	for (Cable* c : cables) {
+		cableIds.push_back(c->id);
+	}
+	return cableIds;
+}
+
+
+static void Engine_updateExpander_NoLock(Engine* that, Module* module,
+                                         uint8_t side) {
+    Module::Expander& expander = module->getExpander(side);
+
+    if (expander.moduleId >= 0) {
+        // Check if moduleId has changed from current module
+        if (!expander.module || expander.module->id != expander.moduleId) {
+            Module* expanderModule = that->getModule_NoLock(expander.moduleId);
+            module->setExpanderModule(expanderModule, side);
+        }
+    } else {
+        // Check if moduleId has unset module
+        if (expander.module) {
+            module->setExpanderModule(NULL, side);
+        }
+    }
+}
+
 static void Engine_relaunchWorkers(Engine* that, int threadCount) {
-	Engine::Internal* internal = that->internal;
-	if (threadCount == internal->threadCount)
+	if (threadCount == that->getInternal()->threadCount)
 		return;
 
-	if (internal->threadCount > 0) {
+    std::vector<EngineWorker>& workers = that->getInternal()->workers;
+
+	if (that->getInternal()->threadCount > 0) {
 		// Stop engine workers
-		for (EngineWorker& worker : internal->workers) {
+		for (EngineWorker& worker : workers) {
 			worker.requestStop();
 		}
-		internal->engineBarrier.wait();
+		that->getInternal()->engineBarrier.wait();
 
 		// Join and destroy engine workers
-		for (EngineWorker& worker : internal->workers) {
+		for (EngineWorker& worker : workers) {
 			worker.join();
 		}
-		internal->workers.resize(0);
+		workers.resize(0);
 	}
 
 	// Configure engine
-	internal->threadCount = threadCount;
+	that->getInternal()->threadCount = threadCount;
 
 	// Set barrier counts
-	internal->engineBarrier.setThreads(threadCount);
-	internal->workerBarrier.setThreads(threadCount);
+	that->getInternal()->engineBarrier.setThreads(threadCount);
+	that->getInternal()->workerBarrier.setThreads(threadCount);
 
 	if (threadCount > 0) {
 		// Create and start engine workers
-		internal->workers.resize(threadCount - 1);
+		that->getInternal()->workers.resize(threadCount - 1);
 		for (int id = 1; id < threadCount; id++) {
-			EngineWorker& worker = internal->workers[id - 1];
+			EngineWorker& worker = that->getInternal()->workers[id - 1];
 			worker.id = id;
 			worker.engine = that;
 			worker.start();
@@ -324,171 +344,170 @@ static void Engine_relaunchWorkers(Engine* that, int threadCount) {
 
 
 static void Engine_stepWorker(Engine* that, int threadId) {
-	Engine::Internal* internal = that->internal;
-
-	// int threadCount = internal->threadCount;
-	int modulesLen = internal->modules.size();
+	int modulesLen = that->getInternal()->modules.size();
 
 	// Build ProcessArgs
 	Module::ProcessArgs processArgs;
-	processArgs.sampleRate = internal->sampleRate;
-	processArgs.sampleTime = internal->sampleTime;
-	processArgs.frame = internal->frame;
+	processArgs.sampleRate = that->getSampleRate();
+	processArgs.sampleTime = that->getSampleTime();
+	processArgs.frame = that->getFrame();
 
 	// Step each module
 	while (true) {
 		// Choose next module
 		// First-come-first serve module-to-thread allocation algorithm
-		int i = internal->workerModuleIndex++;
+		int i = that->getInternal()->workerModuleIndex.fetch_add(1);
 		if (i >= modulesLen)
 			break;
 
-		Module* module = internal->modules[i];
+		Module* module = that->getModules()[i];
 		module->doProcess(processArgs);
 	}
 }
 
-
 static void Engine_stepFrameCables(Engine* that) {
-	auto finitize = [](float x) {
-		return std::isfinite(x) ? x : 0.f;
-	};
+    auto finitize = [](float x) { return std::isfinite(x) ? x : 0.f; };
 
-	// Iterate each cable input group, since `cables` is sorted by input
-	auto firstIt = that->internal->cables.begin();
-	while (firstIt != that->internal->cables.end()) {
-		Cable* firstCable = *firstIt;
-		Input* input = &firstCable->inputModule->inputs[firstCable->inputId];
+    // Iterate each cable input group, since `cables` is sorted by input
+    auto cables = that->getInternal()->cables;
+    auto firstIt = cables.begin();
+    while (firstIt != cables.end()) {
+        Cable* firstCable = *firstIt;
+        Input* input = &firstCable->inputModule->inputs[firstCable->inputId];
 
-		// Find end of input group
-		auto endIt = firstIt;
-		while (++endIt != that->internal->cables.end()) {
-			Cable* endCable = *endIt;
-			// Check inputId first since it changes more frequently between cables
-			if (!(endCable->inputId == firstCable->inputId && endCable->inputModule == firstCable->inputModule))
-				break;
-		}
+        // Find end of input group
+        auto endIt = firstIt;
+        while (++endIt != cables.end()) {
+            Cable* endCable = *endIt;
+            // Check inputId first since it changes more frequently between
+            // cables
+            if (!(endCable->inputId == firstCable->inputId &&
+                  endCable->inputModule == firstCable->inputModule))
+                break;
+        }
 
-		// Since stackable inputs are uncommon, only use stackable input logic if there are multiple cables in input group.
-		if (endIt - firstIt == 1) {
-			Output* output = &firstCable->outputModule->outputs[firstCable->outputId];
-			// Copy all voltages from output to input
-			for (uint8_t c = 0; c < output->channels; c++) {
-				input->voltages[c] = finitize(output->voltages[c]);
-			}
-			// Set higher channel voltages to 0
-			for (uint8_t c = output->channels; c < input->channels; c++) {
-				input->voltages[c] = 0.f;
-			}
-			input->channels = output->channels;
-		}
-		else {
-			// Calculate max output channels
-			uint8_t channels = 0;
-			for (auto it = firstIt; it < endIt; ++it) {
-				Cable* cable = *it;
-				Output* output = &cable->outputModule->outputs[cable->outputId];
-				channels = std::max(channels, output->channels);
-			}
+        // Since stackable inputs are uncommon, only use stackable input logic
+        // if there are multiple cables in input group.
+        if (endIt - firstIt == 1) {
+            Output* output =
+                &firstCable->outputModule->outputs[firstCable->outputId];
+            // Copy all voltages from output to input
+            for (uint8_t c = 0; c < output->channels; c++) {
+                input->voltages[c] = finitize(output->voltages[c]);
+            }
+            // Set higher channel voltages to 0
+            for (uint8_t c = output->channels; c < input->channels; c++) {
+                input->voltages[c] = 0.f;
+            }
+            input->channels = output->channels;
+        } else {
+            // Calculate max output channels
+            uint8_t channels = 0;
+            for (auto it = firstIt; it < endIt; ++it) {
+                Cable* cable = *it;
+                Output* output = &cable->outputModule->outputs[cable->outputId];
+                channels = std::max(channels, output->channels);
+            }
 
-			// Clear input channels, including old channels
-			for (uint8_t c = 0; c < std::max(channels, input->channels); c++) {
-				input->voltages[c] = 0.f;
-			}
-			input->channels = channels;
+            // Clear input channels, including old channels
+            for (uint8_t c = 0; c < std::max(channels, input->channels); c++) {
+                input->voltages[c] = 0.f;
+            }
+            input->channels = channels;
 
-			// Sum outputs of cables
-			for (auto it = firstIt; it < endIt; ++it) {
-				Cable* cable = *it;
-				Output* output = &cable->outputModule->outputs[cable->outputId];
+            // Sum outputs of cables
+            for (auto it = firstIt; it < endIt; ++it) {
+                Cable* cable = *it;
+                Output* output = &cable->outputModule->outputs[cable->outputId];
 
-				// Sum monophonic value to all input channels
-				if (output->channels == 1) {
-					float value = finitize(output->voltages[0]);
-					for (uint8_t c = 0; c < channels; c++) {
-						input->voltages[c] += value;
-					}
-				}
-				// Sum polyphonic values to each input channel
-				else {
-					for (uint8_t c = 0; c < output->channels; c++) {
-						input->voltages[c] += finitize(output->voltages[c]);
-					}
-				}
-			}
-		}
+                // Sum monophonic value to all input channels
+                if (output->channels == 1) {
+                    float value = finitize(output->voltages[0]);
+                    for (uint8_t c = 0; c < channels; c++) {
+                        input->voltages[c] += value;
+                    }
+                }
+                // Sum polyphonic values to each input channel
+                else {
+                    for (uint8_t c = 0; c < output->channels; c++) {
+                        input->voltages[c] += finitize(output->voltages[c]);
+                    }
+                }
+            }
+        }
 
-		firstIt = endIt;
-	}
+        firstIt = endIt;
+    }
 }
-
 
 /** Steps a single frame
-*/
+ */
 static void Engine_stepFrame(Engine* that) {
-	Engine::Internal* internal = that->internal;
+    // Param smoothing
+    Module* smoothModule = that->getInternal()->smoothModule;
+    if (smoothModule) {
+        int smoothParamId = that->getInternal()->smoothParamId;
+        float smoothValue = that->getInternal()->smoothValue;
+        Param* smoothParam = &smoothModule->params[smoothParamId];
+        float value = smoothParam->value;
+        // Use decay rate of roughly 1 graphics frame
+        const float smoothLambda = 60.f;
+        float newValue =
+            value + (smoothValue - value) * smoothLambda * that->getSampleTime();
+        if (value == newValue) {
+            // Snap to actual smooth value if the value doesn't change enough
+            // (due to the granularity of floats)
+            smoothParam->setValue(smoothValue);
+            that->getInternal()->smoothModule = nullptr;
+            that->getInternal()->smoothParamId = 0;
+        } else {
+            smoothParam->setValue(newValue);
+        }
+    }
 
-	// Param smoothing
-	Module* smoothModule = internal->smoothModule;
-	if (smoothModule) {
-		int smoothParamId = internal->smoothParamId;
-		float smoothValue = internal->smoothValue;
-		Param* smoothParam = &smoothModule->params[smoothParamId];
-		float value = smoothParam->value;
-		// Use decay rate of roughly 1 graphics frame
-		const float smoothLambda = 60.f;
-		float newValue = value + (smoothValue - value) * smoothLambda * internal->sampleTime;
-		if (value == newValue) {
-			// Snap to actual smooth value if the value doesn't change enough (due to the granularity of floats)
-			smoothParam->setValue(smoothValue);
-			internal->smoothModule = NULL;
-			internal->smoothParamId = 0;
-		}
-		else {
-			smoothParam->setValue(newValue);
-		}
-	}
+    // Step modules along with workers
+    that->getInternal()->workerModuleIndex = 0;
+    that->getInternal()->engineBarrier.wait();
+    Engine_stepWorker(that, 0);
+    that->getInternal()->workerBarrier.wait();
 
-	// Step modules along with workers
-	internal->workerModuleIndex = 0;
-	internal->engineBarrier.wait();
-	Engine_stepWorker(that, 0);
-	internal->workerBarrier.wait();
+    Engine_stepFrameCables(that);   
 
-	Engine_stepFrameCables(that);
+    // Flip messages for each module
+    for (Module* module : that->getModules()) {
+        if (module->leftExpander.messageFlipRequested) {
+            std::swap(module->leftExpander.producerMessage,
+                      module->leftExpander.consumerMessage);
+            module->leftExpander.messageFlipRequested = false;
+        }
+        if (module->rightExpander.messageFlipRequested) {
+            std::swap(module->rightExpander.producerMessage,
+                      module->rightExpander.consumerMessage);
+            module->rightExpander.messageFlipRequested = false;
+        }
+    }
 
-	// Flip messages for each module
-	for (Module* module : that->internal->modules) {
-		if (module->leftExpander.messageFlipRequested) {
-			std::swap(module->leftExpander.producerMessage, module->leftExpander.consumerMessage);
-			module->leftExpander.messageFlipRequested = false;
-		}
-		if (module->rightExpander.messageFlipRequested) {
-			std::swap(module->rightExpander.producerMessage, module->rightExpander.consumerMessage);
-			module->rightExpander.messageFlipRequested = false;
-		}
-	}
-
-	internal->frame++;
+    that->incrementFrame();
 }
-
 
 static void Engine_refreshParamHandleCache(Engine* that) {
-	// Clear cache
-	that->internal->paramHandlesCache.clear();
-	// Add active ParamHandles to cache
-	for (ParamHandle* paramHandle : that->internal->paramHandles) {
-		if (paramHandle->moduleId >= 0) {
-			that->internal->paramHandlesCache[std::make_tuple(paramHandle->moduleId, paramHandle->paramId)] = paramHandle;
-		}
-	}
+    // Clear cache
+    auto cache = that->getInternal()->paramHandlesCache;
+    cache.clear();
+
+    // Add active ParamHandles to cache
+    for (ParamHandle* paramHandle : that->getInternal()->paramHandles) {
+        if (paramHandle->moduleId >= 0) {
+            cache[std::make_tuple(
+                paramHandle->moduleId, paramHandle->paramId)] = paramHandle;
+        }
+    }
 }
 
-
 Engine::Engine() {
-	internal = new Internal;
+	internal_ = new Internal;
 
-	internal->context = contextGet();
+	internal_->context = contextGet();
 	setSuggestedSampleRate(0.f);
 }
 
@@ -496,12 +515,12 @@ Engine::Engine() {
 Engine::~Engine() {
 	// Stop fallback thread if running
 	{
-		std::lock_guard<std::mutex> lock(internal->fallbackMutex);
-		internal->fallbackRunning = false;
-		internal->fallbackCv.notify_all();
+		std::lock_guard<std::mutex> lock(internal_->fallbackMutex);
+		internal_->fallbackRunning = false;
+		internal_->fallbackCv.notify_all();
 	}
-	if (internal->fallbackThread.joinable())
-		internal->fallbackThread.join();
+	if (internal_->fallbackThread.joinable())
+		internal_->fallbackThread.join();
 
 	// Shut down workers
 	Engine_relaunchWorkers(this, 0);
@@ -511,37 +530,40 @@ Engine::~Engine() {
 
 	// Make sure there are no cables or modules in the rack on destruction.
 	// If this happens, a module must have failed to remove itself before the RackWidget was destroyed.
-	assert(internal->cables.empty());
-	assert(internal->modules.empty());
-	assert(internal->paramHandles.empty());
+	assert(internal_->cables.empty());
+	assert(internal_->modules.empty());
+	assert(internal_->paramHandles.empty());
 
-	assert(internal->modulesCache.empty());
-	assert(internal->cablesCache.empty());
-	assert(internal->paramHandlesCache.empty());
+	assert(internal_->modulesCache.empty());
+	assert(internal_->cablesCache.empty());
+	assert(internal_->paramHandlesCache.empty());
 
-	delete internal;
+	delete internal_;
 }
 
+Engine::Internal* Engine::getInternal() const {
+    return internal_;
+} 
 
 void Engine::clear() {
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	clear_NoLock();
 }
 
 
 void Engine::clear_NoLock() {
 	// Copy lists because we'll be removing while iterating
-	std::set<ParamHandle*> paramHandles = internal->paramHandles;
+	std::set<ParamHandle*> paramHandles = internal_->paramHandles;
 	for (ParamHandle* paramHandle : paramHandles) {
 		removeParamHandle_NoLock(paramHandle);
 		// Don't delete paramHandle because they're normally owned by Module subclasses
 	}
-	std::vector<Cable*> cables = internal->cables;
+	std::vector<Cable*> cables = internal_->cables;
 	for (Cable* cable : cables) {
 		removeCable_NoLock(cable);
 		delete cable;
 	}
-	std::vector<Module*> modules = internal->modules;
+	std::vector<Module*> modules = internal_->modules;
 	for (Module* module : modules) {
 		removeModule_NoLock(module);
 		delete module;
@@ -553,17 +575,17 @@ void Engine::stepBlock(int frames) {
 	// Start timer before locking
 	double startTime = system::getTime();
 
-	std::lock_guard<std::mutex> stepLock(internal->blockMutex);
-	SharedLock<SharedMutex> lock(internal->mutex);
+	std::lock_guard<std::mutex> stepLock(internal_->blockMutex);
+	SharedLock<SharedMutex> lock(internal_->mutex);
 	// Configure thread
 	system::resetFpuFlags();
 
-	internal->blockFrame = internal->frame;
-	internal->blockTime = system::getTime();
-	internal->blockFrames = frames;
+	internal_->blockFrame = internal_->frame;
+	internal_->blockTime = system::getTime();
+	internal_->blockFrames = frames;
 
 	// Update expander pointers
-	for (Module* module : internal->modules) {
+	for (Module* module : internal_->modules) {
 		Engine_updateExpander_NoLock(this, module, 0);
 		Engine_updateExpander_NoLock(this, module, 1);
 	}
@@ -578,83 +600,87 @@ void Engine::stepBlock(int frames) {
 
 	yieldWorkers();
 
-	internal->block++;
+	internal_->block++;
 
 	// Stop timer
 	double endTime = system::getTime();
-	double meter = (endTime - startTime) / (frames * internal->sampleTime);
-	internal->meterTotal += meter;
-	internal->meterMax = std::fmax(internal->meterMax, meter);
-	internal->meterCount++;
+	double meter = (endTime - startTime) / (frames * internal_->sampleTime);
+	internal_->meterTotal += meter;
+	internal_->meterMax = std::fmax(internal_->meterMax, meter);
+	internal_->meterCount++;
 
 	// Update meter values
 	const double meterUpdateDuration = 1.0;
-	if (startTime - internal->meterLastTime >= meterUpdateDuration) {
-		internal->meterLastAverage = internal->meterTotal / internal->meterCount;
-		internal->meterLastMax = internal->meterMax;
-		internal->meterLastTime = startTime;
-		internal->meterCount = 0;
-		internal->meterTotal = 0.0;
-		internal->meterMax = 0.0;
+	if (startTime - internal_->meterLastTime >= meterUpdateDuration) {
+		internal_->meterLastAverage = internal_->meterTotal / internal_->meterCount;
+		internal_->meterLastMax = internal_->meterMax;
+		internal_->meterLastTime = startTime;
+		internal_->meterCount = 0;
+		internal_->meterTotal = 0.0;
+		internal_->meterMax = 0.0;
 	}
 }
 
 
 void Engine::setMasterModule(Module* module) {
-	if (module == internal->masterModule)
+	if (module == internal_->masterModule)
 		return;
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	setMasterModule_NoLock(module);
 }
 
 
 void Engine::setMasterModule_NoLock(Module* module) {
-	if (module == internal->masterModule)
+	if (module == internal_->masterModule)
 		return;
 
-	if (internal->masterModule) {
+	if (internal_->masterModule) {
 		// Dispatch UnsetMasterEvent
 		Module::UnsetMasterEvent e;
-		internal->masterModule->onUnsetMaster(e);
+		internal_->masterModule->onUnsetMaster(e);
 	}
 
-	internal->masterModule = module;
+	internal_->masterModule = module;
 
-	if (internal->masterModule) {
+	if (internal_->masterModule) {
 		// Dispatch SetMasterEvent
 		Module::SetMasterEvent e;
-		internal->masterModule->onSetMaster(e);
+		internal_->masterModule->onSetMaster(e);
 	}
 
 	// Wake up fallback thread if master module was unset
-	if (!internal->masterModule) {
-		internal->fallbackCv.notify_all();
+	if (!internal_->masterModule) {
+		internal_->fallbackCv.notify_all();
 	}
 }
 
 
 Module* Engine::getMasterModule() {
-	return internal->masterModule;
+	return internal_->masterModule;
 }
 
 
 float Engine::getSampleRate() {
-	return internal->sampleRate;
+	return internal_->sampleRate;
+}
+
+float Engine::getSampleTime() {
+    return internal_->sampleTime;
 }
 
 
 void Engine::setSampleRate(float sampleRate) {
-	if (sampleRate == internal->sampleRate)
+	if (sampleRate == internal_->sampleRate)
 		return;
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 
-	internal->sampleRate = sampleRate;
-	internal->sampleTime = 1.f / sampleRate;
+	internal_->sampleRate = sampleRate;
+	internal_->sampleTime = 1.f / sampleRate;
 	// Dispatch SampleRateChangeEvent
 	Module::SampleRateChangeEvent e;
-	e.sampleRate = internal->sampleRate;
-	e.sampleTime = internal->sampleTime;
-	for (Module* module : internal->modules) {
+	e.sampleRate = internal_->sampleRate;
+	e.sampleTime = internal_->sampleTime;
+	for (Module* module : internal_->modules) {
 		module->onSampleRateChange(e);
 	}
 }
@@ -674,65 +700,65 @@ void Engine::setSuggestedSampleRate(float suggestedSampleRate) {
 }
 
 
-float Engine::getSampleTime() {
-	return internal->sampleTime;
-}
-
-
 void Engine::yieldWorkers() {
-	internal->workerBarrier.yield();
+	internal_->workerBarrier.yield();
 }
 
 
 int64_t Engine::getFrame() {
-	return internal->frame;
+	return internal_->frame;
+}
+
+
+void Engine::incrementFrame() const{
+    internal_->frame++;
 }
 
 
 int64_t Engine::getBlock() {
-	return internal->block;
+	return internal_->block;
 }
 
 
 int64_t Engine::getBlockFrame() {
-	return internal->blockFrame;
+	return internal_->blockFrame;
 }
 
 
 double Engine::getBlockTime() {
-	return internal->blockTime;
+	return internal_->blockTime;
 }
 
 
 int Engine::getBlockFrames() {
-	return internal->blockFrames;
+	return internal_->blockFrames;
 }
 
 
 double Engine::getBlockDuration() {
-	return internal->blockFrames * internal->sampleTime;
+	return internal_->blockFrames * internal_->sampleTime;
 }
 
 
 double Engine::getMeterAverage() {
-	return internal->meterLastAverage;
+	return internal_->meterLastAverage;
 }
 
 
 double Engine::getMeterMax() {
-	return internal->meterLastMax;
+	return internal_->meterLastMax;
 }
 
 
-size_t Engine::getNumModules() {
-	return internal->modules.size();
+std::vector<Module*> Engine::getModules() const {
+    return internal_->modules;
 }
 
 
 size_t Engine::getModuleIds(int64_t* moduleIds, size_t len) {
-	SharedLock<SharedMutex> lock(internal->mutex);
+	SharedLock<SharedMutex> lock(internal_->mutex);
 	size_t i = 0;
-	for (Module* m : internal->modules) {
+	for (Module* m : internal_->modules) {
 		if (i >= len)
 			break;
 		moduleIds[i] = m->id;
@@ -743,10 +769,10 @@ size_t Engine::getModuleIds(int64_t* moduleIds, size_t len) {
 
 
 std::vector<int64_t> Engine::getModuleIds() {
-	SharedLock<SharedMutex> lock(internal->mutex);
+	SharedLock<SharedMutex> lock(internal_->mutex);
 	std::vector<int64_t> moduleIds;
-	moduleIds.reserve(internal->modules.size());
-	for (Module* m : internal->modules) {
+	moduleIds.reserve(internal_->modules.size());
+	for (Module* m : internal_->modules) {
 		moduleIds.push_back(m->id);
 	}
 	return moduleIds;
@@ -754,7 +780,7 @@ std::vector<int64_t> Engine::getModuleIds() {
 
 
 void Engine::addModule(Module* module) {
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	addModule_NoLock(module);
 }
 
@@ -762,26 +788,26 @@ void Engine::addModule(Module* module) {
 void Engine::addModule_NoLock(Module* module) {
 	assert(module);
 	// Check that the module is not already added
-	auto it = std::find(internal->modules.begin(), internal->modules.end(), module);
-	assert(it == internal->modules.end());
+	auto it = std::find(internal_->modules.begin(), internal_->modules.end(), module);
+	assert(it == internal_->modules.end());
 	// Set ID if unset or collides with an existing ID
-	while (module->id < 0 || internal->modulesCache.find(module->id) != internal->modulesCache.end()) {
+	while (module->id < 0 || internal_->modulesCache.find(module->id) != internal_->modulesCache.end()) {
 		// Randomly generate ID
 		module->id = random::u64() % (1ull << 53);
 	}
 	// Add module
-	internal->modules.push_back(module);
-	internal->modulesCache[module->id] = module;
+	internal_->modules.push_back(module);
+	internal_->modulesCache[module->id] = module;
 	// Dispatch AddEvent
 	Module::AddEvent eAdd;
 	module->onAdd(eAdd);
 	// Dispatch SampleRateChangeEvent
 	Module::SampleRateChangeEvent eSrc;
-	eSrc.sampleRate = internal->sampleRate;
-	eSrc.sampleTime = internal->sampleTime;
+	eSrc.sampleRate = internal_->sampleRate;
+	eSrc.sampleTime = internal_->sampleTime;
 	module->onSampleRateChange(eSrc);
 	// Update ParamHandles' module pointers
-	for (ParamHandle* paramHandle : internal->paramHandles) {
+	for (ParamHandle* paramHandle : internal_->paramHandles) {
 		if (paramHandle->moduleId == module->id)
 			paramHandle->module = module;
 	}
@@ -789,7 +815,7 @@ void Engine::addModule_NoLock(Module* module) {
 
 
 void Engine::removeModule(Module* module) {
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	removeModule_NoLock(module);
 }
 
@@ -797,13 +823,13 @@ void Engine::removeModule(Module* module) {
 void Engine::removeModule_NoLock(Module* module) {
 	assert(module);
 	// Check that the module actually exists
-	auto it = std::find(internal->modules.begin(), internal->modules.end(), module);
-	assert(it != internal->modules.end());
+	auto it = std::find(internal_->modules.begin(), internal_->modules.end(), module);
+	assert(it != internal_->modules.end());
 	// Dispatch RemoveEvent
 	Module::RemoveEvent eRemove;
 	module->onRemove(eRemove);
 	// Update ParamHandles' module pointers
-	for (ParamHandle* paramHandle : internal->paramHandles) {
+	for (ParamHandle* paramHandle : internal_->paramHandles) {
 		if (paramHandle->moduleId == module->id)
 			paramHandle->module = NULL;
 	}
@@ -812,16 +838,16 @@ void Engine::removeModule_NoLock(Module* module) {
 		setMasterModule_NoLock(NULL);
 	}
 	// If a param is being smoothed on this module, stop smoothing it immediately
-	if (module == internal->smoothModule) {
-		internal->smoothModule = NULL;
+	if (module == internal_->smoothModule) {
+		internal_->smoothModule = NULL;
 	}
 	// Check that all cables are disconnected
-	for (Cable* cable : internal->cables) {
+	for (Cable* cable : internal_->cables) {
 		assert(cable->inputModule != module);
 		assert(cable->outputModule != module);
 	}
 	// Update expanders of other modules
-	for (Module* m : internal->modules) {
+	for (Module* m : internal_->modules) {
 		for (uint8_t side = 0; side < 2; side++) {
 			Module::Expander& expander = m->getExpander(!side);
 			if (expander.moduleId == module->id) {
@@ -839,21 +865,21 @@ void Engine::removeModule_NoLock(Module* module) {
 		module->setExpanderModule(NULL, side);
 	}
 	// Remove module
-	internal->modulesCache.erase(module->id);
-	internal->modules.erase(it);
+	internal_->modulesCache.erase(module->id);
+	internal_->modules.erase(it);
 }
 
 
 bool Engine::hasModule(Module* module) {
-	SharedLock<SharedMutex> lock(internal->mutex);
+	SharedLock<SharedMutex> lock(internal_->mutex);
 	// TODO Performance could be improved by searching modulesCache, but more testing would be needed to make sure it's always valid.
-	auto it = std::find(internal->modules.begin(), internal->modules.end(), module);
-	return it != internal->modules.end();
+	auto it = std::find(internal_->modules.begin(), internal_->modules.end(), module);
+	return it != internal_->modules.end();
 }
 
 
 Module* Engine::getModule(int64_t moduleId) {
-	SharedLock<SharedMutex> lock(internal->mutex);
+	SharedLock<SharedMutex> lock(internal_->mutex);
 	return getModule_NoLock(moduleId);
 }
 
@@ -861,15 +887,15 @@ Module* Engine::getModule(int64_t moduleId) {
 Module* Engine::getModule_NoLock(int64_t moduleId) {
 	if (moduleId < 0)
 		return NULL;
-	auto it = internal->modulesCache.find(moduleId);
-	if (it == internal->modulesCache.end())
+	auto it = internal_->modulesCache.find(moduleId);
+	if (it == internal_->modulesCache.end())
 		return NULL;
 	return it->second;
 }
 
 
 void Engine::resetModule(Module* module) {
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	assert(module);
 
 	Module::ResetEvent eReset;
@@ -878,7 +904,7 @@ void Engine::resetModule(Module* module) {
 
 
 void Engine::randomizeModule(Module* module) {
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	assert(module);
 
 	Module::RandomizeEvent eRandomize;
@@ -891,7 +917,7 @@ void Engine::bypassModule(Module* module, bool bypassed) {
 	if (module->isBypassed() == bypassed)
 		return;
 
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 
 	// Clear outputs and set to 1 channel
 	for (Output& output : module->outputs) {
@@ -914,64 +940,35 @@ void Engine::bypassModule(Module* module, bool bypassed) {
 
 
 json_t* Engine::moduleToJson(Module* module) {
-	SharedLock<SharedMutex> lock(internal->mutex);
+	SharedLock<SharedMutex> lock(internal_->mutex);
 	return module->toJson();
 }
 
 
 void Engine::moduleFromJson(Module* module, json_t* rootJ) {
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	module->fromJson(rootJ);
 }
 
 
 void Engine::prepareSaveModule(Module* module) {
-	SharedLock<SharedMutex> lock(internal->mutex);
+	SharedLock<SharedMutex> lock(internal_->mutex);
 	Module::SaveEvent e;
 	module->onSave(e);
 }
 
 
 void Engine::prepareSave() {
-	SharedLock<SharedMutex> lock(internal->mutex);
-	for (Module* module : internal->modules) {
+	SharedLock<SharedMutex> lock(internal_->mutex);
+	for (Module* module : internal_->modules) {
 		Module::SaveEvent e;
 		module->onSave(e);
 	}
 }
 
 
-size_t Engine::getNumCables() {
-	return internal->cables.size();
-}
-
-
-size_t Engine::getCableIds(int64_t* cableIds, size_t len) {
-	SharedLock<SharedMutex> lock(internal->mutex);
-	size_t i = 0;
-	for (Cable* c : internal->cables) {
-		if (i >= len)
-			break;
-		cableIds[i] = c->id;
-		i++;
-	}
-	return i;
-}
-
-
-std::vector<int64_t> Engine::getCableIds() {
-	SharedLock<SharedMutex> lock(internal->mutex);
-	std::vector<int64_t> cableIds;
-	cableIds.reserve(internal->cables.size());
-	for (Cable* c : internal->cables) {
-		cableIds.push_back(c->id);
-	}
-	return cableIds;
-}
-
-
 void Engine::addCable(Cable* cable) {
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	addCable_NoLock(cable);
 }
 
@@ -985,7 +982,7 @@ void Engine::addCable_NoLock(Cable* cable) {
 	Output& output = cable->outputModule->outputs[cable->outputId];
 	bool inputWasConnected = false;
 	bool outputWasConnected = false;
-	for (Cable* cable2 : internal->cables) {
+	for (Cable* cable2 : internal_->cables) {
 		// Check that the cable is not already added
 		assert(cable2 != cable);
 		// Check that cable isn't similar to another cable
@@ -998,14 +995,14 @@ void Engine::addCable_NoLock(Cable* cable) {
 			outputWasConnected = true;
 	}
 	// Set ID if unset or collides with an existing ID
-	while (cable->id < 0 || internal->cablesCache.find(cable->id) != internal->cablesCache.end()) {
+	while (cable->id < 0 || internal_->cablesCache.find(cable->id) != internal_->cablesCache.end()) {
 		// Generate random 52-bit ID
 		cable->id = random::u64() % (1ull << 53);
 	}
 	// Add the cable
-	internal->cables.push_back(cable);
+	internal_->cables.push_back(cable);
 	// Sort cable by input so they are grouped in stepFrame()
-	std::sort(internal->cables.begin(), internal->cables.end(), [](Cable* a, Cable* b) {
+	std::sort(internal_->cables.begin(), internal_->cables.end(), [](Cable* a, Cable* b) {
 		return std::make_tuple(a->inputModule, a->inputId) < std::make_tuple(b->inputModule, b->inputId);
 	});
 	// Set default number of input/output channels
@@ -1016,7 +1013,7 @@ void Engine::addCable_NoLock(Cable* cable) {
 		output.channels = 1;
 	}
 	// Add caches
-	internal->cablesCache[cable->id] = cable;
+	internal_->cablesCache[cable->id] = cable;
 	// Dispatch input port event
 	if (!inputWasConnected) {
 		Module::PortChangeEvent e;
@@ -1037,7 +1034,7 @@ void Engine::addCable_NoLock(Cable* cable) {
 
 
 void Engine::removeCable(Cable* cable) {
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	removeCable_NoLock(cable);
 }
 
@@ -1047,16 +1044,16 @@ void Engine::removeCable_NoLock(Cable* cable) {
 	Input& input = cable->inputModule->inputs[cable->inputId];
 	Output& output = cable->outputModule->outputs[cable->outputId];
 	// Check that the cable is already added
-	auto it = std::find(internal->cables.begin(), internal->cables.end(), cable);
-	assert(it != internal->cables.end());
+	auto it = std::find(internal_->cables.begin(), internal_->cables.end(), cable);
+	assert(it != internal_->cables.end());
 	// Remove cable caches
-	internal->cablesCache.erase(cable->id);
+	internal_->cablesCache.erase(cable->id);
 	// Remove cable
-	internal->cables.erase(it);
+	internal_->cables.erase(it);
 	// Check if input/output is still connected to a cable
 	bool inputIsConnected = false;
 	bool outputIsConnected = false;
-	for (Cable* cable2 : internal->cables) {
+	for (Cable* cable2 : internal_->cables) {
 		if (cable2->inputModule == cable->inputModule && cable2->inputId == cable->inputId) {
 			inputIsConnected = true;
 		}
@@ -1096,30 +1093,27 @@ void Engine::removeCable_NoLock(Cable* cable) {
 }
 
 
-bool Engine::hasCable(Cable* cable) {
-	SharedLock<SharedMutex> lock(internal->mutex);
-	// TODO Performance could be improved by searching cablesCache, but more testing would be needed to make sure it's always valid.
-	auto it = std::find(internal->cables.begin(), internal->cables.end(), cable);
-	return it != internal->cables.end();
-}
-
-
 Cable* Engine::getCable(int64_t cableId) {
 	if (cableId < 0)
 		return NULL;
-	SharedLock<SharedMutex> lock(internal->mutex);
-	auto it = internal->cablesCache.find(cableId);
-	if (it == internal->cablesCache.end())
+	SharedLock<SharedMutex> lock(internal_->mutex);
+	auto it = internal_->cablesCache.find(cableId);
+	if (it == internal_->cablesCache.end())
 		return NULL;
 	return it->second;
 }
 
 
+std::vector<int64_t> Engine::getCableIds() {
+    return internal_->getCableIds();
+}
+
+
 void Engine::setParamValue(Module* module, int paramId, float value) {
 	// If param is being smoothed, cancel smoothing.
-	if (internal->smoothModule == module && internal->smoothParamId == paramId) {
-		internal->smoothModule = NULL;
-		internal->smoothParamId = 0;
+	if (internal_->smoothModule == module && internal_->smoothParamId == paramId) {
+		internal_->smoothModule = NULL;
+		internal_->smoothParamId = 0;
 	}
 	module->params[paramId].setValue(value);
 }
@@ -1130,68 +1124,49 @@ float Engine::getParamValue(Module* module, int paramId) {
 }
 
 
-void Engine::setParamSmoothValue(Module* module, int paramId, float value) {
-	// If another param is being smoothed, jump value
-	if (internal->smoothModule && !(internal->smoothModule == module && internal->smoothParamId == paramId)) {
-		internal->smoothModule->params[internal->smoothParamId].setValue(internal->smoothValue);
-	}
-	internal->smoothParamId = paramId;
-	internal->smoothValue = value;
-	// Set this last so the above values are valid as soon as it is set
-	internal->smoothModule = module;
-}
-
-
-float Engine::getParamSmoothValue(Module* module, int paramId) {
-	if (internal->smoothModule == module && internal->smoothParamId == paramId)
-		return internal->smoothValue;
-	return module->params[paramId].getValue();
-}
-
-
 void Engine::addParamHandle(ParamHandle* paramHandle) {
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	// New ParamHandles must be blank.
 	// This means we don't have to refresh the cache.
 	assert(paramHandle->moduleId < 0);
 
 	// Check that the ParamHandle is not already added
-	auto it = internal->paramHandles.find(paramHandle);
-	assert(it == internal->paramHandles.end());
+	auto it = internal_->paramHandles.find(paramHandle);
+	assert(it == internal_->paramHandles.end());
 
 	// Add it
-	internal->paramHandles.insert(paramHandle);
+	internal_->paramHandles.insert(paramHandle);
 	// No need to refresh the cache because the moduleId is not set.
 }
 
 
 void Engine::removeParamHandle(ParamHandle* paramHandle) {
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	removeParamHandle_NoLock(paramHandle);
 }
 
 
 void Engine::removeParamHandle_NoLock(ParamHandle* paramHandle) {
 	// Check that the ParamHandle is already added
-	auto it = internal->paramHandles.find(paramHandle);
-	assert(it != internal->paramHandles.end());
+	auto it = internal_->paramHandles.find(paramHandle);
+	assert(it != internal_->paramHandles.end());
 
 	// Remove it
 	paramHandle->module = NULL;
-	internal->paramHandles.erase(it);
+	internal_->paramHandles.erase(it);
 	Engine_refreshParamHandleCache(this);
 }
 
 
 ParamHandle* Engine::getParamHandle(int64_t moduleId, int paramId) {
-	SharedLock<SharedMutex> lock(internal->mutex);
+	SharedLock<SharedMutex> lock(internal_->mutex);
 	return getParamHandle_NoLock(moduleId, paramId);
 }
 
 
 ParamHandle* Engine::getParamHandle_NoLock(int64_t moduleId, int paramId) {
-	auto it = internal->paramHandlesCache.find(std::make_tuple(moduleId, paramId));
-	if (it == internal->paramHandlesCache.end())
+	auto it = internal_->paramHandlesCache.find(std::make_tuple(moduleId, paramId));
+	if (it == internal_->paramHandlesCache.end())
 		return NULL;
 	return it->second;
 }
@@ -1203,15 +1178,15 @@ ParamHandle* Engine::getParamHandle(Module* module, int paramId) {
 
 
 void Engine::updateParamHandle(ParamHandle* paramHandle, int64_t moduleId, int paramId, bool overwrite) {
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 	updateParamHandle_NoLock(paramHandle, moduleId, paramId, overwrite);
 }
 
 
 void Engine::updateParamHandle_NoLock(ParamHandle* paramHandle, int64_t moduleId, int paramId, bool overwrite) {
 	// Check that it exists
-	auto it = internal->paramHandles.find(paramHandle);
-	assert(it != internal->paramHandles.end());
+	auto it = internal_->paramHandles.find(paramHandle);
+	assert(it != internal_->paramHandles.end());
 
 	// Set IDs
 	paramHandle->moduleId = moduleId;
@@ -1246,12 +1221,12 @@ void Engine::updateParamHandle_NoLock(ParamHandle* paramHandle, int64_t moduleId
 
 
 json_t* Engine::toJson() {
-	SharedLock<SharedMutex> lock(internal->mutex);
+	SharedLock<SharedMutex> lock(internal_->mutex);
 	json_t* rootJ = json_object();
 
 	// modules
 	json_t* modulesJ = json_array();
-	for (Module* module : internal->modules) {
+	for (Module* module : internal_->modules) {
 		json_t* moduleJ = module->toJson();
 		json_array_append_new(modulesJ, moduleJ);
 	}
@@ -1259,15 +1234,15 @@ json_t* Engine::toJson() {
 
 	// cables
 	json_t* cablesJ = json_array();
-	for (Cable* cable : internal->cables) {
+	for (Cable* cable : internal_->cables) {
 		json_t* cableJ = cable->toJson();
 		json_array_append_new(cablesJ, cableJ);
 	}
 	json_object_set_new(rootJ, "cables", cablesJ);
 
 	// masterModule
-	if (internal->masterModule) {
-		json_object_set_new(rootJ, "masterModuleId", json_integer(internal->masterModule->id));
+	if (internal_->masterModule) {
+		json_object_set_new(rootJ, "masterModuleId", json_integer(internal_->masterModule->id));
 	}
 
 	return rootJ;
@@ -1319,7 +1294,7 @@ void Engine::fromJson(json_t* rootJ) {
 		modules.push_back(module);
 	}
 
-	std::lock_guard<SharedMutex> lock(internal->mutex);
+	std::lock_guard<SharedMutex> lock(internal_->mutex);
 
 	// Add modules
 	for (Module* module : modules) {
@@ -1367,25 +1342,25 @@ void Engine::fromJson(json_t* rootJ) {
 
 void EngineWorker::run() {
 	// Configure thread
-	contextSet(engine->internal->context);
+	contextSet(engine->getInternal()->context);
 	system::setThreadName(string::f("Worker %d", id));
 	system::resetFpuFlags();
 
 	while (true) {
-		engine->internal->engineBarrier.wait();
+		engine->getInternal()->engineBarrier.wait();
 		if (!running)
 			return;
 		Engine_stepWorker(engine, id);
-		engine->internal->workerBarrier.wait();
+		engine->getInternal()->workerBarrier.wait();
 	}
 }
 
 
 static void Engine_fallbackRun(Engine* that) {
 	system::setThreadName("Engine fallback");
-	contextSet(that->internal->context);
+	contextSet(that->getInternal()->context);
 
-	while (that->internal->fallbackRunning) {
+	while (that->getInternal()->fallbackRunning) {
 		if (!that->getMasterModule()) {
 			// Step blocks and wait
 			double start = system::getTime();
@@ -1400,21 +1375,29 @@ static void Engine_fallbackRun(Engine* that) {
 		}
 		else {
 			// Wait for master module to be unset, or for the request to stop running
-			std::unique_lock<std::mutex> lock(that->internal->fallbackMutex);
-			that->internal->fallbackCv.wait(lock, [&]() {
-				return !that->internal->fallbackRunning || !that->getMasterModule();
+			std::unique_lock<std::mutex> lock(that->getInternal()->fallbackMutex);
+			that->getInternal()->fallbackCv.wait(lock, [&]() {
+				return !that->getInternal()->fallbackRunning || !that->getMasterModule();
 			});
 		}
 	}
 }
 
 
+float Engine::getParamSmoothValue(Module* module, int paramId) {
+    return internal_->getParamSmoothValue(module, paramId);
+}
+
+void Engine::setParamSmoothValue(Module* module, int paramId, float value) {
+    internal_->setParamSmoothValue(module, paramId, value);
+}
+
 void Engine::startFallbackThread() {
-	if (internal->fallbackThread.joinable())
+	if (internal_->fallbackThread.joinable())
 		return;
 
-	internal->fallbackRunning = true;
-	internal->fallbackThread = std::thread(Engine_fallbackRun, this);
+	internal_->fallbackRunning = true;
+	internal_->fallbackThread = std::thread(Engine_fallbackRun, this);
 }
 
 

@@ -15,7 +15,7 @@ void OptionButton::draw(const DrawArgs& args) {
 	std::string text = this->text;
 	if (text.empty() && quantity)
 		text = quantity->getLabel();
-	bndOptionButton(args.vg, 0.0, 0.0, INFINITY, box.size.y, state, text.c_str());
+	bndOptionButton(args.vg, 0.0, 0.0, INFINITY, getHeight(), state, text.c_str());
 }
 
 

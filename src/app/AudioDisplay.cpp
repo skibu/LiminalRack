@@ -55,7 +55,7 @@ void AudioDriverChoice::onAction(const ActionEvent& e) {
 
 void AudioDriverChoice::step() {
 	text = "";
-	if (box.size.x >= 200.0)
+	if (getWidth() >= 200.0)
 		text += string::translate("AudioDisplay.driver");
 	audio::Driver* driver = port ? port->getDriver() : NULL;
 	std::string driverName = driver ? driver->getName() : "";
@@ -138,7 +138,7 @@ void AudioDeviceChoice::onAction(const ActionEvent& e) {
 
 void AudioDeviceChoice::step() {
 	text = "";
-	if (box.size.x >= 200.0)
+	if (getWidth() >= 200.0)
 		text += string::translate("AudioDisplay.device");
 	std::string detail = "";
 	if (port && port->getDevice())
@@ -203,7 +203,7 @@ void AudioSampleRateChoice::onAction(const ActionEvent& e) {
 
 void AudioSampleRateChoice::step() {
 	text = "";
-	if (box.size.x >= 100.0)
+	if (getWidth() >= 100.0)
 		text += string::translate("AudioDisplay.sampleRateColon");
 	float sampleRate = port ? port->getSampleRate() : 0;
 	if (sampleRate > 0) {
@@ -267,7 +267,7 @@ void AudioBlockSizeChoice::onAction(const ActionEvent& e) {
 
 void AudioBlockSizeChoice::step() {
 	text = "";
-	if (box.size.x >= 100.0)
+	if (getWidth() >= 100.0)
 		text += string::translate("AudioDisplay.blockSizeColon");
 	int blockSize = port ? port->getBlockSize() : 0;
 	if (blockSize > 0) {
@@ -296,41 +296,41 @@ void AudioDisplay::setAudioPort(audio::Port* port) {
 	math::Vec pos;
 
 	AudioDriverChoice* driverChoice = createWidget<AudioDriverChoice>(pos);
-	driverChoice->box.size.x = box.size.x;
+	driverChoice->setWidth(getWidth());
 	driverChoice->port = port;
 	addChild(driverChoice);
-	pos = driverChoice->box.getBottomLeft();
+	pos = driverChoice->getBox().getBottomLeft();
 	this->driverChoice = driverChoice;
 
 	this->driverSeparator = createWidget<LedDisplaySeparator>(pos);
-	this->driverSeparator->box.size.x = box.size.x;
+	this->driverSeparator->setWidth(getWidth());
 	addChild(this->driverSeparator);
 
 	AudioDeviceChoice* deviceChoice = createWidget<AudioDeviceChoice>(pos);
-	deviceChoice->box.size.x = box.size.x;
+	deviceChoice->setWidth(getWidth());
 	deviceChoice->port = port;
 	addChild(deviceChoice);
-	pos = deviceChoice->box.getBottomLeft();
+	pos = deviceChoice->getBox().getBottomLeft();
 	this->deviceChoice = deviceChoice;
 
 	this->deviceSeparator = createWidget<LedDisplaySeparator>(pos);
-	this->deviceSeparator->box.size.x = box.size.x;
+	this->deviceSeparator->setWidth(getWidth());
 	addChild(this->deviceSeparator);
 
 	AudioSampleRateChoice* sampleRateChoice = createWidget<AudioSampleRateChoice>(pos);
-	sampleRateChoice->box.size.x = box.size.x / 2;
+	sampleRateChoice->setWidth(getWidth() / 2);
 	sampleRateChoice->port = port;
 	addChild(sampleRateChoice);
 	this->sampleRateChoice = sampleRateChoice;
 
 	this->sampleRateSeparator = createWidget<LedDisplaySeparator>(pos);
-	this->sampleRateSeparator->box.pos.x = box.size.x / 2;
-	this->sampleRateSeparator->box.size.y = this->sampleRateChoice->box.size.y;
+	this->sampleRateSeparator->setPos(math::Vec(getWidth() / 2, pos.getY()));
+	this->sampleRateSeparator->setHeight(this->sampleRateChoice->getHeight());
 	addChild(this->sampleRateSeparator);
 
 	AudioBlockSizeChoice* bufferSizeChoice = createWidget<AudioBlockSizeChoice>(pos);
-	bufferSizeChoice->box.pos.x = box.size.x / 2;
-	bufferSizeChoice->box.size.x = box.size.x / 2;
+	bufferSizeChoice->setX(getWidth() / 2);
+	bufferSizeChoice->setWidth(getWidth() / 2);
 	bufferSizeChoice->port = port;
 	addChild(bufferSizeChoice);
 	this->bufferSizeChoice = bufferSizeChoice;

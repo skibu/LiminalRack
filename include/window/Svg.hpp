@@ -31,6 +31,7 @@ inline float mm2px(float mm) {
 	return mm * (SVG_DPI / MM_PER_IN);
 }
 
+/** Converts millimeter measurements to pixels */
 inline math::Vec mm2px(math::Vec mm) {
 	return mm.mult(SVG_DPI / MM_PER_IN);
 }

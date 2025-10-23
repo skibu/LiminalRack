@@ -20,8 +20,8 @@ void SvgScrew::setSvg(std::shared_ptr<window::Svg> svg) {
 		return;
 
 	sw->setSvg(svg);
-	fb->box.size = sw->box.size;
-	box.size = sw->box.size;
+	fb->setSize(sw->getSize());
+	setSize(sw->getSize());
 
 	fb->setDirty();
 }

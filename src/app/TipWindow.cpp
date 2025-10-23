@@ -80,13 +80,13 @@ struct TipWindow : widget::OpaqueWidget {
 	UrlButton* linkButton;
 
 	TipWindow() {
-		box.size = math::Vec(550, 200);
+		setSize(math::Vec(550, 200));
 		const float margin = 10;
 		const float buttonWidth = 100;
 
 		layout = new ui::SequentialLayout;
-		layout->box.pos = math::Vec(0, 10);
-		layout->box.size = box.size;
+		layout->setPos(math::Vec(0, 10));
+		layout->setSize(getSize());
 		layout->setOrientation(ui::SequentialLayout::VERTICAL_ORIENTATION);
 		layout->setMargin(math::Vec(margin, margin));
 		layout->setMinSpacing(math::Vec(margin, margin));
@@ -95,14 +95,14 @@ struct TipWindow : widget::OpaqueWidget {
 
 		ui::Label* header = new ui::Label();
 		// header->box.size.x = box.size.x - 2*margin;
-		header->box.size.y = 20;
+		header->setHeight(20);
 		header->setFontSize(20);
 		header->setText(string::f(string::translate("TipWindow.welcome"), APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION));
 		layout->addChild(header);
 
 		label = new ui::Label;
-		label->box.size.y = 80;
-		label->box.size.x = box.size.x - 2*margin;
+		label->setHeight(80);
+		label->setWidth(getWidth() - 2*margin);
 		layout->addChild(label);
 
 		// Container for link button so hiding it won't shift layout
@@ -110,12 +110,12 @@ struct TipWindow : widget::OpaqueWidget {
 		layout->addChild(linkPlaceholder);
 
 		linkButton = new UrlButton();
-		linkButton->box.size.x = box.size.x - 2*margin;
-		linkPlaceholder->box.size = linkButton->box.size;
+		linkButton->setWidth(getWidth() - 2*margin);
+		linkPlaceholder->setSize(linkButton->getSize());
 		linkPlaceholder->addChild(linkButton);
 
 		buttonLayout = new ui::SequentialLayout();
-		buttonLayout->box.size.x = box.size.x - 2*margin;
+		buttonLayout->setWidth(getWidth() - 2*margin);
 		buttonLayout->setMinSpacing(math::Vec(margin, margin));
 		layout->addChild(buttonLayout);
 
@@ -130,7 +130,7 @@ struct TipWindow : widget::OpaqueWidget {
 		static ShowQuantity showQuantity;
 
 		ui::OptionButton* showButton = new ui::OptionButton(string::translate("TipWindow.startup"));
-		showButton->box.size.x = 200;
+		showButton->setWidth(200);
 		showButton->setQuantity(&showQuantity);
 		buttonLayout->addChild(showButton);
 
@@ -149,7 +149,7 @@ struct TipWindow : widget::OpaqueWidget {
 
         PreviousButton* prevButton = new PreviousButton(
             "◀  " + string::translate("TipWindow.previous"), *this /* TipWindow */);
-        prevButton->box.size.x = buttonWidth;
+        prevButton->setWidth(buttonWidth);
         buttonLayout->addChild(prevButton);
 
         class NextButton : public ui::Button {
@@ -166,7 +166,7 @@ struct TipWindow : widget::OpaqueWidget {
         };
 
 		NextButton* nextButton = new NextButton("▶  " + string::translate("TipWindow.next"), *this);
-		nextButton->box.size.x = buttonWidth;
+		nextButton->setWidth(buttonWidth);
 		buttonLayout->addChild(nextButton);
 
         class CloseButton : public ui::Button {
@@ -183,10 +183,10 @@ struct TipWindow : widget::OpaqueWidget {
         };
 
         CloseButton* closeButton = new CloseButton("✖  " + string::translate("TipWindow.close"), *this);
-        closeButton->box.size.x = buttonWidth;
+        closeButton->setWidth(buttonWidth);
         buttonLayout->addChild(closeButton);
 
-		buttonLayout->box.size.y = closeButton->box.size.y;
+		buttonLayout->setHeight(closeButton->getHeight());
 
 		// When the TipWindow is created, choose the next tip
 		advanceTip();
@@ -208,11 +208,11 @@ struct TipWindow : widget::OpaqueWidget {
 	void step() override {
 		OpaqueWidget::step();
 
-		box.pos = parent->box.size.minus(box.size).div(2).round();
+		setPos(getParent()->getSize().minus(getSize()).div(2).round());
 	}
 
 	void draw(const DrawArgs& args) override {
-		bndMenuBackground(args.vg, 0.0, 0.0, box.size.x, box.size.y, 0);
+		bndMenuBackground(args.vg, 0.0, 0.0, getWidth(), getHeight(), 0);
 		Widget::draw(args);
 	}
 };

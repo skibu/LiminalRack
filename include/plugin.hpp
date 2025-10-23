@@ -34,8 +34,10 @@ bool isSlugValid(const std::string& slug);
 std::string normalizeSlug(const std::string& slug);
 
 
-/** Path to plugins installation dir */
+/** Global path to plugins installation dir */
 extern std::string pluginsPath;
+
+/** Global list of loaded plugins  */
 extern std::vector<Plugin*> plugins;
 
 
