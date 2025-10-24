@@ -30,22 +30,33 @@ std::string f(Args... args) {
 
 /** Replaces all characters to lowercase letters */
 std::string lowercase(const std::string& s);
+
 /** Replaces all characters to uppercase letters */
 std::string uppercase(const std::string& s);
+
 /** Removes whitespace from beginning and end of string. */
 std::string trim(const std::string& s);
+
 /** Truncates a string to not exceed a number of UTF-8 codepoints. */
 std::string truncate(const std::string& s, size_t maxCodepoints);
+
 /** Truncates the beginning of a string to not exceed a number of UTF-8 codepoints. */
 std::string truncatePrefix(const std::string& s, size_t maxCodepoints);
+
 /** Truncates and adds "…" to the end of a string, to not exceed a number of UTF-8 codepoints. */
 std::string ellipsize(const std::string& s, size_t maxCodepoints);
+
 /** Truncates and adds "…" to the beginning of a string, to not exceed a number of UTF-8 codepoints. */
 std::string ellipsizePrefix(const std::string& s, size_t maxCodepoints);
+
 /** Returns whether a string starts with the given substring. */
 bool startsWith(const std::string& str, const std::string& prefix);
+
 /** Returns whether a string ends with the given substring. */
 bool endsWith(const std::string& str, const std::string& suffix);
+
+/** Utility function to replace all occurrences of a substring with another string */
+void replaceAll(std::string& str, const std::string& from, const std::string& to);
 
 /** Converts a byte array to a Base64-encoded string.
 https://en.wikipedia.org/wiki/Base64
