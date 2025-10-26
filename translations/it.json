@@ -180,7 +180,7 @@
 	"MenuBar.help.changelog": "Note di rilascio",
 	"MenuBar.help.update": "Aggiorna %s",
 	"MenuBar.help.checkUpdate": "Controlla aggiornamenti %s",
-	"MenuBar.infoLabel": "%.1f fps  %.1f%% media  %.1f%% picco",
+	"MenuBar.infoLabel": "%.1ffps  possibile:%.1ffps  cpu:%4.1f%%",
 	"ModuleWidget.history.pastePreset": "incolla preset modulo",
 	"ModuleWidget.history.loadPreset": "carica preset modulo",
 	"ModuleWidget.savePresetFailed": "Impossibile salvare il preset nel file %s",

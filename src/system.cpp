@@ -5,7 +5,6 @@
 #include <chrono>
 #include <cfenv> // for std::fesetround
 #include <ghc/filesystem.hpp>
-
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cxxabi.h> // for abi::__cxa_demangle
@@ -648,11 +647,100 @@ void unarchiveToDirectory(const std::vector<uint8_t>& archiveData, const std::st
 	unarchiveToDirectory("", &archiveData, dirPath);
 }
 
-
 int getLogicalCoreCount() {
-	return std::thread::hardware_concurrency();
+    // Caching the core count since it never changes
+    static int cachedLogicalCoreCount = std::thread::hardware_concurrency();
+
+    return cachedLogicalCoreCount;
 }
 
+static int _getPhysicalCoreCount() {
+#if defined ARCH_LIN
+    // For linux use lscpu command
+    std::string num_str =
+        executeCommand("lscpu | grep \"CPU(s):\" | grep -o \"[0-9]+\"");
+    if (num_str.empty()) {
+        // Fallback to logical core count
+        return getLogicalCoreCount();
+    } else {
+        return std::stoi(num_str);
+    }
+#elif defined ARCH_MAC
+    // For macOS use sysctl command
+    std::string num_str = executeCommand("sysctl -n hw.physicalcpu");
+    if (num_str.empty()) {
+        // Fallback to logical core count
+        return getLogicalCoreCount();
+    } else {
+        return std::stoi(num_str);
+    }
+#elif defined ARCH_WIN
+    // Not sure how to get core cout on Windows so just use logical core count
+    return getLogicalCoreCount();
+#endif
+}
+
+int getPhysicalCoreCount() {
+    // Caching the core count since it never changes
+    static int cachedPhysicalCoreCount = _getPhysicalCoreCount();
+
+    return cachedPhysicalCoreCount;
+}
+
+float retrieveSystemCpuPercentage() {
+#if defined ARCH_WIN
+    // Not implemented yet
+    return -1.0f;
+#else
+    // For linux/macOS use ps command to sum CPU usage of all processes.
+    // Note: could have used command "ps -A -o %cpu | awk '{s+=$1} END {print s}'"
+    // to have awk sum up the values but that would require spawning an extra process.
+    // Therefore the CPU values are summed here in C++ instead.
+    std::string cpu_values_per_process_str = executeCommand("ps -A -o %cpu");
+
+    // Split string into array of CPU values (one per process)
+    std::vector<std::string> cpu_values = string::split(cpu_values_per_process_str, "\n");
+
+    // Sum up CPU values for each process
+    float total_cpu_usage = 0.0f;
+    for (const std::string& cpu_value : cpu_values) {
+        // Skip zero values
+        if (cpu_value.find("0.0") != std::string::npos) {
+            continue;
+        }
+
+        // Convert string to float and add to total
+        try {
+            total_cpu_usage += std::stof(cpu_value);
+        } catch (const std::invalid_argument& ia) {
+            // Ignore invalid argument errors like non-numeric values from std::stof
+        }
+    }
+
+    // Return total CPU usage divided by number of logical cores to get CPU
+    // percentage for entire system
+    return total_cpu_usage / getLogicalCoreCount();
+#endif
+}
+
+float getSystemCpuPercentage() {
+    // Cache CPU values so that they are only determined every second or so.
+    // This way don't further bog down system by trying to determine CPU usage
+    // too often.
+
+    static float lastTimeCpuChecked = 0.0f;
+    static float lastSystemCpuPercentage = 0.0f;
+    static const float CPU_CHECK_INTERVAL_SECS = 0.5f;  // Update every 0.5 sec
+
+    float currentTime = getTime();
+    if (currentTime - lastTimeCpuChecked < CPU_CHECK_INTERVAL_SECS) {
+        return lastSystemCpuPercentage;
+    }
+
+    lastTimeCpuChecked = currentTime;
+    lastSystemCpuPercentage = retrieveSystemCpuPercentage();
+    return lastSystemCpuPercentage;
+}
 
 void setThreadName(const std::string& name) {
 #if defined ARCH_LIN
@@ -930,6 +1018,41 @@ void runProcessDetached(const std::string& path) {
 	// Not implemented on Linux or Mac
 	assert(0);
 #endif
+}
+
+
+std::string executeCommand(const std::string& command) {
+    std::array<char, 128> buffer;
+    std::string result;
+    FILE* pipe = popen(command.c_str(), "r"); // "r" for reading output
+    if (!pipe) {
+        INFO("Failed to open pipe for command: %s", command.c_str());
+        return ""; // Indicate error
+    }
+    try {
+        while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+            result += buffer.data();
+        }
+    } catch (...) {
+        pclose(pipe);
+        throw; // Re-throw any exceptions during reading
+    }
+    int status = pclose(pipe);
+    if (status == -1) {
+        ERROR("Error closing pipe for command: %s", command.c_str());
+    } else if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+        ERROR("Command exited with non-zero status: %d", WEXITSTATUS(status));
+    } else if (WIFSIGNALED(status)) {
+        ERROR("Command terminated by signal: %d", WTERMSIG(status));
+    }
+
+    // Trim trailing newlines
+    while (!result.empty() && (result.back() == '\n' || result.back() == '\r')) {
+        result.pop_back();
+    }
+
+    // Return the output without trailing newlines
+    return result;
 }
 
 

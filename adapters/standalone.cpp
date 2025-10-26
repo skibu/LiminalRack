@@ -214,15 +214,17 @@ int main(int argc, char* argv[]) {
 	INFO("Bundle path: %s", asset::bundlePath.c_str());
 #endif
 	INFO("System time: %s", string::formatTimeISO(system::getUnixTime()).c_str());
-
+    INFO("Physical core count: %d", system::getPhysicalCoreCount());
+    INFO("Logical core count: %d", system::getLogicalCoreCount());
+    
+    // Initialize string language translations
 	string::init();
 
 	// Load configuration settings
 	settings::init();
 	try {
 		settings::load();
-	}
-	catch (Exception& e) {
+	} catch (Exception& e) {
 		std::string msg = e.what();
 		msg += "\n\n";
 		msg += string::translate("standalone.resetSettings");
@@ -265,9 +267,9 @@ int main(int argc, char* argv[]) {
 	gamepad::init();
 	midiloopback::init();
 
-	INFO("Initializing browser");
+	INFO("Initializing module browser");
 	app::browserInit();
-	INFO("Initializing library");
+	INFO("Initializing module library");
 	library::init();
 
 	// On Mac, use a hacked-in GLFW addition to get the launched path.

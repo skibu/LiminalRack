@@ -94,26 +94,54 @@ std::shared_ptr<Image> Image::load(const std::string& filename) {
  * header must remain exactly the same for binary compatibility.
  */
 struct Window::Internal {
-	std::string lastWindowTitle;
+	std::string lastWindowTitle_;
 
-	int lastWindowX = 0;
-	int lastWindowY = 0;
-	int lastWindowWidth = 0;
-	int lastWindowHeight = 0;
+	int lastWindowX_ = 0;
+	int lastWindowY_ = 0;
+	int lastWindowWidth_ = 0;
+	int lastWindowHeight_ = 0;
 
-	int frame = 0;
-	double ignoreMouseDeltaUntil = -INFINITY;
-	double monitorRefreshRate = 0.0;
-	double frameTime = NAN;
-	double lastFrameDuration = NAN;
+	// int frame = 0; No longer used
+	double ignoreMouseDeltaUntil_ = -INFINITY;
+	double monitorRefreshRate_ = 0.0;
 
-	math::Vec lastMousePos;
+    // For making calculations related to frame timing
+	double frameStartTime_ = NAN;
 
-    std::map<std::string, std::shared_ptr<Font>> fontCache;
-    std::map<std::string, std::shared_ptr<Image>> imageCache;
+    // Desired frame time in seconds based on frame rate limit.
+    // If set to zero (or really low value) then frames will be 
+    // processed as fast as possible.
+    double desiredFrameDuration_ = 1.f / settings::frameRateLimit;
 
-    bool fbDirtyOnSubpixelChange = true;
-	int fbCount = 0;
+    // For getting sleep time for frame rate just right
+    double frameTimingOffset_ = 0;
+
+    // 1/fps. So can display frame rate being achieved
+    double lastFrameDuration_ = NAN;
+
+    // 1/fps. So can display potential frame rate
+    double actualFrameProcessingDuration_ = NAN;
+
+    // Last mouse position
+	math::Vec lastMousePos_;
+
+    // Caches for loaded fonts and images
+    std::map<std::string, std::shared_ptr<Font>> fontCache_;
+    std::map<std::string, std::shared_ptr<Image>> imageCache_;
+
+    bool fbDirtyOnSubpixelChange_ = true;
+	int fbCount_ = 0;
+
+    /** Called at start of frame to record timing info */
+    void startOfFrame();
+
+    /** Determines and stores lastFrameDuration_ so that can be displayed in UI */
+    void endOfFrame();
+
+    /** Called at start of frame to record timing info. Returns
+     * true if should continue stepping through frames.
+     */
+    bool shouldContinueStepping(GLFWwindow* glfWin);
 };
 
 static void windowPosCallback(GLFWwindow* win, int x, int y) {
@@ -170,12 +198,8 @@ static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
 	math::Vec mousePos = math::Vec(xpos, ypos).div(getWindow()->pixelRatio / getWindow()->windowRatio).round();
 	math::Vec mouseDelta = mousePos.minus(getWindow()->getLastMousePos());
 
-	// if (glfwGetInputMode(win, GLFW_CURSOR) != GLFW_CURSOR_NORMAL && std::fabs(mouseDelta.y) > 20.0) {
-	// 	DEBUG("%d (%f, %f) (%f, %f)", getWindow()->internal->frame, VEC_ARGS(mousePos), VEC_ARGS(mouseDelta));
-	// }
-
 	// Workaround for GLFW warping mouse to a different position when the cursor is locked or unlocked.
-	if (getWindow()->getIgnoreMouseDeltaUntil() > getWindow()->getFrameTime()) {
+	if (getWindow()->getIgnoreMouseDeltaUntil() > getWindow()->getFrameStartTime()) {
 		mouseDelta = math::Vec();
 	}
 
@@ -271,54 +295,54 @@ Window::Window() {
 #endif
 
 	// Create window
-	win = glfwCreateWindow(1024, 720, "", NULL, NULL);
-	if (!win) {
+	glfWin_ = glfwCreateWindow(1024, 720, "", NULL, NULL);
+	if (!glfWin_) {
 		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, "Could not open GLFW window. Does your graphics card support OpenGL 2.0 or greater? If so, make sure you have the latest graphics drivers installed.");
 		throw Exception("Could not create Window");
 	}
 
 	float contentScale;
-	glfwGetWindowContentScale(win, &contentScale, NULL);
+	glfwGetWindowContentScale(glfWin_, &contentScale, NULL);
 	INFO("Window content scale: %f", contentScale);
 
-	glfwSetWindowSizeLimits(win, WINDOW_SIZE_MIN.getX(), WINDOW_SIZE_MIN.getY(), GLFW_DONT_CARE, GLFW_DONT_CARE);
+	glfwSetWindowSizeLimits(glfWin_, WINDOW_SIZE_MIN.getX(), WINDOW_SIZE_MIN.getY(), GLFW_DONT_CARE, GLFW_DONT_CARE);
 	if (settings::windowSize.getX() > 0 && settings::windowSize.getY() > 0) {
-		glfwSetWindowSize(win, settings::windowSize.getX(), settings::windowSize.getY());
+		glfwSetWindowSize(glfWin_, settings::windowSize.getX(), settings::windowSize.getY());
 	}
 	if (settings::windowPos.getX() > -32000 && settings::windowPos.getY() > -32000) {
-		glfwSetWindowPos(win, settings::windowPos.getX(), settings::windowPos.getY());
+		glfwSetWindowPos(glfWin_, settings::windowPos.getX(), settings::windowPos.getY());
 	}
 	if (settings::windowMaximized) {
-		glfwMaximizeWindow(win);
+		glfwMaximizeWindow(glfWin_);
 	}
-	glfwShowWindow(win);
+	glfwShowWindow(glfWin_);
 
-	glfwSetWindowUserPointer(win, contextGet());
-	glfwSetInputMode(win, GLFW_LOCK_KEY_MODS, 1);
+	glfwSetWindowUserPointer(glfWin_, contextGet());
+	glfwSetInputMode(glfWin_, GLFW_LOCK_KEY_MODS, 1);
 
-	glfwMakeContextCurrent(win);
+	glfwMakeContextCurrent(glfWin_);
 	glfwSwapInterval(0);
 	const GLFWvidmode* monitorMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	if (monitorMode->refreshRate > 0) {
-		internal_->monitorRefreshRate = monitorMode->refreshRate;
+		internal_->monitorRefreshRate_ = monitorMode->refreshRate;
 	}
 	else {
 		// Some monitors report 0Hz refresh rate for some reason, so as a workaround, assume 60Hz.
-		internal_->monitorRefreshRate = 60;
+		internal_->monitorRefreshRate_ = 60;
 	}
 
 	// Set window callbacks
-	glfwSetWindowPosCallback(win, windowPosCallback);
-	glfwSetWindowSizeCallback(win, windowSizeCallback);
-	glfwSetWindowMaximizeCallback(win, windowMaximizeCallback);
-	glfwSetMouseButtonCallback(win, mouseButtonCallback);
+	glfwSetWindowPosCallback(glfWin_, windowPosCallback);
+	glfwSetWindowSizeCallback(glfWin_, windowSizeCallback);
+	glfwSetWindowMaximizeCallback(glfWin_, windowMaximizeCallback);
+	glfwSetMouseButtonCallback(glfWin_, mouseButtonCallback);
 	// Call this ourselves, but on every frame instead of only when the mouse moves
 	// glfwSetCursorPosCallback(win, cursorPosCallback);
-	glfwSetCursorEnterCallback(win, cursorEnterCallback);
-	glfwSetScrollCallback(win, scrollCallback);
-	glfwSetCharCallback(win, charCallback);
-	glfwSetKeyCallback(win, keyCallback);
-	glfwSetDropCallback(win, dropCallback);
+	glfwSetCursorEnterCallback(glfWin_, cursorEnterCallback);
+	glfwSetScrollCallback(glfWin_, scrollCallback);
+	glfwSetCharCallback(glfWin_, charCallback);
+	glfwSetKeyCallback(glfWin_, keyCallback);
+	glfwSetDropCallback(glfWin_, dropCallback);
 
 	// Set up GLEW
 	glewExperimental = GL_TRUE;
@@ -373,8 +397,8 @@ Window::~Window() {
 	}
 
 	// Fonts and Images in the cache must be deleted before the NanoVG context is deleted
-	internal_->fontCache.clear();
-	internal_->imageCache.clear();
+	internal_->fontCache_.clear();
+	internal_->imageCache_.clear();
 
 	// nvgDeleteClone(fbVg);
 
@@ -387,49 +411,86 @@ Window::~Window() {
 	nvgDeleteGLES2(vg);
 #endif
 
-	glfwDestroyWindow(win);
+	glfwDestroyWindow(glfWin_);
 	delete internal_;
 }
 
 
 math::Vec Window::getSize() {
 	int width, height;
-	glfwGetWindowSize(win, &width, &height);
+	glfwGetWindowSize(glfWin_, &width, &height);
 	return math::Vec(width, height);
 }
 
 
 void Window::setSize(math::Vec size) {
 	size = size.max(WINDOW_SIZE_MIN);
-	glfwSetWindowSize(win, size.getX(), size.getY());
+	glfwSetWindowSize(glfWin_, size.getX(), size.getY());
 }
 
+
+bool Window::Internal::shouldContinueStepping(GLFWwindow* glfWin) {
+    // Record timing info at start of frame. Do this right at beginning of frame
+    // so that other calls don't effect the timing.
+    startOfFrame();
+
+    // Return whether should continue
+    return !glfwWindowShouldClose(glfWin);
+}
+
+
+void Window::Internal::startOfFrame() {
+    // Record start time of frame
+    frameStartTime_ = system::getTime();
+}
+
+
+void Window::Internal::endOfFrame() {
+  // Wait appropiate amount of time to achieve desired frame rate.
+  double currentTimeBeforeSleep = system::getTime();
+  actualFrameProcessingDuration_ = currentTimeBeforeSleep - frameStartTime_;
+  double desiredFrameDoneTime = frameStartTime_ + desiredFrameDuration_;
+  double timeToSleep = desiredFrameDoneTime - currentTimeBeforeSleep - frameTimingOffset_;
+
+  if (timeToSleep > 0) {
+    system::sleep(timeToSleep);
+
+    // Since had to sleep was able to achieve desired frame time. 
+    // So record desired frame time as the achieved frame time.
+    lastFrameDuration_ = desiredFrameDuration_;
+
+    // Update frameTimingOffset_ so that can compensate for it. Use the
+    // average of the the curret offset and the previous offset so that
+    // it doesn't jump around as much.
+    double currentFrameTimingOffset = system::getTime() - desiredFrameDoneTime;
+    frameTimingOffset_ = (currentFrameTimingOffset + frameTimingOffset_) / 2;
+  } else {
+    // Took more than allocated time so frame rate needs to be determined
+    lastFrameDuration_ = currentTimeBeforeSleep - frameStartTime_;
+  }
+}
 
 void Window::mainLoop() {
-    INFO("Running window loop");
+    INFO("Running window main loop");
 
-	internal_->frame = 0;
-	while (!glfwWindowShouldClose(win)) {
-		step();
-	}
+    while (internal_->shouldContinueStepping(getGLFWwindow())) {
+        // Process the frame and recurse through all child widgets
+        step();
 
-    INFO("Stopped window loop");
+        // Wait till done with allocated frame time
+        internal_->endOfFrame();
+    }
+
+    INFO("Stopped window main loop");
 }
 
-
 void Window::step() {
-	double frameTime = system::getTime();
-	if (std::isfinite(internal_->frameTime)) {
-		internal_->lastFrameDuration = frameTime - internal_->frameTime;
-	}
-	internal_->frameTime = frameTime;
-	internal_->fbCount = 0;
-	// double t1 = 0.0, t2 = 0.0, t3 = 0.0, t4 = 0.0, t5 = 0.0;
+    internal_->fbCount_ = 0;
 
-	// Make event handlers and step() have a clean NanoVG context
-	nvgReset(vg);
+    // Make event handlers and step() have a clean NanoVG context
+    nvgReset(vg);
 
-	bndSetFont(uiFont->handle);
+    bndSetFont(uiFont->handle);
 
     // Poll events
     // Save and restore context because event handler set their own context
@@ -439,13 +500,13 @@ void Window::step() {
 	contextSet(context);
 
 	// In case glfwPollEvents() sets another OpenGL context
-	glfwMakeContextCurrent(win);
+	glfwMakeContextCurrent(glfWin_);
 
 	// Call cursorPosCallback every frame, not just when the mouse moves
 	{
 		double xpos, ypos;
-		glfwGetCursorPos(win, &xpos, &ypos);
-		cursorPosCallback(win, xpos, ypos);
+		glfwGetCursorPos(glfWin_, &xpos, &ypos);
+		cursorPosCallback(glfWin_, xpos, ypos);
 	}
 	gamepad::step();
 
@@ -457,9 +518,9 @@ void Window::step() {
 			windowTitle += "*";
 		windowTitle += system::getFilename(getPatch()->path);
 	}
-	if (windowTitle != internal_->lastWindowTitle) {
-		glfwSetWindowTitle(win, windowTitle.c_str());
-		internal_->lastWindowTitle = windowTitle;
+	if (windowTitle != internal_->lastWindowTitle_) {
+		glfwSetWindowTitle(glfWin_, windowTitle.c_str());
+		internal_->lastWindowTitle_ = windowTitle;
 	}
 
 	// Get desired pixel ratio
@@ -468,7 +529,7 @@ void Window::step() {
 		newPixelRatio = settings::pixelRatio;
 	}
 	else {
-		glfwGetWindowContentScale(win, &newPixelRatio, NULL);
+		glfwGetWindowContentScale(glfWin_, &newPixelRatio, NULL);
 		newPixelRatio = std::floor(newPixelRatio + 0.5);
 	}
 	if (newPixelRatio != pixelRatio) {
@@ -478,23 +539,20 @@ void Window::step() {
 
 	// Get framebuffer/window ratio
 	int fbWidth, fbHeight;
-	glfwGetFramebufferSize(win, &fbWidth, &fbHeight);
+	glfwGetFramebufferSize(glfWin_, &fbWidth, &fbHeight);
 	int winWidth, winHeight;
-	glfwGetWindowSize(win, &winWidth, &winHeight);
+	glfwGetWindowSize(glfWin_, &winWidth, &winHeight);
 	windowRatio = (float)fbWidth / winWidth;
-	// t1 = system::getTime();
 
 	if (getScene()) {
-		// DEBUG("%f %f %d %d", pixelRatio, windowRatio, fbWidth, winWidth);
 		// Resize scene
 		getScene()->setSize(math::Vec(fbWidth, fbHeight).div(pixelRatio));
 
 		// Step scene
 		getScene()->step();
-		// t2 = system::getTime();
 
 		// Render scene
-		bool visible = glfwGetWindowAttrib(win, GLFW_VISIBLE) && !glfwGetWindowAttrib(win, GLFW_ICONIFIED);
+		bool visible = glfwGetWindowAttrib(glfWin_, GLFW_VISIBLE) && !glfwGetWindowAttrib(glfWin_, GLFW_ICONIFIED);
 		if (visible) {
 			// Update and render
 			nvgBeginFrame(vg, fbWidth, fbHeight, pixelRatio);
@@ -505,38 +563,16 @@ void Window::step() {
 			args.vg = vg;
 			args.clipBox = getScene()->getBox().zeroPos();
 			getScene()->draw(args);
-			// t3 = system::getTime();
 
 			glViewport(0, 0, fbWidth, fbHeight);
 			glClearColor(0.0, 0.0, 0.0, 1.0);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			nvgEndFrame(vg);
 		}
-		// t4 = system::getTime();
 	}
 
-	glfwSwapBuffers(win);
-
-	// Limit frame rate
-	if (settings::frameRateLimit > 0) {
-		double remaining = getFrameDurationRemaining();
-		if (remaining > 0.0) {
-			system::sleep(remaining);
-		}
-	}
-
-	// t5 = system::getTime();
-	// DEBUG("pre-step %6.1f step %6.1f draw %6.1f nvgEndFrame %6.1f glfwSwapBuffers %6.1f total %6.1f",
-	// 	(t1 - frameTime) * 1e3f,
-	// 	(t2 - t1) * 1e3f,
-	// 	(t3 - t2) * 1e3f,
-	// 	(t4 - t3) * 1e3f,
-	// 	(t5 - t4) * 1e3f,
-	// 	(t5 - frameTime) * 1e3f
-	// );
-	internal_->frame++;
+	glfwSwapBuffers(glfWin_);
 }
-
 
 static void flipBitmap(uint8_t* pixels, int width, int height, int depth) {
 	for (int y = 0; y < height / 2; y++) {
@@ -551,7 +587,7 @@ static void flipBitmap(uint8_t* pixels, int width, int height, int depth) {
 void Window::screenshot(const std::string& screenshotPath) {
     // Get window framebuffer size
     int width, height;
-    glfwGetFramebufferSize(getWindow()->win, &width, &height);
+    glfwGetFramebufferSize(getWindow()->glfWin_, &width, &height);
 
     // Allocate pixel color buffer
     uint8_t* pixels = new uint8_t[height * width * 4];
@@ -633,13 +669,13 @@ void Window::screenshotModules(const std::string& screenshotsDir, float zoom) {
 
 
 void Window::close() {
-	glfwSetWindowShouldClose(win, GLFW_TRUE);
+	glfwSetWindowShouldClose(glfWin_, GLFW_TRUE);
 }
 
 void Window::cursorLock() {
     if (!settings::allowCursorLock) return;
 
-    glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(glfWin_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Due to a bug in GLFW, setting GLFW_CURSOR_DISABLED causes a spurious
     // mouse position delta after a few frames.
@@ -647,7 +683,7 @@ void Window::cursorLock() {
     // Emperically, this seems to be up to 3-6 frames at 60 Hz but in fewer
     // frames at lower framerates.
 #if defined ARCH_MAC
-    internal_->ignoreMouseDeltaUntil = internal_->frameTime + 0.09;
+    internal_->ignoreMouseDeltaUntil_ = internal_->frameStartTime_ + 0.09;
 #endif
 }
 
@@ -655,12 +691,12 @@ void Window::cursorUnlock() {
 	if (!settings::allowCursorLock)
 		return;
 
-	glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	glfwSetInputMode(glfWin_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
 
 bool Window::isCursorLocked() {
-	return glfwGetInputMode(win, GLFW_CURSOR) != GLFW_CURSOR_NORMAL;
+	return glfwGetInputMode(glfWin_, GLFW_CURSOR) != GLFW_CURSOR_NORMAL;
 }
 
 int Window::getMods() {
@@ -681,17 +717,17 @@ int Window::getMods() {
     if (state.mods & Mod2Mask) mods |= GLFW_MOD_NUM_LOCK;
 #else
     // Use GLFW key codes on other OS's
-    if (glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-        glfwGetKey(win, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
+    if (glfwGetKey(glfWin_, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+        glfwGetKey(glfWin_, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
         mods |= GLFW_MOD_SHIFT;
-    if (glfwGetKey(win, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
-        glfwGetKey(win, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
+    if (glfwGetKey(glfWin_, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
+        glfwGetKey(glfWin_, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
         mods |= GLFW_MOD_CONTROL;
-    if (glfwGetKey(win, GLFW_KEY_LEFT_ALT) == GLFW_PRESS ||
-        glfwGetKey(win, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
+    if (glfwGetKey(glfWin_, GLFW_KEY_LEFT_ALT) == GLFW_PRESS ||
+        glfwGetKey(glfWin_, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
         mods |= GLFW_MOD_ALT;
-    if (glfwGetKey(win, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS ||
-        glfwGetKey(win, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)
+    if (glfwGetKey(glfWin_, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS ||
+        glfwGetKey(glfWin_, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)
         mods |= GLFW_MOD_SUPER;
 #endif
     return mods;
@@ -701,60 +737,81 @@ void Window::setFullScreen(bool fullScreen) {
     if (!fullScreen) {
         // Put window into non-full screen mode
         INFO("Taking main window out of full screen mode");
-        glfwSetWindowMonitor(win, NULL, internal_->lastWindowX, internal_->lastWindowY,
-                             internal_->lastWindowWidth, internal_->lastWindowHeight, GLFW_DONT_CARE);
+        glfwSetWindowMonitor(glfWin_, NULL, internal_->lastWindowX_, internal_->lastWindowY_,
+                             internal_->lastWindowWidth_, internal_->lastWindowHeight_, GLFW_DONT_CARE);
     } else {
         // Put window into full screen mode
         INFO("Putting main window into full screen mode");
-        glfwGetWindowPos(win, &internal_->lastWindowX, &internal_->lastWindowY);
-        glfwGetWindowSize(win, &internal_->lastWindowWidth, &internal_->lastWindowHeight);
+        glfwGetWindowPos(glfWin_, &internal_->lastWindowX_, &internal_->lastWindowY_);
+        glfwGetWindowSize(glfWin_, &internal_->lastWindowWidth_, &internal_->lastWindowHeight_);
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-        glfwSetWindowMonitor(win, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        glfwSetWindowMonitor(glfWin_, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
     }
 }
 
 bool Window::isFullScreen() {
 	// Return whether main window is in full screen mode
-	GLFWmonitor* monitor = glfwGetWindowMonitor(win);
+	GLFWmonitor* monitor = glfwGetWindowMonitor(glfWin_);
 	return monitor != NULL;
 }
 
 math::Vec Window::getLastMousePos() {
-    return internal_->lastMousePos;
+    return internal_->lastMousePos_;
 }
 
 void Window::setLastMousePos(const math::Vec& pos) {
-    internal_->lastMousePos = pos;
+    internal_->lastMousePos_ = pos;
 }
 
 double Window::getMonitorRefreshRate() {
-	return internal_->monitorRefreshRate;
+	return internal_->monitorRefreshRate_;
 }
 
+void Window::setFrameRate(double frameRate) const {
+    if (frameRate <= 0.0 || isnan(frameRate)) {
+        // desired frame rate not proper so just run as fast as possible
+        internal_->desiredFrameDuration_ = 0.0;
+    } else {
+        // Set desired frame duration based on frame rate
+        internal_->desiredFrameDuration_ = 1.f / frameRate;
+    }
+}
 
-double Window::getFrameTime() const {
-	return internal_->frameTime;
+double Window::getFrameStartTime() const {
+	return internal_->frameStartTime_;
 }
 
 double Window::getIgnoreMouseDeltaUntil() const {
-    return internal_->ignoreMouseDeltaUntil;
+    return internal_->ignoreMouseDeltaUntil_;
 }
 
 double Window::getLastFrameDuration() const {
-	return internal_->lastFrameDuration;
+	return internal_->lastFrameDuration_;
 }
 
 double Window::getFrameDurationRemaining() const {
-	double frameDuration = 1.f / settings::frameRateLimit;
-	return frameDuration - (system::getTime() - internal_->frameTime);
+    return internal_->desiredFrameDuration_ -
+           (system::getTime() - internal_->frameStartTime_);
 }
 
+double Window::getLastFrameRate() const {
+    if (internal_->lastFrameDuration_ == 0.0 ||
+        isnan(internal_->lastFrameDuration_)) {
+        return 0.0;
+    } else {
+        return 1.0 / internal_->lastFrameDuration_;
+    }
+}
+
+double Window::getPotentialFrameRate() const {
+    return 1.0 / internal_->actualFrameProcessingDuration_;
+}
 
 std::shared_ptr<Font> Window::loadFont(const std::string& filename) {
 	// If font is already cached, no need to add fallback fonts again.
-	const auto& it = internal_->fontCache.find(filename);
-	if (it != internal_->fontCache.end())
+	const auto& it = internal_->fontCache_.find(filename);
+	if (it != internal_->fontCache_.end())
 		return it->second;
 
     // This redundantly searches the font cache, but it's not a performance
@@ -780,8 +837,8 @@ std::shared_ptr<Font> Window::loadFont(const std::string& filename) {
 
 std::shared_ptr<Font> Window::loadFontWithoutFallbacks(const std::string& filename) {
 	// Return cached font, even if null
-	const auto& it = internal_->fontCache.find(filename);
-	if (it != internal_->fontCache.end())
+	const auto& it = internal_->fontCache_.find(filename);
+	if (it != internal_->fontCache_.end())
 		return it->second;
 
 	// Load font
@@ -793,7 +850,7 @@ std::shared_ptr<Font> Window::loadFontWithoutFallbacks(const std::string& filena
 		WARN("%s", e.what());
 		font = NULL;
 	}
-	internal_->fontCache[filename] = font;
+	internal_->fontCache_[filename] = font;
 	return font;
 }
 
@@ -809,8 +866,8 @@ void Window::resetFontFace() {
 }
 
 std::shared_ptr<Image> Window::loadImage(const std::string& filename) {
-	const auto& it = internal_->imageCache.find(filename);
-	if (it != internal_->imageCache.end())
+	const auto& it = internal_->imageCache_.find(filename);
+	if (it != internal_->imageCache_.end())
 		return it->second;
 
 	// Load image
@@ -823,23 +880,23 @@ std::shared_ptr<Image> Window::loadImage(const std::string& filename) {
 		WARN("%s", e.what());
 		image = NULL;
 	}
-	internal_->imageCache[filename] = image;
+	internal_->imageCache_[filename] = image;
 	return image;
 }
 
 
 bool& Window::fbDirtyOnSubpixelChange() {
-	return internal_->fbDirtyOnSubpixelChange;
+	return internal_->fbDirtyOnSubpixelChange_;
 }
 
 
 int& Window::fbCount() {
-	return internal_->fbCount;
+	return internal_->fbCount_;
 }
 
 
 void init() {
-    INFO("Initializing window");
+    INFO("Initializing Window system");
 
 	int err;
 
@@ -855,6 +912,8 @@ void init() {
 		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, "Could not initialize GLFW.");
 		throw Exception("Could not initialize GLFW");
 	}
+
+    INFO("Done initializing Window system");
 }
 
 

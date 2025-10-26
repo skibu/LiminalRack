@@ -561,11 +561,11 @@ void ModuleWidget::copyClipboard() {
 	DEFER({json_decref(moduleJ);});
 	char* json = json_dumps(moduleJ, JSON_INDENT(2));
 	DEFER({std::free(json);});
-	glfwSetClipboardString(getWindow()->win, json);
+	glfwSetClipboardString(getWindow()->getGLFWwindow(), json);
 }
 
 bool ModuleWidget::pasteClipboardAction() {
-	const char* json = glfwGetClipboardString(getWindow()->win);
+	const char* json = glfwGetClipboardString(getWindow()->getGLFWwindow());
 	if (!json) {
 		WARN("Could not get text from clipboard.");
 		return false;

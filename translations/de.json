@@ -180,7 +180,7 @@
 	"MenuBar.help.changelog": "Änderungsprotokoll",
 	"MenuBar.help.update": "%s aktualisieren",
 	"MenuBar.help.checkUpdate": "Nach %s-Update suchen",
-	"MenuBar.infoLabel": "%.1f fps  %.1f%% durchschn.  %.1f%% max",
+	"MenuBar.infoLabel": "%.1ffps  possible:%.1f%%  cpu:%4.1f%%",
 	"ModuleWidget.history.pastePreset": "Modul-Preset einfügen",
 	"ModuleWidget.history.loadPreset": "Modul-Preset laden",
 	"ModuleWidget.savePresetFailed": "Preset konnte nicht in Datei %s gespeichert werden",

@@ -97,11 +97,11 @@ class Engine {
     void clear();
     PRIVATE void clear_NoLock();
 
-    /** Advances the engine by `frames` frames.
-    Only call this method from the master module.
-    Share-locks. Also locks so only one stepBlock() can be called simultaneously
-    or recursively.
-    */
+    /** Advances the engine by `frames` frames. Determines CPU load, though
+     * in a really odd way.
+     * Only call this method from the master module.
+     * Share-locks. Also locks so only one stepBlock() can be called simultaneously
+     * or recursively. */
     void stepBlock(int frames);
 
     /** Module does not need to belong to the Engine.
@@ -166,10 +166,20 @@ class Engine {
     */
     double getBlockDuration();
 
-    /** Returns the average block processing time divided by block time in the
-     * last T seconds.
+    /** Returns the max block processing time divided by block time in the
+     * last T seconds. For Windows uses an odd way of getting CPU usage via
+     * a separate thread. But for other platforms uses command line querying.
+     * Truthfully, there isn't a difference between the average and the max
+     * value. Returns percentage between 0.0 and 100.0.
      */
     double getMeterAverage();
+
+    /** Returns the max block processing time divided by block time in the
+     * last T seconds. For Windows uses an odd way of getting CPU usage via
+     * a separate thread. But for other platforms uses command line querying.
+     * Truthfully, there isn't a difference between the average and the max
+     * value. Returns percentage between 0.0 and 100.0.
+     */
     double getMeterMax();
 
     // Modules

@@ -577,6 +577,7 @@ void Engine::stepBlock(int frames) {
 
 	std::lock_guard<std::mutex> stepLock(internal_->blockMutex);
 	SharedLock<SharedMutex> lock(internal_->mutex);
+    
 	// Configure thread
 	system::resetFpuFlags();
 
@@ -609,7 +610,8 @@ void Engine::stepBlock(int frames) {
 	internal_->meterMax = std::fmax(internal_->meterMax, meter);
 	internal_->meterCount++;
 
-	// Update meter values
+	// Update meter values. Note that these values are only used for
+    // Windows machines. For others, CPU usage is obtained from the system.
 	const double meterUpdateDuration = 1.0;
 	if (startTime - internal_->meterLastTime >= meterUpdateDuration) {
 		internal_->meterLastAverage = internal_->meterTotal / internal_->meterCount;
@@ -741,12 +743,24 @@ double Engine::getBlockDuration() {
 
 
 double Engine::getMeterAverage() {
-	return internal_->meterLastAverage;
+#if defined ARCH_WIN
+    // Windows-specific implementation
+    return 100.0 * internal_->meterLastAverage;
+#else
+    // Other platforms get value using command line
+    return system::getSystemCpuPercentage();
+#endif
 }
 
 
 double Engine::getMeterMax() {
-	return internal_->meterLastMax;
+#if defined ARCH_WIN
+    // Windows-specific implementation
+    return 100.0 * internal_->meterLastMax;
+#else
+    // Other platforms get value using command line
+    return system::getSystemCpuPercentage();
+#endif
 }
 
 
@@ -1364,7 +1378,12 @@ static void Engine_fallbackRun(Engine* that) {
 		if (!that->getMasterModule()) {
 			// Step blocks and wait
 			double start = system::getTime();
-			int frames = std::floor(that->getSampleRate() / 60);
+
+            // Uses a number of audio frames to determine max and average meter/CPU loads.
+            // Originally this value was a really tiny timeslice of 1/60th of a second,
+            // But for that short of a time the average and max values were always going to
+            // be the same. Therefore now using a full second's worth of audio frames.
+			int frames = std::floor(that->getSampleRate() * 1 / 1 /* was 60 */);
 			that->stepBlock(frames);
 			double end = system::getTime();
 

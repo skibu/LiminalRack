@@ -61,8 +61,9 @@ class Window {
     struct Internal;
     Internal* internal_;
 
+    GLFWwindow* glfWin_ = NULL;
+
    public:
-    GLFWwindow* win = NULL;
     NVGcontext* vg = NULL;
     NVGcontext* fbVg = NULL;
 
@@ -82,6 +83,10 @@ class Window {
     math::Vec getSize();
     void setSize(math::Vec size);
 
+    GLFWwindow* getGLFWwindow() {
+        return glfWin_;
+    }
+
     /** Main window loop. Calls step() for every frame. Runs until user
      * exits application. */
     PRIVATE void mainLoop();
@@ -89,7 +94,8 @@ class Window {
         mainLoop();
     }
 
-    /** Handle single frame */
+    /** The top level function to handle a single frame. Calls step() for all
+     * child widgets */
     PRIVATE void step();
 
     /** Takes a screenshot of the screen and saves it to a PNG file. */
@@ -130,10 +136,15 @@ class Window {
     /** Returns the primary monitor's refresh rate in Hz. */
     double getMonitorRefreshRate();
 
+    /** Sets the desired frame rate. If set to 0, NAN, or negative, frames will be
+     * processed as fast as possible.
+    */
+    void setFrameRate(double frameRate) const;
+
     /** Returns the timestamp of the beginning of the current frame render
     process. Returns NAN if no frames have begun rendering.
     */
-    double getFrameTime() const;
+    double getFrameStartTime() const;
 
     /** Returns the total time in seconds spent rendering the last frame.
     Returns NAN if no frames have ended rendering.
@@ -143,6 +154,14 @@ class Window {
     /** Returns the current time remaining in seconds until the frame deadline,
      * according to the frame rate limit. */
     double getFrameDurationRemaining() const;
+
+    /** Returns the last frame rate in frames per second. If no information is
+     * available, returns 0. */
+    double getLastFrameRate() const;
+
+    /** Returns potential frame rate in frames per second. This is
+     * 1/lastFrameProcessingTime */
+    double getPotentialFrameRate() const;
 
     /** Returns the ignoreMouseDeltaUntil */
     double getIgnoreMouseDeltaUntil() const;
@@ -180,7 +199,10 @@ class Window {
     PRIVATE int& fbCount();
 };
 
+/** Initializes the window system using GLFW */
 PRIVATE void init();
+
+/** Destroys the window system */
 PRIVATE void destroy();
 
 

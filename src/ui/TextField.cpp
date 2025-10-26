@@ -376,9 +376,9 @@ void TextField::insertText(std::string text) {
 }
 
 void TextField::copyClipboard() {
-	if (cursor == selection)
-		return;
-	glfwSetClipboardString(getWindow()->win, getSelectedText().c_str());
+    if (cursor == selection) return;
+    glfwSetClipboardString(getWindow()->getGLFWwindow(),
+                           getSelectedText().c_str());
 }
 
 void TextField::cutClipboard() {
@@ -387,10 +387,9 @@ void TextField::cutClipboard() {
 }
 
 void TextField::pasteClipboard() {
-	const char* newText = glfwGetClipboardString(getWindow()->win);
-	if (!newText)
-		return;
-	insertText(newText);
+    const char* newText = glfwGetClipboardString(getWindow()->getGLFWwindow());
+    if (!newText) return;
+    insertText(newText);
 }
 
 void TextField::cursorToPrevWord() {

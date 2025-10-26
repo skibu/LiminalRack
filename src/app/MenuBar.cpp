@@ -21,6 +21,7 @@
 #include <context.hpp>
 #include <settings.hpp>
 #include <helpers.hpp>
+#include <string.hpp>
 #include <system.hpp>
 #include <plugin.hpp>
 #include <patch.hpp>
@@ -1269,74 +1270,78 @@ class HelpButton : public MenuButton {
 	}
 };
 
-
-/** Utility function to replace all occurrences of a substring with another string */
-void replaceAll(std::string& str, const std::string& from, const std::string& to) {
-    if (from.empty())
-        return;
-    size_t start_pos = 0;
-    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length(); // Advance past the replaced substring
-    }
-}
-
 ////////////////////
 // InfoBar - displays frame rate, cpu, and app name/version info
 ////////////////////
 
+/** Returns the cached last frame rate. By using a cached value
+ * that only updates every SECS_BETWEEN_UPDATES seconds the display
+ * of the value in the UI doesn't flicker as much. This is useful
+ * since can have a frame rate of 30fps, where user cannot read
+ * a value that updates every frame.
+ */
+static double getCachedLastFrameRate() {
+    static double cachedLastFrameRate = 0.0;
+    static double lastUpdateTime = 0.0;
+    static double SECS_BETWEEN_UPDATES = 0.1;
+
+    // Update every SECS_BETWEEN_UPDATES
+    double currentTime = system::getTime();
+    if (currentTime - lastUpdateTime >= SECS_BETWEEN_UPDATES) {
+        cachedLastFrameRate = getWindow()->getLastFrameRate();
+        lastUpdateTime = currentTime;
+    }
+    return cachedLastFrameRate;
+}
+
+/** Returns the cached potential frame rate. By using a cached value
+ * that only updates every SECS_BETWEEN_UPDATES seconds the display
+ * of the value in the UI doesn't flicker as much. This is useful
+ * since can have a frame rate of 30fps, where user cannot read
+ * a value that updates every frame.
+ */
+static double getCachedPotentialFrameRate() {
+    static double cachedPotentialFrameRate = 0.0;
+    static double lastUpdateTime = 0.0;
+    static double SECS_BETWEEN_UPDATES = 0.2;
+
+    // Update every SECS_BETWEEN_UPDATES
+    double currentTime = system::getTime();
+    if (currentTime - lastUpdateTime >= SECS_BETWEEN_UPDATES) {
+        cachedPotentialFrameRate = getWindow()->getPotentialFrameRate();
+        lastUpdateTime = currentTime;
+    }
+    return cachedPotentialFrameRate;
+}
+
 class InfoLabel : public ui::Label {
-    int frameCount = 0;
-    double frameDurationTotal = 0.0;
-    double frameDurationAvg = NAN;
-    // double uiLastTime = 0.0;
-    // double uiLastThreadTime = 0.0;
-    // double uiFrac = 0.0;
-
     void step() override {
-        // Compute frame rate
-        double frameDuration = getWindow()->getLastFrameDuration();
-        if (std::isfinite(frameDuration)) {
-            frameDurationTotal += frameDuration;
-            frameCount++;
-        }
-        if (frameDurationTotal >= 1.0) {
-            frameDurationAvg = frameDurationTotal / frameCount;
-            frameDurationTotal = 0.0;
-            frameCount = 0;
-        }
-
-        // Compute UI thread CPU
-        // double time = system::getTime();
-        // double uiDuration = time - uiLastTime;
-        // if (uiDuration >= 1.0) {
-        // 	double threadTime = system::getThreadTime();
-        // 	uiFrac = (threadTime - uiLastThreadTime) / uiDuration;
-        // 	uiLastThreadTime = threadTime;
-        // 	uiLastTime = time;
-        // }
-
         std::string label = "";
 
         // If window wide enough display frame rate and CPU meter
         if (getWidth() >= 460) {
-            double fps =
-                std::isfinite(frameDurationAvg) ? 1.0 / frameDurationAvg : 0.0;
-            double meterAverage = getEngine()->getMeterAverage();
-            double meterMax = getEngine()->getMeterMax();
-            label += string::f(string::translate("MenuBar.infoLabel"), fps,
-                               meterAverage * 100, meterMax * 100);
+            double lastFps = getCachedLastFrameRate();
+            // No point in showing more than 120fps
+            double potentialFps = std::min(120.0, getCachedPotentialFrameRate());
+            double meterAveragePct = getEngine()->getMeterAverage();
+            // meterMaxPct not used currently since not useful to user
+            // double meterMaxPct = getEngine()->getMeterMax();  
+            label +=
+                string::f(string::translate("MenuBar.infoLabel"), lastFps,
+                          potentialFps, meterAveragePct);
             label += "   ";
         }
 
-        // Add in app and OS name
+        // Add in app and OS name, but remove double spaces from appAndOsName
         std::string appAndOsName = APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION +
                        " " + APP_OS_NAME + " " + APP_CPU_NAME;
-        // Remove double spaces from appAndOsName
-        replaceAll(appAndOsName, "  ", " ");
+        string::replaceAll(appAndOsName, "  ", " ");
         label += appAndOsName;
 
+        // Use the completed label
         setText(label);
+
+        // Figure out dimensions and draw label
         Label::step();
     }
 };

@@ -70,7 +70,7 @@ Context::~Context() {
 
 void Context::createWindow() {
     INFO("Creating window");
-    window = new window::Window;
+    window = new window::Window();
 }
 
 // Global context pointer for the current thread

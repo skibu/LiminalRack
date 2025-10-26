@@ -180,7 +180,7 @@
 	"MenuBar.help.changelog": "更新履歴",
 	"MenuBar.help.update": "%sを更新",
 	"MenuBar.help.checkUpdate": "%sの更新を確認",
-	"MenuBar.infoLabel": "%.1f fps  平均%.1f%%  最大%.1f%%",
+	"MenuBar.infoLabel": "%.1ffps  possible:%.1ffps  cpu:%4.1f%%",
 	"ModuleWidget.history.pastePreset": "モジュールのプリセットをペースト",
 	"ModuleWidget.history.loadPreset": "モジュールのプリセットを読み込み",
 	"ModuleWidget.savePresetFailed": "プリセットをファイル%sに保存できませんでした",

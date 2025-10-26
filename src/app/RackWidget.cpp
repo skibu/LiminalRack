@@ -639,7 +639,7 @@ void RackWidget::pasteModuleJsonAction(json_t* moduleJ) {
 }
 
 void RackWidget::pasteClipboardAction() {
-	const char* json = glfwGetClipboardString(getWindow()->win);
+	const char* json = glfwGetClipboardString(getWindow()->getGLFWwindow());
 	if (!json) {
 		WARN("Could not get text from clipboard.");
 		return;
@@ -648,7 +648,8 @@ void RackWidget::pasteClipboardAction() {
 	json_error_t error;
 	json_t* rootJ = json_loads(json, 0, &error);
 	if (!rootJ) {
-		WARN("JSON parsing error at %s %d:%d %s", error.source, error.line, error.column, error.text);
+		WARN("JSON parsing error at %s %d:%d %s", 
+            error.source, error.line, error.column, error.text);
 		return;
 	}
 	DEFER({json_decref(rootJ);});
@@ -1188,11 +1189,11 @@ void RackWidget::saveSelectionDialog() {
 }
 
 void RackWidget::copyClipboardSelection() {
-	json_t* rootJ = selectionToJson();
-	DEFER({json_decref(rootJ);});
-	char* moduleJson = json_dumps(rootJ, JSON_INDENT(2));
-	DEFER({std::free(moduleJson);});
-	glfwSetClipboardString(getWindow()->win, moduleJson);
+    json_t* rootJ = selectionToJson();
+    DEFER({ json_decref(rootJ); });
+    char* moduleJson = json_dumps(rootJ, JSON_INDENT(2));
+    DEFER({ std::free(moduleJson); });
+    glfwSetClipboardString(getWindow()->getGLFWwindow(), moduleJson);
 }
 
 void RackWidget::resetSelectionAction() {

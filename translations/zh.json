@@ -180,7 +180,7 @@
     "MenuBar.help.changelog": "更新日志",
     "MenuBar.help.update": "更新%s",
     "MenuBar.help.checkUpdate": "检查%s更新",
-    "MenuBar.infoLabel": "%.1f fps  平均 %.1f%%  最高 %.1f%%",
+    "MenuBar.infoLabel": "%.1ffps  possible:%.1ffps  cpu:%4.1f%%",
     "ModuleWidget.history.pastePreset": "粘贴模块预设",
     "ModuleWidget.history.loadPreset": "加载模块预设",
     "ModuleWidget.savePresetFailed": "无法将预设保存到文件%s",

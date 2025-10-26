@@ -180,7 +180,7 @@
 	"MenuBar.help.changelog": "Notes de la version",
 	"MenuBar.help.update": "Mettre à jour %s",
 	"MenuBar.help.checkUpdate": "Vérifier les mises à jour de %s",
-	"MenuBar.infoLabel": "%.1f ips  %.1f%% moy  %.1f%% max",
+	"MenuBar.infoLabel": "",
 	"ModuleWidget.history.pastePreset": "coller le préréglage du module",
 	"ModuleWidget.history.loadPreset": "charger le préréglage du module",
 	"ModuleWidget.savePresetFailed": "Impossible d'enregistrer le préréglage dans le fichier %s",
