@@ -82,10 +82,11 @@ void destroy() {
 }
 
 static const char* const levelLabels[] = {
-	"debug",
-	"info",
-	"warn",
-	"fatal",
+	"DEBUG",
+	"INFO",
+	"WARN",
+    "ERROR",
+	"FATAL",
 };
 
 void setLogLevel(Level level) {

@@ -16,6 +16,7 @@ will print something like
 #define DEBUG(format, ...) rack::logger::log(rack::logger::DEBUG_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
 #define INFO(format, ...) rack::logger::log(rack::logger::INFO_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
 #define WARN(format, ...) rack::logger::log(rack::logger::WARN_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
+#define ERROR(format, ...) rack::logger::log(rack::logger::ERROR_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
 #define FATAL(format, ...) rack::logger::log(rack::logger::FATAL_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
 
 
@@ -31,6 +32,7 @@ enum Level {
 	DEBUG_LEVEL,
 	INFO_LEVEL,
 	WARN_LEVEL,
+    ERROR_LEVEL,
 	FATAL_LEVEL
 };
 
