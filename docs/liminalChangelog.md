@@ -1,5 +1,9 @@
 # Liminal Rack Change Log
 
+- 10/26/25
+  - Big changes to how fps and cpu displayed in menu bar. Changed code to determine the values accurately while using limited processing. And changed what is displayed so that the info is more useful. Now displaying fps, potential fps, and cpu %.
+  - Added ERROR logging. Not sure why that did not previously exist!
+
 - 10/22/25 - was hella sick for many weeks
   - Major code cleanup.
     - Added comments when could.
