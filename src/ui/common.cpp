@@ -81,9 +81,11 @@ void setTheme(NVGcolor bg, NVGcolor fg) {
 	// Highlight selectedtext background
 	t.textFieldTheme.itemColor = color::lerp(bg, fg, 0.5);
 
-    // Scrollbar handle color and alpha
+    // Scrollbar handle color
 	t.scrollBarTheme.itemColor = color::lerp(bg, fg, 0.7);
-    t.scrollBarTheme.itemColor.a = 0.9f;
+    // Scrollbar handle alpha. Should be reasonably visible but still want
+    // to be able to see content behind it.
+    t.scrollBarTheme.itemColor.a = 0.7f;
     // Scrollbar track background color and alpha
 	t.scrollBarTheme.innerColor = color::lerp(bg, fg, 0.1);
     t.scrollBarTheme.innerColor.a = 0.3f;
