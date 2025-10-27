@@ -896,7 +896,7 @@ struct LogInItem : ui::MenuItem {
 
 	void step() override {
 		setText(string::translate("MenuBar.library.login"));
-		setRightText(library::loginStatus);
+		setRightText(library::getLoginStatus());
 		MenuItem::step();
 	}
 };
@@ -904,10 +904,10 @@ struct LogInItem : ui::MenuItem {
 
 struct SyncUpdatesItem : ui::MenuItem {
 	void step() override {
-		if (library::updateStatus != "") {
-			setText(library::updateStatus);
+		if (library::getUpdateStatus() != "") {
+			setText(library::getUpdateStatus());
 		}
-		else if (library::isSyncing) {
+		else if (library::isSyncing()) {
 			setText(string::translate("MenuBar.library.updating"));
 		}
 		else if (!library::hasUpdates()) {
@@ -917,7 +917,7 @@ struct SyncUpdatesItem : ui::MenuItem {
 			setText(string::translate("MenuBar.library.updateAll"));
 		}
 
-		setDisabled(library::isSyncing || !library::hasUpdates());
+		setDisabled(library::isSyncing() || !library::hasUpdates());
 		MenuItem::step();
 	}
 
@@ -937,8 +937,9 @@ struct SyncUpdateItem : ui::MenuItem {
 	void setUpdate(const std::string& slug) {
 		this->slug = slug;
 
-		auto it = library::updateInfos.find(slug);
-		if (it == library::updateInfos.end())
+        auto updateInfos = library::getUpdateInfos();
+		auto it = updateInfos.find(slug);
+		if (it == updateInfos.end())
 			return;
 		library::UpdateInfo update = it->second;
 
@@ -946,8 +947,10 @@ struct SyncUpdateItem : ui::MenuItem {
 	}
 
 	ui::Menu* createChildMenu() override {
-		auto it = library::updateInfos.find(slug);
-		if (it == library::updateInfos.end())
+        auto updateInfos = library::getUpdateInfos();
+
+		auto it = updateInfos.find(slug);
+		if (it == updateInfos.end())
 			return NULL;
 		library::UpdateInfo update = it->second;
 
@@ -974,11 +977,12 @@ struct SyncUpdateItem : ui::MenuItem {
 	void step() override {
 		bool isDisabled = false;
 
-		if (library::isSyncing)
+		if (library::isSyncing())
 			isDisabled = true;
 
-		auto it = library::updateInfos.find(slug);
-		if (it == library::updateInfos.end()) {
+        auto updateInfos = library::getUpdateInfos();
+		auto it = updateInfos.find(slug);
+		if (it == updateInfos.end()) {
 			isDisabled = true;
 		}
 		else {
@@ -991,8 +995,8 @@ struct SyncUpdateItem : ui::MenuItem {
 				setRightText(CHECKMARK_STRING);
 				isDisabled = true;
 			}
-			else if (slug == library::updateSlug) {
-				setRightText(string::f("%.0f%%", library::updateProgress * 100.f));
+			else if (slug == library::getUpdateSlug()) {
+				setRightText(string::f("%.0f%%", library::getUpdateProgress() * 100.f));
 			}
 			else {
 				std::string rt = "";
@@ -1027,8 +1031,8 @@ struct LibraryMenu : ui::Menu {
 
 	void step() override {
 		// Refresh menu when appropriate
-		if (library::refreshRequested) {
-			library::refreshRequested = false;
+		if (library::isRestartRequested()) {
+			library::clearRestartRequest();
 			refresh();
 		}
 		Menu::step();
@@ -1095,11 +1099,11 @@ struct LibraryMenu : ui::Menu {
 			addChild(syncItem);
 
 			// Add buttons for updating individual collections of modules
-			if (!library::updateInfos.empty()) {
+			if (!library::getUpdateInfos().empty()) {
 				addChild(new ui::MenuSeparator);
 				addChild(createMenuLabel(string::translate("MenuBar.library.updates")));
 
-				for (auto& pair : library::updateInfos) {
+				for (auto& pair : library::getUpdateInfos()) {
 					SyncUpdateItem* updateItem = new SyncUpdateItem;
 					updateItem->setUpdate(pair.first);
 					addChild(updateItem);
@@ -1146,8 +1150,8 @@ class LibraryButton : public MenuButton {
 		notification->setVisible(library::hasUpdates());
 
 		// Popup when updates finish downloading
-		if (library::restartRequested) {
-			library::restartRequested = false;
+		if (library::isRestartRequested()) {
+			library::clearRestartRequest();
 			if (osdialog_message(OSDIALOG_INFO, OSDIALOG_OK_CANCEL, string::translate("MenuBar.library.restart").c_str())) {
 				getWindow()->close();
 				settings::restart = true;
@@ -1239,8 +1243,8 @@ class HelpButton : public MenuButton {
                 menu->addChild(createMenuItem(
                     string::f(string::translate("MenuBar.help.update"),
                               APP_NAME),
-                    APP_VERSION + " → " + library::appVersion,
-                    [=]() { system::openBrowser(library::appDownloadUrl); }));
+                    APP_VERSION + " → " + library::getAppVersion(),
+                    [=]() { system::openBrowser(library::getAppDownloadUrl()); }));
             } else if (!settings::autoCheckUpdates && !settings::devMode) {
                 // Create button for checking for update
                 menu->addChild(createMenuItem(
