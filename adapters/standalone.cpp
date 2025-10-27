@@ -244,7 +244,7 @@ int main(int argc, char* argv[]) {
 	INFO("Initializing network");
 	network::init();
 
-    INFO("Initializing plugins");
+    INFO("Initializing plugins (packages of modules from a manufacturer)");
 	plugin::init();
 
 	// Initialize main UI window
@@ -269,6 +269,7 @@ int main(int argc, char* argv[]) {
 
 	INFO("Initializing module browser");
 	app::browserInit();
+    
 	INFO("Initializing module library");
 	library::init();
 
