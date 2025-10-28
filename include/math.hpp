@@ -458,6 +458,16 @@ class Rect {
         return pos_.getY();
     }
 
+       /** Sets the x position of the rectangle. */
+    void setX(float x) {
+        pos_.setX(x);
+    }   
+
+    /** Sets the y position of the rectangle. */
+    void setY(float y) {
+        pos_.setY(y);
+    }
+
     /** Returns the x position of the rectangle. */
     float getX() const {
         return getPosX();

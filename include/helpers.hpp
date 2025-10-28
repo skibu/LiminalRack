@@ -173,7 +173,7 @@ TParamWidget* createLightParam(math::Vec pos, engine::Module* module, int paramI
 template <class TParamWidget>
 TParamWidget* createLightParamCentered(math::Vec pos, engine::Module* module, int paramId, int firstLightId) {
 	TParamWidget* o = createLightParam<TParamWidget>(pos, module, paramId, firstLightId);
-	o->box.pos = o->box.pos.minus(o->box.size.div(2));
+	o->setPos(o->getPos().minus(o->getSize().div(2)));
 	return o;
 }
 

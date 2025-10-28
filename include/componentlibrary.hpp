@@ -194,7 +194,7 @@ struct LargeSimpleLight : TBase {
 template <typename TBase = GrayModuleLightWidget>
 struct MediumSimpleLight : TBase {
 	MediumSimpleLight() {
-		this->box.size = mm2px(math::Vec(3, 3));
+		this->setSize(mm2px(math::Vec(3, 3)));
 	}
 };
 
@@ -220,7 +220,7 @@ struct RectangleLight : TBase {
 		// Derived from LightWidget::drawBackground()
 
 		nvgBeginPath(args.vg);
-		nvgRect(args.vg, 0, 0, this->box.size.x, this->box.size.y);
+		nvgRect(args.vg, 0, 0, this->getWidth(), this->getHeight());
 
 		// Background
 		if (this->bgColor.a > 0.0) {
@@ -242,7 +242,7 @@ struct RectangleLight : TBase {
 		// Foreground
 		if (this->color.a > 0.0) {
 			nvgBeginPath(args.vg);
-			nvgRect(args.vg, 0, 0, this->box.size.x, this->box.size.y);
+			nvgRect(args.vg, 0, 0, this->getWidth(), this->getHeight());
 
 			nvgFillColor(args.vg, this->color);
 			nvgFill(args.vg);
@@ -256,7 +256,7 @@ struct VCVBezelLight : TBase {
 	VCVBezelLight() {
 		this->borderColor = color::BLACK_TRANSPARENT;
 		this->bgColor = color::BLACK_TRANSPARENT;
-		this->box.size = math::Vec(17.545, 17.545);
+		this->setSize(17.545, 17.545);
 	}
 };
 template <typename TBase>
@@ -870,7 +870,7 @@ struct LightButton : TBase {
 	LightButton() {
 		light = new TLight;
 		// Move center of light to center of box
-		light->setPos(this->box.size.div(2).minus(light->getSize().div(2)));
+		light->setPos(this->getSize().div(2).minus(light->getSize().div(2)));
 		this->addChild(light);
 	}
 
