@@ -1,6 +1,7 @@
 # Ignore all dotfiles except git dotfiles
 .*
 !.git*
+!.vscode
 
 # Binaries and build targets
 *.a

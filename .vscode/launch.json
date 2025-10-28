@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    
+    {
+      "type": "cppdbg",
+      "request": "launch",
+      "name": "Launch Rack Standalone",
+      "program": "${workspaceFolder}/Rack",
+      "args": ["-l", "-b"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build-standalone",
+      "MIMode": "lldb"
+    }
+  ]
+}
