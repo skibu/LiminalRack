@@ -164,7 +164,7 @@ static void windowSizeCallback(GLFWwindow* win, int width, int height) {
 	if (glfwGetWindowMonitor(win))
 		return;
 	settings::windowSize = math::Vec(width, height);
-	DEBUG("windowSizeCallback %d %d", width, height);
+	DEBUG("windowSizeCallback(%d, %d)", width, height);
 }
 
 
