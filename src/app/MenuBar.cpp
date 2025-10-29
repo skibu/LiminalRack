@@ -56,10 +56,8 @@ class MenuButton : public ui::Button {
         if (getEvent()->draggedWidget == this)
             state = BND_ACTIVE;  // Clicked on and menu pulled down
 
-        // Draw the button. Found that using y=1.0 better centers the box
-        // verticqlly due to a strange offset in bndMenuItem height
-        // determination.
-		bndMenuItem(args.vg, 0.0, 1.0, getWidth(), getHeight(), state, -1,
+        // Draw the button
+		bndMenuItem(args.vg, 0.0, 0.0, getWidth(), getHeight(), state, -1,
 					text.c_str());
 
         // Draw all the nodes
