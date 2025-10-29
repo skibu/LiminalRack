@@ -138,59 +138,54 @@ void RackWidget::step() {
 }
 
 void RackWidget::draw(const DrawArgs& args) {
-	float b = settings::rackBrightness;
+    // Draw rack rails and modules
+    Widget::draw(args);
 
-    // FIXME for debugging coordinates
-    static int count = 0;
-    if (count++ % 180 == 0) {
-        DEBUG("=========== RackWidget: box pos=(%f, %f) size=(%f, %f)",
-             getBox().getX(), getBox().getY(), getBox().getWidth(),
-             getBox().getHeight());
-        DEBUG("RackWidget: mousePos=(%f, %f)", internal_->mousePos.getX(),
-             internal_->mousePos.getY());
+    // Draw translucent dark rectangle
+    float rackBrightness = settings::rackBrightness;
+    if (rackBrightness < 1.f) {
+        // Get zoom level
+        float t[6];
+        nvgCurrentTransform(args.vg, t);
+        float zoom = t[3];
+        float radius = 300.0 / zoom;
+        float brightness = 0.2f;
+        // Draw mouse spotlight
+        nvgBeginPath(args.vg);
+        nvgRect(args.vg, 0.0, 0.0, VEC_ARGS(getSize()));
+        nvgFillPaint(args.vg,
+                     nvgRadialGradient(
+                         args.vg, VEC_ARGS(internal_->mousePos), 0.0, radius,
+                         nvgRGBAf(0, 0, 0, 1.f - rackBrightness - brightness),
+                         nvgRGBAf(0, 0, 0, 1.f - rackBrightness)));
+        nvgFill(args.vg);
     }
 
-        // Draw rack rails and modules
-	Widget::draw(args);
+    // Draw lights and halos
+    Widget::drawLayer(args, 1);
 
-	// Draw translucent dark rectangle
-	if (b < 1.f) {
-		// Get zoom level
-		float t[6];
-		nvgCurrentTransform(args.vg, t);
-		float zoom = t[3];
-		float radius = 300.0 / zoom;
-		float brightness = 0.2f;
-		// Draw mouse spotlight
-		nvgBeginPath(args.vg);
-		nvgRect(args.vg, 0.0, 0.0, VEC_ARGS(getSize()));
-		nvgFillPaint(args.vg, nvgRadialGradient(args.vg, VEC_ARGS(internal_->mousePos), 0.0, radius, nvgRGBAf(0, 0, 0, 1.f - b - brightness), nvgRGBAf(0, 0, 0, 1.f - b)));
-		nvgFill(args.vg);
-	}
+    // Tint all draws after this point
+    nvgGlobalTint(args.vg,
+                  nvgRGBAf(rackBrightness, rackBrightness, rackBrightness, 1));
 
-	// Draw lights and halos
-	Widget::drawLayer(args, 1);
+    // Draw plugs
+    Widget::drawLayer(args, 2);
 
-	// Tint all draws after this point
-	nvgGlobalTint(args.vg, nvgRGBAf(b, b, b, 1));
+    // Draw cables
+    Widget::drawLayer(args, 3);
 
-	// Draw plugs
-	Widget::drawLayer(args, 2);
-
-	// Draw cables
-	Widget::drawLayer(args, 3);
-
-	// Draw selection rectangle
-	if (internal_->selecting) {
-		nvgBeginPath(args.vg);
-		math::Rect selectionBox = math::Rect::fromCorners(internal_->selectionStart, internal_->selectionEnd);
-		nvgRect(args.vg, RECT_ARGS(selectionBox));
-		nvgFillColor(args.vg, nvgRGBAf(1, 0, 0, 0.25));
-		nvgFill(args.vg);
-		nvgStrokeWidth(args.vg, 2.0);
-		nvgStrokeColor(args.vg, nvgRGBAf(1, 0, 0, 0.5));
-		nvgStroke(args.vg);
-	}
+    // Draw selection rectangle
+    if (internal_->selecting) {
+        nvgBeginPath(args.vg);
+        math::Rect selectionBox = math::Rect::fromCorners(
+            internal_->selectionStart, internal_->selectionEnd);
+        nvgRect(args.vg, RECT_ARGS(selectionBox));
+        nvgFillColor(args.vg, nvgRGBAf(1, 0, 0, 0.25));
+        nvgFill(args.vg);
+        nvgStrokeWidth(args.vg, 2.0);
+        nvgStrokeColor(args.vg, nvgRGBAf(1, 0, 0, 0.5));
+        nvgStroke(args.vg);
+    }
 }
 
 void RackWidget::onHover(const HoverEvent& e) {
@@ -263,7 +258,8 @@ math::Vec RackWidget::getMousePos() {
 }
 
 void RackWidget::clear() {
-	// This isn't required because removing all ModuleWidgets should remove all cables, but do it just in case.
+	// This isn't required because removing all ModuleWidgets should 
+    // remove all cables, but do it just in case.
 	clearCables();
 	// Remove ModuleWidgets
 	for (ModuleWidget* mw : getModules()) {
