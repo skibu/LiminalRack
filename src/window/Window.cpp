@@ -744,7 +744,6 @@ int Window::getMods() {
 void Window::setFullScreen(bool fullScreen) {
     // Remember full screen state
     settings::windowMaximized = fullScreen;
-    DEBUG("XXXXXXXXXXX setFullScreen %d", fullScreen);
 
     if (!fullScreen) {
         // Put window into non-full screen mode
