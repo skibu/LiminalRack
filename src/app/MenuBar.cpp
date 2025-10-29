@@ -488,337 +488,449 @@ class KnobScrollSensitivitySlider : public ui::Slider {
 class ViewButton : public MenuButton {
    public:
     ViewButton() : MenuButton(string::translate("MenuBar.view")) {}
-    
-	void onAction(const ActionEvent& e) override {
-		ui::Menu* menu = createMenu();
-		menu->cornerFlags = BND_CORNER_TOP;
+
+    // Called when popping up View menu
+    void onAction(const ActionEvent& e) override {
+        ui::Menu* menu = createMenu();
+        menu->cornerFlags = BND_CORNER_TOP;
         menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
 
         // Add Window category menu label (inactive)
-		menu->addChild(new ui::MenuSeparator);
-		menu->addChild(createMenuLabel(string::translate("MenuBar.view.window")));
+        menu->addChild(new ui::MenuSeparator);
+        menu->addChild(
+            createMenuLabel(string::translate("MenuBar.view.window")));
 
         // Add fullscreen menu item
-		bool fullscreen = getWindow()->isFullScreen();
-		std::string fullscreenText = widget::getKeyCommandName(GLFW_KEY_F11, 0);
-		if (fullscreen)
-			fullscreenText += " " CHECKMARK_STRING;
-		menu->addChild(createMenuItem(string::translate("MenuBar.view.fullscreen"), fullscreenText, [=]() {
-			getWindow()->setFullScreen(!fullscreen);
-		}));
+        bool fullscreen = getWindow()->isFullScreen();
+        std::string fullscreenText = widget::getKeyCommandName(GLFW_KEY_F11, 0);
+        if (fullscreen) fullscreenText += " " CHECKMARK_STRING;
+        menu->addChild(createMenuItem(
+            string::translate("MenuBar.view.fullscreen"), fullscreenText,
+            [=]() { getWindow()->setFullScreen(!fullscreen); }));
 
-        // Only provide frame rate option if not VCV rack because it is a obscure feature
-		if (!settings::isNotVCVRack) {
-			menu->addChild(createSubmenuItem(string::translate("MenuBar.view.frameRate"), string::f("%.0f Hz", settings::frameRateLimit), [=](ui::Menu* menu) {
-				for (int i = 1; i <= 6; i++) {
-					double frameRate = getWindow()->getMonitorRefreshRate() / i;
-					menu->addChild(createCheckMenuItem(string::f("%.0f Hz", frameRate), "",
-						[=]() {return settings::frameRateLimit == frameRate;},
-						[=]() {settings::frameRateLimit = frameRate;}
-					));
-				}
-			}));
-		}
+        // Only provide frame rate option if not VCV rack because it is a
+        // obscure feature
+        if (!settings::isNotVCVRack) {
+            menu->addChild(createSubmenuItem(
+                string::translate("MenuBar.view.frameRate"),
+                string::f("%.0f Hz", settings::frameRateLimit),
+                [=](ui::Menu* menu) {
+                    for (int i = 1; i <= 6; i++) {
+                        double frameRate =
+                            getWindow()->getMonitorRefreshRate() / i;
+                        menu->addChild(createCheckMenuItem(
+                            string::f("%.0f Hz", frameRate), "",
+                            [=]() {
+                                return settings::frameRateLimit == frameRate;
+                            },
+                            [=]() { settings::frameRateLimit = frameRate; }));
+                    }
+                }));
+        }
 
-        // Only provide pixel ratio option if not VCV rack because it is a obscure feature
-		if (!settings::isNotVCVRack) {
-			static const std::vector<float> pixelRatios = {0, 1, 1.5, 2, 2.5, 3};
-			std::vector<std::string> pixelRatioLabels;
-			for (float pixelRatio : pixelRatios) {
-				pixelRatioLabels.push_back(pixelRatio == 0.f ? string::translate("MenuBar.view.pixelRatio.auto") : string::f("%0.f%%", pixelRatio * 100.f));
-			}
-			menu->addChild(createIndexSubmenuItem(string::translate("MenuBar.view.pixelRatio"), pixelRatioLabels, [=]() -> size_t {
-				auto it = std::find(pixelRatios.begin(), pixelRatios.end(), settings::pixelRatio);
-				if (it == pixelRatios.end())
-					return -1;
-				return it - pixelRatios.begin();
-			}, [=](size_t i) {
-				settings::pixelRatio = pixelRatios[i];
-			}));
+        // Only provide pixel ratio option if not VCV rack because it is a
+        // obscure feature
+        if (!settings::isNotVCVRack) {
+            static const std::vector<float> pixelRatios = {0, 1,   1.5,
+                                                           2, 2.5, 3};
+            std::vector<std::string> pixelRatioLabels;
+            for (float pixelRatio : pixelRatios) {
+                pixelRatioLabels.push_back(
+                    pixelRatio == 0.f
+                        ? string::translate("MenuBar.view.pixelRatio.auto")
+                        : string::f("%0.f%%", pixelRatio * 100.f));
+            }
+            menu->addChild(createIndexSubmenuItem(
+                string::translate("MenuBar.view.pixelRatio"), pixelRatioLabels,
+                [=]() -> size_t {
+                    auto it = std::find(pixelRatios.begin(), pixelRatios.end(),
+                                        settings::pixelRatio);
+                    if (it == pixelRatios.end()) return -1;
+                    return it - pixelRatios.begin();
+                },
+                [=](size_t i) { settings::pixelRatio = pixelRatios[i]; }));
         }
 
         // Add zoom slider
         ZoomSlider* zoomSlider = new ZoomSlider;
-		zoomSlider->setWidth(250.0);
-		menu->addChild(zoomSlider);
+        zoomSlider->setWidth(250.0);
+        menu->addChild(zoomSlider);
 
-		// Add menu button to zoom fit to modules
-		menu->addChild(createMenuItem(string::translate("MenuBar.view.zoomFit"), widget::getKeyCommandName(GLFW_KEY_F4, 0), [=]() {
-			getScene()->getRackScroll()->zoomToModules();
-		}));
+        // Add menu button to zoom fit to modules
+        menu->addChild(createMenuItem(
+            string::translate("MenuBar.view.zoomFit"),
+            widget::getKeyCommandName(GLFW_KEY_F4, 0),
+            [=]() { getScene()->getRackScroll()->zoomToModules(); }));
 
-		// Create zoom sub menu, if not in Liminal mode
-		if (!settings::isNotVCVRack) {
-			menu->addChild(createIndexPtrSubmenuItem(string::translate("MenuBar.view.mouseWheelZoom"), {
-				string::f(string::translate("MenuBar.view.mouseWheelZoom.scroll"), RACK_MOD_CTRL_NAME),
-				string::f(string::translate("MenuBar.view.mouseWheelZoom.zoom"), RACK_MOD_CTRL_NAME)
-			}, &settings::mouseWheelZoom));
-		}
+        // Create zoom sub menu, if not in Liminal mode
+        if (!settings::isNotVCVRack) {
+            menu->addChild(createIndexPtrSubmenuItem(
+                string::translate("MenuBar.view.mouseWheelZoom"),
+                {string::f(
+                     string::translate("MenuBar.view.mouseWheelZoom.scroll"),
+                     RACK_MOD_CTRL_NAME),
+                 string::f(
+                     string::translate("MenuBar.view.mouseWheelZoom.zoom"),
+                     RACK_MOD_CTRL_NAME)},
+                &settings::mouseWheelZoom));
+        }
 
         // Add Appearance category menu label (inactive)
-		menu->addChild(new ui::MenuSeparator);
-		menu->addChild(createMenuLabel(string::translate("MenuBar.view.appearance")));
+        menu->addChild(new ui::MenuSeparator);
+        menu->addChild(
+            createMenuLabel(string::translate("MenuBar.view.appearance")));
 
-		if (!settings::isNotVCVRack) {
-			static const std::vector<std::string> uiThemes = {"dark", "light", "hcdark"};
-			menu->addChild(createIndexSubmenuItem(string::translate("MenuBar.view.uiTheme"), {
-				string::translate("MenuBar.view.appearance.dark"),
-				string::translate("MenuBar.view.appearance.light"),
-				string::translate("MenuBar.view.appearance.hcdark")
-			}, [=]() -> size_t {
-				auto it = std::find(uiThemes.begin(), uiThemes.end(), settings::uiTheme);
-				if (it == uiThemes.end())
-					return -1;
-				return it - uiThemes.begin();
-			}, [=](size_t i) {
-				settings::uiTheme = uiThemes[i];
-				ui::refreshTheme();
-			}));
-		}
+        if (!settings::isNotVCVRack) {
+            static const std::vector<std::string> uiThemes = {"dark", "light",
+                                                              "hcdark"};
+            menu->addChild(createIndexSubmenuItem(
+                string::translate("MenuBar.view.uiTheme"),
+                {string::translate("MenuBar.view.appearance.dark"),
+                 string::translate("MenuBar.view.appearance.light"),
+                 string::translate("MenuBar.view.appearance.hcdark")},
+                [=]() -> size_t {
+                    auto it = std::find(uiThemes.begin(), uiThemes.end(),
+                                        settings::uiTheme);
+                    if (it == uiThemes.end()) return -1;
+                    return it - uiThemes.begin();
+                },
+                [=](size_t i) {
+                    settings::uiTheme = uiThemes[i];
+                    ui::refreshTheme();
+                }));
+        }
 
-		menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.showTooltips"), "", &settings::tooltips));
+        menu->addChild(createBoolPtrMenuItem(
+            string::translate("MenuBar.view.showTooltips"), "",
+            &settings::tooltips));
 
-		// Various sliders
-		CableOpacitySlider* cableOpacitySlider = new CableOpacitySlider();
-		cableOpacitySlider->setWidth(250.0);
-		menu->addChild(cableOpacitySlider);
+        // Various sliders
+        CableOpacitySlider* cableOpacitySlider = new CableOpacitySlider();
+        cableOpacitySlider->setWidth(250.0);
+        menu->addChild(cableOpacitySlider);
 
-		CableTensionSlider* cableTensionSlider = new CableTensionSlider();
-		cableTensionSlider->setWidth(250.0);
-		menu->addChild(cableTensionSlider);
+        CableTensionSlider* cableTensionSlider = new CableTensionSlider();
+        cableTensionSlider->setWidth(250.0);
+        menu->addChild(cableTensionSlider);
 
-		RackBrightnessSlider* rackBrightnessSlider = new RackBrightnessSlider();
-		rackBrightnessSlider->setWidth(250.0);
-		menu->addChild(rackBrightnessSlider);
+        RackBrightnessSlider* rackBrightnessSlider = new RackBrightnessSlider();
+        rackBrightnessSlider->setWidth(250.0);
+        menu->addChild(rackBrightnessSlider);
 
-		HaloBrightnessSlider* haloBrightnessSlider = new HaloBrightnessSlider();
-		haloBrightnessSlider->setWidth(250.0);
-		menu->addChild(haloBrightnessSlider);
+        HaloBrightnessSlider* haloBrightnessSlider = new HaloBrightnessSlider();
+        haloBrightnessSlider->setWidth(250.0);
+        menu->addChild(haloBrightnessSlider);
 
-		// Cable colors
-		menu->addChild(createSubmenuItem(string::translate("MenuBar.view.cableColors"), "", [=](ui::Menu* menu) {
-			// TODO Subclass Menu to make an auto-refreshing list so user can Ctrl+click to keep menu open.
+        // Cable colors
+        menu->addChild(createSubmenuItem(
+            string::translate("MenuBar.view.cableColors"), "",
+            [=](ui::Menu* menu) {
+                // TODO Subclass Menu to make an auto-refreshing list so user
+                // can Ctrl+click to keep menu open.
 
-			// Add color items
-			for (size_t i = 0; i < settings::cableColors.size(); i++) {
-				NVGcolor color = settings::cableColors[i];
-				std::string label = get(settings::cableLabels, i);
-				std::string labelFallback = (label != "") ? label : string::f("Color #%lld", (long long) (i + 1));
+                // Add color items
+                for (size_t i = 0; i < settings::cableColors.size(); i++) {
+                    NVGcolor color = settings::cableColors[i];
+                    std::string label = get(settings::cableLabels, i);
+                    std::string labelFallback =
+                        (label != "")
+                            ? label
+                            : string::f("Color #%lld", (long long)(i + 1));
 
-				ui::ColorDotMenuItem* item = createSubmenuItem<ui::ColorDotMenuItem>(labelFallback, "", [=](ui::Menu* menu) {
-					// Helper for launching color dialog
-					auto selectColor = [](NVGcolor& color) -> bool {
-						osdialog_color c = {
-							uint8_t(color.r * 255.f),
-							uint8_t(color.g * 255.f),
-							uint8_t(color.b * 255.f),
-							uint8_t(color.a * 255.f),
-						};
-						if (!osdialog_color_picker(&c, false))
-							return false;
-						color = nvgRGBA(c.r, c.g, c.b, c.a);
-						return true;
-					};
+                    ui::ColorDotMenuItem* item = createSubmenuItem<
+                        ui::ColorDotMenuItem>(
+                        labelFallback, "", [=](ui::Menu* menu) {
+                            // Helper for launching color dialog
+                            auto selectColor = [](NVGcolor& color) -> bool {
+                                osdialog_color c = {
+                                    uint8_t(color.r * 255.f),
+                                    uint8_t(color.g * 255.f),
+                                    uint8_t(color.b * 255.f),
+                                    uint8_t(color.a * 255.f),
+                                };
+                                if (!osdialog_color_picker(&c, false))
+                                    return false;
+                                color = nvgRGBA(c.r, c.g, c.b, c.a);
+                                return true;
+                            };
 
-					menu->addChild(createMenuItem(string::translate("MenuBar.view.cableColors.setLabel"), "", [=]() {
-						if (i >= settings::cableColors.size())
-							return;
-						char* s = osdialog_prompt(OSDIALOG_INFO, "", label.c_str());
-						if (!s)
-							return;
-						settings::cableLabels.resize(settings::cableColors.size());
-						settings::cableLabels[i] = s;
-						free(s);
-					}, false, true));
+                            menu->addChild(createMenuItem(
+                                string::translate(
+                                    "MenuBar.view.cableColors.setLabel"),
+                                "",
+                                [=]() {
+                                    if (i >= settings::cableColors.size())
+                                        return;
+                                    char* s = osdialog_prompt(OSDIALOG_INFO, "",
+                                                              label.c_str());
+                                    if (!s) return;
+                                    settings::cableLabels.resize(
+                                        settings::cableColors.size());
+                                    settings::cableLabels[i] = s;
+                                    free(s);
+                                },
+                                false, true));
 
-					menu->addChild(createMenuItem(string::translate("MenuBar.view.cableColors.setColor"), "", [=]() {
-						if (i >= settings::cableColors.size())
-							return;
-						NVGcolor newColor = color;
-						if (!selectColor(newColor))
-							return;
-						std::memcpy(&settings::cableColors[i], &newColor, sizeof(newColor));
-					}, false, true));
+                            menu->addChild(createMenuItem(
+                                string::translate(
+                                    "MenuBar.view.cableColors.setColor"),
+                                "",
+                                [=]() {
+                                    if (i >= settings::cableColors.size())
+                                        return;
+                                    NVGcolor newColor = color;
+                                    if (!selectColor(newColor)) return;
+                                    std::memcpy(&settings::cableColors[i],
+                                                &newColor, sizeof(newColor));
+                                },
+                                false, true));
 
-					menu->addChild(createMenuItem(string::translate("MenuBar.view.cableColors.newColorAbove"), "", [=]() {
-						if (i >= settings::cableColors.size())
-							return;
-						NVGcolor newColor = color;
-						if (!selectColor(newColor))
-							return;
-						settings::cableLabels.resize(settings::cableColors.size());
-						settings::cableColors.insert(settings::cableColors.begin() + i, newColor);
-						settings::cableLabels.insert(settings::cableLabels.begin() + i, "");
-					}, false, true));
+                            menu->addChild(createMenuItem(
+                                string::translate(
+                                    "MenuBar.view.cableColors.newColorAbove"),
+                                "",
+                                [=]() {
+                                    if (i >= settings::cableColors.size())
+                                        return;
+                                    NVGcolor newColor = color;
+                                    if (!selectColor(newColor)) return;
+                                    settings::cableLabels.resize(
+                                        settings::cableColors.size());
+                                    settings::cableColors.insert(
+                                        settings::cableColors.begin() + i,
+                                        newColor);
+                                    settings::cableLabels.insert(
+                                        settings::cableLabels.begin() + i, "");
+                                },
+                                false, true));
 
-					menu->addChild(createMenuItem(string::translate("MenuBar.view.cableColors.newColorBelow"), "", [=]() {
-						if (i >= settings::cableColors.size())
-							return;
-						NVGcolor newColor = color;
-						if (!selectColor(newColor))
-							return;
-						settings::cableLabels.resize(settings::cableColors.size());
-						settings::cableColors.insert(settings::cableColors.begin() + i + 1, newColor);
-						settings::cableLabels.insert(settings::cableLabels.begin() + i + 1, "");
-					}, false, true));
+                            menu->addChild(createMenuItem(
+                                string::translate(
+                                    "MenuBar.view.cableColors.newColorBelow"),
+                                "",
+                                [=]() {
+                                    if (i >= settings::cableColors.size())
+                                        return;
+                                    NVGcolor newColor = color;
+                                    if (!selectColor(newColor)) return;
+                                    settings::cableLabels.resize(
+                                        settings::cableColors.size());
+                                    settings::cableColors.insert(
+                                        settings::cableColors.begin() + i + 1,
+                                        newColor);
+                                    settings::cableLabels.insert(
+                                        settings::cableLabels.begin() + i + 1,
+                                        "");
+                                },
+                                false, true));
 
-					menu->addChild(createMenuItem(string::translate("MenuBar.view.cableColors.moveUp"), "", [=]() {
-						if (i < 1 || i >= settings::cableColors.size())
-							return;
-						settings::cableLabels.resize(settings::cableColors.size());
-						std::swap(settings::cableColors[i], settings::cableColors[i - 1]);
-						std::swap(settings::cableLabels[i], settings::cableLabels[i - 1]);
-					}, i < 1, true));
+                            menu->addChild(createMenuItem(
+                                string::translate(
+                                    "MenuBar.view.cableColors.moveUp"),
+                                "",
+                                [=]() {
+                                    if (i < 1 ||
+                                        i >= settings::cableColors.size())
+                                        return;
+                                    settings::cableLabels.resize(
+                                        settings::cableColors.size());
+                                    std::swap(settings::cableColors[i],
+                                              settings::cableColors[i - 1]);
+                                    std::swap(settings::cableLabels[i],
+                                              settings::cableLabels[i - 1]);
+                                },
+                                i < 1, true));
 
-					menu->addChild(createMenuItem(string::translate("MenuBar.view.cableColors.moveDown"), "", [=]() {
-						if (i + 1 >= settings::cableColors.size())
-							return;
-						settings::cableLabels.resize(settings::cableColors.size());
-						std::swap(settings::cableColors[i], settings::cableColors[i + 1]);
-						std::swap(settings::cableLabels[i], settings::cableLabels[i + 1]);
-					}, i + 1 >= settings::cableColors.size()));
+                            menu->addChild(createMenuItem(
+                                string::translate(
+                                    "MenuBar.view.cableColors.moveDown"),
+                                "",
+                                [=]() {
+                                    if (i + 1 >= settings::cableColors.size())
+                                        return;
+                                    settings::cableLabels.resize(
+                                        settings::cableColors.size());
+                                    std::swap(settings::cableColors[i],
+                                              settings::cableColors[i + 1]);
+                                    std::swap(settings::cableLabels[i],
+                                              settings::cableLabels[i + 1]);
+                                },
+                                i + 1 >= settings::cableColors.size()));
 
-					menu->addChild(createMenuItem(string::translate("MenuBar.view.cableColors.delete"), "", [=]() {
-						if (i >= settings::cableColors.size())
-							return;
-						settings::cableLabels.resize(settings::cableColors.size());
-						settings::cableColors.erase(settings::cableColors.begin() + i);
-						settings::cableLabels.erase(settings::cableLabels.begin() + i);
-					}, settings::cableColors.size() <= 1, true));
-				});
-				item->color = color;
-				menu->addChild(item);
-			}
+                            menu->addChild(createMenuItem(
+                                string::translate(
+                                    "MenuBar.view.cableColors.delete"),
+                                "",
+                                [=]() {
+                                    if (i >= settings::cableColors.size())
+                                        return;
+                                    settings::cableLabels.resize(
+                                        settings::cableColors.size());
+                                    settings::cableColors.erase(
+                                        settings::cableColors.begin() + i);
+                                    settings::cableLabels.erase(
+                                        settings::cableLabels.begin() + i);
+                                },
+                                settings::cableColors.size() <= 1, true));
+                        });
+                    item->color = color;
+                    menu->addChild(item);
+                }
 
-			// Don't need to autorotate or restore cable colors in Liminal
-			if (!settings::isNotVCVRack) {
-				menu->addChild(createBoolMenuItem(string::translate("MenuBar.view.cableColors.autoRotate"), "",
-					[=]() -> bool {
-						return settings::cableAutoRotate;
-					},
-					[=](bool s) {
-						settings::cableAutoRotate = s;
-					}
-				));
-				menu->addChild(createMenuItem(string::translate("MenuBar.view.cableColors.restoreFactory"), "", [=]() {
-					if (!osdialog_message(OSDIALOG_WARNING, OSDIALOG_OK_CANCEL, string::translate("MenuBar.view.cableColors.overwriteFactory").c_str()))
-						return;
-					settings::resetCables();
-				}, false, true));
-			}
-		}));
+                // Don't need to autorotate or restore cable colors in Liminal
+                if (!settings::isNotVCVRack) {
+                    menu->addChild(createBoolMenuItem(
+                        string::translate(
+                            "MenuBar.view.cableColors.autoRotate"),
+                        "", [=]() -> bool { return settings::cableAutoRotate; },
+                        [=](bool s) { settings::cableAutoRotate = s; }));
+                    menu->addChild(createMenuItem(
+                        string::translate(
+                            "MenuBar.view.cableColors.restoreFactory"),
+                        "",
+                        [=]() {
+                            if (!osdialog_message(
+                                    OSDIALOG_WARNING, OSDIALOG_OK_CANCEL,
+                                    string::translate(
+                                        "MenuBar.view.cableColors."
+                                        "overwriteFactory")
+                                        .c_str()))
+                                return;
+                            settings::resetCables();
+                        },
+                        false, true));
+                }
+            }));
 
         // Add Parameters category menu label (inactive)
-		menu->addChild(new ui::MenuSeparator);
-		menu->addChild(createMenuLabel(string::translate("MenuBar.view.parameters")));
+        menu->addChild(new ui::MenuSeparator);
+        menu->addChild(
+            createMenuLabel(string::translate("MenuBar.view.parameters")));
 
-		// Usually want to hide cursor when turning a knob so don't need to make this settable.
-		// But if VCVRack best to not change the UI.
-		if (!settings::isNotVCVRack) {
-			menu->addChild(createBoolPtrMenuItem(
-                string::translate("MenuBar.view.lockCursor"), "", &settings::allowCursorLock));
-		}
+        // Usually want to hide cursor when turning a knob so don't need to make
+        // this settable. But if VCVRack best to not change the UI.
+        if (!settings::isNotVCVRack) {
+            menu->addChild(createBoolPtrMenuItem(
+                string::translate("MenuBar.view.lockCursor"), "",
+                &settings::allowCursorLock));
+        }
 
-		static const std::vector<std::string> knobModeLabels = {
-			string::translate("MenuBar.view.knob.linear"),
-			string::translate("MenuBar.view.knob.scaledLinear"),
-			string::translate("MenuBar.view.knob.absRotary"),
-			string::translate("MenuBar.view.knob.relRotary"),
-		};
-		static const std::vector<int> knobModes = {0, 2, 3};
-		menu->addChild(createSubmenuItem(string::translate("MenuBar.view.knob"), knobModeLabels[settings::knobMode], [=](ui::Menu* menu) {
-			for (int knobMode : knobModes) {
-				menu->addChild(createCheckMenuItem(knobModeLabels[knobMode], "",
-					[=]() {return settings::knobMode == knobMode;},
-					[=]() {settings::knobMode = (settings::KnobMode) knobMode;}
-				));
-			}
-		}));
+        static const std::vector<std::string> knobModeLabels = {
+            string::translate("MenuBar.view.knob.linear"),
+            string::translate("MenuBar.view.knob.scaledLinear"),
+            string::translate("MenuBar.view.knob.absRotary"),
+            string::translate("MenuBar.view.knob.relRotary"),
+        };
+        static const std::vector<int> knobModes = {0, 2, 3};
+        menu->addChild(createSubmenuItem(
+            string::translate("MenuBar.view.knob"),
+            knobModeLabels[settings::knobMode], [=](ui::Menu* menu) {
+                for (int knobMode : knobModes) {
+                    menu->addChild(createCheckMenuItem(
+                        knobModeLabels[knobMode], "",
+                        [=]() { return settings::knobMode == knobMode; },
+                        [=]() {
+                            settings::knobMode = (settings::KnobMode)knobMode;
+                        }));
+                }
+            }));
 
-		if (!settings::isNotVCVRack) {
-			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.knobScroll"), "", &settings::knobScroll));
+        if (!settings::isNotVCVRack) {
+            menu->addChild(createBoolPtrMenuItem(
+                string::translate("MenuBar.view.knobScroll"), "",
+                &settings::knobScroll));
 
-			KnobScrollSensitivitySlider* knobScrollSensitivitySlider = new KnobScrollSensitivitySlider();
-			knobScrollSensitivitySlider->setWidth(250.0);
-			menu->addChild(knobScrollSensitivitySlider);
-		}
+            KnobScrollSensitivitySlider* knobScrollSensitivitySlider =
+                new KnobScrollSensitivitySlider();
+            knobScrollSensitivitySlider->setWidth(250.0);
+            menu->addChild(knobScrollSensitivitySlider);
+        }
 
         // Add Modules category menu label (inactive)
-		menu->addChild(new ui::MenuSeparator);
-		menu->addChild(createMenuLabel(string::translate("MenuBar.view.modules")));
+        menu->addChild(new ui::MenuSeparator);
+        menu->addChild(
+            createMenuLabel(string::translate("MenuBar.view.modules")));
 
-		menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.lockModules"), "", &settings::lockModules));
+        menu->addChild(
+            createBoolPtrMenuItem(string::translate("MenuBar.view.lockModules"),
+                                  "", &settings::lockModules));
         if (settings::isNotVCVRack) {
-            // Nice to be able to add modules within the View Modules section
-            menu->addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "",
-                                          [=]() { getScene()->getBrowser()->show(); }));
-            } else {
-			// These options not that useful so removed when not VCVRack but left in otherwise
-			// to keep the VCV Rack UI consistent				
-			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.squeezeModules"), "", &settings::squeezeModules));
+            // Nice to be able to add modules within the View Modules
+            // section
+            menu->addChild(createMenuItem(
+                string::translate("MenuBar.library.addModuleToRack"), "",
+                [=]() { getScene()->getBrowser()->show(); }));
+        } else {
+            // These options not that useful so removed when not VCVRack
+            // but left in otherwise to keep the VCV Rack UI consistent
+            menu->addChild(createBoolPtrMenuItem(
+                string::translate("MenuBar.view.squeezeModules"), "",
+                &settings::squeezeModules));
+        }
 
-			menu->addChild(createBoolPtrMenuItem(string::translate("MenuBar.view.preferDarkPanels"), "", &settings::preferDarkPanels));
-		}
-	}
-};
-
+        // Allow user to prefer dark or light colored panels. Some
+        // people probably picky.
+        menu->addChild(createBoolPtrMenuItem(
+            string::translate("MenuBar.view.preferDarkPanels"), "",
+            &settings::preferDarkPanels));
+    }
+};  // End of class ViewButton
 
 ////////////////////
 // Engine
 ////////////////////
 
-
 struct SampleRateItem : ui::MenuItem {
-	ui::Menu* createChildMenu() override {
-		ui::Menu* menu = new ui::Menu;
+    ui::Menu* createChildMenu() override {
+        ui::Menu* menu = new ui::Menu;
 
-		// Auto sample rate
-		std::string rightText;
-		if (settings::sampleRate == 0) {
-			float sampleRate = getEngine()->getSampleRate();
-			rightText += string::f("(%g kHz) ", sampleRate / 1000.f);
-		}
-		menu->addChild(createCheckMenuItem(string::translate("MenuBar.engine.sampleRate.auto"), rightText,
-			[=]() {return settings::sampleRate == 0;},
-			[=]() {settings::sampleRate = 0;}
-		));
+        // Auto sample rate
+        std::string rightText;
+        if (settings::sampleRate == 0) {
+            float sampleRate = getEngine()->getSampleRate();
+            rightText += string::f("(%g kHz) ", sampleRate / 1000.f);
+        }
+        menu->addChild(createCheckMenuItem(
+            string::translate("MenuBar.engine.sampleRate.auto"), rightText,
+            [=]() { return settings::sampleRate == 0; },
+            [=]() { settings::sampleRate = 0; }));
 
-		// Power-of-2 oversample times 44.1kHz or 48kHz
-		for (int i = -1; i <= 2; i++) {
-			// Originally would do both relative to 44.1kHz and 48kHz, but this is too many options.
-			int minj = i == 0 ? 0 : 1;
-			int maxj = 2;
-			for (int j = minj; j < maxj; j++) {
-				float oversample = std::pow(2.f, i);
-				float sampleRate = (j == 0) ? 44100.f : 48000.f;
-				sampleRate *= oversample;
+        // Power-of-2 oversample times 44.1kHz or 48kHz
+        for (int i = -1; i <= 2; i++) {
+            // Originally would do both relative to 44.1kHz and 48kHz, but
+            // this is too many options.
+            int minj = i == 0 ? 0 : 1;
+            int maxj = 2;
+            for (int j = minj; j < maxj; j++) {
+                float oversample = std::pow(2.f, i);
+                float sampleRate = (j == 0) ? 44100.f : 48000.f;
+                sampleRate *= oversample;
 
-				std::string text = string::f("%g kHz", sampleRate / 1000.f);
-				std::string rightText;
-				if (oversample > 1.f) {
-					rightText += string::f("(%.0fx)", oversample);
-				}
-				else if (oversample < 1.f) {
-					rightText += string::f("(1/%.0fx)", 1.f / oversample);
-				}
-				menu->addChild(createCheckMenuItem(text, rightText,
-					[=]() {return settings::sampleRate == sampleRate;},
-					[=]() {settings::sampleRate = sampleRate;}
-				));
-			}
-		}
-		return menu;
-	}
+                std::string text = string::f("%g kHz", sampleRate / 1000.f);
+                std::string rightText;
+                if (oversample > 1.f) {
+                    rightText += string::f("(%.0fx)", oversample);
+                } else if (oversample < 1.f) {
+                    rightText += string::f("(1/%.0fx)", 1.f / oversample);
+                }
+                menu->addChild(createCheckMenuItem(
+                    text, rightText,
+                    [=]() { return settings::sampleRate == sampleRate; },
+                    [=]() { settings::sampleRate = sampleRate; }));
+            }
+        }
+        return menu;
+    }
 };
 
 /**
  * The Engine button for the main menu
  */
 class EngineButton : public MenuButton {
-   public:
+    public:
     EngineButton() : MenuButton(string::translate("MenuBar.engine")) {}
 
-   private:
+    private:
     void onAction(const ActionEvent& e) override {
         ui::Menu* menu = createMenu();
         menu->cornerFlags = BND_CORNER_TOP;
@@ -826,17 +938,20 @@ class EngineButton : public MenuButton {
 
         menu->addChild(new ui::MenuSeparator);
 
-        std::string cpuMeterText = widget::getKeyCommandName(GLFW_KEY_F3, 0);
+        std::string cpuMeterText =
+            widget::getKeyCommandName(GLFW_KEY_F3, 0);
         if (settings::cpuMeter) cpuMeterText += " " CHECKMARK_STRING;
-        menu->addChild(createMenuItem(string::translate("MenuBar.engine.cpuMeter"), cpuMeterText,
-                                      [=]() { settings::cpuMeter ^= true; }));
+        menu->addChild(createMenuItem(
+            string::translate("MenuBar.engine.cpuMeter"), cpuMeterText,
+            [=]() { settings::cpuMeter ^= true; }));
 
         menu->addChild(createMenuItem<SampleRateItem>(
             string::translate("MenuBar.engine.sampleRate"), RIGHT_ARROW));
 
         if (!settings::isNotVCVRack) {
             menu->addChild(createSubmenuItem(
-                string::translate("MenuBar.engine.threads"), string::f("%d", settings::threadCount),
+                string::translate("MenuBar.engine.threads"),
+                string::f("%d", settings::threadCount),
                 [=](ui::Menu* menu) {
                     // BUG This assumes SMT is enabled.
                     int cores = system::getLogicalCoreCount() / 2;
@@ -844,9 +959,11 @@ class EngineButton : public MenuButton {
                     for (int i = 1; i <= 2 * cores; i++) {
                         std::string rightText;
                         if (i == cores)
-                            rightText += string::translate("MenuBar.engine.threads.most");
+                            rightText += string::translate(
+                                "MenuBar.engine.threads.most");
                         else if (i == 1)
-                            rightText += string::translate("MenuBar.engine.threads.lowest");
+                            rightText += string::translate(
+                                "MenuBar.engine.threads.lowest");
                         menu->addChild(createCheckMenuItem(
                             string::f("%d", i), rightText,
                             [=]() { return settings::threadCount == i; },
@@ -862,19 +979,19 @@ class EngineButton : public MenuButton {
 ////////////////////
 
 class AccountPasswordField : public ui::PasswordField {
-   public:
-	AccountPasswordField() {}
+    public:
+    AccountPasswordField() {}
 
-	void setLogInItem(ui::MenuItem* item) {
-		logInItem = item;
-	}
+    void setLogInItem(ui::MenuItem* item) {
+        logInItem = item;
+    }
 
-   private:
-	ui::MenuItem* logInItem;
+    private:
+    ui::MenuItem* logInItem;
 
-	void onAction(const ActionEvent& e) override {
-		logInItem->doAction();
-	}
+    void onAction(const ActionEvent& e) override {
+        logInItem->doAction();
+    }
 };
 
 struct LogInItem : ui::MenuItem {
@@ -1414,15 +1531,12 @@ struct MenuBar : widget::OpaqueWidget {
 	}
 };
 
-
-} // namespace menuBar
-
+}  // namespace menuBar
 
 widget::Widget* createMenuBar() {
-	menuBar::MenuBar* menuBar = new menuBar::MenuBar;
-	return menuBar;
+    menuBar::MenuBar* menuBar = new menuBar::MenuBar;
+    return menuBar;
 }
-
 
 void appendLanguageMenu(ui::Menu* menu) {
 	for (const std::string& language : string::getLanguages()) {

@@ -337,6 +337,12 @@ void CableWidget::step() {
         math::Vec initialVec = slump;
         math::Vec absoluteVec = getAbsoluteOffset(initialVec);
         DEBUG("--absoluteVecOfSlump=(%f, %f)",  absoluteVec.getX(), absoluteVec.getY());
+
+        math::Vec outputAbsoluteVec = getAbsoluteOffset(outputPos);
+        DEBUG("--absoluteVecOfOutputPos=(%f, %f)",  outputAbsoluteVec.getX(), outputAbsoluteVec.getY());
+
+        math::Vec inputAbsoluteVec = getAbsoluteOffset(inputPos);
+        DEBUG("--absoluteVecOfInputPos=(%f, %f)",  inputAbsoluteVec.getX(), inputAbsoluteVec.getY());
     }
 
     NVGcolor colorOpaque = color;

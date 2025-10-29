@@ -11,7 +11,7 @@ namespace ui {
 
 class Liminal {
    public:
-    /** Configures settings for Liminal mode */
+    /** Configures settings for Liminal mode. To be called at startup */
     static void configAsLiminal();
 
     static bool isLiminal() {

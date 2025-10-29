@@ -184,9 +184,17 @@ void resetCables();
 
 PRIVATE void init();
 PRIVATE void destroy();
+
+/** Converts settings to JSON object */
 PRIVATE json_t* toJson();
+
+/** Converts JSON object to settings */
 PRIVATE void fromJson(json_t* rootJ);
+
+/** Saves settings to file, in JSON format */
 PRIVATE void save(std::string path = "");
+
+/** Loads settings from file, in JSON format */
 PRIVATE void load(std::string path = "");
 
 /**

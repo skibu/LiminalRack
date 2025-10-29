@@ -61,8 +61,8 @@ bool mouseWheelZoom = false;
 float pixelRatio = 0.0;
 std::string uiTheme = "dark";
 float cableOpacity = 0.75;
-float cableTension = 0.8;
-float rackBrightness = 0.9;
+float cableTension = 0.75;
+float rackBrightness = 1.0;
 float haloBrightness = 0.2;
 bool allowCursorLock = true;
 KnobMode knobMode = KNOB_MODE_LINEAR;
@@ -77,7 +77,7 @@ bool tooltips = true;
 bool cpuMeter = false;
 bool lockModules = false;
 bool squeezeModules = true;
-bool preferDarkPanels = false;
+bool preferDarkPanels = true;
 #if defined ARCH_MAC
 	// Most Mac GPUs can't handle rendering the screen every frame, so use 30 Hz by default.
 	float frameRateLimit = 30.f;

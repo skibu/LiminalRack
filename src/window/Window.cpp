@@ -168,9 +168,17 @@ static void windowSizeCallback(GLFWwindow* win, int width, int height) {
 }
 
 
+/** Called when the window is maximized or restored since it is enabled using
+ * glfwSetWindowMaximizeCallback(). Unfortunately this means that can actually 
+ * be called multiple times in quick succession, so we need to be careful
+ * about how we handle the state. For example, when restoring from maximized
+ * to normal windowed mode, this callback can be called twice: once for getting
+ * out of full screen (maximized set to false), and then again for restoring
+ * the window to full size as opposed to full screen (maximized set to true).
+ * Since the maximized parameter can be true for full screen or for full size
+ * mode it can't be relied on to determine if in full screen mode or not.
+ */
 static void windowMaximizeCallback(GLFWwindow* win, int maximized) {
-	settings::windowMaximized = maximized;
-	DEBUG("windowMaximizeCallback %d", maximized);
 }
 
 
@@ -734,6 +742,10 @@ int Window::getMods() {
 }
 
 void Window::setFullScreen(bool fullScreen) {
+    // Remember full screen state
+    settings::windowMaximized = fullScreen;
+    DEBUG("XXXXXXXXXXX setFullScreen %d", fullScreen);
+
     if (!fullScreen) {
         // Put window into non-full screen mode
         INFO("Taking main window out of full screen mode");
