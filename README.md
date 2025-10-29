@@ -13,6 +13,7 @@ Therefore the idea is to hide a general purpose computer in a Eurorack module, l
 
 ### Relevant Liminal docs:
 - [Change Log](docs/liminalChangelog.md)
+- [Installing Liminal Rack](docs/liminalInstalling.md)
 
 ### Contributions
 
