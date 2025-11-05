@@ -4,6 +4,8 @@
 #include <asset.hpp>
 #include <system.hpp>
 #include <settings.hpp>
+#include <string>
+
 // #include <unistd.h> // for dup2
 
 
@@ -134,12 +136,12 @@ static void logVa(Level level, const char* filename, int line, const char* func,
 
 void log(Level level, const char* filename, int line, const char* func, const char* format, ...) {
 	// If log level for the logging statement is below the level set for the system then don't log
-    if (level < systemLogLevel) return;
+	if (level < systemLogLevel) return;
 
-    va_list args;
-    va_start(args, format);
-    logVa(level, filename, line, func, format, args);
-    va_end(args);
+	va_list args;
+	va_start(args, format);
+	logVa(level, filename, line, (std::string(func) + "()").c_str(), format, args);
+	va_end(args);
 }
 
 bool wasTruncated() {
