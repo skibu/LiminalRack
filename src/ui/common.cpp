@@ -85,7 +85,7 @@ void setTheme(NVGcolor bg, NVGcolor fg) {
 	t.scrollBarTheme.itemColor = color::lerp(bg, fg, 0.7);
     // Scrollbar handle alpha. Should be reasonably visible but still want
     // to be able to see content behind it.
-    t.scrollBarTheme.itemColor.a = 0.7f;
+    t.scrollBarTheme.itemColor.a = 0.4f;
     // Scrollbar track background color and alpha
 	t.scrollBarTheme.innerColor = color::lerp(bg, fg, 0.1);
     t.scrollBarTheme.innerColor.a = 0.3f;
