@@ -363,6 +363,51 @@ class CableTensionSlider : public ui::Slider {
     }
 };
 
+class CableTensionRandomFactorQuantity : public Quantity {
+   public:
+    void setValue(float value) override {
+        settings::cableTensionRandomFactor =
+            math::clamp(value, getMinValue(), getMaxValue());
+    }
+        float getValue() override {
+		return settings::cableTensionRandomFactor;
+	}
+	float getDefaultValue() override {
+		return 0.1f;
+	}
+    float getMinValue() override {
+        return 0.0f;
+    }
+    float getMaxValue() override {
+        return 0.3f;
+    }
+	float getDisplayValue() override {
+		return getValue() * 100;
+	}
+	void setDisplayValue(float displayValue) override {
+		setValue(displayValue / 100);
+	}
+	std::string getLabel() override {
+		return string::translate("MenuBar.view.cableTensionRandomFactor");
+	}
+	std::string getUnit() override {
+		return "%";
+	}
+};
+
+class CableTensionRandomFactorSlider : public ui::Slider {
+   public:
+    /** Construct a slider with a cable tension random quantity */
+    CableTensionRandomFactorSlider()
+        : ui::Slider(new CableTensionRandomFactorQuantity()) {}
+
+    /** Since API requires passing in pointer, need to manually delete what we
+     * created and passed in  */
+    ~CableTensionRandomFactorSlider() {
+        delete quantity;
+    }
+};
+
 class RackBrightnessQuantity : public Quantity {
    public:
 	void setValue(float value) override {
@@ -612,6 +657,11 @@ class ViewButton : public MenuButton {
         CableTensionSlider* cableTensionSlider = new CableTensionSlider();
         cableTensionSlider->setWidth(250.0);
         menu->addChild(cableTensionSlider);
+
+        CableTensionRandomFactorSlider* cableTensionRandomFactorSlider =
+            new CableTensionRandomFactorSlider();
+        cableTensionRandomFactorSlider->setWidth(250.0);
+        menu->addChild(cableTensionRandomFactorSlider);
 
         RackBrightnessSlider* rackBrightnessSlider = new RackBrightnessSlider();
         rackBrightnessSlider->setWidth(250.0);

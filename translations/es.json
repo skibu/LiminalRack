@@ -104,6 +104,7 @@
 	"MenuBar.view.zoom": "Zoom",
 	"MenuBar.view.cableOpacity": "Opacidad de cables",
 	"MenuBar.view.cableTension": "Tensión de cables",
+    "MenuBar.view.cableTensionRandomFactor": "Tensión aleatoria",
 	"MenuBar.view.roomBrightness": "Brillo de la habitación",
 	"MenuBar.view.lightBloom": "Resplandor de luces",
 	"MenuBar.view.wheelSensitivity": "Sensibilidad de la rueda del ratón",

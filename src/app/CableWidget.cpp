@@ -1,3 +1,4 @@
+#include <cstdlib> 
 #include <app/CableWidget.hpp>
 #include <app/CableColorMatcher.hpp>
 #include <widget/SvgWidget.hpp>
@@ -174,7 +175,7 @@ struct CableWidget::CableInternal {
 CableWidget::CableWidget() {
 	cableInternals_ = new CableInternal;
 	color_ = color::BLACK_TRANSPARENT;
-
+    tensionRandomValue_ = generateTensionRandomValue();  // Value between -1.0 and 1.0
 	outputPlug_ = new PlugWidget(this, engine::Port::OUTPUT);
 	inputPlug_ = new PlugWidget(this, engine::Port::INPUT);
 }
@@ -188,6 +189,14 @@ CableWidget::~CableWidget() {
 	delete cableInternals_;
 }
 
+float CableWidget::generateTensionRandomValue() {
+    float min_val = -1.0f;
+    float max_val = 1.0f;
+    float random_float_range =
+        min_val + static_cast<float>(rand()) / RAND_MAX * (max_val - min_val);
+
+    return random_float_range;
+}
 
 bool CableWidget::isComplete() {
 	return outputPort_ && inputPort_;
@@ -288,6 +297,9 @@ math::Vec CableWidget::getOutputPortPosInRackCoords() const {
 void CableWidget::mergeJson(json_t* rootJ) {
 	std::string s = color::toHexString(color_);
 	json_object_set_new(rootJ, "color", json_string(s.c_str()));
+
+    json_object_set_new(rootJ, "tensionRandomValue",
+                        json_real(tensionRandomValue_));
 }
 
 void CableWidget::fromJson(json_t* rootJ) {
@@ -299,6 +311,14 @@ void CableWidget::fromJson(json_t* rootJ) {
         // ignore them if so and use the existing cable color. In <=v1, cable
         // colors were not serialized.
         color_ = getRack()->getNextCableColor();
+    }
+
+    json_t* tensionRandomJ = json_object_get(rootJ, "tensionRandomValue");
+    if (tensionRandomJ && json_is_number(tensionRandomJ) &&
+        json_number_value(tensionRandomJ) != 0.0) {
+        tensionRandomValue_ = json_number_value(tensionRandomJ);
+    } else {
+        tensionRandomValue_ = generateTensionRandomValue();
     }
 }
 
@@ -316,12 +336,21 @@ math::Vec CableWidget::getSlumpVertexInRackCoords() const {
     // hang so low.
     double droopage = 50.0;
 
+    // Determine the cabke tension value to use. It is the 0.0-1.0 tension
+    // setting for the application plus cableTensionRandomFactor *
+    // tensionRandomValue_ where cableTensionRandomFactor is between 0.0 and 0.3
+    // and tensionRandomValue_ is a random value between -1.0 and 1.
+    float cableTensionWithRandom = math::clamp(
+        settings::cableTension +
+            settings::cableTensionRandomFactor * tensionRandomValue_,
+        0.0f, 1.0f);
+
     // The y value of the slumpVertex position is the average of the two port y
     // positions, plus an amount based on the distance between the two ports
     // and the cable tension setting.
     float distanceBtwnPorts = pos0InRackCoords.minus(pos2InRackCoords).norm();
     float yAverage = (pos0InRackCoords.getY() + pos2InRackCoords.getY()) / 2;
-    float ySlumpPos = yAverage + (1.0 - settings::cableTension) *
+    float ySlumpPos = yAverage + (1.0 - cableTensionWithRandom) *
                                      (droopage + 1.0 * distanceBtwnPorts);
 
     // Return the calculated slumpVertex position

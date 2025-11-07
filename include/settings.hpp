@@ -83,6 +83,8 @@ extern std::string uiTheme;
 extern float cableOpacity;
 /** Straightness of cables in the range [0, 1]. Unitless and arbitrary. */
 extern float cableTension;
+/** Random addition to straightness of cables in the range [0, 0.3]. Unitless and arbitrary. */
+extern float cableTensionRandomFactor;
 /** Sometimes nice to dim rack so that it isn't too bright */
 extern float rackBrightness;
 /** When dimming rack it can be nice to have system draw halos around the lights

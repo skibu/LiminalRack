@@ -104,6 +104,7 @@
 	"MenuBar.view.zoom": "Zoom",
 	"MenuBar.view.cableOpacity": "Opacità cavi",
 	"MenuBar.view.cableTension": "Tensione cavi",
+    "MenuBar.view.cableTensionRandomFactor": "Fattore di tensione casuale",
 	"MenuBar.view.roomBrightness": "Luminosità ambientale",
 	"MenuBar.view.lightBloom": "Diffusione delle luci",
 	"MenuBar.view.wheelSensitivity": "Sensibilità rotella del mouse sulle manopole",

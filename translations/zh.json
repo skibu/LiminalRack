@@ -104,6 +104,7 @@
     "MenuBar.view.zoom": "缩放界面",
     "MenuBar.view.cableOpacity": "跳线透明度",
     "MenuBar.view.cableTension": "跳线张力",
+    "MenuBar.view.cableTensionRandomFactor": "跳线随机张力",
     "MenuBar.view.roomBrightness": "房间亮度",
     "MenuBar.view.lightBloom": "灯光泛光",
     "MenuBar.view.wheelSensitivity": "鼠标滚轮灵敏度",

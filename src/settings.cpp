@@ -62,6 +62,7 @@ float pixelRatio = 0.0;
 std::string uiTheme = "dark";
 float cableOpacity = 0.75;
 float cableTension = 0.75;
+float cableTensionRandomFactor = 0.1;
 float rackBrightness = 1.0;
 float haloBrightness = 0.2;
 bool allowCursorLock = true;
@@ -238,6 +239,8 @@ json_t* toJson() {
     json_object_set_new(rootJ, "cableOpacity", json_real(cableOpacity));
 
     json_object_set_new(rootJ, "cableTension", json_real(cableTension));
+
+    json_object_set_new(rootJ, "cableTensionRandomFactor", json_real(cableTensionRandomFactor));
 
     json_object_set_new(rootJ, "rackBrightness", json_real(rackBrightness));
 
@@ -499,6 +502,10 @@ void fromJson(json_t* rootJ) {
 	json_t* cableTensionJ = json_object_get(rootJ, "cableTension");
 	if (cableTensionJ)
 		cableTension = json_number_value(cableTensionJ);
+
+    json_t* cableTensionRandomFactorJ = json_object_get(rootJ, "cableTensionRandomFactor");
+    if (cableTensionRandomFactorJ)
+        cableTensionRandomFactor = json_number_value(cableTensionRandomFactorJ);
 
 	json_t* rackBrightnessJ = json_object_get(rootJ, "rackBrightness");
 	if (rackBrightnessJ)

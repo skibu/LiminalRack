@@ -104,6 +104,7 @@
 	"MenuBar.view.zoom": "Zoom",
 	"MenuBar.view.cableOpacity": "Opacité des câbles",
 	"MenuBar.view.cableTension": "Tension des câbles",
+    "MenuBar.view.cableTensionRandomFactor": "Tension aléatoire",
 	"MenuBar.view.roomBrightness": "Luminosité ambiante",
 	"MenuBar.view.lightBloom": "Halo lumineux",
 	"MenuBar.view.wheelSensitivity": "Sensibilité de la molette pour les potentiomètres",

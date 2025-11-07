@@ -137,6 +137,15 @@ struct CableWidget : widget::Widget {
     /** Color of the cable */
     NVGcolor color_;
 
+    // Random value used to vary cable tension and perhaps make
+    // cables look less uniform and thereby more natural. Multiplied
+    // by random cable tension value and then added to the cable tension
+    // for this cable. A value between -1.0 and 1.0
+    float tensionRandomValue_ = 0.f;
+
+    // Generates a random float value between -1.0 and 1.0
+    static float generateTensionRandomValue();
+
     // Following positions are calculated in step() and used in draw().
     // They are in Rack coordinates since that is what the nvg drawing functions
     // expect.
@@ -192,7 +201,7 @@ struct CableWidget : widget::Widget {
    public:  // public because following could be used by plugins
     void mergeJson(json_t* rootJ);
     void fromJson(json_t* rootJ);
-    
+
     void step() override;
     void draw(const DrawArgs& args) override;
 

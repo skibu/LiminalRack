@@ -104,6 +104,7 @@
 	"MenuBar.view.zoom": "Zoom",
 	"MenuBar.view.cableOpacity": "Kabeltransparenz",
 	"MenuBar.view.cableTension": "Kabelspannung",
+	"MenuBar.view.cableTensionRandomFactor": "Zufällige Kabelspannung",
 	"MenuBar.view.roomBrightness": "Helligkeit",
 	"MenuBar.view.lightBloom": "Leuchtkraft",
 	"MenuBar.view.wheelSensitivity": "Mausrad-Empfindlichkeit",

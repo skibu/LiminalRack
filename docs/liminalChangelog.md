@@ -2,6 +2,7 @@
 
 - 11/6/25
   - Relative small UI change of preventing cables from drooping below where they are fully visible. This way can better see which ports are connected together. But this required quite a lot of code cleanup.
+  - Added random factor slider for cable tension so that there can be some natural variability in tension for the cables. It is hoped that this makes the cables look a bit more natural.
 - 10/26/25
   - Big changes to how fps and cpu displayed in menu bar. Changed code to determine the values accurately while using limited processing. And changed what is displayed so that the info is more useful. Now displaying fps, potential fps, and cpu %.
   - Fixed updating of plugins. Previously system would always say that Bastl plugin should be updated, when actually the problem was that the plugin was never successfully loaded in the first place and now is no longer available.

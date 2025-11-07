@@ -104,6 +104,7 @@
 	"MenuBar.view.zoom": "ズーム",
 	"MenuBar.view.cableOpacity": "ケーブルの透明度",
 	"MenuBar.view.cableTension": "ケーブルの張力",
+    "MenuBar.view.cableTensionRandomFactor": "ケーブルのランダム張力",
 	"MenuBar.view.roomBrightness": "部屋の明るさ",
 	"MenuBar.view.lightBloom": "光の拡散エフェクト",
 	"MenuBar.view.wheelSensitivity": "マウスホイールの感度",
