@@ -234,104 +234,105 @@ class Widget : public WeakBase {
 	*/
 	void addChild(Widget* child);
 
-	/** Adds widget to the bottom of the children.
-	*/
-	void addChildBottom(Widget* child);
+    /** Adds widget to the bottom of the children.
+     */
+    void addChildBottom(Widget* child);
 
-	/** Adds widget directly below another widget.
-	The sibling widget must already be a child of `this` widget.
-	*/
-	void addChildBelow(Widget* child, Widget* sibling);
-	void addChildAbove(Widget* child, Widget* sibling);
+    /** Adds widget directly below another widget.
+     * The sibling widget must already be a child of `this` widget.
+     */
+    void addChildBelow(Widget* child, Widget* sibling);
+    void addChildAbove(Widget* child, Widget* sibling);
 
-	/** Removes widget from list of children if it exists.
-	Triggers RemoveEvent of child.
-	Does not delete widget but transfers ownership to caller
-	*/
-	void removeChild(Widget* child);
-    
-	/** Removes and deletes all child Widgets.
-	Triggers RemoveEvent of all children.
-	*/
-	void clearChildren();
+    /** Removes widget from list of children if it exists.
+    Triggers RemoveEvent of child.
+    Does not delete widget but transfers ownership to caller
+    */
+    void removeChild(Widget* child);
 
-	/** Advances the module by one frame */
-	virtual void step();
+    /** Removes and deletes all child Widgets.
+     * Triggers RemoveEvent of all children.
+     */
+    void clearChildren();
 
-	struct DrawArgs {
-		// The Vector Graphics context to draw to
-		NVGcontext* vg = NULL;
-		/** Local box representing the visible viewport. */
-		math::Rect clipBox;
-		NVGLUframebuffer* fb = NULL;
-	};
+        /** Advances the module by one frame */
+        virtual void step();
 
-	/** Draws the widget to the NanoVG context.
-	When overriding, call the superclass's `draw(args)` to recurse to children.
-	*/
-	virtual void draw(const DrawArgs& args);
+        struct DrawArgs {
+            // The Vector Graphics context to draw to
+            NVGcontext* vg = NULL;
+            /** Local box representing the visible viewport. */
+            math::Rect clipBox;
+            NVGLUframebuffer* fb = NULL;
+        };
 
-	/** Override draw(const DrawArgs &args) instead */
-	DEPRECATED virtual void draw(NVGcontext* vg) {}
+    /** Draws the widget to the NanoVG context.
+     * When overriding, call the superclass's `draw(args)` to recurse to
+     * children.
+     */
+    virtual void draw(const DrawArgs& args);
 
-	/** Draw additional layers.
+    /** Override draw(const DrawArgs &args) instead */
+    DEPRECATED virtual void draw(NVGcontext* vg) {}
 
-	Custom widgets may draw its children multiple times on different layers, passing an arbitrary layer number each time.
-	Layer 0 calls children's draw().
-	When overriding, always wrap draw commands in `if (layer == ...) {}` to avoid drawing on all layers.
-	When overriding, call the superclass's `drawLayer(args, layer)` to recurse to children.
-	*/
-	virtual void drawLayer(const DrawArgs& args, int layer);
+    /** Draw additional layers.
+     *
+     * Custom widgets may draw its children multiple times on different
+     * layers, passing an arbitrary layer number each time. Layer 0 calls
+     * children's draw(). Layer 1 draws lights and halos. Layer 2 draws
+     * plugs. Layer 3 draws cables. When overriding, always wrap draw
+     * commands in `if (layer == ...) {}` to avoid drawing on all layers.
+     * When overriding, call the superclass's `drawLayer(args, layer)` to
+     * recurse to children.
+     */
+    virtual void drawLayer(const DrawArgs& args, int layer);
 
-	/** Draws a particular child.
-	Saves and restores NanoVG context to prevent changing the given context.
-	*/
-	void drawChild(Widget* child, const DrawArgs& args, int layer = 0);
+    /** Draws a particular child.
+     * Saves and restores NanoVG context to prevent changing the given
+     * context.
+     */
+    void drawChild(Widget* child, const DrawArgs& args, int layer = 0);
 
-	// Events
+    // Events
 
-	/** Recurses an event to all visible Widgets */
-	template <typename TMethod, class TEvent>
-	void recurseEvent(TMethod f, const TEvent& e) {
-		for (auto it = children_.rbegin(); it != children_.rend(); it++) {
-			// Stop propagation if requested
-			if (!e.isPropagating())
-				break;
-			Widget* child = *it;
-			// Don't filter child by visibility. Typically only position events need to be filtered by visibility.
-			// if (!child->visible)
-			// 	continue;
+    /** Recurses an event to all visible Widgets */
+    template <typename TMethod, class TEvent>
+    void recurseEvent(TMethod f, const TEvent& e) {
+        for (auto it = children_.rbegin(); it != children_.rend(); it++) {
+            // Stop propagation if requested
+            if (!e.isPropagating()) break;
+            Widget* child = *it;
+            // Don't filter child by visibility. Typically only position
+            // events need to be filtered by visibility. if
+            // (!child->visible) 	continue;
 
-			// Clone event for (currently) no reason
-			TEvent e2 = e;
-			// Call child event handler
-			(child->*f)(e2);
-		}
-	}
+            // Clone event for (currently) no reason
+            TEvent e2 = e;
+            // Call child event handler
+            (child->*f)(e2);
+        }
+    }
 
-	/** Recurses an event to all visible Widgets until it is consumed. */
+    /** Recurses an event to all visible Widgets until it is consumed. */
 	template <typename TMethod, class TEvent>
 	void recursePositionEvent(TMethod f, const TEvent& e) {
-		for (auto it = children_.rbegin(); it != children_.rend(); it++) {
-			// Stop propagation if requested
-			if (!e.isPropagating())
-				break;
-			Widget* child = *it;
-			// Filter child by visibility and position
-			if (!child->visible_)
-				continue;
-			if (!child->box_.contains(e.pos))
-				continue;
+    for (auto it = children_.rbegin(); it != children_.rend(); it++) {
+        // Stop propagation if requested
+        if (!e.isPropagating()) break;
+        Widget* child = *it;
+        // Filter child by visibility and position
+        if (!child->visible_) continue;
+        if (!child->box_.contains(e.pos)) continue;
 
-			// Clone event and adjust its position
-			TEvent e2 = e;
-			e2.pos = e.pos.minus(child->getPos());
-			// Call child event handler
-			(child->*f)(e2);
-		}
-	}
+        // Clone event and adjust its position
+        TEvent e2 = e;
+        e2.pos = e.pos.minus(child->getPos());
+        // Call child event handler
+        (child->*f)(e2);
+    }
+}
 
-	using BaseEvent = widget::BaseEvent;
+    using BaseEvent = widget::BaseEvent;
 
 	/** An event prototype with a vector position. */
 	struct PositionBaseEvent {

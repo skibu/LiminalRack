@@ -153,6 +153,7 @@ void RackWidget::draw(const DrawArgs& args) {
         float zoom = t[3];
         float radius = 300.0 / zoom;
         float brightness = 0.2f;
+        
         // Draw mouse spotlight
         nvgBeginPath(args.vg);
         nvgRect(args.vg, 0.0, 0.0, VEC_ARGS(getSize()));
