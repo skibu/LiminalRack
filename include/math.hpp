@@ -26,18 +26,18 @@ bool isOdd(T x) {
 	return x % 2 != 0;
 }
 
-/** Limits `x` between `a` and `b`.
-If `b < a`, returns a.
-*/
-inline int clamp(int x, int a, int b) {
-	return std::max(std::min(x, b), a);
+/** Limits `x` between `min` and `max`.
+ * If `max < min`, returns min.
+ */
+inline int clamp(int x, int min, int max) {
+	return std::max(std::min(x, max), min);
 }
 
-/** Limits `x` between `a` and `b`.
-If `b < a`, switches the two values.
-*/
-inline int clampSafe(int x, int a, int b) {
-	return (a <= b) ? clamp(x, a, b) : clamp(x, b, a);
+/** Limits `x` between `min` and `max`.
+ * If `max < min`, switches the two values.
+ */
+inline int clampSafe(int x, int min, int max) {
+	return (min <= max) ? clamp(x, min, max) : clamp(x, max, min);
 }
 
 /** Euclidean modulus. Always returns `0 <= mod < b`.
@@ -100,18 +100,18 @@ T sgn(T x) {
 // basic float functions
 ////////////////////
 
-/** Limits `x` between `a` and `b`.
-If `b < a`, returns a.
+/** Limits `x` between `min` and `b`.
+If `b < min`, returns min.
 */
-inline float clamp(float x, float a = 0.f, float b = 1.f) {
-	return std::fmax(std::fmin(x, b), a);
+inline float clamp(float x, float min = 0.f, float max = 1.f) {
+	return std::fmax(std::fmin(x, max), min);
 }
 
-/** Limits `x` between `a` and `b`.
-If `b < a`, switches the two values.
+/** Limits `x` between `min` and `b`.
+If `b < min`, switches the two values.
 */
-inline float clampSafe(float x, float a = 0.f, float b = 1.f) {
-	return (a <= b) ? clamp(x, a, b) : clamp(x, b, a);
+inline float clampSafe(float x, float min = 0.f, float max = 1.f) {
+	return (min <= max) ? clamp(x, min, max) : clamp(x, max, min);
 }
 
 /** Converts -0.f to 0.f. Leaves all other values unchanged. */
