@@ -1,8 +1,10 @@
 #include <ui/liminal.hpp>
 #include <settings.hpp>
+#include <context.hpp>
 
 namespace rack {
 namespace ui {
+
 
 void Liminal::configAsLiminal() {
     INFO("Configuring as Liminal Rack mode");
@@ -26,6 +28,16 @@ void Liminal::configAsLiminal() {
     // So that menus are bigger and easier tp use with touch screen
     rack::settings::bndLabelFontSize = 24; // Increase font size for touch screen
     rack::settings::bndWidgetHeight = rack::settings::bndLabelFontSize + 8; // Increase widget height for touch screen
+}
+
+void Liminal::showSplashScreen() {
+    auto rack = getRack();
+    if (!rack) {
+        WARN("Cannot show Liminal Rack splash screen: RackWidget not created yet");
+        return;
+    }
+
+    INFO("Showing Liminal Rack splash screen");
 }
 
 }  // namespace ui

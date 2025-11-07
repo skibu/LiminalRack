@@ -11,22 +11,22 @@ namespace rack {
 
 Context::Context() {
     // window only gets created if not in headless mode
-    window = NULL;
+    window = nullptr;
 
-    INFO("Creating patch manager");
+    INFO("Creating Patch Manager");
 	patch_ = new patch::Manager;
 
-    INFO("Creating scene");
+    INFO("Creating Scene");
 	scene_ = new app::Scene();
 
-	INFO("Creating event state");
+	INFO("Creating Event State");
 	event_ = new widget::EventState;
     event_->rootWidget = getScene();
 
-	INFO("Creating history state");
+	INFO("Creating History State");
 	history_ = new history::State;
 
-    INFO("Creating engine");
+    INFO("Creating Engine");
 	engine_ = new engine::Engine;
 	engine_->startFallbackThread();
 
@@ -35,37 +35,37 @@ Context::Context() {
 }
 
 Context::~Context() {
-	// Deleting NULL is safe in C++.
+	// Deleting nullptr is safe in C++.
 
-	// Set pointers to NULL so other objects will segfault when attempting to access them
+	// Set pointers to nullptr so other objects will segfault when attempting to access them
 
 	INFO("Deleting window");
 	delete window;
-	window = NULL;
+	window = nullptr;
 
 	INFO("Deleting patch manager");
 	delete patch_;
-	patch_ = NULL;
+	patch_ = nullptr;
 
 	INFO("Deleting scene");
 	delete scene_;
-	scene_ = NULL;
+	scene_ = nullptr;
 
 	INFO("Deleting event state");
 	delete event_;
-	event_ = NULL;
+	event_ = nullptr;
 
 	INFO("Deleting history state");
 	delete history_;
-	history_ = NULL;
+	history_ = nullptr;
 
 	INFO("Deleting engine");
 	delete engine_;
-	engine_ = NULL;
+	engine_ = nullptr;
 
 	INFO("Deleting MIDI loopback");
 	delete midiLoopbackContext_;
-	midiLoopbackContext_ = NULL;
+	midiLoopbackContext_ = nullptr;
 }
 
 void Context::createWindow() {
@@ -74,7 +74,7 @@ void Context::createWindow() {
 }
 
 // Global context pointer for the current thread
-static thread_local Context* threadContext = NULL;
+static thread_local Context* threadContext = nullptr;
 
 Context* contextGet() {
 	return threadContext;
@@ -85,7 +85,7 @@ widget::EventState* getEvent() {
     if (ctx) {
         return ctx->getEvent();
     }
-    return NULL;
+    return nullptr;
 }
 
 app::Scene* getScene() {
@@ -93,7 +93,7 @@ app::Scene* getScene() {
     if (ctx) {
         return ctx->getScene();
     }
-    return NULL;
+    return nullptr;
 }
 
 window::Window* getWindow() {
@@ -101,7 +101,7 @@ window::Window* getWindow() {
     if (ctx) {
         return ctx->getWindow();
     }
-    return NULL;
+    return nullptr;
 }
 
 app::RackWidget* getRack() {
@@ -109,7 +109,7 @@ app::RackWidget* getRack() {
     if (ctx) {
         return ctx->getRack();
     }
-    return NULL;
+    return nullptr;
 }
 
 engine::Engine* getEngine() {
@@ -117,7 +117,7 @@ engine::Engine* getEngine() {
     if (ctx) {
         return ctx->getEngine();
     }
-    return NULL;
+    return nullptr;
 }
 
 history::State* getHistory() {
@@ -125,7 +125,7 @@ history::State* getHistory() {
     if (ctx) {
         return ctx->getHistory();
     }
-    return NULL;
+    return nullptr;
 }
 
 patch::Manager* getPatch() {
@@ -133,7 +133,7 @@ patch::Manager* getPatch() {
     if (ctx) {
         return ctx->getPatch();
     }
-    return NULL;
+    return nullptr;
 }
 
 midiloopback::Context* getMidiLoopbackContext() {
@@ -141,7 +141,7 @@ midiloopback::Context* getMidiLoopbackContext() {
     if (ctx) {
         return ctx->getMidiLoopbackContext();
     }
-    return NULL;
+    return nullptr;
 }
 
 // Apple's clang incorrectly compiles this function when -O2 or higher is enabled.

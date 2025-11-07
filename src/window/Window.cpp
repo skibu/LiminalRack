@@ -912,7 +912,7 @@ int& Window::fbCount() {
 
 
 void Window::init() {
-    INFO("Initializing Window system");
+    INFO("Initializing Window system...");
 
 	// Set up GLFW
 #if defined ARCH_MAC

@@ -17,6 +17,8 @@ struct RailWidget::Internal {
 
 
 RailWidget::RailWidget() {
+    DEBUG("Constructing RailWidget...");
+
 	internal_ = new Internal;
 
 	internal_->railFb = new widget::FramebufferWidget;

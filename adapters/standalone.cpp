@@ -83,7 +83,13 @@ static void initUI() {
     context->createWindow();
 
     // If was in full screen mode previously go right into full screen mode
-    if (settings::windowMaximized) getWindow()->setFullScreen(true);
+    if (settings::windowMaximized) {
+        INFO("Putting window into full screen mode");
+        getWindow()->setFullScreen(true);
+    }
+
+    // Now that window fully created display spash screen
+    ui::Liminal::showSplashScreen();
 }
 
 /**

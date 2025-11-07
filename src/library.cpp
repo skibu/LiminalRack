@@ -125,6 +125,8 @@ void checkAppUpdate() {
 		if (downloadUrlJ)
 			appDownloadUrl_ = json_string_value(downloadUrlJ);
 	}
+
+    DEBUG("Done initiating the checking for plugin library updates");
 }
 
 
