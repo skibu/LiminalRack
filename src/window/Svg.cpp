@@ -25,7 +25,7 @@ void Svg::loadFile(const std::string& filename) {
 	handle = nsvgParseFromFile(filename.c_str(), "px", SVG_DPI);
 	if (!handle)
 		throw Exception("Failed to load SVG %s", filename.c_str());
-	INFO("Loaded SVG %s", filename.c_str());
+	DEBUG("Loaded SVG %s", filename.c_str());
 }
 
 

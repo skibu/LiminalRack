@@ -363,7 +363,7 @@ bool Manager::hasAutosave() {
 
 void Manager::loadAutosave() {
 	std::string patchPath = system::join(autosavePath, "patch.json");
-	INFO("Loading autosave %s", patchPath.c_str());
+	INFO("Loading patch that was autosaved %s", patchPath.c_str());
 	FILE* file = std::fopen(patchPath.c_str(), "r");
 	if (!file)
 		throw Exception("Could not open autosave patch %s", patchPath.c_str());

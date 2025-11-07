@@ -57,7 +57,7 @@ void Font::loadFile(const std::string& filename, NVGcontext* vg) {
 		std::free(data);
 		throw Exception("Failed to load font %s", filename.c_str());
 	}
-	INFO("Loaded font %s", filename.c_str());
+	DEBUG("Loaded font %s", filename.c_str());
 }
 
 
@@ -282,6 +282,8 @@ static void errorCallback(int error, const char* description) {
 
 
 Window::Window() {
+    INFO("Constructing Window...");
+
 	internal_ = new Internal();
 	int err;
 
@@ -390,10 +392,13 @@ Window::Window() {
 		bndSetFont(uiFont->handle);
 
 	if (getScene()) {
+        // Notify all widgets that the Scene context has been created
 		widget::Widget::ContextCreateEvent e;
 		e.vg = vg;
 		getScene()->onContextCreate(e);
 	}
+
+    INFO("Constructed Window");
 }
 
 
@@ -479,7 +484,7 @@ void Window::Internal::endOfFrame() {
 }
 
 void Window::mainLoop() {
-    INFO("Running window main loop");
+    INFO("Running window main loop...");
 
     while (internal_->shouldContinueStepping(getGLFWwindow())) {
         // Process the frame and recurse through all child widgets
@@ -906,10 +911,8 @@ int& Window::fbCount() {
 }
 
 
-void init() {
+void Window::init() {
     INFO("Initializing Window system");
-
-	int err;
 
 	// Set up GLFW
 #if defined ARCH_MAC
@@ -918,7 +921,7 @@ void init() {
 #endif
 
 	glfwSetErrorCallback(errorCallback);
-	err = glfwInit();
+	int err = glfwInit();
 	if (err != GLFW_TRUE) {
 		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, "Could not initialize GLFW.");
 		throw Exception("Could not initialize GLFW");
@@ -928,7 +931,7 @@ void init() {
 }
 
 
-void destroy() {
+void Window::destroy() {
 	glfwTerminate();
 }
 

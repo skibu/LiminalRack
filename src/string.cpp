@@ -598,7 +598,7 @@ static void loadTranslations() {
 		std::string language = system::getStem(filename);
 		std::string path = system::join(translationsDir, filename);
 
-		INFO("Loading translation %s from %s", language.c_str(), path.c_str());
+		DEBUG("Loading translation %s from %s", language.c_str(), path.c_str());
 		FILE* file = std::fopen(path.c_str(), "r");
 		if (!file) {
 			WARN("Cannot open translation file %s", path.c_str());

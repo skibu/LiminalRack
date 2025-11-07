@@ -152,7 +152,7 @@ json_t* requestJson(Method method, const std::string& url, json_t* dataJ, const 
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resText);
 
 	// Perform request
-	INFO("Requesting JSON %s %s", methodNames[method].c_str(), urlS.c_str());
+	DEBUG("Requesting JSON %s %s", methodNames[method].c_str(), urlS.c_str());
 	CURLcode res = curl_easy_perform(curl);
 
 	// Cleanup

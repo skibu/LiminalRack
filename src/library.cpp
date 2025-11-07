@@ -90,6 +90,8 @@ void checkAppUpdate() {
 		return;
 	DEFER({appUpdateMutex_.unlock();});
 
+    INFO("Checking for plugin library updates...");
+
     // Get latest version info of Rack from VCV Rack API
 	std::string versionUrl = API_URL + "/version";
 	json_t* reqJ = json_object();

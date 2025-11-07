@@ -197,14 +197,14 @@ class Window {
 
     PRIVATE bool& fbDirtyOnSubpixelChange();
     PRIVATE int& fbCount();
+
+   public:
+    /** Initializes the window system using GLFW */
+    static void init();
+
+    /** Destroys the window system */
+    static void destroy();
 };
-
-/** Initializes the window system using GLFW */
-PRIVATE void init();
-
-/** Destroys the window system */
-PRIVATE void destroy();
-
 
 } // namespace window
 } // namespace rack

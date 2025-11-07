@@ -6,7 +6,10 @@
 namespace rack {
 namespace app {
 
-struct RailWidget : widget::TransparentWidget {
+/** For drawing the back of the rack where there is no module covering it.
+ * Includes the rails and also the power board.
+ */
+class RailWidget : public widget::TransparentWidget {
    private:
     struct Internal;
     Internal* internal_;

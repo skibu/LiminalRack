@@ -623,25 +623,26 @@ class Widget : public WeakBase {
 		recurseEvent(&Widget::onHide, e);
 	}
 
-	/** Occurs after the Window (including OpenGL and NanoVG contexts) are created.
-	Recurses.
-	*/
-	struct ContextCreateEvent : BaseEvent {
-		NVGcontext* vg;
-	};
-	virtual void onContextCreate(const ContextCreateEvent& e) {
-		recurseEvent(&Widget::onContextCreate, e);
-	}
+    struct ContextCreateEvent : BaseEvent {
+        NVGcontext* vg;
+    };
+    /** Called after the Window (including OpenGL and NanoVG contexts) are
+     * created. Recurses.
+     */
+    virtual void onContextCreate(const ContextCreateEvent& e) {
+        recurseEvent(&Widget::onContextCreate, e);
+    }
 
-	/** Occurs before the Window (including OpenGL and NanoVG contexts) are destroyed.
-	Recurses.
-	*/
-	struct ContextDestroyEvent : BaseEvent {
-		NVGcontext* vg;
-	};
-	virtual void onContextDestroy(const ContextDestroyEvent& e) {
-		recurseEvent(&Widget::onContextDestroy, e);
-	}
+    struct ContextDestroyEvent : BaseEvent {
+        NVGcontext* vg;
+    };
+    /** Called before the Window (including OpenGL and NanoVG contexts) are
+     * destroyed. Recurses.
+     */
+    virtual void
+    onContextDestroy(const ContextDestroyEvent& e) {
+        recurseEvent(&Widget::onContextDestroy, e);
+    }
 
    private:
     /** Position relative to parent and size of widget. */

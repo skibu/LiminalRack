@@ -67,6 +67,8 @@ struct Scene::Internal {
 
 
 Scene::Scene() {
+    DEBUG("Constructing the Scene Widget...");
+
 	internal_ = new Internal;
 
     // Create the scrolled rack area

@@ -79,7 +79,7 @@ static void initUI() {
 
     // Initialize UI and create main window
     ui::init();
-    window::init();
+    window::Window::init();
     context->createWindow();
 
     // If was in full screen mode previously go right into full screen mode
@@ -198,6 +198,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	// Log environment
+    INFO("Running Rack standalone...");
 	INFO("%s", appInfo.c_str());
 	INFO("%s", system::getOperatingSystemInfo().c_str());
 	std::string argsList;
@@ -317,7 +318,7 @@ int main(int argc, char* argv[]) {
 	// Destroy environment
 	if (!settings::headless) {
 		INFO("Destroying window");
-		window::destroy();
+		window::Window::destroy();
 		INFO("Destroying UI");
 		ui::destroy();
 	}

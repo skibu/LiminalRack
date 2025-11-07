@@ -50,8 +50,15 @@ struct FramebufferWidget : Widget {
      */
     virtual void drawFramebuffer();
 
+    /** Called when the framebuffer needs to be marked as dirty. */
     void onDirty(const DirtyEvent& e) override;
+
+    /** Called when Scene is created and can be written to. Marks framebuffer as
+     * dirty. */
     void onContextCreate(const ContextCreateEvent& e) override;
+
+    /** Called when Scene is being destroyed. Deletes framebuffer. Marks
+     * framebuffer as dirty. */
     void onContextDestroy(const ContextDestroyEvent& e) override;
 };
 
