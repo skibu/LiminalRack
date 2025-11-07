@@ -14,25 +14,30 @@ namespace rack {
 namespace widget {
 
 /** A node in the 2D [scene graph](https://en.wikipedia.org/wiki/Scene_graph).
-The bounding box of a Widget is a rectangle specified by `box` relative to their
-parent. The appearance is defined by overriding `draw()`, and the behavior is
-defined by overriding `step()` and `on*()` event handlers.
-*/
+ * The bounding box of a Widget is a rectangle specified by `box` relative to
+ * their parent. The appearance is defined by overriding `draw()`, and the
+ * behavior is defined by overriding `step()` and `on*()` event handlers.
+ */
 class Widget : public WeakBase {
-    public:
-	virtual ~Widget();
+   public:
+    virtual ~Widget();
 
-    /** Returns the bounding box of the widget in its parent's coordinate system. */
-	math::Rect getBox();
+    /** Returns the bounding box of the widget in its parent's coordinate
+     * system. */
+    math::Rect getBox() const {
+        return box_;
+    }
 
-	/** Calls setPos() and then setSize(). */
+    /** Calls setPos() and then setSize(). */
 	void setBox(math::Rect box);
 
     /** Returns the position of the widget. */
-	math::Vec getPos();
+    math::Vec getPos() const {
+        return box_.getPos();
+    }
 
     /** Alias for getPos(). getPosition() might be used by modules. */
-    math::Vec getPosition() {
+    math::Vec getPosition() const {
         return getPos();
     }
 
@@ -52,7 +57,7 @@ class Widget : public WeakBase {
     }   
 
     /** Returns the X position of the widget. */
-    float getX() {
+    float getX() const {
         return getPos().getX();
     }
 
@@ -64,14 +69,16 @@ class Widget : public WeakBase {
     }
 
     /** Returns the Y position of the widget. */
-    float getY() {
+    float getY() const {
         return getPos().getY();
     }
 
     /** Gets the size of the widget. */
-	math::Vec getSize();
+    math::Vec getSize() const {
+        return box_.getSize();
+    }
 
-	/** Sets size of the widget and triggers ResizeEvent if size changed. */
+    /** Sets size of the widget and triggers ResizeEvent if size changed. */
 	void setSize(math::Vec size);
 
     /** Sets size of the widget and triggers ResizeEvent if size changed. */
@@ -80,38 +87,38 @@ class Widget : public WeakBase {
     }
 
     /** Returns the width of the widget. */
-    float getWidth() {
+    float getWidth() const {
         return getSize().getWidth();
     }
 
     /** Sets the width of the widget. */
     void setWidth(float width) {
-        box.setWidth(width);
+        box_.setWidth(width);
     }
 
     /** Returns the height of the widget. */
-    float getHeight() {
+    float getHeight() const {
         return getSize().getHeight();
     }
 
     /** Sets the height of the widget. */
     void setHeight(float height) {
-        box.setHeight(height);
+        box_.setHeight(height);
     }
 
     /** Returns the parent widget of this widget */
-	widget::Widget* getParent() {
-        return parent;
+	widget::Widget* getParent() const {
+        return parent_;
     }
 
     /** Returns the list of child widgets */
-    std::list<Widget*> getChildren() {
-        return children;
+    std::list<Widget*> getChildren() const {
+        return children_;
     }   
 
     /** Returns whether the widget is visible. */
-	bool isVisible() {
-        return visible;
+	bool isVisible() const {
+        return visible_;
     }
 
 	/** Sets `visible` and triggers ShowEvent or HideEvent if changed. */
@@ -133,57 +140,81 @@ class Widget : public WeakBase {
      */
     void hideInitially() {
         // The widget should be initially hidden
-        visible = false;
+        visible_ = false;
     }
 
 	/** Requests this Widget's parent to delete it in the next step(). */
 	void requestDelete();
 
-	/** Returns the smallest rectangle containing this widget's children (visible and invisible) in its local coordinates.
-	Returns `Rect(Vec(inf, inf), Vec(-inf, -inf))` if there are no children.
-	*/
-	virtual math::Rect getChildrenBoundingBox();
+    /** Returns the smallest rectangle containing this widget's children
+     * (visible and invisible) in its local coordinates. Returns `Rect(Vec(inf,
+     * inf), Vec(-inf, -inf))` if there are no children.
+    */
+    virtual math::Rect getChildrenBoundingBox();
 	virtual math::Rect getVisibleChildrenBoundingBox();
 
-	/** Returns whether `ancestor` is a parent or distant parent of this widget.
-	*/
-	bool isDescendantOf(Widget* ancestor);
+    /** Returns whether `ancestor` is a parent or distant parent of this
+     * widget.
+     */
+    bool isDescendantOf(Widget* ancestor);
 
-	/**  Returns `v` (given in local coordinates) transformed into the coordinate system of `ancestor`.
-	*/
-	virtual math::Vec getRelativeOffset(math::Vec v, Widget* ancestor);
+    /**  Returns `v` (given in this coordinates) transformed into the
+     * coordinate system of `ancestor`. Note that it is critical to 
+     * call this method via the class that v is relative to. There is no scaling. It simply sums
+     * the positions up the parent chain. If `ancestor` is NULL, transforms
+     * `v` into Screen coordinates.
+     * 
+     * @param v The vector in local widget coordinates.
+     * @param ancestor The ancestor Widget to transform `v` into the coordinate system of.
+     * @return The vector in absolute/screen coordinates. 
+     */
+    virtual math::Vec getRelativeOffset(const math::Vec& v,
+                                        Widget* ancestor) const;
 
-	/** Returns `v` transformed into world/root/global/absolute coordinates.
-	*/
-	math::Vec getAbsoluteOffset(math::Vec v) {
-		return getRelativeOffset(v, NULL);
-	}
+    /** Returns `v` in this coordinates and transformed into
+     * Screen/world/root/global/absolute coordinates.  Note that it is critical
+     * to call this method via the class that v is relative to.
+     *
+     * @param v The vector in local widget coordinates.
+     * @return The vector in absolute/screen coordinates.
+     */
+    math::Vec getInSceneCoords(const math::Vec& v) const {
+        return getRelativeOffset(v, nullptr);
+    }
 
-	/** Returns the zoom level in the coordinate system of `ancestor`.
-	Only `ZoomWidget` should override this to return value other than 1.
-	*/
-	virtual float getRelativeZoom(Widget* ancestor);
-	float getAbsoluteZoom() {
-		return getRelativeZoom(NULL);
-	}
+    /** Returns the zoom level in the coordinate system of `ancestor`.
+     * Only `ZoomWidget` should override this to return value other than 1.
+     */
+    virtual float getRelativeZoom(Widget* ancestor);
+    float getAbsoluteZoom() {
+        return getRelativeZoom(NULL);
+    }
 
-	/** Returns a subset of the given Rect bounded by the box of this widget and all ancestors.
-	*/
-	virtual math::Rect getViewport(math::Rect r = math::Rect::inf());
+    /** Converts a Scene space vector to local widget coordinates.
+     * Only accounts for position, not zooming. Zooming is handled by
+     * an override in ZoomWidget of getScreenVecInLocalCoords().
+     * @param vec The vector in Scene coordinates.
+     * @return The vector in local widget coordinates.
+     */
+    virtual math::Vec getScenePosInLocalCoords(const math::Vec& vec) const;
 
-	template <class T>
-	T* getAncestorOfType() {
-		if (!parent)
-			return NULL;
-		T* p = dynamic_cast<T*>(parent);
-		if (p)
-			return p;
-		return parent->getAncestorOfType<T>();
-	}
+    /** Returns a subset of the given Rect bounded by the box of this widget
+     * and all ancestors. Does this by doing the transformation for each
+     * ancestor up to the Screen.
+     */
+    virtual math::Rect getViewport(math::Rect r = math::Rect::inf());
+
+    template <class T>
+    T* getAncestorOfType() {
+        if (!parent_) return NULL;
+        T* p = dynamic_cast<T*>(parent_);
+        if (p) return p;
+        return parent_->getAncestorOfType<T>();
+    }
 
 	template <class T>
 	T* getFirstDescendantOfType() {
-		for (Widget* child : children) {
+		for (Widget* child : children_) {
 			T* c = dynamic_cast<T*>(child);
 			if (c)
 				return c;
@@ -262,7 +293,7 @@ class Widget : public WeakBase {
 	/** Recurses an event to all visible Widgets */
 	template <typename TMethod, class TEvent>
 	void recurseEvent(TMethod f, const TEvent& e) {
-		for (auto it = children.rbegin(); it != children.rend(); it++) {
+		for (auto it = children_.rbegin(); it != children_.rend(); it++) {
 			// Stop propagation if requested
 			if (!e.isPropagating())
 				break;
@@ -281,15 +312,15 @@ class Widget : public WeakBase {
 	/** Recurses an event to all visible Widgets until it is consumed. */
 	template <typename TMethod, class TEvent>
 	void recursePositionEvent(TMethod f, const TEvent& e) {
-		for (auto it = children.rbegin(); it != children.rend(); it++) {
+		for (auto it = children_.rbegin(); it != children_.rend(); it++) {
 			// Stop propagation if requested
 			if (!e.isPropagating())
 				break;
 			Widget* child = *it;
 			// Filter child by visibility and position
-			if (!child->visible)
+			if (!child->visible_)
 				continue;
-			if (!child->box.contains(e.pos))
+			if (!child->box_.contains(e.pos))
 				continue;
 
 			// Clone event and adjust its position
@@ -613,26 +644,25 @@ class Widget : public WeakBase {
 
    private:
     /** Position relative to parent and size of widget. */
-	math::Rect box = math::Rect(math::Vec(), math::Vec(INFINITY, INFINITY));
+	math::Rect box_ = math::Rect(math::Vec(), math::Vec(INFINITY, INFINITY));
 
 	/** Automatically set when Widget is added as a child to another Widget */
-	Widget* parent = NULL;
+	Widget* parent_ = NULL;
 
     /** Lazily created children */
-	std::list<Widget*> children;
+	std::list<Widget*> children_;
 
     /** Disables rendering but allow stepping.
     Use isVisible(), setVisible(), show(), or hide() instead of using this
     variable directly. 
     */
-    bool visible = true;
+    bool visible_ = true;
 
 	/** If set to true, parent will delete Widget in the next step().
 	Use requestDelete() instead of using this variable directly.
 	*/
-	bool requestedDelete = false;
+	bool requestedDelete_ = false;
 };  // end of class Widget
-
 
 } // namespace widget
 

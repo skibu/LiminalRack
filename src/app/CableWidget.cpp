@@ -172,326 +172,434 @@ struct CableWidget::CableInternal {
 
 
 CableWidget::CableWidget() {
-	cableInternals = new CableInternal;
-	color = color::BLACK_TRANSPARENT;
+	cableInternals_ = new CableInternal;
+	color_ = color::BLACK_TRANSPARENT;
 
-	outputPlug = new PlugWidget(this, engine::Port::OUTPUT);
-	inputPlug = new PlugWidget(this, engine::Port::INPUT);
+	outputPlug_ = new PlugWidget(this, engine::Port::OUTPUT);
+	inputPlug_ = new PlugWidget(this, engine::Port::INPUT);
 }
 
 
 CableWidget::~CableWidget() {
-	delete outputPlug;
-	delete inputPlug;
+	delete outputPlug_;
+	delete inputPlug_;
 
 	setCable(NULL);
-	delete cableInternals;
+	delete cableInternals_;
 }
 
 
 bool CableWidget::isComplete() {
-	return outputPort && inputPort;
+	return outputPort_ && inputPort_;
 }
 
 
 void CableWidget::updateCable() {
 	// Clean up existing cable if it exists
-	if (cable) {
-		getEngine()->removeCable(cable);
-		delete cable;
-		cable = NULL;
+	if (cable_) {
+		getEngine()->removeCable(cable_);
+		delete cable_;
+		cable_ = NULL;
 	}
 
 	// If either input or output port not set then cannot create cable
-	if (!inputPort || !outputPort) return;
+	if (!inputPort_ || !outputPort_) return;
 
 	// Both ports are set, create a new cable
-	cable = new engine::Cable;
-	cable->id = cableInternals->cableId;
-	cable->inputModule = inputPort->module;
-	cable->inputId = inputPort->portId;
-	cable->outputModule = outputPort->module;
-	cable->outputId = outputPort->portId;
-	getEngine()->addCable(cable);
-	cableInternals->cableId = cable->id;
+	cable_ = new engine::Cable;
+	cable_->id = cableInternals_->cableId;
+	cable_->inputModule = inputPort_->module;
+	cable_->inputId = inputPort_->portId;
+	cable_->outputModule = outputPort_->module;
+	cable_->outputId = outputPort_->portId;
+	getEngine()->addCable(cable_);
+	cableInternals_->cableId = cable_->id;
 
 	// Make sure cable color is correct. It was originally set based
 	// on the first port, but that port might not have definitively
 	// determined the color, perhaps because name of the port had
 	// insufficient information.
-    color = CableColorMatcher::getCableColor(inputPort->getPortInfo(),
-											outputPort->getPortInfo());
+    color_ = CableColorMatcher::getCableColor(inputPort_->getPortInfo(),
+											outputPort_->getPortInfo());
 }
 
 void CableWidget::setCable(engine::Cable* cable) {
-	if (this->cable) {
-		getEngine()->removeCable(this->cable);
-		delete this->cable;
-		this->cable = NULL;
-		cableInternals->cableId = -1;
+	if (this->cable_) {
+		getEngine()->removeCable(this->cable_);
+		delete this->cable_;
+		this->cable_ = NULL;
+		cableInternals_->cableId = -1;
 	}
 	if (cable) {
 		app::ModuleWidget* outputMw = getRack()->getModule(cable->outputModule->id);
 		if (!outputMw)
 			throw Exception("Cable cannot find output ModuleWidget %lld", (long long) cable->outputModule->id);
-		outputPort = outputMw->getOutput(cable->outputId);
-		if (!outputPort)
+		outputPort_ = outputMw->getOutput(cable->outputId);
+		if (!outputPort_)
 			throw Exception("Cable cannot find output port %d", cable->outputId);
 
 		app::ModuleWidget* inputMw = getRack()->getModule(cable->inputModule->id);
 		if (!inputMw)
 			throw Exception("Cable cannot find input ModuleWidget %lld", (long long) cable->inputModule->id);
-		inputPort = inputMw->getInput(cable->inputId);
-		if (!inputPort)
+		inputPort_ = inputMw->getInput(cable->inputId);
+		if (!inputPort_)
 			throw Exception("Cable cannot find input port %d", cable->inputId);
 
-		this->cable = cable;
-		cableInternals->cableId = cable->id;
+		this->cable_ = cable;
+		cableInternals_->cableId = cable->id;
 	}
 	else {
-		outputPort = NULL;
-		inputPort = NULL;
+		outputPort_ = NULL;
+		inputPort_ = NULL;
 	}
 }
 
 
 engine::Cable* CableWidget::getCable() {
-	return cable;
+	return cable_;
 }
 
-math::Vec CableWidget::getInputPos() {
-    if (inputPort) {
-		return inputPort->getRelativeOffset(
-			inputPort->getBox().zeroPos().getCenter(), getRack());
-    } else if (hoveredInputPort) {
-		return hoveredInputPort->getRelativeOffset(
-			hoveredInputPort->getBox().zeroPos().getCenter(), getRack());
+math::Vec CableWidget::getInputPortPosInRackCoords() const {
+    if (inputPort_) {
+        // Return center of the input port in Rack coordinates
+		return inputPort_->getRelativeOffset(
+			inputPort_->getBox().zeroPos().getCenter(), getRack());
+    } else if (hoveredInputPort_) {
+		return hoveredInputPort_->getRelativeOffset(
+			hoveredInputPort_->getBox().zeroPos().getCenter(), getRack());
     } else {
         return getRack()->getMousePos();
     }
 }
 
-math::Vec CableWidget::getOutputPos() {
-	if (outputPort) {
-		return outputPort->getRelativeOffset(outputPort->getBox().zeroPos().getCenter(), getRack());
-	}
-	else if (hoveredOutputPort) {
-		return hoveredOutputPort->getRelativeOffset(hoveredOutputPort->getBox().zeroPos().getCenter(), getRack());
-	}
-	else {
-		return getRack()->getMousePos();
-	}
+math::Vec CableWidget::getOutputPortPosInRackCoords() const {
+    if (outputPort_) {
+        // Return center of the output port in Rack coordinates
+        return outputPort_->getRelativeOffset(
+            outputPort_->getBox().zeroPos().getCenter(), getRack());
+    } else if (hoveredOutputPort_) {
+        return hoveredOutputPort_->getRelativeOffset(
+            hoveredOutputPort_->getBox().zeroPos().getCenter(), getRack());
+    } else {
+        return getRack()->getMousePos();
+    }
 }
 
-
 void CableWidget::mergeJson(json_t* rootJ) {
-	std::string s = color::toHexString(color);
+	std::string s = color::toHexString(color_);
 	json_object_set_new(rootJ, "color", json_string(s.c_str()));
 }
 
-
 void CableWidget::fromJson(json_t* rootJ) {
-	json_t* colorJ = json_object_get(rootJ, "color");
-	if (colorJ && json_is_string(colorJ)) {
-		color = color::fromHexString(json_string_value(colorJ));
-	}
-	else {
-		// In <v0.6.0, cables used JSON objects instead of hex strings. Just ignore them if so and use the existing cable color.
-		// In <=v1, cable colors were not serialized.
-		color = getRack()->getNextCableColor();
-	}
+    json_t* colorJ = json_object_get(rootJ, "color");
+    if (colorJ && json_is_string(colorJ)) {
+        color_ = color::fromHexString(json_string_value(colorJ));
+    } else {
+        // In <v0.6.0, cables used JSON objects instead of hex strings. Just
+        // ignore them if so and use the existing cable color. In <=v1, cable
+        // colors were not serialized.
+        color_ = getRack()->getNextCableColor();
+    }
 }
 
+math::Vec CableWidget::getSlumpVertexInRackCoords() const {
+    // Use the output and input port positions for calculating slumpVertex position
+    math::Vec pos0InRackCoords = getOutputPortPosInRackCoords();
+    math::Vec pos2InRackCoords = getInputPortPosInRackCoords();
 
-static math::Vec getSlumpPos(math::Vec pos1, math::Vec pos2) {
-	float dist = pos1.minus(pos2).norm();
-	math::Vec avg = pos1.plus(pos2).div(2);
-	// Lower average point as distance increases. 
-	// Originally droopage was 150 but there is no good reason for
-	// the cables to hang so low.
-	double droopage = 50.0;
-	avg.setY(avg.getY() + (1.0 - settings::cableTension) * (droopage + 1.0 * dist));
-	return avg;
+    // The x position of the slumpVertex position is simply the average of the two
+    // port x positions.
+    float xAverage = (pos0InRackCoords.getX() + pos2InRackCoords.getX()) / 2;
+
+    // Lower average point as distance increases.
+    // Originally droopage was 150 but there is no good reason for the cables to
+    // hang so low.
+    double droopage = 50.0;
+
+    // The y value of the slumpVertex position is the average of the two port y
+    // positions, plus an amount based on the distance between the two ports
+    // and the cable tension setting.
+    float distanceBtwnPorts = pos0InRackCoords.minus(pos2InRackCoords).norm();
+    float yAverage = (pos0InRackCoords.getY() + pos2InRackCoords.getY()) / 2;
+    float ySlumpPos = yAverage + (1.0 - settings::cableTension) *
+                                     (droopage + 1.0 * distanceBtwnPorts);
+
+    // Return the calculated slumpVertex position
+    math::Vec slumpPos(xAverage, ySlumpPos);
+    return slumpPos;
 }
 
-static int c = 0;
+/**
+ * @brief Get the slumpVertex Y pos given port locs and minimum y value for
+ * curve
+ *
+ * Definitions: P0 is first port positiion, P1 is position of the vertex point,
+ * and P2 is the second port position. y1 is simply P1.y. y_min is the bottom of
+ * the Bezier curve.
+ *
+ * Goal is to be able to have the Bezier curve represeenting the cable not go
+ * beyond the bottom of the screen. This is complicated by the curve being
+ * specified by the port locs P0 and P2, and also the vertex P1. But need to use
+ * the Bezier quadratic equation B(t) = (1-t)^2 * P0 + 2*t*(1-t)*P1 + t^2 * P2.
+ * Then can determine P1.y where the curve (not the vertex) is at bottom of
+ * scene.
+ *
+ * Once have P1.y for making the curve be at bottom of scene, can see if this
+ * value is greater or less than the original P1.y. If the new value is smaller
+ * than the original P1.y then the Bezier curve for the cable is above the
+ * scene bottom and can be used. But if new value is greater than original P1.y
+ * then the curve would be below the scene bottom and instead the new P1.y
+ * value should be used.
+ *
+ * The derivation of the formula for calculating y1 is quite complicated so used
+ * Gemini AI and went over the results. Indeed seem correct. The equation is:
+ *
+ *   y1 = y_min +- sqrt((y_min - y0)(y_min - y2))
+ *
+ * But if (y_min - y0)(y_min - y2) < 0 then cannot have a minimum at y_min so
+ * returns simply the average of y0 and y2.
+ *
+ * Note: all positions must be provided in the same coordinate frame. The Rack
+ * coordinate frame is probably best since most locations are already relative
+ * to Rack coordinates.
+ *
+ * @param p0 position of first port, which is P0 for defining Bezier curve
+ * @param p2 position of second port, which is P2 for defining Bezier curve
+ * @param y_min the bottom location of the Bezier curve, which should be set to
+ * bottom of scene
+ *
+ * @return float y1, the value P1.y needs to be for curve to be at bottom of
+ * scene
+ */
+static float getSlumpVertexYGivenPortLocsAndCurveMinY(const math::Vec& p0,
+                                                      const math::Vec& p2,
+                                                      float y_min) {
+    float y0 = p0.getY();
+    float y2 = p2.getY();
+
+    if ((y_min - y0) * (y_min - y2) >= 0) {
+        // Can have curve minimum at y_min. Return calculated value.
+        float y1 = y_min + sqrt((y_min - y0) * (y_min - y2));
+        return y1;
+    } else {
+        // Cannot have curve minimum at y_min since ports are on opposite
+        // sides of y_min. Just return average of the two port y positions.
+        float y1 = (y0 + y2) / 2;
+        return y1;
+    }
+}
+
+math::Vec CableWidget::getSlumpVertexForCableAtScreenBottomInRackCoords() const {
+    math::Vec bottomOfScreenInRackCoords = getRack()->getScenePosInLocalCoords(
+        math::Vec(0, getScene()->getHeight()));
+
+    math::Vec p0InRackCoords = getOutputPortPosInRackCoords();
+    math::Vec p2InRackCoords = getInputPortPosInRackCoords();
+
+    // Determine the p1 slumpVertex Y position for the bottom of the
+    // cable curve to be at the bottom of the screen. Note: if the math
+    // was correct then should subtract half CABLE_WIDTH since the cable
+    // is drawn centered on the curve. But in practice it looks better
+    // to just use CABLE_WIDTH.
+    float slumpVertexYInRackCoords = getSlumpVertexYGivenPortLocsAndCurveMinY(
+        p0InRackCoords, p2InRackCoords,
+        bottomOfScreenInRackCoords.getY() - CABLE_WIDTH);
+
+    // Determine the p1 slumpVertex X position, which is simply the average
+    // of the two port X positions
+    float slumpVertexXInRackCoords =
+        (p0InRackCoords.getX() + p2InRackCoords.getX()) / 2;
+
+    // Return the p1 slumpVertex position for the cable curve to be at
+    // the bottom of the screen
+    return math::Vec(slumpVertexXInRackCoords, slumpVertexYInRackCoords);
+}
 
 void CableWidget::step() {
-	math::Vec outputPos = getOutputPos();
-	math::Vec inputPos = getInputPos();
-	math::Vec slump = getSlumpPos(outputPos, inputPos);
+    cableOutputPlugInRackCoords_ = getOutputPortPosInRackCoords();
+    cableInputPlugInRackCoords_ = getInputPortPosInRackCoords();
+    slumpVertexInRackCoords_ = getSlumpVertexInRackCoords();
 
-    // FIXME for debugging coordinates : Remove debug output
-    if (c++ % 180 == 0) {
-        DEBUG(
-            "step: outputPos=(%.1f, %.1f) inputPos=(%.1f, "
-            "%.1f) slump=(%.1f, %.1f)",
-            outputPos.getX(), outputPos.getY(), inputPos.getX(), inputPos.getY(), slump.getX(),
-            slump.getY());
+    // Determine the proper slumpVertex position to keep cable visible within
+    // scene bounds. Adjust the slumpVertex y position if needed
 
-        DEBUG("Scene box: x=%f, y=%f w=%f, h=%f", getScene()->getX(),
-             getScene()->getY(), getScene()->getWidth(),
-             getScene()->getHeight());
+    // Get p1 slump vertex based just on cable tension. The bottom of
+    // the cable might be below the scene bottom.
+    math::Vec originalSlumpVertexInRackCoords = slumpVertexInRackCoords_;
 
-        // FIXME for debugging coordinates trying using getAbsoluteOffset() to convert to absolute coords
-        math::Vec initialVec = slump;
-        math::Vec absoluteVec = getAbsoluteOffset(initialVec);
-        DEBUG("--absoluteVecOfSlump=(%f, %f)",  absoluteVec.getX(), absoluteVec.getY());
+    // Determine p1 slump vertex such that bottom of cable is right at
+    // bottom of scene and therefore fully visible
+    math::Vec slumpVertexForCurveAtScreenBottomInRackCoords =
+        getSlumpVertexForCableAtScreenBottomInRackCoords();
 
-        math::Vec outputAbsoluteVec = getAbsoluteOffset(outputPos);
-        DEBUG("--absoluteVecOfOutputPos=(%f, %f)",  outputAbsoluteVec.getX(), outputAbsoluteVec.getY());
-
-        math::Vec inputAbsoluteVec = getAbsoluteOffset(inputPos);
-        DEBUG("--absoluteVecOfInputPos=(%f, %f)",  inputAbsoluteVec.getX(), inputAbsoluteVec.getY());
+    // If the slump vertex Y is below where it needs to be to keep cable
+    // within screen bounds, then adjust slump vertex upward
+    if (originalSlumpVertexInRackCoords.getY() >
+        slumpVertexForCurveAtScreenBottomInRackCoords.getY()) {
+        // Current slumpVertex is below where it needs to be to keep cable
+        // within screen bounds, so adjust it upward
+        slumpVertexInRackCoords_ = slumpVertexForCurveAtScreenBottomInRackCoords;
     }
 
-    NVGcolor colorOpaque = color;
-	colorOpaque.a = 1.f;
+    // The endpoints of cable shouldn't go all the way to center of plug.
+    // This way the cable won't be drawn over the plugs.
+    float outputPlugDistance = 17.f;
+    cableOutputEndInRackCoords_ = cableOutputPlugInRackCoords_.plus(
+        slumpVertexInRackCoords_.minus(cableOutputPlugInRackCoords_)
+            .normalize()
+            .mult(outputPlugDistance));
 
-	// Setup drawing of output plug
-	outputPlug->setPos(outputPos);
-	bool outputTop = outputPort && (getRack()->getTopPlug(outputPort) == outputPlug);
-	outputPlug->setTop(outputTop);
-	outputPlug->setAngle(slump.minus(outputPos).arg());
-	outputPlug->setColor(colorOpaque);
+    float inputPlugDistance = 16.f;
+    cableInputEndInRackCoords_ = cableInputPlugInRackCoords_.plus(
+        slumpVertexInRackCoords_.minus(cableInputPlugInRackCoords_)
+            .normalize()
+            .mult(inputPlugDistance));
 
-	// Setup drawing of input plug
-	inputPlug->setPos(inputPos);
-	bool inputTop = inputPort && (getRack()->getTopPlug(inputPort) == inputPlug);
-	inputPlug->setTop(inputTop);
-	inputPlug->setAngle(slump.minus(inputPos).arg());
-	inputPlug->setColor(colorOpaque);
+    // Setup opaqueness color for the plugs
+    NVGcolor colorFullyOpaque = color_;
+    colorFullyOpaque.a = 1.f;
 
-	Widget::step();
+    // Setup drawing of output plug
+    outputPlug_->setPos(cableOutputPlugInRackCoords_);
+    bool outputPortOnTop =
+        outputPort_ && (getRack()->getTopPlug(outputPort_) == outputPlug_);
+    outputPlug_->setTop(outputPortOnTop);
+    outputPlug_->setAngle(
+        slumpVertexInRackCoords_.minus(cableOutputPlugInRackCoords_).arg());
+    outputPlug_->setColor(colorFullyOpaque);
+
+    // Setup drawing of input plug
+    inputPlug_->setPos(cableInputPlugInRackCoords_);
+    bool inputPortOnTop =
+        inputPort_ && (getRack()->getTopPlug(inputPort_) == inputPlug_);
+    inputPlug_->setTop(inputPortOnTop);
+    inputPlug_->setAngle(
+        slumpVertexInRackCoords_.minus(cableInputPlugInRackCoords_).arg());
+    inputPlug_->setColor(colorFullyOpaque);
+
+    // Continue with normal step processing
+    Widget::step();
 }
-
 
 void CableWidget::draw(const DrawArgs& args) {
-	CableWidget::drawLayer(args, 0);
+    CableWidget::drawLayer(args, 0);
 }
-
-
 
 void CableWidget::drawLayer(const DrawArgs& args, int layer) {
-	// Determine opacity for drawing cable and shadow
-	float opacity = settings::cableOpacity;
-	bool thick = false;
+    // Determine opacity for drawing cable and shadow
+    float opacity = settings::cableOpacity;
+    bool thick = false;
 
-	// Determine opacity to use for drawing the cable
-	if (isComplete()) {
-		// Cable connected on both ends to port, so determine desired opacity of cable accordingly 
-		engine::Output* output = &cable->outputModule->outputs[cable->outputId];
+    // Determine opacity to use for drawing the cable
+    if (isComplete()) {
+        // Cable connected on both ends to port, so determine desired opacity of
+        // cable accordingly
+        engine::Output* output = &cable_->outputModule->outputs[cable_->outputId];
 
-		// Increase thickness if output port is polyphonic
-		if (output->isPolyphonic()) {
-			thick = true;
-		}
-
-		// Draw opaque if mouse is hovering over a connected port
-		Widget* hoveredWidget = getEvent()->hoveredWidget;
-		if (outputPort == hoveredWidget || inputPort == hoveredWidget) {
-			opacity = 1.0;
-		}
-		// Draw translucent cable if not active (i.e. 0 channels)
-		else if (output->getChannels() == 0) {
-			opacity *= 0.5;
-		}
-	}
-	else {
-		// Draw opaque since the cable is incomplete
-		opacity = 1.0;
-	}
-
-	if (opacity <= 0.0)
-		return;
-	nvgAlpha(args.vg, std::pow(opacity, 1.5));
-
-	// Determine how to draw the cable
-	math::Vec outputPos = getOutputPos();
-	math::Vec inputPos = getInputPos();
-
-	// Set how thick the cable should be drawn
-	float thickness = thick ? 9.0 : 6.0;
-
-	// The endpoints of cable don't go all the way to center of jack.
-	// For output jack they should go closer to look somewhat like an arrow.
-	math::Vec slump = getSlumpPos(outputPos, inputPos);
-	float outputJackDistance = 17.f;
-	outputPos = outputPos.plus(slump.minus(outputPos).normalize().mult(outputJackDistance));
-	float inputJackDistance = 16.f;
-	inputPos = inputPos.plus(slump.minus(inputPos).normalize().mult(inputJackDistance));
-
-	// Best line cap seems to be rounded
-	nvgLineCap(args.vg, NVG_ROUND);
-
-	// Avoids glitches when cable is bent
-	nvgLineJoin(args.vg, NVG_ROUND);
-
-	if (layer == -1) {
-		// Setup to draw cable shadow using a slump point below the cable
-		float shadowDeltaPxls = 15.f;
-		math::Vec shadowSlump = slump.plus(math::Vec(0, shadowDeltaPxls));
-
-		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, VEC_ARGS(outputPos));
-		nvgQuadTo(args.vg, VEC_ARGS(shadowSlump), VEC_ARGS(inputPos));
-		NVGcolor shadowColor = nvgRGBAf(0, 0, 0, 0.12);
-		nvgStrokeColor(args.vg, shadowColor);
-		nvgStrokeWidth(args.vg, thickness - 1.0);
-		nvgStroke(args.vg);
-
-		// And now draw shadow but in white so that it shows up
-		// on top of black panels as well
-		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, VEC_ARGS(outputPos));
-		nvgQuadTo(args.vg, VEC_ARGS(shadowSlump), VEC_ARGS(inputPos));
-		NVGcolor shadowColorForDarkPanel = nvgRGBAf(1.0, 1.0, 1.0, 0.12);
-		nvgStrokeColor(args.vg, shadowColorForDarkPanel);
-		nvgStrokeWidth(args.vg, thickness - 1.0);
-		nvgStroke(args.vg);
-
+        // Increase thickness if output port is polyphonic
+        if (output->isPolyphonic()) {
+            thick = true;
         }
-	else if (layer == 0) {
-		// Setup to draw cable outline
-		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, VEC_ARGS(outputPos));
-		nvgQuadTo(args.vg, VEC_ARGS(slump), VEC_ARGS(inputPos));
-		// nvgStrokePaint(args.vg, nvgLinearGradient(args.vg, VEC_ARGS(outputPos), VEC_ARGS(inputPos), color::mult(color, 0.5), color));
-		nvgStrokeColor(args.vg, color::mult(color, 0.8));
-		nvgStrokeWidth(args.vg, thickness);
-		nvgStroke(args.vg);
 
-		// Draw cable
-		nvgStrokeColor(args.vg, color::mult(color, 0.95));
-		nvgStrokeWidth(args.vg, thickness - 1.0);
-		nvgStroke(args.vg);
-	}
+        // Draw opaque if mouse is hovering over a connected port
+        Widget* hoveredWidget = getEvent()->hoveredWidget;
+        if (outputPort_ == hoveredWidget || inputPort_ == hoveredWidget) {
+            opacity = 1.0;
+        }
+        // Draw translucent cable if not active (i.e. 0 channels)
+        else if (output->getChannels() == 0) {
+            opacity *= 0.5;
+        }
+    } else {
+        // Draw opaque since the cable is incomplete
+        opacity = 1.0;
+    }
 
-	// Draw children widgets
-	Widget::drawLayer(args, layer);
+    if (opacity <= 0.0) return;
+    nvgAlpha(args.vg, std::pow(opacity, 1.5));
+
+    // Set how thick the cable should be drawn
+    float thickness = thick ? THICK_CABLE_WIDTH : CABLE_WIDTH;
+
+    // Best line cap seems to be rounded
+    nvgLineCap(args.vg, NVG_ROUND);
+
+    // Avoids glitches when cable is bent
+    nvgLineJoin(args.vg, NVG_ROUND);
+
+    if (layer == -1) {
+        // layer is -1 so draw the cable shadows
+
+        // Setup to draw cable shadow using a slumpVertex point below the cable
+        float shadowDeltaPxls = 15.f;
+        math::Vec shadowSlumpVertexInRackCoords =
+            slumpVertexInRackCoords_.plus(math::Vec(0, shadowDeltaPxls));
+
+        // Draw cable shadow using bezier curve with shadowSlumpVertexInRackCoords point
+        nvgBeginPath(args.vg);
+        nvgMoveTo(args.vg, VEC_ARGS(cableOutputEndInRackCoords_));
+        nvgQuadTo(args.vg, VEC_ARGS(shadowSlumpVertexInRackCoords),
+                  VEC_ARGS(cableInputEndInRackCoords_));
+        NVGcolor shadowColor = nvgRGBAf(0, 0, 0, 0.12);
+        nvgStrokeColor(args.vg, shadowColor);
+        nvgStrokeWidth(args.vg, thickness - 1.0);
+        nvgStroke(args.vg);
+
+        // And now draw shadow but in white so that it shows up
+        // on top of black panels as well
+        nvgBeginPath(args.vg);
+        nvgMoveTo(args.vg, VEC_ARGS(cableOutputEndInRackCoords_));
+        nvgQuadTo(args.vg, VEC_ARGS(shadowSlumpVertexInRackCoords),
+                  VEC_ARGS(cableInputEndInRackCoords_));
+        NVGcolor shadowColorForDarkPanel = nvgRGBAf(1.0, 1.0, 1.0, 0.12);
+        nvgStrokeColor(args.vg, shadowColorForDarkPanel);
+        nvgStrokeWidth(args.vg, thickness - 1.0);
+        nvgStroke(args.vg);
+    } else if (layer == 0) {
+        // layer is 0 so draw the cable itself
+
+        // Setup points to draw cable
+        nvgBeginPath(args.vg);
+        nvgMoveTo(args.vg, VEC_ARGS(cableOutputEndInRackCoords_));
+        nvgQuadTo(args.vg, VEC_ARGS(slumpVertexInRackCoords_),
+                  VEC_ARGS(cableInputEndInRackCoords_));
+
+        // Do the stroke for the cable outline. The outline has slightly
+        // lower opacity than the cable itself.
+        nvgStrokeColor(args.vg, color::mult(color_, 0.8));
+        nvgStrokeWidth(args.vg, thickness);
+        nvgStroke(args.vg);
+
+        // Do the stroke for the inner part of the cable. This is slightly
+        // thinner than the outline and has slightly higher opacity.
+        nvgStrokeColor(args.vg, color::mult(color_, 0.95));
+        nvgStrokeWidth(args.vg, thickness - 1.0);
+        nvgStroke(args.vg);
+    }
+
+    // Draw children widgets, such as the plugs
+    Widget::drawLayer(args, layer);
 }
-
 
 engine::Cable* CableWidget::releaseCable() {
-	engine::Cable* cable = this->cable;
-	this->cable = NULL;
-	cableInternals->cableId = -1;
-	return cable;
+    engine::Cable* cable = this->cable_;
+    this->cable_ = NULL;
+    cableInternals_->cableId = -1;
+    return cable;
 }
-
 
 void CableWidget::onAdd(const AddEvent& e) {
 	Widget* plugContainer = getRack()->getPlugContainer();
-	plugContainer->addChild(outputPlug);
-	plugContainer->addChild(inputPlug);
+	plugContainer->addChild(outputPlug_);
+	plugContainer->addChild(inputPlug_);
 	Widget::onAdd(e);
 }
 
 
 void CableWidget::onRemove(const RemoveEvent& e) {
 	Widget* plugContainer = getRack()->getPlugContainer();
-	plugContainer->removeChild(outputPlug);
-	plugContainer->removeChild(inputPlug);
+	plugContainer->removeChild(outputPlug_);
+	plugContainer->removeChild(inputPlug_);
 	Widget::onRemove(e);
 }
 

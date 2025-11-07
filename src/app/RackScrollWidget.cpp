@@ -146,13 +146,6 @@ void RackScrollWidget::step() {
 	// Hide scrollbars if fullscreen
 	hideScrollbars = getWindow()->isFullScreen();
 
-    //FIXME
-    static int count = 0;
-    if (count++ % 180 == 0) {
-        math::Vec gridOffset = getGridOffset();
-        INFO("RackScrollWidget: zoom %f, offset %f,%f, gridOffset %f,%f", zoom, offset.getX(), offset.getY(), gridOffset.getX(), gridOffset.getY());
-    }
-
 	ScrollWidget::step();
 
 	internal_->oldOffset = offset;

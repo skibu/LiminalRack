@@ -95,7 +95,10 @@ struct PlugContainer : widget::TransparentWidget {
 };
 
 
-struct CableContainer : widget::TransparentWidget {
+/** For drawing of the cables and shadows using different layers. 
+ * No offset so same coordinate frame as parent widget.
+*/
+class CableContainer : public widget::TransparentWidget {
 	void draw(const DrawArgs& args) override {
 		// Don't draw on layer 0
 	}
@@ -323,14 +326,14 @@ void RackWidget::mergeJson(json_t* rootJ) {
 		cw->mergeJson(cableJ);
 
 		// inputPlugOrder
-		auto plugOrderIt = plugOrders.find(cw->inputPlug);
+		auto plugOrderIt = plugOrders.find(cw->inputPlug_);
 		if (plugOrderIt != plugOrders.end()) {
 			int inputPlugOrder = plugOrderIt->second;
 			json_object_set_new(cableJ, "inputPlugOrder", json_integer(inputPlugOrder));
 		}
 
 		// outputPlugOrder
-		plugOrderIt = plugOrders.find(cw->outputPlug);
+		plugOrderIt = plugOrders.find(cw->outputPlug_);
 		if (plugOrderIt != plugOrders.end()) {
 			int outputPlugOrder = plugOrderIt->second;
 			json_object_set_new(cableJ, "outputPlugOrder", json_integer(outputPlugOrder));
@@ -442,13 +445,13 @@ void RackWidget::fromJson(json_t* rootJ) {
 		// inputPlugOrder
 		json_t* inputPlugOrderJ = json_object_get(cableJ, "inputPlugOrder");
 		if (inputPlugOrderJ) {
-			plugOrders[cw->inputPlug] = json_integer_value(inputPlugOrderJ);
+			plugOrders[cw->inputPlug_] = json_integer_value(inputPlugOrderJ);
 		}
 
 		// outputPlugOrder
 		json_t* outputPlugOrderJ = json_object_get(cableJ, "outputPlugOrder");
 		if (outputPlugOrderJ) {
-			plugOrders[cw->outputPlug] = json_integer_value(outputPlugOrderJ);
+			plugOrders[cw->outputPlug_] = json_integer_value(outputPlugOrderJ);
 		}
 	}
 
@@ -1279,14 +1282,14 @@ void RackWidget::cloneSelectionAction(bool cloneCables) {
 			// Create cable attached to cloned ModuleWidget's input
 			engine::Cable* clonedCable = new engine::Cable;
 			clonedCable->inputModule = clonedInputModule;
-			clonedCable->inputId = cw->cable->inputId;
-			clonedCable->outputModule = cw->cable->outputModule;
-			clonedCable->outputId = cw->cable->outputId;
+			clonedCable->inputId = cw->cable_->inputId;
+			clonedCable->outputModule = cw->cable_->outputModule;
+			clonedCable->outputId = cw->cable_->outputId;
 			getEngine()->addCable(clonedCable);
 
 			app::CableWidget* clonedCw = new app::CableWidget;
 			clonedCw->setCable(clonedCable);
-			clonedCw->color = cw->color;
+			clonedCw->setColor(cw->getColor());
 			getRack()->addCable(clonedCw);
 
 			// history::CableAdd
@@ -1557,9 +1560,9 @@ CableWidget* RackWidget::getCable(int64_t cableId) {
 	for (widget::Widget* w : internal_->cableContainer->getChildren()) {
 		CableWidget* cw = dynamic_cast<CableWidget*>(w);
 		assert(cw);
-		if (!cw->cable)
+		if (!cw->cable_)
 			continue;
-		if (cw->cable->id == cableId)
+		if (cw->cable_->id == cableId)
 			return cw;
 	}
 	return NULL;
@@ -1569,7 +1572,7 @@ CableWidget* RackWidget::getCable(PortWidget* outputPort, PortWidget* inputPort)
 	for (widget::Widget* w : internal_->cableContainer->getChildren()) {
 		CableWidget* cw = dynamic_cast<CableWidget*>(w);
 		assert(cw);
-		if (cw->outputPort == outputPort && cw->inputPort == inputPort)
+		if (cw->outputPort_ == outputPort && cw->inputPort_ == inputPort)
 			return cw;
 	}
 	return NULL;

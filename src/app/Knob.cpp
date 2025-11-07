@@ -190,7 +190,7 @@ void Knob::onDragMove(const DragMoveEvent& e) {
 			value += delta;
 		}
 		else if (internal_->rotaryDragEnabled) {
-			math::Vec origin = getAbsoluteOffset(getSize().div(2));
+			math::Vec origin = getInSceneCoords(getSize().div(2));
 			math::Vec deltaPos = getScene()->getMousePos().minus(origin);
 			float angle = deltaPos.arg() + float(M_PI) / 2;
 

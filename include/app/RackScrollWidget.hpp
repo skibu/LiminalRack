@@ -26,7 +26,12 @@ struct RackScrollWidget : ui::ScrollWidget {
     math::Vec getGridOffset();
 
     void setGridOffset(math::Vec gridOffset);
+    
+    /** Returns the zoom level.
+     * @return The zoom level. 1.0 is 100%.
+     */
     float getZoom();
+
     /** Sets the zoom level, with a pivot at the center of the scroll viewport.
      */
     void setZoom(float zoom);

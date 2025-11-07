@@ -148,22 +148,22 @@ void ParamChange::redo() {
 
 void CableAdd::setCable(app::CableWidget* cw) {
 	assert(cw);
-	assert(cw->cable);
-	assert(cw->cable->id >= 0);
-	cableId = cw->cable->id;
-	assert(cw->cable->outputModule);
-	outputModuleId = cw->cable->outputModule->id;
-	outputId = cw->cable->outputId;
-	assert(cw->cable->inputModule);
-	inputModuleId = cw->cable->inputModule->id;
-	inputId = cw->cable->inputId;
-	color = cw->color;
+	assert(cw->cable_);
+	assert(cw->cable_->id >= 0);
+	cableId = cw->cable_->id;
+	assert(cw->cable_->outputModule);
+	outputModuleId = cw->cable_->outputModule->id;
+	outputId = cw->cable_->outputId;
+	assert(cw->cable_->inputModule);
+	inputModuleId = cw->cable_->inputModule->id;
+	inputId = cw->cable_->inputId;
+	color = cw->getColor();
 }
 
 bool CableAdd::isCable(app::CableWidget* cw) const {
-	if (!(cw && cw->cable && cw->cable->id >= 0 && cw->cable->outputModule && cw->cable->inputModule))
+	if (!(cw && cw->cable_ && cw->cable_->id >= 0 && cw->cable_->outputModule && cw->cable_->inputModule))
 		return false;
-	engine::Cable* c = cw->cable;
+	engine::Cable* c = cw->cable_;
 	return c->inputModule->id == inputModuleId && c->inputId == inputId && c->outputModule->id == outputModuleId && c->outputId == outputId;
 }
 
@@ -194,30 +194,30 @@ void CableAdd::redo() {
 
 	app::CableWidget* cw = new app::CableWidget;
 	cw->setCable(cable);
-	cw->color = color;
+	cw->setColor(color);
 	getRack()->addCable(cw);
 }
 
 
 void CableColorChange::setCable(app::CableWidget* cw) {
 	assert(cw);
-	assert(cw->cable);
-	assert(cw->cable->id >= 0);
-	cableId = cw->cable->id;
+	assert(cw->cable_);
+	assert(cw->cable_->id >= 0);
+	cableId = cw->cable_->id;
 }
 
 void CableColorChange::undo() {
 	app::CableWidget* cw = getRack()->getCable(cableId);
 	if (!cw)
 		return;
-	cw->color = oldColor;
+	cw->setColor(oldColor);
 }
 
 void CableColorChange::redo() {
 	app::CableWidget* cw = getRack()->getCable(cableId);
 	if (!cw)
 		return;
-	cw->color = newColor;
+	cw->setColor(newColor);
 }
 
 

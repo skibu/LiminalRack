@@ -915,7 +915,7 @@ void Browser::BrandItem::step() {
 
 void Browser::BrandButton::onAction(const ActionEvent& e) {
     ui::Menu* menu = createMenu();
-    menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
+    menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
     menu->setWidth(getWidth());
 
     BrandItem* noneItem =
@@ -995,7 +995,7 @@ void Browser::TagItem::step() {
 
 void Browser::TagButton::onAction(const ActionEvent& e) {
     ui::Menu* menu = createMenu();
-    menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
+    menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
     menu->setWidth(getWidth());
 
     // So user can select no tags/types
@@ -1046,7 +1046,7 @@ void Browser::TagButton::step() {
 
 void Browser::SortButton::onAction(const ActionEvent& e) {
 	ui::Menu* menu = createMenu();
-    menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
+    menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
     menu->setWidth(getWidth());
 
 	for (int sortId = 0; sortId <= settings::BROWSER_SORT_RANDOM; sortId++) {
@@ -1063,7 +1063,7 @@ void Browser::SortButton::onAction(const ActionEvent& e) {
 /** Called when user clicks on the zoom button. Shows possible choices. */
 void Browser::ZoomButton::onAction(const ActionEvent& e) {
 	ui::Menu* menu = createMenu();
-    menu->setPos(getAbsoluteOffset(math::Vec(0, getHeight())));
+    menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
     menu->setWidth(getWidth());
 
     if (!settings::isNotVCVRack) {

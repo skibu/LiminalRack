@@ -869,20 +869,20 @@ void ModuleWidget::cloneAction(bool cloneCables) {
 		for (PortWidget* pw : getPorts()) {
 			for (CableWidget* cw : getRack()->getCompleteCablesOnPort(pw)) {
 				// Skip input ports self-patched to this module's outputs, to avoid double-cloning them.
-				if (pw->type == engine::Port::OUTPUT && cw->cable->inputModule == module)
+				if (pw->type == engine::Port::OUTPUT && cw->cable_->inputModule == module)
 					continue;
 
 				// Create cable attached to cloned ModuleWidget's input
 				engine::Cable* clonedCable = new engine::Cable;
-				clonedCable->inputModule = cw->cable->inputModule;
-				clonedCable->inputId = cw->cable->inputId;
-				clonedCable->outputModule = cw->cable->outputModule;
-				clonedCable->outputId = cw->cable->outputId;
+				clonedCable->inputModule = cw->cable_->inputModule;
+				clonedCable->inputId = cw->cable_->inputId;
+				clonedCable->outputModule = cw->cable_->outputModule;
+				clonedCable->outputId = cw->cable_->outputId;
 
 				if (pw->type == engine::Port::INPUT) {
 					clonedCable->inputModule = clonedModule;
 					// If cable is self-patched, attach to cloned module instead
-					if (cw->cable->outputModule == module)
+					if (cw->cable_->outputModule == module)
 						clonedCable->outputModule = clonedModule;
 				}
 				else {
@@ -893,7 +893,7 @@ void ModuleWidget::cloneAction(bool cloneCables) {
 
 				app::CableWidget* clonedCw = new app::CableWidget;
 				clonedCw->setCable(clonedCable);
-				clonedCw->color = cw->color;
+				clonedCw->setColor(cw->getColor());
 				getRack()->addCable(clonedCw);
 
 				// history::CableAdd

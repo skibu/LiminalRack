@@ -57,7 +57,7 @@ struct PortTooltip : ui::Tooltip {
 			std::vector<CableWidget*> cables = getRack()->getCompleteCablesOnPort(portWidget);
 			for (auto it = cables.rbegin(); it != cables.rend(); it++) {
 				CableWidget* cable = *it;
-				PortWidget* otherPw = (portWidget->type == engine::Port::INPUT) ? cable->outputPort : cable->inputPort;
+				PortWidget* otherPw = (portWidget->type == engine::Port::INPUT) ? cable->outputPort_ : cable->inputPort_;
 				if (!otherPw)
 					continue;
 				text += "\n";
@@ -112,10 +112,10 @@ struct CableColorItem : ui::ColorDotMenuItem {
 		history::CableColorChange* h = new history::CableColorChange;
 		h->setCable(cw);
 		h->newColor = color;
-		h->oldColor = cw->color;
+		h->oldColor = cw->getColor();
 		getHistory()->push(h);
 
-		cw->color = color;
+		cw->setColor(color);
 	}
 };
 
@@ -147,7 +147,7 @@ struct PortCableItem : ui::ColorDotMenuItem {
 		for (NVGcolor color : settings::cableColors) {
 			// Include extra leading spaces for the color circle
 			CableColorItem* item = createMenuItem<CableColorItem>(string::translate("PortWidget.setColor"));
-			item->setDisabled(color::isEqual(color, cw->color));
+			item->setDisabled(color::isEqual(color, cw->getColor()));
 			item->cw = cw;
 			item->color = color;
 			menu->addChild(item);
@@ -342,11 +342,11 @@ void PortWidget::createContextMenu() {
 		// Cable items
 		for (auto it = cws.rbegin(); it != cws.rend(); it++) {
 			CableWidget* cw = *it;
-			PortWidget* pw = (type == engine::Port::INPUT) ? cw->outputPort : cw->inputPort;
+			PortWidget* pw = (type == engine::Port::INPUT) ? cw->outputPort_ : cw->inputPort_;
 			engine::PortInfo* portInfo = pw->getPortInfo();
 
 			PortCableItem* item = createMenuItem<PortCableItem>(portInfo->module->model->name + ": " + portInfo->getName(), RIGHT_ARROW);
-			item->color = cw->color;
+			item->color = cw->getColor();
 			item->pw = this;
 			item->cw = cw;
 			menu->addChild(item);
@@ -476,11 +476,11 @@ void PortWidget::onDragStart(const DragStartEvent& e) {
 
 		if (cloneCw) {
 			CableWidget* cw = new CableWidget;
-			cw->color = cloneCw->color;
+			cw->setColor(cloneCw->getColor());
 			if (type == engine::Port::OUTPUT)
-				cw->inputPort = cloneCw->inputPort;
+				cw->inputPort_ = cloneCw->inputPort_;
 			else
-				cw->outputPort = cloneCw->outputPort;
+				cw->outputPort_ = cloneCw->outputPort_;
 			internal_->draggedType = type;
 			getRack()->addCable(cw);
 			cws.push_back(cw);
@@ -519,7 +519,7 @@ void PortWidget::onDragStart(const DragStartEvent& e) {
 		CableWidget* cw = new CableWidget;
 
 		// Set color of the cable
-        cw->color = CableColorMatcher::getCableColor(getPortInfo());
+        cw->setColor(CableColorMatcher::getCableColor(getPortInfo()));
 
         // Set port
 		cw->getPort(type) = this;
@@ -576,13 +576,13 @@ void PortWidget::onDragDrop(const DragDropEvent& e) {
 
 	for (CableWidget* cw : getRack()->getIncompleteCables()) {
 		// These should already be NULL because onDragLeave() is called immediately before onDragDrop().
-		cw->hoveredOutputPort = NULL;
-		cw->hoveredInputPort = NULL;
+		cw->hoveredOutputPort_ = NULL;
+		cw->hoveredInputPort_ = NULL;
 		if (type == engine::Port::OUTPUT) {
 			// Check that similar cable doesn't exist
-			if (cw->inputPort && !getRack()->getCable(this, cw->inputPort)) {
+			if (cw->inputPort_ && !getRack()->getCable(this, cw->inputPort_)) {
 				// Connecting to output port so remember this port
-				cw->outputPort = this;
+				cw->outputPort_ = this;
 			}
 			else {
 				// Cable already exists so skip this one
@@ -590,9 +590,9 @@ void PortWidget::onDragDrop(const DragDropEvent& e) {
 			}
 		}
 		else {
-			if (cw->outputPort && !getRack()->getCable(cw->outputPort, this)) {
+			if (cw->outputPort_ && !getRack()->getCable(cw->outputPort_, this)) {
 				// Connecting to input port so remember this port
-				cw->inputPort = this;
+				cw->inputPort_ = this;
 			}
 			else {
 				// Cable already exists so skip this one
@@ -644,13 +644,13 @@ void PortWidget::onDragEnter(const DragEnterEvent& e) {
 	for (CableWidget* cw : getRack()->getIncompleteCables()) {
 		if (type == engine::Port::OUTPUT) {
 			// Check that similar cable doesn't exist
-			if (cw->inputPort && !getRack()->getCable(this, cw->inputPort)) {
-				cw->hoveredOutputPort = this;
+			if (cw->inputPort_ && !getRack()->getCable(this, cw->inputPort_)) {
+				cw->hoveredOutputPort_ = this;
 			}
 		}
 		else {
-			if (cw->outputPort && !getRack()->getCable(cw->outputPort, this)) {
-				cw->hoveredInputPort = this;
+			if (cw->outputPort_ && !getRack()->getCable(cw->outputPort_, this)) {
+				cw->hoveredInputPort_ = this;
 			}
 		}
 	}

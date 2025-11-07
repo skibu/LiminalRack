@@ -76,18 +76,22 @@ struct CableWidget : widget::Widget {
     struct CableInternal;
 
 	// The internal members of PlugWidget
-    CableInternal* cableInternals;
+    CableInternal* cableInternals_;
 
     // Other members of CableWidget
-    engine::Cable* cable = NULL;
-    NVGcolor color;
-    PlugWidget* inputPlug;
-    PlugWidget* outputPlug;
+    // The cable
+    engine::Cable* cable_ = NULL;
 
-    PortWidget* inputPort = NULL;
-    PortWidget* outputPort = NULL;
-    PortWidget* hoveredInputPort = NULL;
-    PortWidget* hoveredOutputPort = NULL;
+    // The plugs on each end of the cable
+    PlugWidget* inputPlug_;
+    PlugWidget* outputPlug_;
+
+    // The ports on module
+    PortWidget* inputPort_ = NULL;
+    PortWidget* outputPort_ = NULL;
+
+    PortWidget* hoveredInputPort_ = NULL;
+    PortWidget* hoveredOutputPort_ = NULL;
 
     CableWidget();
     ~CableWidget();
@@ -107,43 +111,116 @@ struct CableWidget : widget::Widget {
     engine::Cable* getCable();
 
     PlugWidget*& getPlug(engine::Port::Type type) {
-        return type == engine::Port::INPUT ? inputPlug : outputPlug;
+        return type == engine::Port::INPUT ? inputPlug_ : outputPlug_;
     }
 
 	PortWidget*& getPort(engine::Port::Type type) {
-		return type == engine::Port::INPUT ? inputPort : outputPort;
+		return type == engine::Port::INPUT ? inputPort_ : outputPort_;
 	}
 
-	PortWidget*& getHoveredPort(engine::Port::Type type) {
-		return type == engine::Port::INPUT ? hoveredInputPort : hoveredOutputPort;
-	}
+    PortWidget*& getHoveredPort(engine::Port::Type type) {
+        return type == engine::Port::INPUT ? hoveredInputPort_
+                                            : hoveredOutputPort_;
+    }
 
-	math::Vec getInputPos();
-	math::Vec getOutputPos();
-	void mergeJson(json_t* rootJ);
-	void fromJson(json_t* rootJ);
-	void step() override;
-	void draw(const DrawArgs& args) override;
+    /** Gets the color of the cable */
+    NVGcolor getColor() const {
+        return color_;
+    }
 
-	/**
-	 * @brief Draws the cable and its shadow, though not the plugs, on the 
-	 * specified layer. 
-	 * 
-	 * Key part is the opacity. If the cable is being manipulated
-	 * then it is drawn opaque, otherwise it is drawn somewhat translucent. The
-	 * opacity also affects the shadow.
-	 * 
-	 * @param args 
-	 * @param layer 
-	 */
-	void drawLayer(const DrawArgs& args, int layer) override;
+    /** Sets the color of the cable */
+    void setColor(const NVGcolor& color) {
+        color_ = color;
+    }
 
-	engine::Cable* releaseCable();
+   private:
+    /** Color of the cable */
+    NVGcolor color_;
 
-	void onAdd(const AddEvent& e) override;
-	void onRemove(const RemoveEvent& e) override;
+    // Following positions are calculated in step() and used in draw().
+    // They are in Rack coordinates since that is what the nvg drawing functions
+    // expect.
+
+    // Location of the output plug of cable
+    math::Vec cableOutputPlugInRackCoords_;
+
+    // Location of the output end of cable. This is slightly offset from the
+    // plug position so that the cable appears to come out of the module plug
+    // properly and not be drawn over the plug.
+    math::Vec cableOutputEndInRackCoords_;
+
+    // Location of the input plug of cable
+    math::Vec cableInputPlugInRackCoords_;
+
+    // Location of the input end of cable. This is slightly offset from the plug
+    // position position so that the cable appears to come out of the module
+    // plug properly and not be drawn over the plug.
+    math::Vec cableInputEndInRackCoords_;
+
+    // The slump vertex used to draw the cable bezier curve.
+    // It is determined in step() and used in draw().
+    math::Vec slumpVertexInRackCoords_;
+
+    /** Calculates and returns the slump vertex (P1) position for the cable
+     * bezier curve between the output (P0) and input (P2) ports. The slump
+     * vertex position is based on the cable tension and the distance between
+     * the ports. Coordinates are in Rack space.
+     */
+    math::Vec getSlumpVertexInRackCoords() const;
+
+    /** Given input and output port locations and the rack bottom Y position,
+     * returns what P1, the slump position, needs to be such that the drawing
+     * of the cable would be exactly at the bottom of the rack.
+     *
+     * @return the x,y position of the slump point p1 such that the curve will
+     * have its minimum at the bottom of the rack. In rack coordinates
+     */
+    math::Vec getSlumpVertexForCableAtScreenBottomInRackCoords() const;
+
+    /** Returns the position of the input port of the module relative to Rack
+     * coordinates, if cable has an input port. Otherwise returns position of
+     * the input port being hovered over. Otherwise returns mouse position.
+     * Positions are relative to the rack (not the screen).  */
+    math::Vec getInputPortPosInRackCoords() const;
+
+    /** Returns the position of the output port of the module relative to Rack
+     * coordinates, if cable has an output port. Otherwise returns position of
+     * the output port being hovered over. Otherwise returns mouse position.
+     * Positions are relative to the rack (not the screen).  */
+    math::Vec getOutputPortPosInRackCoords() const;
+
+   public:  // public because following could be used by plugins
+    void mergeJson(json_t* rootJ);
+    void fromJson(json_t* rootJ);
+    
+    void step() override;
+    void draw(const DrawArgs& args) override;
+
+    /**
+     * @brief Draws the cable and its shadow, though not the plugs, on the
+     * specified layer.
+     *
+     * Key part is the opacity. If the cable is being manipulated then it is
+     * drawn opaque, otherwise it is drawn somewhat translucent. The opacity
+     * also affects the shadow.
+     *
+     * The nvg drawing functions assume that the coordinates passed in are in
+     * Rack coordinates. Therefore all the positions need to be in Rack
+     * coordinates before drawing.
+     *
+     * @param args
+     * @param layer
+     */
+    void drawLayer(const DrawArgs& args, int layer) override;
+
+    engine::Cable* releaseCable();
+
+    void onAdd(const AddEvent& e) override;
+    void onRemove(const RemoveEvent& e) override;
+
+    static constexpr float CABLE_WIDTH = 6.0f;
+    static constexpr float THICK_CABLE_WIDTH = 9.0f;
 };
-
 
 } // namespace app
 } // namespace rack

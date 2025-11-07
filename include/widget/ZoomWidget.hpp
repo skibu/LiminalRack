@@ -9,9 +9,15 @@ namespace widget {
 /** Resizes the scale of appearance and PositionEvents of children. */
 struct ZoomWidget : Widget {
 	/** Use setZoom() and getZoom() instead of using this variable directly. */
-	float zoom = 1.f;
+	float zoom_ = 1.f;
 
-	math::Vec getRelativeOffset(math::Vec v, Widget* ancestor) override;
+	math::Vec getRelativeOffset(const math::Vec& v, Widget* ancestor) const override;
+
+    /** Converts a screen space vector to local widget coordinates.
+     * Accounts for position and zooming since this is the ZoomWidget.
+     */
+    math::Vec getScenePosInLocalCoords(const math::Vec& screenVec) const override;
+
 	float getRelativeZoom(Widget* ancestor) override;
 	math::Rect getViewport(math::Rect r) override;
 	float getZoom();
@@ -22,37 +28,37 @@ struct ZoomWidget : Widget {
 
 	void onHover(const HoverEvent& e) override {
 		HoverEvent e2 = e;
-		e2.pos = e.pos.div(zoom);
+		e2.pos = e.pos.div(zoom_);
 		Widget::onHover(e2);
 	}
 	void onButton(const ButtonEvent& e) override {
 		ButtonEvent e2 = e;
-		e2.pos = e.pos.div(zoom);
+		e2.pos = e.pos.div(zoom_);
 		Widget::onButton(e2);
 	}
 	void onHoverKey(const HoverKeyEvent& e) override {
 		HoverKeyEvent e2 = e;
-		e2.pos = e.pos.div(zoom);
+		e2.pos = e.pos.div(zoom_);
 		Widget::onHoverKey(e2);
 	}
 	void onHoverText(const HoverTextEvent& e) override {
 		HoverTextEvent e2 = e;
-		e2.pos = e.pos.div(zoom);
+		e2.pos = e.pos.div(zoom_);
 		Widget::onHoverText(e2);
 	}
 	void onHoverScroll(const HoverScrollEvent& e) override {
 		HoverScrollEvent e2 = e;
-		e2.pos = e.pos.div(zoom);
+		e2.pos = e.pos.div(zoom_);
 		Widget::onHoverScroll(e2);
 	}
 	void onDragHover(const DragHoverEvent& e) override {
 		DragHoverEvent e2 = e;
-		e2.pos = e.pos.div(zoom);
+		e2.pos = e.pos.div(zoom_);
 		Widget::onDragHover(e2);
 	}
 	void onPathDrop(const PathDropEvent& e) override {
 		PathDropEvent e2 = e;
-		e2.pos = e.pos.div(zoom);
+		e2.pos = e.pos.div(zoom_);
 		Widget::onPathDrop(e2);
 	}
 };
