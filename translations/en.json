@@ -165,7 +165,7 @@
 	"MenuBar.library.register": "Register VCV account",
 	"MenuBar.library.email": "Email",
 	"MenuBar.library.password": "Password",
-        "MenuBar.library.addModuleToRack": "Add module to rack",
+    "MenuBar.library.addModuleToRack": "Add module to rack",
 	"MenuBar.library.logOut": "Log out of VCV Library",
 	"MenuBar.library.account": "VCV Library account settings",
 	"MenuBar.library.browse": "Browse VCV Library",
