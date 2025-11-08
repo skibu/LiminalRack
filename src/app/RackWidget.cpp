@@ -144,26 +144,30 @@ void RackWidget::draw(const DrawArgs& args) {
     // Draw rack rails and modules
     Widget::draw(args);
 
-    // Draw translucent dark rectangle
+    // Draw mouse spotlight.
+    // Draw over entire rack, though a circular gradient will be used
+    nvgBeginPath(args.vg);
+    nvgRect(args.vg, 0.0, 0.0, VEC_ARGS(getSize()));
+
+    // Specify colors for the radial gradient.
+    // Note: spotlightOuterColor is also used for everything beyond the
+    // outer radius. This means that it is used to darken the rest of the rack.
+    float innerGradientBrightness = 0.2f;
     float rackBrightness = settings::rackBrightness;
-    if (rackBrightness < 1.f) {
-        // Get zoom level
-        float t[6];
-        nvgCurrentTransform(args.vg, t);
-        float zoom = t[3];
-        float radius = 300.0 / zoom;
-        float brightness = 0.2f;
-        
-        // Draw mouse spotlight
-        nvgBeginPath(args.vg);
-        nvgRect(args.vg, 0.0, 0.0, VEC_ARGS(getSize()));
-        nvgFillPaint(args.vg,
-                     nvgRadialGradient(
-                         args.vg, VEC_ARGS(internal_->mousePos), 0.0, radius,
-                         nvgRGBAf(0, 0, 0, 1.f - rackBrightness - brightness),
-                         nvgRGBAf(0, 0, 0, 1.f - rackBrightness)));
-        nvgFill(args.vg);
-    }
+    auto spotlightInnerColor =
+        nvgRGBAf(1.0f, 0.7f, 0.7f, (1.1f - rackBrightness) * innerGradientBrightness);
+    auto spotlightOuterColor = nvgRGBAf(0, 0, 0, 1.0f - rackBrightness);
+
+    // Specify the radial gradient fill to be used and then do the fill
+    float radius = 130.0 / getAbsoluteZoom();
+    nvgFillPaint(
+        args.vg,
+        nvgRadialGradient(
+            args.vg,
+            VEC_ARGS(internal_->mousePos) /* centered at mouse position */,
+            0.0 /* inner radius */, radius /* outer radius */,
+            spotlightInnerColor, spotlightOuterColor));
+    nvgFill(args.vg);
 
     // Draw lights and halos
     Widget::drawLayer(args, 1);
@@ -178,7 +182,7 @@ void RackWidget::draw(const DrawArgs& args) {
     // Draw cables
     Widget::drawLayer(args, 3);
 
-    // Draw selection rectangle
+    // If selecting then draw selection rectangle
     if (internal_->selecting) {
         nvgBeginPath(args.vg);
         math::Rect selectionBox = math::Rect::fromCorners(
