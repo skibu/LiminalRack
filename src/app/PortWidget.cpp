@@ -392,7 +392,7 @@ void PortWidget::draw(const DrawArgs& args) {
         // colors and alpha used to draw the ports.
         if (draggedPw->internal_->draggedType != type) {
             // Cannot make a connection to the port so deemphasize it. This is accomplished
-            // by reducing alpha to 0.4, which basically makes the port fade out
+            // by reducing alpha to 0.5, which basically makes the port fade out
             nvgTint(args.vg, nvgRGBAf(1.0, 1.0, 1.0, 0.5));
         } else {
             // Can make a connection to the port so emphasize it
