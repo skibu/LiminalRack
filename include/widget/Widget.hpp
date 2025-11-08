@@ -255,16 +255,16 @@ class Widget : public WeakBase {
      */
     void clearChildren();
 
-        /** Advances the module by one frame */
-        virtual void step();
+    /** Advances the module by one frame */
+    virtual void step();
 
-        struct DrawArgs {
-            // The Vector Graphics context to draw to
-            NVGcontext* vg = NULL;
-            /** Local box representing the visible viewport. */
-            math::Rect clipBox;
-            NVGLUframebuffer* fb = NULL;
-        };
+    struct DrawArgs {
+        // The Vector Graphics context to draw to
+        NVGcontext* vg = NULL;
+        /** Local box representing the visible viewport. */
+        math::Rect clipBox;
+        NVGLUframebuffer* fb = NULL;
+    };
 
     /** Draws the widget to the NanoVG context.
      * When overriding, call the superclass's `draw(args)` to recurse to
