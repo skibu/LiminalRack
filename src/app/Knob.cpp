@@ -28,6 +28,9 @@ struct Knob::Internal {
 	float dragAngle = NAN;
 
 	float distDragged = 0.f;
+
+    /** Whether the knob is currently being dragged. */
+    bool dragging_ = false;
 };
 
 
@@ -72,6 +75,9 @@ void Knob::onDragStart(const DragStartEvent& e) {
 	if (e.button != GLFW_MOUSE_BUTTON_LEFT)
 		return;
 
+    // Mark as dragging
+    internal_->dragging_ = true;
+
 	engine::ParamQuantity* pq = getParamQuantity();
 	if (pq) {
 		internal_->oldValue = pq->getValue();
@@ -97,6 +103,9 @@ void Knob::onDragStart(const DragStartEvent& e) {
 void Knob::onDragEnd(const DragEndEvent& e) {
 	if (e.button != GLFW_MOUSE_BUTTON_LEFT)
 		return;
+
+    // Mark as done dragging
+    internal_->dragging_ = false;
 
 	settings::KnobMode km = settings::knobMode;
 	if (km == settings::KNOB_MODE_LINEAR || km == settings::KNOB_MODE_SCALED_LINEAR) {
@@ -317,6 +326,43 @@ void Knob::onLeave(const LeaveEvent& e) {
 	internal_->oldValue = NAN;
 }
 
+void Knob::draw(const DrawArgs& args) {
+    // Call parent draw to actually draw the knob
+    ParamWidget::draw(args);
+
+    // If currently manipulating the knob, highlight it slightly
+    // to make it clear that it is being turned
+    if (internal_->dragging_) {
+        // Setup drawing of highlight
+        NVGcontext* vg = args.vg;
+        nvgBeginPath(vg);
+
+        float heightToWidthRatio = getHeight() / getWidth();
+        if (heightToWidthRatio < 0.9f || heightToWidthRatio > 1.1f) {
+            // Use a rounded rectangle for non-circular knobs (e.g. sliders)
+            float radius = std::min(getWidth(), getHeight()) / 4.0f;
+            nvgRoundedRect(vg, 0, -getHeight() * 0.05f, getWidth(),
+                           getHeight() * 1.1f, radius);
+
+            float strokeWidth = math::clamp(getWidth() / 3.0f, 3.0f, 10.0f);
+            nvgStrokeWidth(vg, strokeWidth);
+        } else {
+            // Use an circle for circular knobs, where width ~= height
+            math::Vec center = getSize().div(2);
+            float radius = getWidth() / 2.8f;
+            nvgCircle(vg, center.getX(), center.getY(), radius);
+
+            float strokeWidth = math::clamp(getWidth() / 2.7f, 5.0f, 20.0f);
+            nvgStrokeWidth(vg, strokeWidth);
+        }
+
+        // Use a green stroke that is mostly transparent
+        nvgStrokeColor(vg, nvgRGBAf(0.5f, 1.0f, 0.5f, 0.3f));
+
+        // Actually draw the stroke
+        nvgStroke(vg);
+    }
+}
 
 } // namespace app
 } // namespace rack

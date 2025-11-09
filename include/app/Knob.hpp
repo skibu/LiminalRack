@@ -52,6 +52,8 @@ struct Knob : ParamWidget {
     void onHoverScroll(const HoverScrollEvent& e) override;
     void onLeave(const LeaveEvent& e) override;
 
+    void draw(const DrawArgs& args) override;
+
     /** Called when user clicks the knob without moving it.
     Useful for handling emulating push-knobs in hardware.
     */

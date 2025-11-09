@@ -5,6 +5,8 @@
     will show up even if room lighting is bright. It will just be 
     pretty dim. And changed spotlight color so that it is a bit red,
     which looks nice. Made code clearer.
+  - Highlighting knobs and sliders so it is really easy to see which 
+    knob or slider is being manipulated. Really useful yet simple enhancement.
 
 - 11/6/25
   - Relative small UI change of preventing cables from drooping below where they are fully visible. This way can better see which ports are connected together. But this required quite a lot of code cleanup.
