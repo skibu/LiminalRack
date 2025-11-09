@@ -111,7 +111,7 @@ static ModuleWidget* chooseModel(plugin::Model* model) {
 
     getHistory()->push(h);
 
-    // Hide Module Browser
+    // Hide Module Browser since user has chosen a module
     getScene()->getBrowser()->hide();
 
     return moduleWidget;
@@ -124,10 +124,16 @@ static ModuleWidget* chooseModel(plugin::Model* model) {
  * yet they still see that the rack window is there, right underneath.
  */
 struct BrowserOverlay : ui::MenuOverlay {
-	void step() override {
-		// Only step if visible, since there are potentially thousands of descendants that don't need to be stepped.
-		if (isVisible())
-			MenuOverlay::step();
+    BrowserOverlay() {
+        // To initially hide the Browser window need to actually
+        // hide the BrowserOverlay.
+        hideInitially();
+    }
+    
+    void step() override {
+        // Only step if visible, since there are potentially thousands of
+        // descendants that don't need to be stepped.
+        if (isVisible()) MenuOverlay::step();
 	}
 
 	void onAction(const ActionEvent& e) override {
@@ -377,7 +383,7 @@ struct ModelBox : widget::OpaqueWidget {
  */
 class BrowserHeader : public ui::SequentialLayout {
    public:
-   /** Create browser header, and use center alignmentn and if two rows of children
+   /** Create browser header, and use center alignment and if two rows of children
     * make them even.
     */
     BrowserHeader() : SequentialLayout(CENTER_ALIGNMENT, true) {}
@@ -410,11 +416,11 @@ class BrowserHeader : public ui::SequentialLayout {
 };
 
 Browser::Browser() {
-    // Browser bit title label at the top
+    // Browser big title label at the top
     titleLabel = new ui::Label(string::translate("Browser.title"));
     titleLabel->setFontSize(40);
 
-    // Set color to contrast with background
+    // Set color of title to contrast with background
     titleLabel->setColor(color::BLACK);
     titleLabel->setAlignment(ui::Label::Alignment::CENTER_ALIGNMENT);
 
@@ -470,8 +476,8 @@ Browser::Browser() {
         120 * BrowserHeader::HEADER_WIDGETS_FONT_SIZE / BND_LABEL_FONT_SIZE);
     headerLayout->addChild(clearButton);
 
-    // can see the modules. And it takes up precious space. Plus there are
-    // already lots of other action widgets, complicating the UI. Therefore
+    // Can already see the modules. And it takes up precious space. Plus there
+    // are already lots of other action widgets, complicating the UI. Therefore
     // don't display it unless VCV Rack where want UI to be consistent.
     if (!settings::isNotVCVRack) {
         countLabel = new ui::Label;

@@ -16,16 +16,9 @@ void init() {
 
 	settings::initBlendish();
 
-    // The browser window should be initially hidden.
-    // Yes, it is unfortunate that it has to be done here instead
-    // of in Browser() constructor where it is created. But doing it there
-    // prevents the Browser window from every showing.
-    getScene()->getBrowser()->hide();
-
     // Set the initial theme: light, dark, or hcdark
 	refreshTheme();
 }
-
 
 void destroy() {
 }
