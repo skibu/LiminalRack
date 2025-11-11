@@ -204,7 +204,7 @@ struct ModelBox : widget::OpaqueWidget {
 		fb = new widget::FramebufferWidget;
 		if (getWindow()->pixelRatio_ < 2.0) {
 			// Small details draw poorly at low DPI, so oversample when drawing to the framebuffer
-			fb->oversample = 2.0;
+			fb->setOversample(2.0);
 		}
 		zoomWidget->addChild(fb);
 

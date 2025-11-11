@@ -642,7 +642,7 @@ void Window::screenshotModules(const std::string& screenshotsDir, float zoom) {
 
 			// Create widgets
 			widget::FramebufferWidget* fbw = new widget::FramebufferWidget;
-			fbw->oversample = 2;
+			fbw->setOversample(2);
 
 			struct ModuleWidgetContainer : widget::Widget {
 				void draw(const DrawArgs& args) override {

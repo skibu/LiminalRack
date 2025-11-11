@@ -8,7 +8,7 @@ namespace widget {
 
 void OpenGlWidget::step() {
 	// Render every frame
-	dirty = true;
+	setDirty(true);
 	FramebufferWidget::step();
 }
 

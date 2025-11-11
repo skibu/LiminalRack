@@ -23,9 +23,9 @@ RailWidget::RailWidget() {
 
 	internal_->railFb = new widget::FramebufferWidget;
 	// The rail renders fine without oversampling, and it would be too expensive anyway.
-	internal_->railFb->oversample = 1.0;
+	internal_->railFb->setOversample(1.0);
 	// Don't redraw when the world offset of the rail FramebufferWidget changes its fractional value.
-	internal_->railFb->dirtyOnSubpixelChange = false;
+	internal_->railFb->setDirtyOnSubpixelChange(false);
 	addChild(internal_->railFb);
 
 	internal_->railSw = new widget::SvgWidget;

@@ -31,10 +31,10 @@ SvgPanel::SvgPanel() {
 void SvgPanel::step() {
 	if (getWindow()->pixelRatio_ < 2.0) {
 		// Small details draw poorly at low DPI, so oversample when drawing to the framebuffer
-		fb->oversample = 2.0;
+		fb->setOversample(2.0);
 	}
 	else {
-		fb->oversample = 1.0;
+		fb->setOversample(1.0);
 	}
 
 	Widget::step();

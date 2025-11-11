@@ -41,7 +41,7 @@ FramebufferWidget::~FramebufferWidget() {
 
 
 void FramebufferWidget::setDirty(bool dirty) {
-	this->dirty = dirty;
+	this->dirty_ = dirty;
 }
 
 
@@ -83,7 +83,7 @@ void FramebufferWidget::step() {
 
 void FramebufferWidget::draw(const DrawArgs& args) {
 	// Draw directly if bypassed or already drawing in a framebuffer
-	if (bypassed || args.fb) {
+	if (bypassed_ || args.fb) {
 		Widget::draw(args);
 		return;
 	}
@@ -106,7 +106,7 @@ void FramebufferWidget::draw(const DrawArgs& args) {
 	// Re-render if drawing to a new subpixel location.
 	// Anything less than 0.1 pixels isn't noticeable.
 	math::Vec offsetFDelta = offsetF.minus(internal_->fbOffsetF);
-	if (dirtyOnSubpixelChange && getWindow()->fbDirtyOnSubpixelChange() && offsetFDelta.square() >= std::pow(0.1f, 2)) {
+	if (dirtyOnSubpixelChange_ && getWindow()->fbDirtyOnSubpixelChange() && offsetFDelta.square() >= std::pow(0.1f, 2)) {
 		TRACE("%p dirty subpixel (%f, %f) (%f, %f)", this, VEC_ARGS(offsetF), VEC_ARGS(internal_->fbOffsetF));
 		setDirty();
 	}
@@ -120,7 +120,7 @@ void FramebufferWidget::draw(const DrawArgs& args) {
 		setDirty();
 	}
 
-	if (dirty) {
+	if (dirty_) {
 		// Render only if there is frame time remaining (to avoid lagging frames significantly), or if it's one of the first framebuffers this frame (to avoid framebuffers from never rendering).
 		const int minCount = 1;
 		const double minRemaining = -1 / 60.0;
@@ -171,7 +171,7 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
                                math::Rect clipBox) {
     // In case we fail drawing the framebuffer, don't try again the next frame,
     // so reset `dirty` here.
-    dirty = false;
+    dirty_ = false;
     NVGcontext* vg = getWindow()->vg_;
     NVGcontext* fbVg = getWindow()->fbVg_;
 
@@ -185,8 +185,8 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
         localBox = getVisibleChildrenBoundingBox();
     }
 
-    // Intersect local box with viewport if viewportMargin is set
-    internal_->fbClipBox = clipBox.grow(viewportMargin);
+    // Intersect local box with viewport if viewportMargin_ is set
+    internal_->fbClipBox = clipBox.grow(viewportMargin_);
     if (internal_->fbClipBox.getSize().isFinite()) {
         localBox = localBox.intersect(internal_->fbClipBox);
     }
@@ -238,7 +238,7 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
     TRACE("Drawing to framebuffer of size (%f, %f)", VEC_ARGS(internal_->fbSize));
 
     // Render to framebuffer
-    if (oversample == 1.0) {
+    if (oversample_ == 1.0) {
         // If not oversampling, render directly to framebuffer.
         nvgluBindFramebuffer(internal_->fb);
         drawFramebuffer();
@@ -247,9 +247,9 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
         NVGLUframebuffer* fb = internal_->fb;
         // If oversampling, create another framebuffer and copy it to actual
         // size.
-        math::Vec oversampledFbSize = internal_->fbSize.mult(oversample).ceil();
+        math::Vec oversampledFbSize = internal_->fbSize.mult(oversample_).ceil();
         TRACE("Creating %0.fx oversampled framebuffer of size (%f, %f)",
-              oversample, VEC_ARGS(internal_->fbSize));
+              oversample_, VEC_ARGS(internal_->fbSize));
         NVGLUframebuffer* oversampledFb = nvgluCreateFramebuffer(
             fbVg, oversampledFbSize.getX(), oversampledFbSize.getY(), 0);
 
@@ -299,7 +299,7 @@ void FramebufferWidget::drawFramebuffer() {
     nvgSave(vg);
 
     float pixelRatio =
-        internal_->fbSize.getX() * oversample / internal_->fbBox.getWidth();
+        internal_->fbSize.getX() * oversample_ / internal_->fbBox.getWidth();
     nvgBeginFrame(vg, internal_->fbBox.getWidth(), internal_->fbBox.getHeight(),
                   pixelRatio);
 
@@ -315,8 +315,8 @@ void FramebufferWidget::drawFramebuffer() {
     args.fb = internal_->fb;
     Widget::draw(args);
 
-    glViewport(0.0, 0.0, internal_->fbSize.getX() * oversample,
-               internal_->fbSize.getY() * oversample);
+    glViewport(0.0, 0.0, internal_->fbSize.getX() * oversample_,
+               internal_->fbSize.getY() * oversample_);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     // glClearColor(0.0, 1.0, 1.0, 0.5);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);

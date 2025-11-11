@@ -44,8 +44,10 @@ struct Image {
 	int handle = -1;
 
 	~Image();
+
 	/** Don't call this directly but instead use `getWindow()->loadImage()` */
 	void loadFile(const std::string& filename, NVGcontext* vg);
+    
 	/** Use `getWindow()->loadImage()` instead. */
 	DEPRECATED static std::shared_ptr<Image> load(const std::string& filename);
 };
@@ -187,14 +189,15 @@ class Window {
     void resetFontFace();
 
     /** Loads and caches an Image from a file path.
-    Do not store this reference across screen frames, as the Window may have
-    changed, invalidating the Image.
-    */
+     * Do not store this reference across screen frames, as the Window may have
+     * changed, invalidating the Image. Instead, rely on the caching within
+     * Window.
+     */
     std::shared_ptr<Image> loadImage(const std::string& filename);
 
     /** Loads and caches an Svg from a file path.
-    Alias for `Svg::load()`.
-    */
+     * Alias for `Svg::load()`.
+     */
     std::shared_ptr<Svg> loadSvg(const std::string& filename) {
         return Svg::load(filename);
     }
