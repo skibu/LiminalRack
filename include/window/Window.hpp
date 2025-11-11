@@ -64,20 +64,24 @@ class Window {
     GLFWwindow* glfWin_ = NULL;
 
    public:
-    NVGcontext* vg = NULL;
-    NVGcontext* fbVg = NULL;
+    NVGcontext* vg_ = NULL;
+    NVGcontext* fbVg_ = NULL;
 
     /** UI scaling ratio */
-    float pixelRatio = 1.f;
+    float pixelRatio_ = 1.f;
 
     /** Ratio between the framebuffer size and the window size reported by the
     OS. This is not equal to pixelRatio in general.
     */
-    float windowRatio = 1.f;
+    float windowRatio_ = 1.f;
 
-    std::shared_ptr<Font> uiFont;
+    std::shared_ptr<Font> uiFont_;
 
+    /** Constructs the system Window using glfw function calls. Takes a while
+     * since has to deal with operating system. */
     PRIVATE Window();
+
+    /** Destroys the system Window and cleans up resources */
     PRIVATE ~Window();
 
     math::Vec getSize();
@@ -199,7 +203,9 @@ class Window {
     PRIVATE int& fbCount();
 
    public:
-    /** Initializes the window system using GLFW */
+    /** Initializes the window system using GLFW. Takes a significant amount
+     * of time to complete since it initializes the OpenGL context as well.
+     */
     static void init();
 
     /** Destroys the window system */

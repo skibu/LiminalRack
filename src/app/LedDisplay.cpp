@@ -173,7 +173,7 @@ void LedDisplayTextField::drawLayer(const DrawArgs& args, int layer) {
 				getWidth() - 2 * textOffset.getX(), getHeight() - 2 * textOffset.getY(),
 				-1, color, 12, getTextCStr(), highlightColor, begin, end);
 
-			bndSetFont(getWindow()->uiFont->handle);
+			bndSetFont(getWindow()->uiFont_->handle);
 		}
 	}
 
@@ -187,10 +187,10 @@ int LedDisplayTextField::getTextPosition(math::Vec mousePos) {
 
     bndSetFont(font->handle);
     int textPos = bndIconLabelTextPosition(
-        getWindow()->vg, textOffset.getX(), textOffset.getY(),
+        getWindow()->vg_, textOffset.getX(), textOffset.getY(),
         getWidth() - 2 * textOffset.getX(), getHeight() - 2 * textOffset.getY(),
         -1, 12, getTextCStr(), mousePos.getX(), mousePos.getY());
-    bndSetFont(getWindow()->uiFont->handle);
+    bndSetFont(getWindow()->uiFont_->handle);
     return textPos;
 }
 

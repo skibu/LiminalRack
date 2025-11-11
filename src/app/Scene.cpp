@@ -4,6 +4,7 @@
 
 #include <app/Scene.hpp>
 #include <app/Browser.hpp>
+#include <app/SplashWidget.hpp>
 #include <app/TipWindow.hpp>
 #include <app/MenuBar.hpp>
 #include <context.hpp>
@@ -72,17 +73,22 @@ Scene::Scene() {
 	internal_ = new Internal;
 
     // Create the scrolled rack area
-	rackScroll = new RackScrollWidget;
-	addChild(rackScroll);
-	rack = rackScroll->rackWidget;
+	rackScroll_ = new RackScrollWidget;
+	addChild(rackScroll_);
+	rack_ = rackScroll_->rackWidget;
 
     // Create menu bar
-	menuBar = createMenuBar();
-	addChild(menuBar);
+	menuBar_ = createMenuBar();
+	addChild(menuBar_);
 
-    // Create module browser window but keep it hidden for now
-	browser = browserCreate();
-	addChild(browser);
+    // Create splash window. Must be done after RackScroll and MenuBar widgets created so that
+    // the splash screen is on top and visible.
+    splashWidget_ = new SplashWidget();
+    addChild(splashWidget_);
+
+    // Create module browser, though it will be hidden for now
+	browser_ = browserCreate();
+	addChild(browser_);
 
     // Create tip window if enabled in settings
 	if (settings::showTipsOnLaunch) {
@@ -101,41 +107,41 @@ Scene::~Scene() {
 }
 
 math::Vec Scene::getMousePos() {
-	return mousePos;
+	return mousePos_;
 }
 
 widget::Widget* Scene::getMenuBar() {
-    return menuBar;
+    return menuBar_;
 }
 
 RackWidget* Scene::getRack() {
-    return rack;
+    return rack_;
 }
 
 RackScrollWidget* Scene::getRackScroll() {
-    return rackScroll;
+    return rackScroll_;
 }
 
 widget::Widget* Scene::getBrowser() {
-    return browser;
+    return browser_;
 }
 
 void Scene::step() {
 	if (getWindow()->isFullScreen()) {
 		// Expand RackScrollWidget to cover entire screen if fullscreen
-		rackScroll->setPos(math::Vec(rackScroll->getPos().getX(), 0));
+		rackScroll_->setPos(math::Vec(rackScroll_->getPos().getX(), 0));
 	} else {
 		// Always show MenuBar if not fullscreen
-		menuBar->show();
-		rackScroll->setPos(math::Vec(rackScroll->getPos().getX(), menuBar->getSize().getY()));
+		menuBar_->show();
+		rackScroll_->setPos(math::Vec(rackScroll_->getPos().getX(), menuBar_->getSize().getY()));
 	}
 
 	internal_->resizeHandle->setPos(getSize().minus(internal_->resizeHandle->getSize()));
 
 	// Resize owned descendants
-	menuBar->setSize(math::Vec(getSize().getX(), menuBar->getSize().getY()));
-	rackScroll->setSize(getSize().minus(rackScroll->getPos()));
-    rackScroll->setSize(getSize().minus(rackScroll->getPos()));
+	menuBar_->setSize(math::Vec(getSize().getX(), menuBar_->getSize().getY()));
+	rackScroll_->setSize(getSize().minus(rackScroll_->getPos()));
+    rackScroll_->setSize(getSize().minus(rackScroll_->getPos()));
 
     // Autosave periodically
     if (settings::autosaveInterval > 0.0) {
@@ -170,7 +176,7 @@ void Scene::step() {
         if ((mods & RACK_MOD_MASK) == (RACK_MOD_CTRL | GLFW_MOD_SHIFT))
             arrowSpeed /= 16.f;
 
-        rackScroll->offset += arrowDelta * arrowSpeed;
+        rackScroll_->offset += arrowDelta * arrowSpeed;
     }
 
     Widget::step();
@@ -182,16 +188,16 @@ void Scene::draw(const DrawArgs& args) {
 
 
 void Scene::onHover(const HoverEvent& e) {
-	mousePos = e.pos;
-	if (mousePos.getY() < menuBar->getHeight()) {
-		menuBar->show();
+	mousePos_ = e.pos;
+	if (mousePos_.getY() < menuBar_->getHeight()) {
+		menuBar_->show();
 	}
 	OpaqueWidget::onHover(e);
 }
 
 
 void Scene::onDragHover(const DragHoverEvent& e) {
-	mousePos = e.pos;
+	mousePos_ = e.pos;
 	OpaqueWidget::onDragHover(e);
 }
 
@@ -237,7 +243,7 @@ void Scene::onHoverKey(const HoverKeyEvent& e) {
 			zoom *= 2;
 			zoom = std::ceil(zoom - 0.01f) - 1;
 			zoom /= 2;
-			getScene()->rackScroll->setZoom(std::pow(2.f, zoom));
+			getScene()->rackScroll_->setZoom(std::pow(2.f, zoom));
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_EQUAL, RACK_MOD_CTRL)
@@ -247,15 +253,15 @@ void Scene::onHoverKey(const HoverKeyEvent& e) {
 			|| e.isKeyCommand(GLFW_KEY_KP_ADD, RACK_MOD_CTRL)
 			// Some layouts (e.g. QWERTZ) have a + key, but GLFW doesn't have a macro for it
 			|| e.isKeyCommand('+', RACK_MOD_CTRL)) {
-			float zoom = std::log2(getScene()->rackScroll->getZoom());
+			float zoom = std::log2(getScene()->rackScroll_->getZoom());
 			zoom *= 2;
 			zoom = std::floor(zoom + 0.01f) + 1;
 			zoom /= 2;
-			getScene()->rackScroll->setZoom(std::pow(2.f, zoom));
+			getScene()->rackScroll_->setZoom(std::pow(2.f, zoom));
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_0, RACK_MOD_CTRL) || e.isKeyCommand(GLFW_KEY_KP_0, RACK_MOD_CTRL)) {
-			getScene()->rackScroll->setZoom(1.f);
+			getScene()->rackScroll_->setZoom(1.f);
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_F1)) {
@@ -267,7 +273,7 @@ void Scene::onHoverKey(const HoverKeyEvent& e) {
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_F4)) {
-			getScene()->rackScroll->zoomToModules();
+			getScene()->rackScroll_->zoomToModules();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_F11)) {
@@ -279,58 +285,58 @@ void Scene::onHoverKey(const HoverKeyEvent& e) {
 
 		// Module selections
 		if (e.isKeyCommand(GLFW_KEY_A, RACK_MOD_CTRL)) {
-			rack->selectAll();
+			rack_->selectAll();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_A, RACK_MOD_CTRL | GLFW_MOD_SHIFT)) {
-			rack->deselectAll();
+			rack_->deselectAll();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_C, RACK_MOD_CTRL)) {
-			if (rack->hasSelection()) {
-				rack->copyClipboardSelection();
+			if (rack_->hasSelection()) {
+				rack_->copyClipboardSelection();
 				e.consume(this);
 			}
 		}
 		if (e.isKeyCommand(GLFW_KEY_I, RACK_MOD_CTRL)) {
-			if (rack->hasSelection()) {
-				rack->resetSelectionAction();
+			if (rack_->hasSelection()) {
+				rack_->resetSelectionAction();
 				e.consume(this);
 			}
 		}
 		if (e.isKeyCommand(GLFW_KEY_R, RACK_MOD_CTRL)) {
-			if (rack->hasSelection()) {
-				rack->randomizeSelectionAction();
+			if (rack_->hasSelection()) {
+				rack_->randomizeSelectionAction();
 				e.consume(this);
 			}
 		}
 		if (e.isKeyCommand(GLFW_KEY_U, RACK_MOD_CTRL)) {
-			if (rack->hasSelection()) {
-				rack->disconnectSelectionAction();
+			if (rack_->hasSelection()) {
+				rack_->disconnectSelectionAction();
 				e.consume(this);
 			}
 		}
 		if (e.isKeyCommand(GLFW_KEY_E, RACK_MOD_CTRL)) {
-			if (rack->hasSelection()) {
-				rack->bypassSelectionAction(!rack->isSelectionBypassed());
+			if (rack_->hasSelection()) {
+				rack_->bypassSelectionAction(!rack_->isSelectionBypassed());
 				e.consume(this);
 			}
 		}
 		if (e.isKeyCommand(GLFW_KEY_D, RACK_MOD_CTRL)) {
-			if (rack->hasSelection()) {
-				rack->cloneSelectionAction(false);
+			if (rack_->hasSelection()) {
+				rack_->cloneSelectionAction(false);
 				e.consume(this);
 			}
 		}
 		if (e.isKeyCommand(GLFW_KEY_D, RACK_MOD_CTRL | GLFW_MOD_SHIFT)) {
-			if (rack->hasSelection()) {
-				rack->cloneSelectionAction(true);
+			if (rack_->hasSelection()) {
+				rack_->cloneSelectionAction(true);
 				e.consume(this);
 			}
 		}
 		if (e.isKeyCommand(GLFW_KEY_DELETE) || e.isKeyCommand(GLFW_KEY_BACKSPACE)) {
-			if (rack->hasSelection()) {
-				rack->deleteSelectionAction();
+			if (rack_->hasSelection()) {
+				rack_->deleteSelectionAction();
 				e.consume(this);
 			}
 		}
@@ -372,11 +378,11 @@ void Scene::onHoverKey(const HoverKeyEvent& e) {
 			}
 		}
 		if (e.isKeyCommand(GLFW_KEY_V, RACK_MOD_CTRL)) {
-			rack->pasteClipboardAction();
+			rack_->pasteClipboardAction();
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_ENTER) || e.isKeyCommand(GLFW_KEY_KP_ENTER)) {
-			browser->show();
+			browser_->show();
 			e.consume(this);
 		}
 	}

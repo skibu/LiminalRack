@@ -43,7 +43,7 @@ class MenuButton : public ui::Button {
 
     // Handle actions
     void step() override {
-        setWidth(bndLabelWidth(getWindow()->vg, -1, text.c_str()) + 1.0);
+        setWidth(bndLabelWidth(getWindow()->vg_, -1, text.c_str()) + 1.0);
         Widget::step();
     }
 

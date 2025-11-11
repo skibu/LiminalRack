@@ -25,11 +25,6 @@ class Liminal {
     static bool hasKeyboard() {
         return rack::settings::hasKeyboard;
     }
-
-    /** Displays the spash screen on the Scene. The Scene and
-     * Window must already be created.
-     */
-    static void showSplashScreen();
 };
 
 }  // namespace ui

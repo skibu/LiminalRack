@@ -200,28 +200,31 @@ static void mouseButtonCallback(GLFWwindow* win, int button, int action, int mod
 	getEvent()->handleButton(getWindow()->getLastMousePos(), button, action, mods);
 }
 
-
 static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
-	contextSet((Context*) glfwGetWindowUserPointer(win));
-	math::Vec mousePos = math::Vec(xpos, ypos).div(getWindow()->pixelRatio / getWindow()->windowRatio).round();
-	math::Vec mouseDelta = mousePos.minus(getWindow()->getLastMousePos());
+    contextSet((Context*)glfwGetWindowUserPointer(win));
+    math::Vec mousePos =
+        math::Vec(xpos, ypos)
+            .div(getWindow()->pixelRatio_ / getWindow()->windowRatio_)
+            .round();
+    math::Vec mouseDelta = mousePos.minus(getWindow()->getLastMousePos());
 
-	// Workaround for GLFW warping mouse to a different position when the cursor is locked or unlocked.
-	if (getWindow()->getIgnoreMouseDeltaUntil() > getWindow()->getFrameStartTime()) {
-		mouseDelta = math::Vec();
-	}
+    // Workaround for GLFW warping mouse to a different position when the cursor
+    // is locked or unlocked.
+    if (getWindow()->getIgnoreMouseDeltaUntil() >
+        getWindow()->getFrameStartTime()) {
+        mouseDelta = math::Vec();
+    }
 
-	getWindow()->setLastMousePos(mousePos);
+    getWindow()->setLastMousePos(mousePos);
 
-	getEvent()->handleHover(mousePos, mouseDelta);
+    getEvent()->handleHover(mousePos, mouseDelta);
 
-	// Keyboard/mouse MIDI driver
-	int width, height;
-	glfwGetWindowSize(win, &width, &height);
-	math::Vec scaledPos(xpos / width, ypos / height);
-	keyboard::mouseMove(scaledPos);
+    // Keyboard/mouse MIDI driver
+    int width, height;
+    glfwGetWindowSize(win, &width, &height);
+    math::Vec scaledPos(xpos / width, ypos / height);
+    keyboard::mouseMove(scaledPos);
 }
-
 
 static void cursorEnterCallback(GLFWwindow* win, int entered) {
 	contextSet((Context*) glfwGetWindowUserPointer(win));
@@ -313,7 +316,7 @@ Window::Window() {
 
 	float contentScale;
 	glfwGetWindowContentScale(glfWin_, &contentScale, NULL);
-	INFO("Window content scale: %f", contentScale);
+	DEBUG("Window content scale: %f", contentScale);
 
 	glfwSetWindowSizeLimits(glfWin_, WINDOW_SIZE_MIN.getX(), WINDOW_SIZE_MIN.getY(), GLFW_DONT_CARE, GLFW_DONT_CARE);
 	if (settings::windowSize.getX() > 0 && settings::windowSize.getY() > 0) {
@@ -374,27 +377,27 @@ Window::Window() {
 	// Set up NanoVG
 	int nvgFlags = NVG_ANTIALIAS;
 #if defined NANOVG_GL2
-	vg = nvgCreateGL2(nvgFlags);
-	fbVg = nvgCreateSharedGL2(vg, nvgFlags);
+	vg_ = nvgCreateGL2(nvgFlags);
+	fbVg_ = nvgCreateSharedGL2(vg_, nvgFlags);
 #elif defined NANOVG_GL3
 	vg = nvgCreateGL3(nvgFlags);
 #elif defined NANOVG_GLES2
 	vg = nvgCreateGLES2(nvgFlags);
 #endif
-	if (!vg) {
+	if (!vg_) {
 		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, "Could not initialize NanoVG. Does your graphics card support OpenGL 2.0 or greater? If so, make sure you have the latest graphics drivers installed.");
 		throw Exception("Could not initialize NanoVG");
 	}
 
 	// Load UI fonts
-	uiFont = loadFont(asset::system("res/fonts/DejaVuSans.ttf"));
-	if (uiFont)
-		bndSetFont(uiFont->handle);
+	uiFont_ = loadFont(asset::system("res/fonts/DejaVuSans.ttf"));
+	if (uiFont_)
+		bndSetFont(uiFont_->handle);
 
 	if (getScene()) {
         // Notify all widgets that the Scene context has been created
 		widget::Widget::ContextCreateEvent e;
-		e.vg = vg;
+		e.vg = vg_;
 		getScene()->onContextCreate(e);
 	}
 
@@ -405,7 +408,7 @@ Window::Window() {
 Window::~Window() {
 	if (getScene()) {
 		widget::Widget::ContextDestroyEvent e;
-		e.vg = vg;
+		e.vg = vg_;
 		getScene()->onContextDestroy(e);
 	}
 
@@ -416,8 +419,8 @@ Window::~Window() {
 	// nvgDeleteClone(fbVg);
 
 #if defined NANOVG_GL2
-	nvgDeleteGL2(vg);
-	nvgDeleteGL2(fbVg);
+	nvgDeleteGL2(vg_);
+	nvgDeleteGL2(fbVg_);
 #elif defined NANOVG_GL3
 	nvgDeleteGL3(vg);
 #elif defined NANOVG_GLES2
@@ -501,9 +504,9 @@ void Window::step() {
     internal_->fbCount_ = 0;
 
     // Make event handlers and step() have a clean NanoVG context
-    nvgReset(vg);
+    nvgReset(vg_);
 
-    bndSetFont(uiFont->handle);
+    bndSetFont(uiFont_->handle);
 
     // Poll events
     // Save and restore context because event handler set their own context
@@ -545,8 +548,8 @@ void Window::step() {
 		glfwGetWindowContentScale(glfWin_, &newPixelRatio, NULL);
 		newPixelRatio = std::floor(newPixelRatio + 0.5);
 	}
-	if (newPixelRatio != pixelRatio) {
-		pixelRatio = newPixelRatio;
+	if (newPixelRatio != pixelRatio_) {
+		pixelRatio_ = newPixelRatio;
 		getEvent()->handleDirty();
 	}
 
@@ -555,11 +558,11 @@ void Window::step() {
 	glfwGetFramebufferSize(glfWin_, &fbWidth, &fbHeight);
 	int winWidth, winHeight;
 	glfwGetWindowSize(glfWin_, &winWidth, &winHeight);
-	windowRatio = (float)fbWidth / winWidth;
+	windowRatio_ = (float)fbWidth / winWidth;
 
 	if (getScene()) {
 		// Resize scene
-		getScene()->setSize(math::Vec(fbWidth, fbHeight).div(pixelRatio));
+		getScene()->setSize(math::Vec(fbWidth, fbHeight).div(pixelRatio_));
 
 		// Step scene
 		getScene()->step();
@@ -568,19 +571,19 @@ void Window::step() {
 		bool visible = glfwGetWindowAttrib(glfWin_, GLFW_VISIBLE) && !glfwGetWindowAttrib(glfWin_, GLFW_ICONIFIED);
 		if (visible) {
 			// Update and render
-			nvgBeginFrame(vg, fbWidth, fbHeight, pixelRatio);
-			nvgScale(vg, pixelRatio, pixelRatio);
+			nvgBeginFrame(vg_, fbWidth, fbHeight, pixelRatio_);
+			nvgScale(vg_, pixelRatio_, pixelRatio_);
 
 			// Draw scene
 			widget::Widget::DrawArgs args;
-			args.vg = vg;
+			args.vg = vg_;
 			args.clipBox = getScene()->getBox().zeroPos();
 			getScene()->draw(args);
 
 			glViewport(0, 0, fbWidth, fbHeight);
 			glClearColor(0.0, 0.0, 0.0, 1.0);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-			nvgEndFrame(vg);
+			nvgEndFrame(vg_);
 		}
 	}
 
@@ -664,7 +667,7 @@ void Window::screenshotModules(const std::string& screenshotsDir, float zoom) {
 			// Read pixels
 			nvgluBindFramebuffer(fbw->getFramebuffer());
 			int width, height;
-			nvgImageSize(vg, fbw->getImageHandle(), &width, &height);
+			nvgImageSize(vg_, fbw->getImageHandle(), &width, &height);
 			uint8_t* pixels = new uint8_t[height * width * 4];
 			glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
@@ -839,13 +842,13 @@ std::shared_ptr<Font> Window::loadFont(const std::string& filename) {
     // Load fallback fonts for CJK and emoji characters
 	std::shared_ptr<Font> jpFont = loadFontWithoutFallbacks(asset::system("res/fonts/NotoSansJP-Medium.otf"));
 	if (jpFont)
-		nvgAddFallbackFontId(vg, font->handle, jpFont->handle);
+		nvgAddFallbackFontId(vg_, font->handle, jpFont->handle);
 	std::shared_ptr<Font> scFont = loadFontWithoutFallbacks(asset::system("res/fonts/NotoSansSC-Medium.otf"));
 	if (scFont)
-		nvgAddFallbackFontId(vg, font->handle, scFont->handle);
+		nvgAddFallbackFontId(vg_, font->handle, scFont->handle);
 	std::shared_ptr<Font> emojiFont = loadFontWithoutFallbacks(asset::system("res/fonts/NotoEmoji-Medium.ttf"));
 	if (emojiFont)
-		nvgAddFallbackFontId(vg, font->handle, emojiFont->handle);
+		nvgAddFallbackFontId(vg_, font->handle, emojiFont->handle);
 
 	return font;
 }
@@ -860,7 +863,7 @@ std::shared_ptr<Font> Window::loadFontWithoutFallbacks(const std::string& filena
 	// Load font
 	std::shared_ptr<Font> font = std::make_shared<Font>();
 	try {
-		font->loadFile(filename, vg);
+		font->loadFile(filename, vg_);
 	}
 	catch (Exception& e) {
 		WARN("%s", e.what());
@@ -878,7 +881,7 @@ void Window::overrideFontFace(const std::string& filename) {
 }
 
 void Window::resetFontFace() {
-    bndSetFont(getWindow()->uiFont->handle);
+    bndSetFont(getWindow()->uiFont_->handle);
 }
 
 std::shared_ptr<Image> Window::loadImage(const std::string& filename) {
@@ -890,7 +893,7 @@ std::shared_ptr<Image> Window::loadImage(const std::string& filename) {
 	std::shared_ptr<Image> image;
 	try {
 		image = std::make_shared<Image>();
-		image->loadFile(filename, vg);
+		image->loadFile(filename, vg_);
 	}
 	catch (Exception& e) {
 		WARN("%s", e.what());

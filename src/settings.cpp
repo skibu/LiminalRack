@@ -80,8 +80,9 @@ bool lockModules = false;
 bool squeezeModules = true;
 bool preferDarkPanels = true;
 #if defined ARCH_MAC
-	// Most Mac GPUs can't handle rendering the screen every frame, so use 30 Hz by default.
-	float frameRateLimit = 30.f;
+	// Some older Mac GPUs can't handle rendering the screen every frame, 
+    // so might want to use 30 Hz by default.
+	float frameRateLimit = 60.f;
 #else
 	float frameRateLimit = 60.f;
 #endif

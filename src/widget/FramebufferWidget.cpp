@@ -172,8 +172,8 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
     // In case we fail drawing the framebuffer, don't try again the next frame,
     // so reset `dirty` here.
     dirty = false;
-    NVGcontext* vg = getWindow()->vg;
-    NVGcontext* fbVg = getWindow()->fbVg;
+    NVGcontext* vg = getWindow()->vg_;
+    NVGcontext* fbVg = getWindow()->fbVg_;
 
     internal_->fbScale = scale;
     internal_->fbOffsetF = offsetF;
@@ -206,7 +206,7 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
     internal_->fbBox = math::Rect::fromMinMax(min, max);
     // DEBUG("%g %g %g %g", RECT_ARGS(internal->fbBox));
 
-    float pixelRatio = std::fmax(1.f, std::floor(getWindow()->pixelRatio));
+    float pixelRatio = std::fmax(1.f, std::floor(getWindow()->pixelRatio_));
     math::Vec newFbSize = internal_->fbBox.getSize().mult(pixelRatio).ceil();
 
     // Create framebuffer if a new size is needed
@@ -296,7 +296,7 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
 };
 
 void FramebufferWidget::drawFramebuffer() {
-    NVGcontext* vg = getWindow()->fbVg;
+    NVGcontext* vg = getWindow()->fbVg_;
     nvgSave(vg);
 
     float pixelRatio =

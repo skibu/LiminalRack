@@ -324,7 +324,7 @@ void TextField::onSelectKey(const SelectKeyEvent& e) {
 }
 
 int TextField::getTextPosition(math::Vec mousePos) {
-    return bndTextFieldTextPosition(getWindow()->vg, 0.0, 0.0, getWidth(),
+    return bndTextFieldTextPosition(getWindow()->vg_, 0.0, 0.0, getWidth(),
                                     getHeight(), -1, fontSize, text.c_str(),
                                     mousePos.getX(), mousePos.getY());
 }

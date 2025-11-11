@@ -51,7 +51,7 @@ void MenuLabel::step() {
 	// Add 10 more pixels because Retina measurements are sometimes too small
 	const float rightPadding = 10.0;
 	// HACK use getWindow()->vg from the window.
-	setWidth(bndLabelWidth(getWindow()->vg, -1, text.c_str()) + rightPadding);
+	setWidth(bndLabelWidth(getWindow()->vg_, -1, text.c_str()) + rightPadding);
 	Widget::step();
 }
 

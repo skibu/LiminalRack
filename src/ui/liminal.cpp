@@ -30,15 +30,6 @@ void Liminal::configAsLiminal() {
     rack::settings::bndWidgetHeight = rack::settings::bndLabelFontSize + 8; // Increase widget height for touch screen
 }
 
-void Liminal::showSplashScreen() {
-    auto rack = getRack();
-    if (!rack) {
-        WARN("Cannot show Liminal Rack splash screen: RackWidget not created yet");
-        return;
-    }
-
-    INFO("Showing Liminal Rack splash screen");
-}
 
 }  // namespace ui
 }  // namespace rack

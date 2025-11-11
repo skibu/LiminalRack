@@ -1,5 +1,8 @@
 # Liminal Rack Change Log
 
+- 11/10/25
+  - Added basic splash screen.Worked hard to make it appear as quickly as possible.
+
 - 11/8/25
   - Improved spotlight and room lighting. Changed so that spotlight 
     will show up even if room lighting is bright. It will just be 

@@ -69,7 +69,6 @@ Context::~Context() {
 }
 
 void Context::createWindow() {
-    INFO("Creating window");
     window = new window::Window();
 }
 

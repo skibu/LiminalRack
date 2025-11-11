@@ -25,11 +25,15 @@ class Context;
  */
 class Context {
    public:
+    /** Constructor. Creates the Patch Manager, Scene, Event State, History
+     * State, Engine, and MIDI loopback context. */
     Context();
 
+    /** Destructor, frees up resources */
     ~Context();
 
-    /** Creates the main window. Only to be called if not in headless mode. */
+    /** Creates the main window. Takes a while since deals with operating
+     * system. Only to be called if not in headless mode. */
     void createWindow();
 
     // Convenience method to get the RackWidget

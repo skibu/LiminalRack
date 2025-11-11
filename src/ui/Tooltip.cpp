@@ -17,16 +17,16 @@ static float maxTooltipWidth() {
 
 void Tooltip::step() {
     // Save the current render state
-    nvgSave(getWindow()->vg);
+    nvgSave(getWindow()->vg_);
 
     // Set line height to reasonable value
-    nvgTextLineHeight(getWindow()->vg, 1.2);
+    nvgTextLineHeight(getWindow()->vg_, 1.2);
 
     // Set size of tooltip to fit contents
     setWidth(std::min(maxTooltipWidth(), bndLabelWidthForFontSize(
-        getWindow()->vg, -1, settings::tooltipFontSize, text.c_str())));
+        getWindow()->vg_, -1, settings::tooltipFontSize, text.c_str())));
     setHeight(bndLabelHeightForFontSize(
-        getWindow()->vg, -1, settings::tooltipFontSize, text.c_str(), maxTooltipWidth()));
+        getWindow()->vg_, -1, settings::tooltipFontSize, text.c_str(), maxTooltipWidth()));
     // add bit of vertical padding
     setHeight(getHeight() + 2);
 
@@ -47,7 +47,7 @@ void Tooltip::step() {
     setBox(getBox().nudge(getParent()->getBox().zeroPos()));
 
     // Restore the previous render state
-    nvgRestore(getWindow()->vg);
+    nvgRestore(getWindow()->vg_);
 
     Widget::step();
 }

@@ -3,6 +3,7 @@
 #include <widget/OpaqueWidget.hpp>
 #include <app/RackScrollWidget.hpp>
 #include <app/RackWidget.hpp>
+#include <app/SplashWidget.hpp>
 
 
 namespace rack {
@@ -13,7 +14,11 @@ namespace app {
  */
 class Scene : public widget::OpaqueWidget {
    public:
+    /** Constructor. Creates the top level widgets MenuBar, RackScrollWidget,
+     * Splash Screen, and Browser */
     PRIVATE Scene();
+
+    /** Destructor, frees up resources */
     PRIVATE ~Scene();
 
     /** Returns the current mouse position in the Scene's local coordinates */
@@ -45,13 +50,14 @@ class Scene : public widget::OpaqueWidget {
     Internal* internal_;
 
     // Convenience variables for accessing important widgets
-    RackScrollWidget* rackScroll;
-    RackWidget* rack;
-    widget::Widget* menuBar;
-    widget::Widget* browser;
+    RackScrollWidget* rackScroll_;
+    RackWidget* rack_;
+    widget::Widget* menuBar_;
+    widget::Widget* browser_;
+    SplashWidget* splashWidget_;
 
     // The last mouse position in the Scene's local coordinates
-    math::Vec mousePos;
+    math::Vec mousePos_;
 
     void onHover(const HoverEvent& e) override;
     void onDragHover(const DragHoverEvent& e) override;

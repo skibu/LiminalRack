@@ -66,9 +66,9 @@ void MenuItem::drawOffset(NVGcontext* vg, float x_offset) {
 void MenuItem::step() {
 	// HACK use getWindow()->vg from the window.
 	// All this does is inspect the font, so it shouldn't modify getWindow()->vg and should work when called from a widget::FramebufferWidget for example.
-	setWidth(bndLabelWidth(getWindow()->vg, -1, text.c_str()));
+	setWidth(bndLabelWidth(getWindow()->vg_, -1, text.c_str()));
 	if (!rightText.empty())
-		setWidth(getWidth() + bndLabelWidth(getWindow()->vg, -1, rightText.c_str()) - 10.0);
+		setWidth(getWidth() + bndLabelWidth(getWindow()->vg_, -1, rightText.c_str()) - 10.0);
 	// Add 10 more pixels because measurements on high-DPI screens are sometimes too small for some reason
 	setWidth(getWidth() + 10.0);
 

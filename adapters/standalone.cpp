@@ -23,6 +23,7 @@
 #include <engine/Engine.hpp>
 #include <app/common.hpp>
 #include <app/Scene.hpp>
+#include <app/SplashWidget.hpp>
 #include <app/Browser.hpp>
 #include <plugin.hpp>
 #include <context.hpp>
@@ -70,7 +71,7 @@ static void fatalSignalHandler(int sig) {
  * settings so they must be read in first.
  */
 static void initUI() {
-	// Initialize context. Needs to be done before Window created
+	// Initialize context. This needs to be done before Window created.
     Context* context = new Context();
 	contextSet(context);
 
@@ -82,14 +83,15 @@ static void initUI() {
     window::Window::init();
     context->createWindow();
 
+    // Step window to make splash screen appear
+    INFO("Making splash screen visible...");
+    getWindow()->step(); 
+
     // If was in full screen mode previously go right into full screen mode
     if (settings::windowMaximized) {
         INFO("Putting window into full screen mode");
         getWindow()->setFullScreen(true);
     }
-
-    // Now that window fully created display spash screen
-    ui::Liminal::showSplashScreen();
 }
 
 /**
@@ -191,9 +193,6 @@ int main(int argc, char* argv[]) {
 	// Now that logging fully setup log the log level
 	logger::logLogLevel();
 
-    // Test code
-	// exit(0);
-
 	// We can now install a signal handler and log the output
 	if (!settings::devMode) {
 		signal(SIGABRT, fatalSignalHandler);
@@ -251,12 +250,13 @@ int main(int argc, char* argv[]) {
 	INFO("Initializing network");
 	network::init();
 
-    INFO("Initializing plugins (packages of modules from a manufacturer)");
-	plugin::init();
-
-	// Initialize main UI window
+	// Initialize main UI window. This should be done before initializing
+    // plugins and audio so that splash screen can be displayed ASAP.
     INFO("Initializing UI");
 	initUI();
+
+    INFO("Initializing plugins (packages of modules from a manufacturer)");
+	plugin::init();
 
 	INFO("Initializing audio");
 	audio::init();
@@ -299,7 +299,7 @@ int main(int argc, char* argv[]) {
 		getPatch()->launch(patchPath);
 	}
 
-	// Run context
+    // Run context
 	if (settings::headless) {
 		printf("Press enter to exit.\n");
 		getchar();
@@ -307,13 +307,15 @@ int main(int argc, char* argv[]) {
 	else if (screenshot) {
 		INFO("Taking screenshots of all modules at %gx zoom", screenshotZoom);
 		getWindow()->screenshotModules(asset::user("screenshots"), screenshotZoom);
-	}
-	else {
+	} else {
+        // Leave splash screen up for at least 7 seconds
+        app::SplashWidget::waitTillSplashShouldCloseAutomatically(7.0f);
+
 		// Run till user exits
 		getWindow()->mainLoop();
 	}
 
-	// Destroy context
+	// Time to exit. First, destroy context
 	INFO("Deleting context");
 	delete APP;
 	contextSet(NULL);

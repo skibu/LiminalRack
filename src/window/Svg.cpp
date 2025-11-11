@@ -4,10 +4,6 @@
 #include <string.hpp>
 
 
-// #define DEBUG_ONLY(x) x
-#define DEBUG_ONLY(x)
-
-
 namespace rack {
 namespace window {
 
@@ -25,7 +21,7 @@ void Svg::loadFile(const std::string& filename) {
 	handle = nsvgParseFromFile(filename.c_str(), "px", SVG_DPI);
 	if (!handle)
 		throw Exception("Failed to load SVG %s", filename.c_str());
-	DEBUG("Loaded SVG %s", filename.c_str());
+	// DEBUG("Loaded SVG %s", filename.c_str());
 }
 
 
@@ -139,11 +135,11 @@ static float getLineCrossing(math::Vec p0, math::Vec p1, math::Vec p2, math::Vec
 }
 
 void svgDraw(NVGcontext* vg, NSVGimage* svg) {
-	DEBUG("new image: %g x %g px", svg->width, svg->height);
+	//DEBUG("new image: %g x %g px", svg->width, svg->height);
 	int shapeIndex = 0;
 	// Iterate shape linked list
 	for (NSVGshape* shape = svg->shapes; shape; shape = shape->next, shapeIndex++) {
-		DEBUG("new shape: %d id \"%s\", fillrule %d, from (%f, %f) to (%f, %f)", shapeIndex, shape->id, shape->fillRule, shape->bounds[0], shape->bounds[1], shape->bounds[2], shape->bounds[3]);
+		//DEBUG("new shape: %d id \"%s\", fillrule %d, from (%f, %f) to (%f, %f)", shapeIndex, shape->id, shape->fillRule, shape->bounds[0], shape->bounds[1], shape->bounds[2], shape->bounds[3]);
 
 		// Visibility
 		if (!(shape->flags & NSVG_FLAGS_VISIBLE))
@@ -160,14 +156,14 @@ void svgDraw(NVGcontext* vg, NSVGimage* svg) {
 
 		// Iterate path linked list
 		for (NSVGpath* path = shape->paths; path; path = path->next) {
-			DEBUG("new path: %d points, %s, from (%f, %f) to (%f, %f)", path->npts, path->closed ? "closed" : "open", path->bounds[0], path->bounds[1], path->bounds[2], path->bounds[3]);
+			//DEBUG("new path: %d points, %s, from (%f, %f) to (%f, %f)", path->npts, path->closed ? "closed" : "open", path->bounds[0], path->bounds[1], path->bounds[2], path->bounds[3]);
 
 			nvgMoveTo(vg, path->pts[0], path->pts[1]);
 			for (int i = 1; i < path->npts; i += 3) {
 				float* p = &path->pts[2 * i];
 				nvgBezierTo(vg, p[0], p[1], p[2], p[3], p[4], p[5]);
 				// nvgLineTo(vg, p[4], p[5]);
-				DEBUG("bezier (%f, %f) to (%f, %f)", p[-2], p[-1], p[4], p[5]);
+				//DEBUG("bezier (%f, %f) to (%f, %f)", p[-2], p[-1], p[4], p[5]);
 			}
 
 			// Close path
@@ -231,18 +227,18 @@ void svgDraw(NVGcontext* vg, NSVGimage* svg) {
 		// Fill shape
 		if (shape->fill.type == NSVG_PAINT_COLOR) {
 			NVGcolor color = getNVGColor(shape->fill.color);
-			DEBUG("fill color (%g, %g, %g, %g)", color.r, color.g, color.b, color.a);
+			// DEBUG("fill color (%g, %g, %g, %g)", color.r, color.g, color.b, color.a);
 			nvgFillColor(vg, color);
 			nvgFill(vg);
 		}
 		else if (shape->fill.type == NSVG_PAINT_LINEAR_GRADIENT || shape->fill.type == NSVG_PAINT_RADIAL_GRADIENT) {
 			nvgSave(vg);
 			const NSVGgradient* g = shape->fill.gradient;
-			DEBUG("gradient: type: %s xform: %f %f %f %f %f %f spread: %d fx: %f fy: %f nstops: %d", 
-                shape->fill.type == NSVG_PAINT_LINEAR_GRADIENT ? "linear" : "radial", g->xform[0], g->xform[1], g->xform[2], g->xform[3], g->xform[4], g->xform[5], g->spread, g->fx, g->fy, g->nstops);
-			for (int i = 0; i < g->nstops; i++) {
-				DEBUG("stop: #%08x\t%f", g->stops[i].color, g->stops[i].offset);
-			}
+			// DEBUG("gradient: type: %s xform: %f %f %f %f %f %f spread: %d fx: %f fy: %f nstops: %d", 
+            //    shape->fill.type == NSVG_PAINT_LINEAR_GRADIENT ? "linear" : "radial", g->xform[0], g->xform[1], g->xform[2], g->xform[3], g->xform[4], g->xform[5], g->spread, g->fx, g->fy, g->nstops);
+			// for (int i = 0; i < g->nstops; i++) {
+			// 	DEBUG("stop: #%08x\t%f", g->stops[i].color, g->stops[i].offset);
+			// }
 
 			assert(g->nstops >= 1);
 			NVGcolor icol = getNVGColor(g->stops[0].color);
@@ -252,7 +248,7 @@ void svgDraw(NVGcontext* vg, NSVGimage* svg) {
 
 			float t[6];
 			nvgTransformInverse(t, g->xform);
-			DEBUG("inverse: %f %f %f %f %f %f", t[0], t[1], t[2], t[3], t[4], t[5]);
+			//DEBUG("inverse: %f %f %f %f %f %f", t[0], t[1], t[2], t[3], t[4], t[5]);
 			nvgTransform(vg, t[0], t[1], t[2], t[3], t[4], t[5]);
 			// Because nvgLinearGradient() and nvgRadialGradient() arbitrarily limit a minimum of 1.0 feather, rescale and use (0, 100) coordinates.
 			nvgScale(vg, 1/100.0, 1/100.0);
@@ -280,7 +276,7 @@ void svgDraw(NVGcontext* vg, NSVGimage* svg) {
 				case NSVG_PAINT_COLOR: {
 					NVGcolor color = getNVGColor(shape->stroke.color);
 					nvgStrokeColor(vg, color);
-					DEBUG("stroke color (%g, %g, %g, %g)", color.r, color.g, color.b, color.a);
+					//DEBUG("stroke color (%g, %g, %g, %g)", color.r, color.g, color.b, color.a);
 				} break;
 				case NSVG_PAINT_LINEAR_GRADIENT: {
 					// NSVGgradient *g = shape->stroke.gradient;
@@ -292,8 +288,6 @@ void svgDraw(NVGcontext* vg, NSVGimage* svg) {
 
 		nvgRestore(vg);
 	}
-
-	DEBUG_ONLY(printf("\n");)
 }
 
 
