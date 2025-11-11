@@ -6,8 +6,6 @@
 #include <settings.hpp>
 #include <string>
 
-// #include <unistd.h> // for dup2
-
 
 namespace rack {
 namespace logger {
@@ -84,6 +82,7 @@ void destroy() {
 }
 
 static const char* const levelLabels[] = {
+    "TRACE",
 	"DEBUG",
 	"INFO",
 	"WARN",
