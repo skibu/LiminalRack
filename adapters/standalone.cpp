@@ -308,8 +308,8 @@ int main(int argc, char* argv[]) {
 		INFO("Taking screenshots of all modules at %gx zoom", screenshotZoom);
 		getWindow()->screenshotModules(asset::user("screenshots"), screenshotZoom);
 	} else {
-        // Leave splash screen up for at least 7 seconds
-        app::SplashWidget::waitTillSplashShouldCloseAutomatically(7.0f);
+        // Leave splash screen up for default time
+        app::SplashWidget::waitTillSplashShouldCloseAutomatically();
 
 		// Run till user exits
 		getWindow()->mainLoop();

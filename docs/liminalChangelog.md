@@ -1,5 +1,8 @@
 # Liminal Rack Change Log
 
+- 11/11/25
+  - Added splashscreen, with a png image even!
+  
 - 11/10/25
   - Added basic splash screen.Worked hard to make it appear as quickly as possible.
 

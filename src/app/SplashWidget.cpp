@@ -10,7 +10,7 @@ SplashWidget::SplashWidget() {}
 
 static bool shouldClose_s = false;
 static int stepCount_s = 0;
-static const float FADE_OUT_STEPS = 45;
+static const float FADE_OUT_STEPS = 75;
 
 void SplashWidget::step() {
     // Only do fade out if shouldClose_s is true. This way splash screen
@@ -28,26 +28,41 @@ void SplashWidget::step() {
 }
 
 void SplashWidget::draw(const DrawArgs& args) {
-    // Draw darkish ackground
     nvgBeginPath(args.vg);
+
+    // Draw darkish background
     nvgRect(args.vg, 0, 0, getParent()->getWidth(), getParent()->getHeight());
-    nvgFillColor(args.vg, nvgRGBAf(0.3f, 0.1f, 0.1f, fadeAlpha_));
+    nvgFillColor(args.vg, nvgRGBAf(0.1f, 0.04f, 0.04f, fadeAlpha_));
+    nvgFill(args.vg);
+
+    // Load in image using nanovg function, since that is what is used here
+    int imageHandle = nvgCreateImage(args.vg, "res/Liminal/liminal-spaces-classroom.png", 
+        NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);
+    int imageWidth, imageHeight;
+    nvgImageSize(args.vg, imageHandle, &imageWidth, &imageHeight);
+    NVGpaint imagePattern = nvgImagePattern(
+        args.vg, 0, 0, imageWidth, imageHeight, 0.0f /* angle */, imageHandle, fadeAlpha_);
+
+    // Draw splash image
+    nvgBeginPath(args.vg);
+    nvgRect(args.vg, 20, 20, imageWidth, imageHeight);
+    nvgFillPaint(args.vg, imagePattern);
     nvgFill(args.vg);
 
     // Logo/Title
-    nvgFontSize(args.vg, 48);
+    nvgFontSize(args.vg, 54);
     nvgFontFaceId(args.vg, getWindow()->uiFont_->handle);
     nvgFillColor(args.vg, nvgRGBAf(1.0f, 1.0f, 1.0f, fadeAlpha_));
     nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
     nvgTextBox(args.vg, getParent()->getWidth() * 0.5f - 350.0f,
-               getParent()->getHeight() * 0.4f, 700,
+               getParent()->getHeight() * 0.4f, 800,
                "Liminal Rack\nAn Instrument or a Computer?", nullptr);
 
     // Version info
-    nvgFontSize(args.vg, 20);
+    nvgFontSize(args.vg, 18);
     nvgFillColor(args.vg, nvgRGBAf(0.8f, 0.8f, 0.8f, fadeAlpha_));
     nvgText(args.vg, getParent()->getWidth() * 0.5f,
-            getParent()->getHeight() * 0.6f, "Initializing...", nullptr);
+            getParent()->getHeight() * 0.6f, "Contemplating...", nullptr);
 }
 
 void SplashWidget::waitTillSplashShouldCloseAutomatically(

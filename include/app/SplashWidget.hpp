@@ -20,7 +20,7 @@ public:
 
     /** Keeps calling getWindow()->step() until the splash screen has been
      * viewable long enough. */
-    static void waitTillSplashShouldCloseAutomatically(float displayTimeSecs);
+    static void waitTillSplashShouldCloseAutomatically(float displayTimeSecs = 8.0f);
 
     /** Called when the user clicks on the splash screen. Initiates closing of
      * the splash screen. */
