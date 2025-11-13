@@ -264,6 +264,7 @@ void Widget::draw(const DrawArgs& args) {
 		// Don't draw if invisible
 		if (!child->isVisible())
 			continue;
+
 		// Don't draw if child is outside clip box
 		if (!args.clipBox.intersects(child->box_))
 			continue;
@@ -279,6 +280,7 @@ void Widget::drawLayer(const DrawArgs& args, int layer) {
 		// Don't draw if invisible
 		if (!child->isVisible())
 			continue;
+            
 		// Don't draw if child is outside clip box
 		if (!args.clipBox.intersects(child->box_))
 			continue;
