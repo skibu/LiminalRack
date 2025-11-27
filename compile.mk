@@ -18,7 +18,7 @@ FLAGS += -O0 -funsafe-math-optimizations -fno-omit-frame-pointer
 # Warnings
 FLAGS += -Wall -Wextra -Wno-unused-parameter
 # Needed because of hack at dep/include/nanovg_gl_utils.h:46:11
-FLAGS += -Wmacro-redefined
+#FLAGS += -Wmacro-redefined
 # C++ standard
 CXXFLAGS += -std=c++17
 
@@ -41,7 +41,8 @@ endif
 ifdef ARCH_MAC
 	CXXFLAGS += -stdlib=libc++
 	MAC_SDK_FLAGS := -mmacosx-version-min=10.9
-	FLAGS += $(MAC_SDK_FLAGS)
+#       -Wmacro-redefined needed because of hack at dep/include/nanovg_gl_utils.h:46:11
+        FLAGS += $(MAC_SDK_FLAGS) -Wmacro-redefined
 endif
 ifdef ARCH_WIN
 	FLAGS += -D_USE_MATH_DEFINES
