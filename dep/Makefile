@@ -272,7 +272,7 @@ $(simde): simde/simde
 
 # Helpers
 
-src: glew-2.2.0 glfw jansson-2.12 libsamplerate-0.1.9 openssl-3.3.2 curl-8.10.0 zstd-1.5.6 libarchive-3.7.7 rtaudio nanovg nanosvg oui-blendish osdialog
+src: glew-2.2.0 glfw jansson-2.12 libsamplerate-0.2.1 openssl-3.3.2 curl-8.10.0 zstd-1.5.6 libarchive-3.7.7 rtaudio nanovg nanosvg oui-blendish osdialog
 
 clean:
 	git clean -fdx
