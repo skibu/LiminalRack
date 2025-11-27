@@ -7,6 +7,13 @@ And only instructions for a Mac are provided since that is all I use. Sorry!
 In case the instructions for running VCV Rack are useful, they can be found at 
 https://vcvrack.com/manual/Building
 
+## Setup on Raspberry Pi OS
+
+Need some utilities, like jq.
+```
+sudo apt install -y jq
+```
+
 ## Setup on MacOS
 
 First, need the tool brew to install other things. In terminal window simply use:
