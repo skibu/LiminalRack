@@ -7,7 +7,23 @@ And only instructions for a Mac are provided since that is all I use. Sorry!
 In case the instructions for running VCV Rack are useful, they can be found at 
 https://vcvrack.com/manual/Building
 
-## Setup
+## Setup on Raspberry Pi OS
+
+Need some utilities, like cmake, jq, autoconf, and automake.
+```
+sudo apt update
+sudo apt install -y cmake
+sudo apt install -y jq
+sudo apt install -y autoconf automake libtool build-essential
+sudo apt install -y libxinerama-dev
+sudo apt install -y libxcursor-dev
+sudo apt install -y libxi-dev
+
+sudo apt-get update
+sudo apt-get install -y libxrandr-dev
+```
+
+## Setup on MacOS
 
 First, need the tool brew to install other things. In terminal window simply use:
 ```
