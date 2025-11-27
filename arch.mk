@@ -1,3 +1,6 @@
+OBJ_FORMAT := elf64-x86-64
+ARCH_FLAG := i386:x86-64
+
 ifdef CROSS_COMPILE
 	MACHINE := $(CROSS_COMPILE)
 else
@@ -10,9 +13,13 @@ ifneq (,$(findstring x86_64-,$(MACHINE)))
 else ifneq (,$(findstring arm64-,$(MACHINE)))
 	ARCH_ARM64 := 1
 	ARCH_CPU := arm64
+	OBJ_FORMAT := elf64-littleaarch64
+	ARCH_FLAG := aarch64
 else ifneq (,$(findstring aarch64-,$(MACHINE)))
 	ARCH_ARM64 := 1
 	ARCH_CPU := arm64
+	OBJ_FORMAT := elf64-littleaarch64
+	ARCH_FLAG := aarch64
 else
 $(error Could not determine CPU architecture of $(MACHINE))
 endif

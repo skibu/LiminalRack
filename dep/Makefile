@@ -179,16 +179,17 @@ $(libspeexdsp): | speexdsp
 	$(MAKE) -C speexdsp
 	$(MAKE) -C speexdsp install
 
-libsamplerate-0.1.9:
-	$(WGET) "https://github.com/libsndfile/libsamplerate/releases/download/0.1.9/libsamplerate-0.1.9.tar.gz" || $(WGET) "http://www.mega-nerd.com/SRC/libsamplerate-0.1.9.tar.gz"
-	$(SHA256) libsamplerate-0.1.9.tar.gz 0a7eb168e2f21353fb6d84da152e4512126f7dc48ccb0be80578c565413444c1
-	$(UNTAR) libsamplerate-0.1.9.tar.gz
-	rm libsamplerate-0.1.9.tar.gz
+libsamplerate-0.2.1:
+	$(WGET) "https://github.com/libsndfile/libsamplerate/archive/refs/tags/0.2.1.tar.gz" -O libsamplerate-0.2.1.tar.gz 
+	$(SHA256) libsamplerate-0.2.1.tar.gz c28dc9fd587f250114d35aab180e41551935e37c84e7641c31d225cda5eb5fab
+	$(UNTAR) libsamplerate-0.2.1.tar.gz
+	rm libsamplerate-0.2.1.tar.gz
 
-$(libsamplerate): | libsamplerate-0.1.9
-	cd libsamplerate-0.1.9 && $(CONFIGURE) --disable-fftw --disable-sndfile
-	$(MAKE) -C libsamplerate-0.1.9
-	$(MAKE) -C libsamplerate-0.1.9 install
+$(libsamplerate): | libsamplerate-0.2.1
+	cd libsamplerate-0.2.1 && ./autogen.sh --no-configure
+	cd libsamplerate-0.2.1 && $(CONFIGURE) --disable-fftw --disable-sndfile
+	$(MAKE) -C libsamplerate-0.2.1
+	$(MAKE) -C libsamplerate-0.2.1 install
 
 RTMIDI_FLAGS += --enable-shared=no
 ifdef ARCH_LIN
