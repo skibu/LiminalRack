@@ -11,8 +11,15 @@ https://vcvrack.com/manual/Building
 
 Need some utilities, like cmake and jq.
 ```
+sudo apt update
 sudo apt install -y cmake
 sudo apt install -y jq
+sudo apt install -y libxinerama-dev
+sudo apt install -y libxcursor-dev
+sudo apt install -y libxi-dev
+
+sudo apt-get update
+sudo apt-get install -y libxrandr-dev
 ```
 
 ## Setup on MacOS
