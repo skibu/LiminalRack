@@ -9,12 +9,13 @@ https://vcvrack.com/manual/Building
 
 ## Setup on Raspberry Pi OS
 
-Need some utilities, like cmake, jq, and autoconf.
+Need some utilities, like cmake, jq, autoconf, and automake.
 ```
 sudo apt update
 sudo apt install -y cmake
 sudo apt install -y jq
 sudo apt install -y autoconf
+sudo apt install -y automake
 sudo apt install -y libxinerama-dev
 sudo apt install -y libxcursor-dev
 sudo apt install -y libxi-dev
