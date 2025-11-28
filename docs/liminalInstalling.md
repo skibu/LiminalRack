@@ -21,6 +21,8 @@ sudo apt install -y libxi-dev
 
 sudo apt-get update
 sudo apt-get install -y libxrandr-dev
+# For rtmidi. Need ALSA and JACK
+sudo apt-get install -y libasound2-dev libjack0 libjack-dev
 ```
 
 ## Setup on MacOS
