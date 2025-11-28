@@ -18,11 +18,13 @@ sudo apt install -y autoconf automake libtool build-essential
 sudo apt install -y libxinerama-dev
 sudo apt install -y libxcursor-dev
 sudo apt install -y libxi-dev
+sudo apt install -y libxrandr-dev
 
-sudo apt-get update
-sudo apt-get install -y libxrandr-dev
 # For rtmidi. Need ALSA and JACK
-sudo apt-get install -y libasound2-dev libjack0 libjack-dev
+sudo apt install -y libasound2-dev libjack0 libjack-dev
+
+# For rtaudio
+sudo apt install -y libpulse-dev
 ```
 
 ## Setup on MacOS
