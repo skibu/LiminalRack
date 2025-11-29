@@ -398,42 +398,45 @@ json_t* toJson() {
 }
 
 void fromJson(json_t* rootJ) {
-	json_t* languageJ = json_object_get(rootJ, "language");
-	if (languageJ)
-		language = json_string_value(languageJ);
+    json_t* languageJ = json_object_get(rootJ, "language");
+    if (languageJ) language = json_string_value(languageJ);
 
-	json_t* safeModeJ = json_object_get(rootJ, "safeMode");
-	if (safeModeJ) {
-		// If safe mode is enabled (e.g. by command line flag), don't disable it when loading.
-		if (json_boolean_value(safeModeJ))
-			safeMode = true;
-	}
+    json_t* safeModeJ = json_object_get(rootJ, "safeMode");
+    if (safeModeJ) {
+        // If safe mode is enabled (e.g. by command line flag), don't disable it
+        // when loading.
+        if (json_boolean_value(safeModeJ)) safeMode = true;
+    }
 
-	json_t* tokenJ = json_object_get(rootJ, "token");
-	if (tokenJ)
-		token = json_string_value(tokenJ);
-	
+    json_t* tokenJ = json_object_get(rootJ, "token");
+    if (tokenJ) token = json_string_value(tokenJ);
+
     json_t* moduleBrowserBgJ = json_object_get(rootJ, "moduleBrowserBg");
     if (moduleBrowserBgJ) {
-        moduleBrowserBg = color::fromHexString(json_string_value(moduleBrowserBgJ));
+        moduleBrowserBg =
+            color::fromHexString(json_string_value(moduleBrowserBgJ));
     }
 
     json_t* lightModeThemeBgJ = json_object_get(rootJ, "lightModeThemeBg");
     if (lightModeThemeBgJ) {
-        lightModeThemeBg = color::fromHexString(json_string_value(lightModeThemeBgJ));
+        lightModeThemeBg =
+            color::fromHexString(json_string_value(lightModeThemeBgJ));
     }
     json_t* lightModeThemeFgJ = json_object_get(rootJ, "lightModeThemeFg");
     if (lightModeThemeFgJ) {
-        lightModeThemeFg = color::fromHexString(json_string_value(lightModeThemeFgJ));
+        lightModeThemeFg =
+            color::fromHexString(json_string_value(lightModeThemeFgJ));
     }
 
     json_t* darkModeThemeBgJ = json_object_get(rootJ, "darkModeThemeBg");
     if (darkModeThemeBgJ) {
-        darkModeThemeBg = color::fromHexString(json_string_value(darkModeThemeBgJ));
+        darkModeThemeBg =
+            color::fromHexString(json_string_value(darkModeThemeBgJ));
     }
     json_t* darkModeThemeFgJ = json_object_get(rootJ, "darkModeThemeFg");
     if (darkModeThemeFgJ) {
-        darkModeThemeFg = color::fromHexString(json_string_value(darkModeThemeFgJ));
+        darkModeThemeFg =
+            color::fromHexString(json_string_value(darkModeThemeFgJ));
     }
 
     json_t* tooltipBgJ = json_object_get(rootJ, "tooltipBg");
@@ -447,284 +450,265 @@ void fromJson(json_t* rootJ) {
         tooltipFontSize = json_integer_value(tooltipFontSizeJ);
 
     json_t* isLiminalJ = json_object_get(rootJ, "isLiminal");
-	if (isLiminalJ) isLiminal = json_boolean_value(isLiminalJ);
+    if (isLiminalJ) isLiminal = json_boolean_value(isLiminalJ);
 
-	json_t* hasTouchscreenJ = json_object_get(rootJ, "hasTouchscreen");
-	if (hasTouchscreenJ) hasTouchscreen = json_boolean_value(hasTouchscreenJ);
+    json_t* hasTouchscreenJ = json_object_get(rootJ, "hasTouchscreen");
+    if (hasTouchscreenJ) hasTouchscreen = json_boolean_value(hasTouchscreenJ);
 
-	json_t* hasKeyboardJ = json_object_get(rootJ, "hasKeyboard");
-	if (hasKeyboardJ) hasKeyboard = json_boolean_value(hasKeyboardJ);
+    json_t* hasKeyboardJ = json_object_get(rootJ, "hasKeyboard");
+    if (hasKeyboardJ) hasKeyboard = json_boolean_value(hasKeyboardJ);
 
-	json_t* bndLabelFontSizeJ = json_object_get(rootJ, "bndLabelFontSize");
-	if (bndLabelFontSizeJ)
-		bndLabelFontSize = json_integer_value(bndLabelFontSizeJ);
+    json_t* bndLabelFontSizeJ = json_object_get(rootJ, "bndLabelFontSize");
+    if (bndLabelFontSizeJ)
+        bndLabelFontSize = json_integer_value(bndLabelFontSizeJ);
 
-	json_t* bndWidgetHeightJ = json_object_get(rootJ, "bndWidgetHeight");
-	if (bndWidgetHeightJ)
-		bndWidgetHeight = json_integer_value(bndWidgetHeightJ);
+    json_t* bndWidgetHeightJ = json_object_get(rootJ, "bndWidgetHeight");
+    if (bndWidgetHeightJ)
+        bndWidgetHeight = json_integer_value(bndWidgetHeightJ);
 
-	json_t* windowMaximizedJ = json_object_get(rootJ, "windowMaximized");
-	if (windowMaximizedJ) windowMaximized = json_boolean_value(windowMaximizedJ);
+    json_t* windowMaximizedJ = json_object_get(rootJ, "windowMaximized");
+    if (windowMaximizedJ)
+        windowMaximized = json_boolean_value(windowMaximizedJ);
 
     json_t* windowSizeJ = json_object_get(rootJ, "windowSize");
-	if (windowSizeJ) {
-		double x, y;
-		json_unpack(windowSizeJ, "[F, F]", &x, &y);
-		windowSize = math::Vec(x, y);
-	}
+    if (windowSizeJ) {
+        double x, y;
+        json_unpack(windowSizeJ, "[F, F]", &x, &y);
+        windowSize = math::Vec(x, y);
+    }
 
-	json_t* windowPosJ = json_object_get(rootJ, "windowPos");
-	if (windowPosJ) {
-		double x, y;
-		json_unpack(windowPosJ, "[F, F]", &x, &y);
-		windowPos = math::Vec(x, y);
-	}
+    json_t* windowPosJ = json_object_get(rootJ, "windowPos");
+    if (windowPosJ) {
+        double x, y;
+        json_unpack(windowPosJ, "[F, F]", &x, &y);
+        windowPos = math::Vec(x, y);
+    }
 
-	json_t* invertZoomJ = json_object_get(rootJ, "invertZoom");
-	if (invertZoomJ)
-		invertZoom = json_boolean_value(invertZoomJ);
+    json_t* invertZoomJ = json_object_get(rootJ, "invertZoom");
+    if (invertZoomJ) invertZoom = json_boolean_value(invertZoomJ);
 
-	json_t* mouseWheelZoomJ = json_object_get(rootJ, "mouseWheelZoom");
-	if (mouseWheelZoomJ)
-		mouseWheelZoom = json_boolean_value(mouseWheelZoomJ);
+    json_t* mouseWheelZoomJ = json_object_get(rootJ, "mouseWheelZoom");
+    if (mouseWheelZoomJ) mouseWheelZoom = json_boolean_value(mouseWheelZoomJ);
 
-	json_t* pixelRatioJ = json_object_get(rootJ, "pixelRatio");
-	if (pixelRatioJ)
-		pixelRatio = json_number_value(pixelRatioJ);
+    json_t* pixelRatioJ = json_object_get(rootJ, "pixelRatio");
+    if (pixelRatioJ) pixelRatio = json_number_value(pixelRatioJ);
 
-	json_t* uiThemeJ = json_object_get(rootJ, "uiTheme");
-	if (uiThemeJ)
-		uiTheme = json_string_value(uiThemeJ);
+    json_t* uiThemeJ = json_object_get(rootJ, "uiTheme");
+    if (uiThemeJ) uiTheme = json_string_value(uiThemeJ);
 
-	json_t* cableOpacityJ = json_object_get(rootJ, "cableOpacity");
-	if (cableOpacityJ)
-		cableOpacity = json_number_value(cableOpacityJ);
+    json_t* cableOpacityJ = json_object_get(rootJ, "cableOpacity");
+    if (cableOpacityJ) cableOpacity = json_number_value(cableOpacityJ);
 
-	json_t* cableTensionJ = json_object_get(rootJ, "cableTension");
-	if (cableTensionJ)
-		cableTension = json_number_value(cableTensionJ);
+    json_t* cableTensionJ = json_object_get(rootJ, "cableTension");
+    if (cableTensionJ) cableTension = json_number_value(cableTensionJ);
 
-    json_t* cableTensionRandomFactorJ = json_object_get(rootJ, "cableTensionRandomFactor");
+    json_t* cableTensionRandomFactorJ =
+        json_object_get(rootJ, "cableTensionRandomFactor");
     if (cableTensionRandomFactorJ)
         cableTensionRandomFactor = json_number_value(cableTensionRandomFactorJ);
 
-	json_t* rackBrightnessJ = json_object_get(rootJ, "rackBrightness");
-	if (rackBrightnessJ)
-		rackBrightness = json_number_value(rackBrightnessJ);
+    json_t* rackBrightnessJ = json_object_get(rootJ, "rackBrightness");
+    if (rackBrightnessJ) rackBrightness = json_number_value(rackBrightnessJ);
 
-	json_t* haloBrightnessJ = json_object_get(rootJ, "haloBrightness");
-	if (haloBrightnessJ)
-		haloBrightness = json_number_value(haloBrightnessJ);
+    json_t* haloBrightnessJ = json_object_get(rootJ, "haloBrightness");
+    if (haloBrightnessJ) haloBrightness = json_number_value(haloBrightnessJ);
 
-	json_t* allowCursorLockJ = json_object_get(rootJ, "allowCursorLock");
-	if (allowCursorLockJ)
-		allowCursorLock = json_boolean_value(allowCursorLockJ);
+    json_t* allowCursorLockJ = json_object_get(rootJ, "allowCursorLock");
+    if (allowCursorLockJ)
+        allowCursorLock = json_boolean_value(allowCursorLockJ);
 
-	json_t* knobModeJ = json_object_get(rootJ, "knobMode");
-	if (knobModeJ)
-		knobMode = (KnobMode) json_integer_value(knobModeJ);
+    json_t* knobModeJ = json_object_get(rootJ, "knobMode");
+    if (knobModeJ) knobMode = (KnobMode)json_integer_value(knobModeJ);
 
-	json_t* knobScrollJ = json_object_get(rootJ, "knobScroll");
-	if (knobScrollJ)
-		knobScroll = json_boolean_value(knobScrollJ);
+    json_t* knobScrollJ = json_object_get(rootJ, "knobScroll");
+    if (knobScrollJ) knobScroll = json_boolean_value(knobScrollJ);
 
-	json_t* knobLinearSensitivityJ = json_object_get(rootJ, "knobLinearSensitivity");
-	if (knobLinearSensitivityJ)
-		knobLinearSensitivity = json_number_value(knobLinearSensitivityJ);
+    json_t* knobLinearSensitivityJ =
+        json_object_get(rootJ, "knobLinearSensitivity");
+    if (knobLinearSensitivityJ)
+        knobLinearSensitivity = json_number_value(knobLinearSensitivityJ);
 
-	json_t* knobScrollSensitivityJ = json_object_get(rootJ, "knobScrollSensitivity");
-	if (knobScrollSensitivityJ)
-		knobScrollSensitivity = json_number_value(knobScrollSensitivityJ);
+    json_t* knobScrollSensitivityJ =
+        json_object_get(rootJ, "knobScrollSensitivity");
+    if (knobScrollSensitivityJ)
+        knobScrollSensitivity = json_number_value(knobScrollSensitivityJ);
 
-	json_t* sampleRateJ = json_object_get(rootJ, "sampleRate");
-	if (sampleRateJ)
-		sampleRate = json_number_value(sampleRateJ);
+    json_t* sampleRateJ = json_object_get(rootJ, "sampleRate");
+    if (sampleRateJ) sampleRate = json_number_value(sampleRateJ);
 
-	json_t* threadCountJ = json_object_get(rootJ, "threadCount");
-	if (threadCountJ)
-		threadCount = json_integer_value(threadCountJ);
+    json_t* threadCountJ = json_object_get(rootJ, "threadCount");
+    if (threadCountJ) threadCount = json_integer_value(threadCountJ);
 
-	json_t* tooltipsJ = json_object_get(rootJ, "tooltips");
-	if (tooltipsJ)
-		tooltips = json_boolean_value(tooltipsJ);
+    json_t* tooltipsJ = json_object_get(rootJ, "tooltips");
+    if (tooltipsJ) tooltips = json_boolean_value(tooltipsJ);
 
-	json_t* cpuMeterJ = json_object_get(rootJ, "cpuMeter");
-	if (cpuMeterJ)
-		cpuMeter = json_boolean_value(cpuMeterJ);
+    json_t* cpuMeterJ = json_object_get(rootJ, "cpuMeter");
+    if (cpuMeterJ) cpuMeter = json_boolean_value(cpuMeterJ);
 
-	json_t* lockModulesJ = json_object_get(rootJ, "lockModules");
-	if (lockModulesJ)
-		lockModules = json_boolean_value(lockModulesJ);
+    json_t* lockModulesJ = json_object_get(rootJ, "lockModules");
+    if (lockModulesJ) lockModules = json_boolean_value(lockModulesJ);
 
-	json_t* squeezeModulesJ = json_object_get(rootJ, "squeezeModules");
-	if (squeezeModulesJ)
-		squeezeModules = json_boolean_value(squeezeModulesJ);
+    json_t* squeezeModulesJ = json_object_get(rootJ, "squeezeModules");
+    if (squeezeModulesJ) squeezeModules = json_boolean_value(squeezeModulesJ);
 
-	json_t* preferDarkPanelsJ = json_object_get(rootJ, "preferDarkPanels");
-	if (preferDarkPanelsJ)
-		preferDarkPanels = json_boolean_value(preferDarkPanelsJ);
+    json_t* preferDarkPanelsJ = json_object_get(rootJ, "preferDarkPanels");
+    if (preferDarkPanelsJ)
+        preferDarkPanels = json_boolean_value(preferDarkPanelsJ);
 
-	// Legacy setting in Rack <2.2
-	json_t* frameSwapIntervalJ = json_object_get(rootJ, "frameSwapInterval");
-	if (frameSwapIntervalJ) {
-		// Assume 60 Hz monitor refresh rate.
-		int frameSwapInterval = json_integer_value(frameSwapIntervalJ);
-		if (frameSwapInterval > 0)
-			frameRateLimit = 60.f / frameSwapInterval;
-		else
-			frameRateLimit = 0.f;
-	}
+    // Legacy setting in Rack <2.2
+    json_t* frameSwapIntervalJ = json_object_get(rootJ, "frameSwapInterval");
+    if (frameSwapIntervalJ) {
+        // Assume 60 Hz monitor refresh rate.
+        int frameSwapInterval = json_integer_value(frameSwapIntervalJ);
+        if (frameSwapInterval > 0)
+            frameRateLimit = 60.f / frameSwapInterval;
+        else
+            frameRateLimit = 0.f;
+    }
 
-	json_t* frameRateLimitJ = json_object_get(rootJ, "frameRateLimit");
-	if (frameRateLimitJ)
-		frameRateLimit = json_number_value(frameRateLimitJ);
+    json_t* frameRateLimitJ = json_object_get(rootJ, "frameRateLimit");
+    if (frameRateLimitJ) frameRateLimit = json_number_value(frameRateLimitJ);
 
-	json_t* autosaveIntervalJ = json_object_get(rootJ, "autosaveInterval");
-	if (autosaveIntervalJ)
-		autosaveInterval = json_number_value(autosaveIntervalJ);
+    json_t* autosaveIntervalJ = json_object_get(rootJ, "autosaveInterval");
+    if (autosaveIntervalJ)
+        autosaveInterval = json_number_value(autosaveIntervalJ);
 
-	json_t* skipLoadOnLaunchJ = json_object_get(rootJ, "skipLoadOnLaunch");
-	if (skipLoadOnLaunchJ)
-		skipLoadOnLaunch = json_boolean_value(skipLoadOnLaunchJ);
+    json_t* skipLoadOnLaunchJ = json_object_get(rootJ, "skipLoadOnLaunch");
+    if (skipLoadOnLaunchJ)
+        skipLoadOnLaunch = json_boolean_value(skipLoadOnLaunchJ);
 
-	json_t* lastPatchDirectoryJ = json_object_get(rootJ, "lastPatchDirectory");
-	if (lastPatchDirectoryJ)
-		lastPatchDirectory = json_string_value(lastPatchDirectoryJ);
+    json_t* lastPatchDirectoryJ = json_object_get(rootJ, "lastPatchDirectory");
+    if (lastPatchDirectoryJ)
+        lastPatchDirectory = json_string_value(lastPatchDirectoryJ);
 
-	json_t* lastSelectionDirectoryJ = json_object_get(rootJ, "lastSelectionDirectory");
-	if (lastSelectionDirectoryJ)
-		lastSelectionDirectory = json_string_value(lastSelectionDirectoryJ);
+    json_t* lastSelectionDirectoryJ =
+        json_object_get(rootJ, "lastSelectionDirectory");
+    if (lastSelectionDirectoryJ)
+        lastSelectionDirectory = json_string_value(lastSelectionDirectoryJ);
 
-	recentPatchPaths.clear();
-	json_t* recentPatchPathsJ = json_object_get(rootJ, "recentPatchPaths");
-	if (recentPatchPathsJ) {
-		size_t i;
-		json_t* pathJ;
-		json_array_foreach(recentPatchPathsJ, i, pathJ) {
-			std::string path = json_string_value(pathJ);
-			recentPatchPaths.push_back(path);
-		}
-	}
-	// Update recent patches to use new dir
-	if (asset::oldUserDir != "") {
-		for (std::string& path : recentPatchPaths) {
-			if (string::startsWith(path, asset::oldUserDir)) {
-				path.replace(0, asset::oldUserDir.size(), asset::userDir);
-			}
-		}
-	}
+    recentPatchPaths.clear();
+    json_t* recentPatchPathsJ = json_object_get(rootJ, "recentPatchPaths");
+    if (recentPatchPathsJ) {
+        size_t i;
+        json_t* pathJ;
+        json_array_foreach(recentPatchPathsJ, i, pathJ) {
+            std::string path = json_string_value(pathJ);
+            recentPatchPaths.push_back(path);
+        }
+    }
+    // Update recent patches to use new dir
+    if (asset::oldUserDir != "") {
+        for (std::string& path : recentPatchPaths) {
+            if (string::startsWith(path, asset::oldUserDir)) {
+                path.replace(0, asset::oldUserDir.size(), asset::userDir);
+            }
+        }
+    }
 
-	cableColors.clear();
-	json_t* cableColorsJ = json_object_get(rootJ, "cableColors");
-	if (cableColorsJ) {
-		size_t i;
-		json_t* cableColorJ;
-		json_array_foreach(cableColorsJ, i, cableColorJ) {
-			std::string colorStr = json_string_value(cableColorJ);
-			cableColors.push_back(color::fromHexString(colorStr));
-		}
-	}
+    cableColors.clear();
+    json_t* cableColorsJ = json_object_get(rootJ, "cableColors");
+    if (cableColorsJ) {
+        size_t i;
+        json_t* cableColorJ;
+        json_array_foreach(cableColorsJ, i, cableColorJ) {
+            std::string colorStr = json_string_value(cableColorJ);
+            cableColors.push_back(color::fromHexString(colorStr));
+        }
+    }
 
-	cableLabels.clear();
-	json_t* cableLabelsJ = json_object_get(rootJ, "cableLabels");
-	if (cableLabelsJ) {
-		size_t i;
-		json_t* cableLabelJ;
-		json_array_foreach(cableLabelsJ, i, cableLabelJ) {
-			cableLabels.push_back(json_string_value(cableLabelJ));
-		}
-	}
+    cableLabels.clear();
+    json_t* cableLabelsJ = json_object_get(rootJ, "cableLabels");
+    if (cableLabelsJ) {
+        size_t i;
+        json_t* cableLabelJ;
+        json_array_foreach(cableLabelsJ, i, cableLabelJ) {
+            cableLabels.push_back(json_string_value(cableLabelJ));
+        }
+    }
 
-	json_t* cableAutoRotateJ = json_object_get(rootJ, "cableAutoRotate");
-	if (cableAutoRotateJ)
-		cableAutoRotate = json_boolean_value(cableAutoRotateJ);
+    json_t* cableAutoRotateJ = json_object_get(rootJ, "cableAutoRotate");
+    if (cableAutoRotateJ)
+        cableAutoRotate = json_boolean_value(cableAutoRotateJ);
 
-	json_t* autoCheckUpdatesJ = json_object_get(rootJ, "autoCheckUpdates");
-	if (autoCheckUpdatesJ)
-		autoCheckUpdates = json_boolean_value(autoCheckUpdatesJ);
+    json_t* autoCheckUpdatesJ = json_object_get(rootJ, "autoCheckUpdates");
+    if (autoCheckUpdatesJ)
+        autoCheckUpdates = json_boolean_value(autoCheckUpdatesJ);
 
-	json_t* verifyHttpsCertsJ = json_object_get(rootJ, "verifyHttpsCerts");
-	if (verifyHttpsCertsJ)
-		verifyHttpsCerts = json_boolean_value(verifyHttpsCertsJ);
+    json_t* verifyHttpsCertsJ = json_object_get(rootJ, "verifyHttpsCerts");
+    if (verifyHttpsCertsJ)
+        verifyHttpsCerts = json_boolean_value(verifyHttpsCertsJ);
 
-	json_t* showTipsOnLaunchJ = json_object_get(rootJ, "showTipsOnLaunch");
-	if (showTipsOnLaunchJ)
-		showTipsOnLaunch = json_boolean_value(showTipsOnLaunchJ);
+    json_t* showTipsOnLaunchJ = json_object_get(rootJ, "showTipsOnLaunch");
+    if (showTipsOnLaunchJ)
+        showTipsOnLaunch = json_boolean_value(showTipsOnLaunchJ);
 
-	json_t* tipIndexJ = json_object_get(rootJ, "tipIndex");
-	if (tipIndexJ)
-		tipIndex = json_integer_value(tipIndexJ);
+    json_t* tipIndexJ = json_object_get(rootJ, "tipIndex");
+    if (tipIndexJ) tipIndex = json_integer_value(tipIndexJ);
 
-	json_t* browserSortJ = json_object_get(rootJ, "browserSort");
-	if (browserSortJ)
-		browserSort = (BrowserSort) json_integer_value(browserSortJ);
+    json_t* browserSortJ = json_object_get(rootJ, "browserSort");
+    if (browserSortJ)
+        browserSort = (BrowserSort)json_integer_value(browserSortJ);
 
-	json_t* browserZoomJ = json_object_get(rootJ, "browserZoom");
-	if (browserZoomJ)
-		browserZoom = json_number_value(browserZoomJ);
+    json_t* browserZoomJ = json_object_get(rootJ, "browserZoom");
+    if (browserZoomJ) browserZoom = json_number_value(browserZoomJ);
 
-	// Delete previous pluginSettings object
-	if (pluginSettingsJ) {
-		json_decref(pluginSettingsJ);
-		pluginSettingsJ = NULL;
-	}
-	pluginSettingsJ = json_object_get(rootJ, "pluginSettings");
-	if (pluginSettingsJ)
-		json_incref(pluginSettingsJ);
+    // Delete previous pluginSettings object
+    if (pluginSettingsJ) {
+        json_decref(pluginSettingsJ);
+        pluginSettingsJ = NULL;
+    }
+    pluginSettingsJ = json_object_get(rootJ, "pluginSettings");
+    if (pluginSettingsJ) json_incref(pluginSettingsJ);
 
-	moduleInfos.clear();
-	json_t* moduleInfosJ = json_object_get(rootJ, "moduleInfos");
-	if (moduleInfosJ) {
-		const char* pluginSlug;
-		json_t* pluginJ;
-		json_object_foreach(moduleInfosJ, pluginSlug, pluginJ) {
-			const char* moduleSlug;
-			json_t* moduleJ;
-			json_object_foreach(pluginJ, moduleSlug, moduleJ) {
-				ModuleInfo m;
+    moduleInfos.clear();
+    json_t* moduleInfosJ = json_object_get(rootJ, "moduleInfos");
+    if (moduleInfosJ) {
+        const char* pluginSlug;
+        json_t* pluginJ;
+        json_object_foreach(moduleInfosJ, pluginSlug, pluginJ) {
+            const char* moduleSlug;
+            json_t* moduleJ;
+            json_object_foreach(pluginJ, moduleSlug, moduleJ) {
+                ModuleInfo m;
 
-				json_t* enabledJ = json_object_get(moduleJ, "enabled");
-				if (enabledJ)
-					m.enabled = json_boolean_value(enabledJ);
+                json_t* enabledJ = json_object_get(moduleJ, "enabled");
+                if (enabledJ) m.enabled = json_boolean_value(enabledJ);
 
-				json_t* favoriteJ = json_object_get(moduleJ, "favorite");
-				if (favoriteJ)
-					m.favorite = json_boolean_value(favoriteJ);
+                json_t* favoriteJ = json_object_get(moduleJ, "favorite");
+                if (favoriteJ) m.favorite = json_boolean_value(favoriteJ);
 
-				json_t* addedJ = json_object_get(moduleJ, "added");
-				if (addedJ)
-					m.added = json_integer_value(addedJ);
+                json_t* addedJ = json_object_get(moduleJ, "added");
+                if (addedJ) m.added = json_integer_value(addedJ);
 
-				json_t* lastAddedJ = json_object_get(moduleJ, "lastAdded");
-				if (lastAddedJ)
-					m.lastAdded = json_number_value(lastAddedJ);
+                json_t* lastAddedJ = json_object_get(moduleJ, "lastAdded");
+                if (lastAddedJ) m.lastAdded = json_number_value(lastAddedJ);
 
-				moduleInfos[pluginSlug][moduleSlug] = m;
-			}
-		}
-	}
+                moduleInfos[pluginSlug][moduleSlug] = m;
+            }
+        }
+    }
 
-	moduleWhitelist.clear();
-	json_t* moduleWhitelistJ = json_object_get(rootJ, "moduleWhitelist");
-	if (moduleWhitelistJ) {
-		const char* pluginSlug;
-		json_t* pluginJ;
-		json_object_foreach(moduleWhitelistJ, pluginSlug, pluginJ) {
-			auto& plugin = moduleWhitelist[pluginSlug];
+    moduleWhitelist.clear();
+    json_t* moduleWhitelistJ = json_object_get(rootJ, "moduleWhitelist");
+    if (moduleWhitelistJ) {
+        const char* pluginSlug;
+        json_t* pluginJ;
+        json_object_foreach(moduleWhitelistJ, pluginSlug, pluginJ) {
+            auto& plugin = moduleWhitelist[pluginSlug];
 
-			if (json_is_true(pluginJ)) {
-				plugin.subscribed = true;
-				continue;
-			}
+            if (json_is_true(pluginJ)) {
+                plugin.subscribed = true;
+                continue;
+            }
 
-			size_t moduleIndex;
-			json_t* moduleJ;
-			json_array_foreach(pluginJ, moduleIndex, moduleJ) {
-				std::string moduleSlug = json_string_value(moduleJ);
-				plugin.moduleSlugs.insert(moduleSlug);
-			}
-		}
-	}
+            size_t moduleIndex;
+            json_t* moduleJ;
+            json_array_foreach(pluginJ, moduleIndex, moduleJ) {
+                std::string moduleSlug = json_string_value(moduleJ);
+                plugin.moduleSlugs.insert(moduleSlug);
+            }
+        }
+    }
 }
 
 void save(std::string path) {
