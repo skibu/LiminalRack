@@ -18,9 +18,13 @@ sudo apt install -y autoconf automake libtool build-essential
 sudo apt install -y libxinerama-dev
 sudo apt install -y libxcursor-dev
 sudo apt install -y libxi-dev
+sudo apt install -y libxrandr-dev
 
-sudo apt-get update
-sudo apt-get install -y libxrandr-dev
+# For rtmidi. Need ALSA and JACK
+sudo apt install -y libasound2-dev libjack0 libjack-dev
+
+# For rtaudio
+sudo apt install -y libpulse-dev
 ```
 
 ## Setup on MacOS
@@ -51,7 +55,17 @@ Note: original Rack is at https://github.com/VCVRack/Rack.git, but these instruc
 If happen to not use --recurse-submodules when cloning then need to clone submodules separately. Also good for updating changes:
 `$ git submodule update --init --recursive`
 
-## Downloading source code for Fundamental module 
+## Building Liminal Rack
+You can build Liminal Rack in VSCode or via command line. Doing it in VSCode is 
+best if you are going to develop the code further. But if you just want to run
+the existing code then the following command line instructions are easiest.
+```
+$ cd ~/vscode-projects/LiminalRack/
+$ make dep     # Build dependencies (can take 5-50 minutes!)
+$ make         # Build Rack (may take 1-5 minutes)
+```
+
+## Downloading & compiling source code for Fundamental module 
 Need to get the Fundamental Rack plugins. 
 These modules are the standard mostly utility ones. They are very useful and so should be used. 
 Need to download the Fundamental source code, compile it, and then place the compiled library in your Rack2
@@ -74,16 +88,6 @@ $ # make install # which does both make and make dist
 Note: if you are going to use VSCode to deal with the Fundamental code then you 
 should open up a separate VSCode project window 
 for Fundamental since it is a separate git repo.
-
-## Building Liminal Rack
-You can build Liminal Rack in VSCode or via command line. Doing it in VSCode is 
-best if you are going to develop the code further. But if you just want to run
-the existing code then the following command line instructions are easiest.
-```
-$ cd ~/vscode-projects/LiminalRack/
-$ make dep     # Build dependencies (can take 5-50 minutes!)
-$ make         # Build Rack (may take 1-5 minutes)
-```
 
 ## Run Liminal Rack:
 ```
