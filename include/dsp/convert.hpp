@@ -9,7 +9,7 @@ namespace dsp {
 
 /** 24-bit integer, using int32_t for conversions. */
 struct
-#ifdef __clang__
+#if defined(__clang__) || defined(__GNUC__)
 __attribute__((packed, aligned(1)))
 #else
 __attribute__((packed, aligned(1), gcc_struct))
