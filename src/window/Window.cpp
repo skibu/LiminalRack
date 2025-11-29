@@ -788,7 +788,7 @@ double Window::getMonitorRefreshRate() {
 }
 
 void Window::setFrameRate(double frameRate) const {
-    if (frameRate <= 0.0 || isnan(frameRate)) {
+    if (frameRate <= 0.0 || std::isnan(frameRate)) {
         // desired frame rate not proper so just run as fast as possible
         internal_->desiredFrameDuration_ = 0.0;
     } else {
@@ -816,7 +816,7 @@ double Window::getFrameDurationRemaining() const {
 
 double Window::getLastFrameRate() const {
     if (internal_->lastFrameDuration_ == 0.0 ||
-        isnan(internal_->lastFrameDuration_)) {
+        std::isnan(internal_->lastFrameDuration_)) {
         return 0.0;
     } else {
         return 1.0 / internal_->lastFrameDuration_;
