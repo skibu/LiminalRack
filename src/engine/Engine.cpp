@@ -25,7 +25,11 @@ inline void cpuPause() {
 #if defined ARCH_X64
 	_mm_pause();
 #elif defined ARCH_ARM64
-	__yield();
+    // Originally used __yield() from arm_acle.h, but appears that gcc on RasPi
+    // does not support it. Therefore, using inline asm instead as described in
+    // https://stackoverflow.com/questions/70069855/is-there-a-yield-intrinsic-on-arm
+	//__yield();
+    asm volatile("yield");
 #endif
 }
 
