@@ -90,6 +90,11 @@ static void initSystemDir() {
 #endif
 }
 
+/** Returns the full application name, including the "Liminal" prefix if applicable,
+ * and also the version number. So will be something like "LiminalRack2" */
+static std::string fullAppName() {
+    return std::string(settings::isLiminal ? "Liminal" : "") + APP_NAME + APP_VERSION_MAJOR;
+}
 
 static void initUserDir() {
 	if (!userDir.empty())
@@ -115,7 +120,7 @@ static void initUserDir() {
 	std::string localDir = string::UTF16toUTF8(localBufW);
 
 	// Usually C:/Users/<username>/AppData/Local/Rack2
-	userDir = system::join(localDir, "Rack" + APP_VERSION_MAJOR);
+	userDir = system::join(localDir, fullAppName());
 
 	// Get Documents path
 	WCHAR documentsBufW[MAX_PATH] = {};
@@ -124,12 +129,12 @@ static void initUserDir() {
 	std::string documentsDir = string::UTF16toUTF8(documentsBufW);
 
 	// Rack <2.5.0 used "My Documents/Rack2"
-	oldUserDir = system::join(documentsDir, "Rack" + APP_VERSION_MAJOR);
+	oldUserDir = system::join(documentsDir, fullAppName());
 #endif
 
 #if defined ARCH_MAC
 	// Usually ~/Library/Application Support/Rack2
-	userDir = system::join(getApplicationSupportDir(), "Rack" + APP_VERSION_MAJOR);
+	userDir = system::join(getApplicationSupportDir(), fullAppName());
 
 	// Get home directory
 	struct passwd* pw = getpwuid(getuid());
@@ -137,7 +142,7 @@ static void initUserDir() {
 	std::string homeDir = pw->pw_dir;
 
 	// Rack <2.5.0 used ~/Documents/Rack2
-	oldUserDir = system::join(homeDir, "Documents", "Rack" + APP_VERSION_MAJOR);
+	oldUserDir = system::join(homeDir, "Documents", fullAppName());
 #endif
 
 #if defined ARCH_LIN
@@ -159,7 +164,7 @@ static void initUserDir() {
 		userDir = system::join(homeDir, ".local", "share");
 	}
 	// Usually ~/.local/share/Rack2
-	userDir = system::join(userDir, "Rack" + APP_VERSION_MAJOR);
+	userDir = system::join(userDir, fullAppName());
 
 	// Rack <2.5.0 used ~/.Rack2
 	oldUserDir = system::join(homeDir, ".Rack" + APP_VERSION_MAJOR);
