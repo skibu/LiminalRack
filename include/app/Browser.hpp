@@ -251,7 +251,7 @@ class Browser : public widget::OpaqueWidget {
     TagButton* tagButton;
     FavoriteButton* favoriteButton;
     ClearButton* clearButton;
-    ui::Label* countLabel;
+    ui::Label* countLabel = nullptr; // Null it because not always created
 
     ui::ScrollWidget* moduleScroll;
     widget::Widget* moduleMargin;
