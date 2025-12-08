@@ -249,7 +249,9 @@ static void extractPackages(std::string path) {
 }
 
 static std::string getFundamentalPackagePath() {
-	for (const std::string& path : system::getEntries(asset::systemDir)) {
+	// Recursively search system dir for Fundamental package. By doing
+	// recursive search can find the plugins regardless where installed.
+	for (const std::string& path : system::getEntries(asset::systemDir, -1)) {
 		std::string filename = system::getFilename(path);
 		if (string::startsWith(filename, "Fundamental-") && string::endsWith(filename, APP_OS + "-" + APP_CPU + ".vcvplugin"))
 			return path;
@@ -387,20 +389,20 @@ static const std::map<std::string, std::string> pluginSlugFallbacks = {
 
 Plugin* getPlugin(const std::string& pluginSlug) {
 	if (pluginSlug.empty())
-		return NULL;
+		return nullptr;
 
 	auto it = std::find_if(plugins.begin(), plugins.end(), [=](Plugin* p) {
 		return p->slug == pluginSlug;
 	});
 	if (it != plugins.end())
 		return *it;
-	return NULL;
+	return nullptr;
 }
 
 
 Plugin* getPluginFallback(const std::string& pluginSlug) {
 	if (pluginSlug.empty())
-		return NULL;
+		return nullptr;
 
 	// Attempt example plugin
 	Plugin* p = getPlugin(pluginSlug);
@@ -412,7 +414,7 @@ Plugin* getPluginFallback(const std::string& pluginSlug) {
 	if (it != pluginSlugFallbacks.end())
 		return getPlugin(it->second);
 
-	return NULL;
+	return nullptr;
 }
 
 

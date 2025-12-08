@@ -25,7 +25,7 @@ PRIVATE void destroy();
 PRIVATE void settingsMergeJson(json_t* rootJ);
 
 /** Returns the already loaded Plugin identified by the slug.
- * Returns NULL if not found.
+ * Returns nullptr if not found.
  */
 Plugin* getPlugin(const std::string& pluginSlug);
 
