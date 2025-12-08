@@ -7,34 +7,39 @@
 namespace rack {
 namespace gamepad {
 
-
-struct Driver;
+// Forward declaration
+class GamepadDriver;
 
 
 static const int DRIVER = -10;
-static Driver* driver = NULL;
+static GamepadDriver* driver_s = nullptr;
 
 
-struct InputDevice : midi::InputDevice {
-	int deviceId;
-	int16_t ccValues[128] = {};
+class GamepadInputDevice : public midi::InputDevice {
+    public:
+    void setDeviceId(int deviceId) {
+        deviceId_ = deviceId;
+    }
+
+	int deviceId_;
+	int16_t ccValues_[128] = {};
 
 	std::string getName() override {
-		const char* name = glfwGetJoystickName(deviceId);
+		const char* name = glfwGetJoystickName(deviceId_);
 		if (!name)
 			return "";
 		return name;
 	}
 
 	void step() {
-		if (!glfwJoystickPresent(deviceId))
+		if (!glfwJoystickPresent(deviceId_))
 			return;
 
 		// Get gamepad state
 		int numAxes;
-		const float* axes = glfwGetJoystickAxes(deviceId, &numAxes);
+		const float* axes = glfwGetJoystickAxes(deviceId_, &numAxes);
 		int numButtons;
-		const unsigned char* buttons = glfwGetJoystickButtons(deviceId, &numButtons);
+		const unsigned char* buttons = glfwGetJoystickButtons(deviceId_, &numButtons);
 
 		// Convert axes and buttons to MIDI CC
 		// Unfortunately to support 14-bit MIDI CC, only the first 32 CCs can be used.
@@ -52,9 +57,9 @@ struct InputDevice : midi::InputDevice {
 				value = buttons[i - numAxes] ? 0x3f80 : 0;
 			}
 
-			if (value == ccValues[i])
+			if (value == ccValues_[i])
 				continue;
-			ccValues[i] = value;
+			ccValues_[i] = value;
 
 			// Send MSB MIDI message
 			midi::Message msg;
@@ -77,18 +82,24 @@ struct InputDevice : midi::InputDevice {
 };
 
 
-struct Driver : midi::Driver {
-	InputDevice devices[16];
-
-	Driver() {
+class GamepadDriver : public midi::Driver {
+    public:
+	GamepadDriver() {
 		for (int i = 0; i < 16; i++) {
-			devices[i].deviceId = i;
+			devices_[i].setDeviceId(i);
 		}
 	}
+    
+    GamepadInputDevice& getGamepadDevice(int i) {
+        return devices_[i];
+    }
 
 	std::string getName() override {
 		return "Gamepad";
 	}
+
+    private:
+	GamepadInputDevice devices_[16];
 
 	std::vector<int> getInputDeviceIds() override {
 		std::vector<int> deviceIds;
@@ -120,15 +131,16 @@ struct Driver : midi::Driver {
 		if (!glfwJoystickPresent(deviceId))
 			return NULL;
 
-		devices[deviceId].subscribe(input);
-		return &devices[deviceId];
+        GamepadInputDevice& dev = getGamepadDevice(deviceId);
+		dev.subscribe(input);
+		return &dev;
 	}
 
 	void unsubscribeInput(int deviceId, midi::Input* input) override {
 		if (!(0 <= deviceId && deviceId < 16))
 			return;
 
-		devices[deviceId].unsubscribe(input);
+		getGamepadDevice(deviceId).unsubscribe(input);
 	}
 };
 
@@ -136,14 +148,21 @@ struct Driver : midi::Driver {
 
 
 void init() {
-	driver = new Driver;
-	midi::addDriver(DRIVER, driver);
+    // If already initialized, return
+    if (driver_s) return;
+
+	driver_s = new GamepadDriver();
+	midi::addDriver(DRIVER, driver_s);
 }
 
 void step() {
+    // Initialize driver if hasn't been done yet
+    if (!driver_s) init();
+
+    // Step all connected gamepads
 	for (int i = 0; i < 16; i++) {
 		if (glfwJoystickPresent(i)) {
-			driver->devices[i].step();
+			driver_s->getGamepadDevice(i).step();
 		}
 	}
 }
