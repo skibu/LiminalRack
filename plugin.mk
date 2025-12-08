@@ -1,3 +1,7 @@
+# Makefile for making a plugin.
+# Puts the resulting files into $(RACK_USER_DIR)/plugins-$(ARCH_OS)-$(ARCH_CPU)
+# which is the Rack2 user directory. 
+
 ifndef RACK_DIR
 $(error RACK_DIR is not defined)
 endif
