@@ -90,10 +90,13 @@ static void initSystemDir() {
 #endif
 }
 
-/** Returns the full application name, including the "Liminal" prefix if applicable,
- * and also the version number. So will be something like "LiminalRack2" */
+/** Returns the full application name and the version number. So will be
+ * something like "Rack2". Tried including "Liminal" in te name but then the
+ * users directory would be LiminalRack2 yet the plugins are distributed to
+ * Rack2.
+ */
 static std::string fullAppName() {
-    return std::string(settings::isLiminal ? "Liminal" : "") + APP_NAME + APP_VERSION_MAJOR;
+    return std::string(APP_NAME + APP_VERSION_MAJOR);
 }
 
 static void initUserDir() {
