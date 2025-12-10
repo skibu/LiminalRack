@@ -52,6 +52,12 @@ extern NVGcolor tooltipFg;
 /** Font size for tooltips */
 extern int tooltipFontSize;
 
+/** Color for when selecting modules. Not stored in json file. */
+extern NVGcolor selectModuleFillColor;
+
+/** Color for when selecting modules. Not stored in json file. */
+extern NVGcolor selectModuleStrokeColor;
+
 /** Whether the window is maximized */
 extern bool windowMaximized;
 

@@ -189,10 +189,10 @@ void RackWidget::draw(const DrawArgs& args) {
         math::Rect selectionBox = math::Rect::fromCorners(
             internal_->selectionStart, internal_->selectionEnd);
         nvgRect(args.vg, RECT_ARGS(selectionBox));
-        nvgFillColor(args.vg, nvgRGBAf(1, 0, 0, 0.25));
+        nvgFillColor(args.vg, settings::selectModuleFillColor);
         nvgFill(args.vg);
         nvgStrokeWidth(args.vg, 2.0);
-        nvgStrokeColor(args.vg, nvgRGBAf(1, 0, 0, 0.5));
+        nvgStrokeColor(args.vg, settings::selectModuleStrokeColor);
         nvgStroke(args.vg);
     }
 }

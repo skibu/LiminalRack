@@ -275,14 +275,14 @@ void ModuleWidget::draw(const DrawArgs& args) {
                      rack::settings::bndWidgetHeight, -1, meterText.c_str());
     }
 
-    // Selection
+    // If module selected then draw it specially by highlighting with green
     if (getRack()->isSelected(this)) {
         nvgBeginPath(args.vg);
         nvgRect(args.vg, 0.0, 0.0, VEC_ARGS(getSize()));
-        nvgFillColor(args.vg, nvgRGBAf(1, 0, 0, 0.25));
+        nvgFillColor(args.vg, settings::selectModuleFillColor);
         nvgFill(args.vg);
         nvgStrokeWidth(args.vg, 2.0);
-        nvgStrokeColor(args.vg, nvgRGBAf(1, 0, 0, 0.5));
+        nvgStrokeColor(args.vg, settings::selectModuleStrokeColor);
         nvgStroke(args.vg);
     }
 

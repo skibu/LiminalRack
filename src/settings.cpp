@@ -52,6 +52,10 @@ NVGcolor tooltipBg = color::fromHexString("#3b3434");
 NVGcolor tooltipFg = color::fromHexString("#F0F0F0");
 int tooltipFontSize = 15;
 
+// For selecting modules
+NVGcolor selectModuleFillColor = nvgRGBAf(0.0f, 1.0f, 0.0f, 0.2f); // semi-transparent green
+NVGcolor selectModuleStrokeColor = nvgRGBAf(0.0f, 1.0f, 0.0f, 0.4f); // semi-transparent green outline
+
 // Whether in full screen mode
 bool windowMaximized = false;
 math::Vec windowSize = math::Vec(1024, 720);
