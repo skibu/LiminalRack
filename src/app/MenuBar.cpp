@@ -1225,12 +1225,12 @@ struct LibraryMenu : ui::Menu {
 
 			ui::TextField* emailField = new ui::TextField;
 			emailField->setPlaceholder(string::translate("MenuBar.library.email"));
-			emailField->setWidth(320.0);
+			emailField->setWidth(350.0);
 			addChild(emailField);
 
 			AccountPasswordField* passwordField = new AccountPasswordField();
 			passwordField->setPlaceholder(string::translate("MenuBar.library.password"));
-			passwordField->setWidth(320.0);
+			passwordField->setWidth(350.0);
 			passwordField->setNextField(emailField);
 			emailField->setNextField(passwordField);
 			addChild(passwordField);
