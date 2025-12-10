@@ -275,7 +275,7 @@ int main(int argc, char* argv[]) {
 	midiloopback::init();
 
 	INFO("Initializing module browser");
-	app::browserInit();
+	app::browser::browserInit();
     
 	INFO("Initializing module library");
 	library::init();

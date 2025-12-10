@@ -9,6 +9,12 @@
 namespace rack {
 namespace app {
 
+// Forward declaration of Browser class
+namespace browser {
+    class Browser;
+}
+
+
 /** The top level widget. Contains all other widgets in the application
  * including the Rack, MenuBar, Browser, etc.
  */
@@ -35,8 +41,21 @@ class Scene : public widget::OpaqueWidget {
     /** Returns the rack scroll widget that is contained by the Scene */
     RackScrollWidget* getRackScroll();
 
-    /** Returns the module browser widget that is contained by the Scene */
-    widget::Widget* getBrowser();
+    /** Returns the module browser widget that is contained by the Scene.
+     * If want to show/hide the browser, use the overlay since the overlay
+     * contains the browser.
+     */
+    browser::Browser* getBrowser() {
+        return browser_;
+    };
+
+    /** Returns the overlay of the module browser widget that is contained by 
+     * the Scene. If want to show/hide the browser, use this overlay since the 
+     * overlay contains the browser..
+     */
+    widget::Widget *getBrowserOverlay() {
+        return browserOverlay_;
+    };
 
     // draw() and step() called directly so must be public
     /** Called once per frame to update the Scene */
@@ -53,7 +72,8 @@ class Scene : public widget::OpaqueWidget {
     RackScrollWidget* rackScroll_;
     RackWidget* rack_;
     widget::Widget* menuBar_;
-    widget::Widget* browser_;
+    browser::Browser* browser_;
+    widget::Widget* browserOverlay_;
     SplashWidget* splashWidget_;
 
     // The last mouse position in the Scene's local coordinates

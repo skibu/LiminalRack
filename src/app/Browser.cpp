@@ -112,7 +112,7 @@ static ModuleWidget* chooseModel(plugin::Model* model) {
     getHistory()->push(h);
 
     // Hide Module Browser since user has chosen a module
-    getScene()->getBrowser()->hide();
+    getScene()->getBrowserOverlay()->hide();
 
     return moduleWidget;
 }
@@ -1101,16 +1101,13 @@ void Browser::ZoomButton::onAction(const ActionEvent& e) {
     }
 }
 
-} // namespace browser
-
-
 
 void browserInit() {
 	browser::modelDbInit();
 }
 
 
-widget::Widget* browserCreate() {
+Browser* browserCreate() {
     // Draw a dark area over the rest of the UI. This way user's focus is on
     // the Browser Window but they can still see that the Rack window is there,
     // underneath.
@@ -1120,12 +1117,12 @@ widget::Widget* browserCreate() {
     overlay->bgColor = nvgRGBAf(0, 0, 0, 0.58);
 
     // Now actually create the Browser window and add it to the overlay heirachy
-	browser::Browser* browser = new browser::Browser;
+	Browser* browser = new Browser();
 	overlay->addChild(browser);
 
-	return overlay;
+	return browser;
 }
 
-
+} // namespace browser
 } // namespace app
 } // namespace rack

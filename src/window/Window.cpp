@@ -201,6 +201,8 @@ static void mouseButtonCallback(GLFWwindow* win, int button, int action, int mod
 }
 
 static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
+	//DEBUG("cursorPosCallback x=%.2f y=%.2f", xpos, ypos);
+
     contextSet((Context*)glfwGetWindowUserPointer(win));
     math::Vec mousePos =
         math::Vec(xpos, ypos)
@@ -227,6 +229,8 @@ static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
 }
 
 static void cursorEnterCallback(GLFWwindow* win, int entered) {
+	DEBUG("cursorEnterCallback entered=%d", entered);
+
 	contextSet((Context*) glfwGetWindowUserPointer(win));
 	if (!entered) {
 		getEvent()->handleLeave();
@@ -235,6 +239,8 @@ static void cursorEnterCallback(GLFWwindow* win, int entered) {
 
 
 static void scrollCallback(GLFWwindow* win, double x, double y) {
+	DEBUG("scrollCallback x=%.2f y=%.2f", x, y);
+
 	contextSet((Context*) glfwGetWindowUserPointer(win));
 	math::Vec scrollDelta = math::Vec(x, y);
 #if defined ARCH_MAC

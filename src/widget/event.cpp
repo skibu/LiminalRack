@@ -232,7 +232,7 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 	}
 
 	if (action == GLFW_PRESS) {
-		DEBUG("handleButton action == GLFW_PRESS", clickedWidget->);
+		DEBUG("handleButton action == GLFW_PRESS");
 		setDraggedWidget(clickedWidget, button);
 	}
 
@@ -281,6 +281,9 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 }
 
 bool EventState::handleHover(math::Vec pos, math::Vec mouseDelta) {
+	// DEBUG("handleHover pos (%.1f, %.1f) mouseDelta (%.1f, %.1f)", 
+	// 	pos.getX(), pos.getY(), mouseDelta.getX(), mouseDelta.getY());
+
 	bool cursorLocked = getWindow()->isCursorLocked();
 
 	// Fake a key RACK_HELD event for each held key
@@ -337,6 +340,8 @@ bool EventState::handleHover(math::Vec pos, math::Vec mouseDelta) {
 }
 
 bool EventState::handleLeave() {
+	DEBUG("handleLeave");
+
 	heldKeys.clear();
 	// When leaving the window, don't un-hover widgets because the mouse might be dragging.
 	// setDragHoveredWidget(NULL);
@@ -345,6 +350,9 @@ bool EventState::handleLeave() {
 }
 
 bool EventState::handleScroll(math::Vec pos, math::Vec scrollDelta) {
+	DEBUG("handleScroll pos (%.1f, %.1f) scrollDelta (%.1f, %.1f)", 
+		pos.getX(), pos.getY(), scrollDelta.getX(), scrollDelta.getY());
+
 	// Dispatch HoverScrollEvent
 	EventContext cHoverScroll;
 	Widget::HoverScrollEvent eHoverScroll;
@@ -357,6 +365,9 @@ bool EventState::handleScroll(math::Vec pos, math::Vec scrollDelta) {
 }
 
 bool EventState::handleDrop(math::Vec pos, const std::vector<std::string>& paths) {
+	DEBUG("handleDrop pos (%.1f, %.1f) %zu paths", 
+		pos.getX(), pos.getY(), paths.size());
+
 	// Dispatch PathDropEvent
 	EventContext cPathDrop;
 	Widget::PathDropEvent ePathDrop(paths);

@@ -19,15 +19,18 @@
 
 namespace rack {
 namespace app {
+namespace browser {
 
-/** Initializes the browser */
+/** Global static function that initializes the browser */
 PRIVATE void browserInit();
 
-/** Creates the browser window */
-PRIVATE widget::Widget* browserCreate();
+class Browser; // Forward declaration
+/** Global static function that creates the browser window and returns it. 
+ * The Browser has an overlay widget. If need access to the overlay, such as 
+ * to show or hide it, then use getParent().
+ */
+PRIVATE Browser* browserCreate();
 
-
-namespace browser {
 
 /** The actual Browser class. The Browser is the window that shows the modules 
  * the user has available and can add to their rack.
@@ -231,6 +234,13 @@ class Browser : public widget::OpaqueWidget {
         return moduleLayoutContainer;
     }
 
+    /** Updates the list of plugins in the browser. To be called when the global
+     * plugins list is changed (like after loading a new plugin).
+     */
+    void updateBrowserPlugins() {
+        resetModuleBoxes();
+    }
+
     // The following are only used internally so are private
    private:
     void resetModuleBoxes();
@@ -269,6 +279,7 @@ class Browser : public widget::OpaqueWidget {
     // Margin used for the small border around the Browser window
     const float MARGIN = 8.0;
 }; // end of class Browser
+
 
 } // namespace browser
 } // namespace app

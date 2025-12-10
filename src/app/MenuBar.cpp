@@ -6,6 +6,7 @@
 
 #include <app/MenuBar.hpp>
 #include <app/TipWindow.hpp>
+#include <app/Browser.hpp>
 #include <widget/OpaqueWidget.hpp>
 #include <ui/Button.hpp>
 #include <ui/MenuItem.hpp>
@@ -223,7 +224,7 @@ class EditButton : public MenuButton {
 
 		// Add button for adding a module by opening up the local module browser
 		menu->addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "", [=]() {
-			getScene()->getBrowser()->show();
+			getScene()->getBrowserOverlay()->show();
 		}));
 
 		// Add select all modules button
@@ -909,7 +910,7 @@ class ViewButton : public MenuButton {
             // section
             menu->addChild(createMenuItem(
                 string::translate("MenuBar.library.addModuleToRack"), "",
-                [=]() { getScene()->getBrowser()->show(); }));
+                [=]() { getScene()->getBrowserOverlay()->show(); }));
         } else {
             // These options not that useful so removed when not VCVRack
             // but left in otherwise to keep the VCV Rack UI consistent
@@ -1239,7 +1240,7 @@ struct LibraryMenu : ui::Menu {
 		// The regular module library options for when user is logged in
 		else {
 			addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "", [=]() {
-				getScene()->getBrowser()->show();
+				getScene()->getBrowserOverlay()->show();
 			}));
 
 			addChild(new ui::MenuSeparator);

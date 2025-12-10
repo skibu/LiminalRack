@@ -7,6 +7,7 @@
 
 #include <app/RackWidget.hpp>
 #include <widget/TransparentWidget.hpp>
+#include <app/Browser.hpp>
 #include <app/RailWidget.hpp>
 #include <app/Scene.hpp>
 #include <settings.hpp>
@@ -215,7 +216,7 @@ void RackWidget::onButton(const ButtonEvent& e) {
 	if (e.button == GLFW_MOUSE_BUTTON_RIGHT) {
 		// Right mouse button clicked so open up module browser
 		if (e.action == GLFW_PRESS) {
-			getScene()->getBrowser()->show();
+			getScene()->getBrowserOverlay()->show();
 		}
 		e.consume(this);
 	}

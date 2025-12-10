@@ -87,8 +87,9 @@ Scene::Scene() {
     addChild(splashWidget_);
 
     // Create module browser, though it will be hidden for now
-	browser_ = browserCreate();
-	addChild(browser_);
+	browser_ = browser::browserCreate();
+	browserOverlay_ = browser_->getParent();
+	addChild(browserOverlay_);
 
     // Create tip window if enabled in settings
 	if (settings::showTipsOnLaunch) {
@@ -120,10 +121,6 @@ RackWidget* Scene::getRack() {
 
 RackScrollWidget* Scene::getRackScroll() {
     return rackScroll_;
-}
-
-widget::Widget* Scene::getBrowser() {
-    return browser_;
 }
 
 void Scene::step() {
@@ -382,7 +379,7 @@ void Scene::onHoverKey(const HoverKeyEvent& e) {
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_ENTER) || e.isKeyCommand(GLFW_KEY_KP_ENTER)) {
-			browser_->show();
+			browserOverlay_->show();
 			e.consume(this);
 		}
 	}

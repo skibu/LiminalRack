@@ -30,6 +30,8 @@
 #include <plugin/callbacks.hpp>
 #include <settings.hpp>
 
+#include <app/Browser.hpp>
+
 
 namespace rack {
 
@@ -312,6 +314,9 @@ void init() {
 			}
 		}
 	}
+
+	// Since plugins updated, update browser
+	getScene()->getBrowser()->updateBrowserPlugins();
 }
 
 
