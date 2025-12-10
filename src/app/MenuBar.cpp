@@ -1213,20 +1213,24 @@ struct LibraryMenu : ui::Menu {
 		if (settings::devMode) {
 			addChild(createMenuLabel(string::translate("MenuBar.library.devMode")));
 		}
+
 		// If user not logged in to VCV then they need to log in first
 		else if (!library::isLoggedIn()) {
 			addChild(createMenuItem(string::translate("MenuBar.library.register"), "", [=]() {
 				system::openBrowser("https://vcvrack.com/login");
 			}));
 
+            addChild(new ui::MenuSeparator);
+            addChild(createMenuLabel(string::translate("MenuBar.library.loginHeader")));
+
 			ui::TextField* emailField = new ui::TextField;
 			emailField->setPlaceholder(string::translate("MenuBar.library.email"));
-			emailField->setWidth(240.0);
+			emailField->setWidth(320.0);
 			addChild(emailField);
 
 			AccountPasswordField* passwordField = new AccountPasswordField();
 			passwordField->setPlaceholder(string::translate("MenuBar.library.password"));
-			passwordField->setWidth(240.0);
+			passwordField->setWidth(320.0);
 			passwordField->setNextField(emailField);
 			emailField->setNextField(passwordField);
 			addChild(passwordField);

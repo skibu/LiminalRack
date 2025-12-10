@@ -162,6 +162,7 @@
 	"MenuBar.library.changelog": "更新履歴",
 	"MenuBar.library.devMode": "開発モードでは無効",
 	"MenuBar.library.register": "VCVアカウントを登録",
+	"MenuBar.library.loginHeader": "Log in to VCV account:",
 	"MenuBar.library.email": "メール",
 	"MenuBar.library.password": "パスワード",
 	"MenuBar.library.logOut": "ログアウト",

@@ -162,6 +162,7 @@
 	"MenuBar.library.changelog": "Registro de cambios",
 	"MenuBar.library.devMode": "Deshabilitado en modo desarrollo",
 	"MenuBar.library.register": "Registrar una cuenta de usuario VCV",
+	"MenuBar.library.loginHeader": "Iniciar sesión en la cuenta de VCV:",
 	"MenuBar.library.email": "Correo electrónico",
 	"MenuBar.library.password": "Contraseña",
 	"MenuBar.library.logOut": "Cerrar sesión",

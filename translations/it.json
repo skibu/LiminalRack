@@ -162,6 +162,7 @@
 	"MenuBar.library.changelog": "Note di rilascio",
 	"MenuBar.library.devMode": "Disabilitato in modalità di sviluppo",
 	"MenuBar.library.register": "Registra account VCV",
+	"MenuBar.library.loginHeader": "Log in to VCV account:",
 	"MenuBar.library.email": "Email",
 	"MenuBar.library.password": "Password",
 	"MenuBar.library.logOut": "Esci (Logout)",

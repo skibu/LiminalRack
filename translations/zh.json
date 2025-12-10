@@ -162,6 +162,7 @@
     "MenuBar.library.changelog": "更新日志",
     "MenuBar.library.devMode": "仅限开发者模式下使用",
     "MenuBar.library.register": "注册 VCV 账户",
+	"MenuBar.library.loginHeader": "Log in to VCV account:",
     "MenuBar.library.email": "输入邮箱",
     "MenuBar.library.password": "输入密码",
     "MenuBar.library.logOut": "退出登录",
