@@ -90,7 +90,10 @@ struct RackWidget : widget::OpaqueWidget {
 	void updateSelectionFromRect();
 	void selectAll();
 	void deselectAll();
+
+	/** Mark module as selected. Default for selected param is true. */
 	void select(ModuleWidget* mw, bool selected = true);
+	
 	bool hasSelection();
 
 	/** Returns set of ModuleWidgets that are currently selected */

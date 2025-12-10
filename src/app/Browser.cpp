@@ -100,6 +100,10 @@ static ModuleWidget* chooseModel(plugin::Model* model) {
     getRack()->addModuleAtMouse(moduleWidget);
     h->push(getRack()->getModuleDragAction());
 
+    // Select the module so that it is obvious which module has been
+    // added to the rack.
+    getRack()->select(moduleWidget, true);
+
     // Load template preset
     moduleWidget->loadTemplate();
 

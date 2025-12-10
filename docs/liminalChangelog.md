@@ -1,6 +1,7 @@
 # Liminal Rack Change Log
 
 - 12/9/25 
+  - Changed so when module added from browser window it is selected so that user can easily see what was added and where.
   - Changed select module color to green instead of red. Green is consistent with other selections.
   - Made rack scrollbars even more transparent so that can see cables at bottom of screen better.
   - Fixed initialization so that Core and Fundamental modules actually show up in Browser window.
