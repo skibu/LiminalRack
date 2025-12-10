@@ -1,5 +1,9 @@
 # Liminal Rack Change Log
 
+- 12/9/25 
+  - Made rack scrollbars even more transparent so that can see cables at bottom of screen better.
+  - Fixed initialization so that Core and Fundamental modules actually show up in Browser window.
+  
 - 11/11/25
   - Added splashscreen, with a png image even!
   
@@ -54,7 +58,7 @@
   - Changed "Tags" to "Types" in Browser window in en.json. Seemed bit unfriendly to user CS term for a music device. Know your audience!
 
 - 9/1/25
-  - Srollbar colors and opacity changed so that they are much more visible
+  - Scrollbar colors and opacity changed so that they are much more visible
 
 - 8/31/25
   - Rewrite of SequentialLayout so that it has additional features
