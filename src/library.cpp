@@ -230,7 +230,9 @@ void checkUpdates() {
 
     // Get library manifests for all libraries on VCV Rack
     std::string manifestsUrl = API_URL + "/library/manifests";
-    json_t* manifestsReq = json_object();
+    DEBUG("Requesting library manifests from VCV Rack using %s...", 
+        manifestsUrl.c_str());
+    json_t *manifestsReq = json_object();
     json_object_set_new(manifestsReq, "version",
                         json_string(APP_VERSION_MAJOR.c_str()));
     json_t* manifestsFromVcvRackJ =
@@ -245,6 +247,7 @@ void checkUpdates() {
 
     // Get user's plugin libraries and modules that they have enabled
     std::string modulesUrl = API_URL + "/modules";
+    DEBUG("Requesting user's loaded modules using %s...", modulesUrl.c_str());
     json_t* modulesLoadedJ = network::requestJson(
         network::METHOD_GET, modulesUrl, NULL, getTokenCookies());
     if (!modulesLoadedJ) {
@@ -265,6 +268,7 @@ void checkUpdates() {
     json_object_foreach(pluginsLoadedJ, modulesKey, modulesJ) {
         // Name of the plugin library, like Core, Fundamental, Befaco etc.
         std::string pluginSlug = modulesKey;
+        DEBUG("Checking updates for plugin %s...", pluginSlug.c_str());
 
         // Get the manifest for this plugin from VCV Rack server
         json_t* manifestFromVcvRackJ =
@@ -272,6 +276,7 @@ void checkUpdates() {
 
         // If no manifest, skip plugin
         if (!manifestFromVcvRackJ) {
+            DEBUG("No manifest found for plugin %s", pluginSlug.c_str());
             continue;
         }
 
@@ -280,6 +285,8 @@ void checkUpdates() {
         // plugin is downloaded to `plugins/` at a time.
         auto it = updateInfos_.find(pluginSlug);
         if (it != updateInfos_.end()) {
+            DEBUG("UpdateInfo already exists for plugin %s, skipping...",
+                  pluginSlug.c_str());
             continue;
         }
 
@@ -301,28 +308,40 @@ void checkUpdates() {
         }
         update.version = json_string_value(versionJ);
 
-        // Reject plugins with ABI mismatch
+        // Reject plugins with major app version mismatch
         if (!string::startsWith(update.version, APP_VERSION_MAJOR + ".")) {
+            DEBUG(
+                "Plugin %s version %s is incompatible with Rack "
+                "major version %s, skipping update.",
+                pluginSlug.c_str(), update.version.c_str(),
+                APP_VERSION_MAJOR.c_str());
             continue;
         }
 
         // For the plugin already loaded, check whether update is needed.
-        // If the plugin was not actually successfully loaded, skip it.
         // Update is needed if the available plugin version is newer
         // than the loaded plugin version.
         plugin::Plugin* alreadyLoadedPlugin = plugin::getPlugin(pluginSlug);
-        if (!alreadyLoadedPlugin ||
-            update.version == alreadyLoadedPlugin->version ||
-            string::Version(update.version) <
-                string::Version(alreadyLoadedPlugin->version))
-            continue;
-
+        if (alreadyLoadedPlugin) {
+            if (update.version == alreadyLoadedPlugin->version ||
+                string::Version(update.version) <
+                string::Version(alreadyLoadedPlugin->version)) {
+                // Already have proper version of plugin loaded
+                DEBUG(
+                    "Loaded plugin %s version %s is up to date, no update needed.",
+                    pluginSlug.c_str(), alreadyLoadedPlugin->version.c_str());
+                continue;
+            }
+        }
+                
         // Check that plugin is available for this arch
         json_t* archesJ = json_object_get(manifestFromVcvRackJ, "arches");
         if (!archesJ) continue;
         std::string arch = APP_OS + "-" + APP_CPU;
         json_t* archJ = json_object_get(archesJ, arch.c_str());
         if (!json_boolean_value(archJ)) continue;
+        DEBUG("Update available for plugin %s for %s", pluginSlug.c_str(),
+              arch.c_str());
 
         // Get changelog URL
         json_t* changelogUrlJ =
@@ -402,18 +421,26 @@ void syncUpdate(std::string slug) {
 	if (settings::token.empty())
 		return;
 
+    DEBUG("Starting sync of plugin %s...", slug.c_str());
+
 	isSyncing_ = true;
 	DEFER({isSyncing_ = false;});
 
 	// Get the UpdateInfo object
 	auto it = updateInfos_.find(slug);
-	if (it == updateInfos_.end())
+	if (it == updateInfos_.end()) {
+		DEBUG("No UpdateInfo found for plugin %s so skipping update.", 
+            slug.c_str());
 		return;
+	}
 	UpdateInfo update = it->second;
 
 	// Don't update if not compatible with Rack version
-	if (update.minRackVersion != "")
+	if (update.minRackVersion != "") {
+		DEBUG("Plugin %s version %s is incompatible with Rack major version %s, skipping update.",
+              slug.c_str(), update.version.c_str(), APP_VERSION_MAJOR.c_str());
 		return;
+	}
 
 	updateSlug_ = slug;
 	DEFER({updateSlug_ = "";});
@@ -435,6 +462,8 @@ void syncUpdate(std::string slug) {
 	std::string packagePath = system::join(plugin::pluginsPath, packageFilename);
 
 	// Download plugin package
+    DEBUG("Requesting download of plugin %s from %s to %s",
+        slug.c_str(), downloadUrl.c_str(), packagePath.c_str());
 	if (!network::requestDownload(downloadUrl, packagePath, &updateProgress_, getTokenCookies())) {
 		WARN("Plugin %s download was unsuccessful", slug.c_str());
 		return;
@@ -451,6 +480,8 @@ void syncUpdate(std::string slug) {
 void syncUpdates() {
 	if (settings::token.empty())
 		return;
+
+    DEBUG("Starting sync of all plugin updates...");
 
 	// updateInfos could possibly change in the checkUpdates() thread, but checkUpdates() will not execute if syncUpdate() is running, so the chance of the updateInfos map being modified while iterating is rare.
 	auto updateInfosClone = updateInfos_;

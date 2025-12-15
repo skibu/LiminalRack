@@ -157,16 +157,9 @@ void Module::fromJson(json_t* rootJ) {
 	plugin::Model* model = plugin::modelFromJson(rootJ);
 	assert(model);
 	if (model != this->model)
-		throw Exception("Model %s %s does not match Module's model %s %s.", model->plugin->slug.c_str(), model->slug.c_str(), this->model->plugin->slug.c_str(), this->model->slug.c_str());
-
-	// Check plugin version
-	json_t* versionJ = json_object_get(rootJ, "version");
-	if (versionJ) {
-		std::string version = json_string_value(versionJ);
-		if (version != this->model->plugin->version) {
-			INFO("Patch created with %s %s, currently using version %s.", this->model->plugin->slug.c_str(), version.c_str(), this->model->plugin->version.c_str());
-		}
-	}
+		throw Exception("Model %s %s does not match Module's model %s %s.", 
+			model->plugin->slug.c_str(), model->slug.c_str(), 
+			this->model->plugin->slug.c_str(), this->model->slug.c_str());
 
 	// id
 	// Only set ID if unset

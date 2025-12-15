@@ -13,7 +13,7 @@ struct Driver;
 
 
 static const int DRIVER = -11;
-static Driver* driver = NULL;
+static Driver* driver = nullptr;
 static const int MOUSE_DEVICE_ID = 1000;
 
 enum {
@@ -309,6 +309,12 @@ void mouseMove(math::Vec pos) {
 	driver->onMouseMove(pos);
 }
 
+void destroy() {
+	// Don't need to free the driver from midi namespace because it will be freed
+	// when midi is destroyed. Just clear our reference to driver so that it will
+	// be initialized properly when system restarted.
+	driver = nullptr;
+}
 
 } // namespace keyboard
 } // namespace rack

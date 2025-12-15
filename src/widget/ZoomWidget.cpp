@@ -5,7 +5,7 @@ namespace rack {
 namespace widget {
 
 
-math::Vec ZoomWidget::getRelativeOffset(const math::Vec& v, Widget* ancestor) const {
+math::Vec ZoomWidget::getRelativeOffset(const math::Vec v, Widget* ancestor) {
 	// Transform `v` (which is in child coordinates) to local coordinates.
 	math::Vec adjustedV = v.mult(zoom_);
 	return Widget::getRelativeOffset(adjustedV, ancestor);
@@ -16,12 +16,9 @@ float ZoomWidget::getRelativeZoom(Widget* ancestor) {
 	return zoom_ * Widget::getRelativeZoom(ancestor);
 }
 
-math::Vec ZoomWidget::getScenePosInLocalCoords(const math::Vec& v) const {
-    // Call the base Widget implementation to get local coords without zoom
-    math::Vec localVec = Widget::getScenePosInLocalCoords(v);
-
+math::Vec ZoomWidget::getScreenVecInLocalCoordsForZoomWidget(const math::Vec& v) const {
     // Adjust for zoom and return value
-    math::Vec adjustedV = localVec.div(zoom_);
+    math::Vec adjustedV = v.div(zoom_);
     return adjustedV;
 }
 

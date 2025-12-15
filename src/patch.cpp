@@ -309,10 +309,7 @@ void Manager::load(std::string path) {
 	}
 	else {
 		// Extract the .vcv file as a .tar.zst archive.
-		double startTime = system::getTime();
 		system::unarchiveToDirectory(path, autosavePath);
-		double endTime = system::getTime();
-		INFO("Unarchived patch in %lf seconds", (endTime - startTime));
 	}
 
 	loadAutosave();

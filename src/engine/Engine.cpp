@@ -1291,7 +1291,7 @@ void Engine::fromJson(json_t* rootJ) {
 		}
 
 		// Create module
-		INFO("Creating module %s", model->getFullName().c_str());
+		DEBUG("Creating module %s", model->getFullName().c_str());
 		Module* module = model->createModule();
 		assert(module);
 

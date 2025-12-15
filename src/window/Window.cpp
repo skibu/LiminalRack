@@ -57,7 +57,7 @@ void Font::loadFile(const std::string& filename, NVGcontext* vg) {
 		std::free(data);
 		throw Exception("Failed to load font %s", filename.c_str());
 	}
-	DEBUG("Loaded font %s", filename.c_str());
+	INFO("Loaded font %s", filename.c_str());
 }
 
 

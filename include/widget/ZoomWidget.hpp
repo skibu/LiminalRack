@@ -11,12 +11,7 @@ struct ZoomWidget : Widget {
 	/** Use setZoom() and getZoom() instead of using this variable directly. */
 	float zoom_ = 1.f;
 
-	math::Vec getRelativeOffset(const math::Vec& v, Widget* ancestor) const override;
-
-    /** Converts a screen space vector to local widget coordinates.
-     * Accounts for position and zooming since this is the ZoomWidget.
-     */
-    math::Vec getScenePosInLocalCoords(const math::Vec& screenVec) const override;
+	math::Vec getRelativeOffset(const math::Vec v, Widget* ancestor) override;
 
 	float getRelativeZoom(Widget* ancestor) override;
 	math::Rect getViewport(math::Rect r) override;
@@ -61,6 +56,11 @@ struct ZoomWidget : Widget {
 		e2.pos = e.pos.div(zoom_);
 		Widget::onPathDrop(e2);
 	}
+
+    /** Converts a screen space vector to local widget coordinates.
+     * Accounts for position and zooming since this is the ZoomWidget.
+     */
+    math::Vec getScreenVecInLocalCoordsForZoomWidget(const math::Vec& screenVec) const;
 };
 
 

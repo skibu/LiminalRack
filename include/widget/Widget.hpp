@@ -23,8 +23,15 @@ class Widget : public WeakBase {
     virtual ~Widget();
 
     /** Returns the bounding box of the widget in its parent's coordinate
-     * system. */
-    math::Rect getBox() const {
+     * system. Need separate const version of function since plugins compiled 
+	 * to the legacy Rack SDK. */
+    math::Rect getBox() {
+        return box_;
+    }
+
+	/** Returns the bounding box of the widget in its parent's coordinate
+	 * system. Is properly a const function. */
+	math::Rect getBox() const {
         return box_;
     }
 
@@ -106,7 +113,17 @@ class Widget : public WeakBase {
         box_.setHeight(height);
     }
 
-    /** Returns the parent widget of this widget */
+    /** Returns the parent widget of this widget.
+	 * Cannot be const since plugins compiled to the legacy Rack SDK.
+	 */
+
+	widget::Widget* getParent() {
+        return parent_;
+    }
+
+	/** Returns the parent widget of this widget. Is properly a const 
+	 * function. 
+	 * */
 	widget::Widget* getParent() const {
         return parent_;
     }
@@ -116,8 +133,10 @@ class Widget : public WeakBase {
         return children_;
     }   
 
-    /** Returns whether the widget is visible. */
-	bool isVisible() const {
+    /** Returns whether the widget is visible. 
+	 * Cannot be const since plugins compiled to the legacy Rack SDK.
+	*/
+	bool isVisible() {
         return visible_;
     }
 
@@ -158,18 +177,25 @@ class Widget : public WeakBase {
      */
     bool isDescendantOf(Widget* ancestor);
 
-    /**  Returns `v` (given in this coordinates) transformed into the
-     * coordinate system of `ancestor`. Note that it is critical to 
-     * call this method via the class that v is relative to. There is no scaling. It simply sums
-     * the positions up the parent chain. If `ancestor` is NULL, transforms
-     * `v` into Screen coordinates.
-     * 
-     * @param v The vector in local widget coordinates.
-     * @param ancestor The ancestor Widget to transform `v` into the coordinate system of.
-     * @return The vector in absolute/screen coordinates. 
-     */
-    virtual math::Vec getRelativeOffset(const math::Vec& v,
-                                        Widget* ancestor) const;
+	/** Returns whether `ancestor` is a parent or distant parent of this
+	 * widget. Const version.
+	 */
+	bool isDescendantOf(Widget* ancestor) const {
+		return const_cast<Widget*>(this)->isDescendantOf(ancestor);
+	}
+
+	/**  Returns `v` (given in this coordinates) transformed into the
+	 * coordinate system of `ancestor`. Note that it is critical to 
+	 * call this method via the class that v is relative to. There is no scaling. It simply sums
+	 * the positions up the parent chain. If `ancestor` is NULL, transforms
+	 * `v` into Screen coordinates. Can't be const since plugins compiled to the Rack SDK.
+	 * 
+	 * @param v The vector in local widget coordinates. Note: cannot change to a reference
+	 * since this function is called by plugins there were compiled to the Rack SDK.
+	 * @param ancestor The ancestor Widget to transform `v` into the coordinate system of.
+	 * @return The vector in absolute/screen coordinates. 
+	 */
+	virtual math::Vec getRelativeOffset(const math::Vec v, Widget* ancestor);
 
     /** Returns `v` in this coordinates and transformed into
      * Screen/world/root/global/absolute coordinates.  Note that it is critical
@@ -179,24 +205,18 @@ class Widget : public WeakBase {
      * @return The vector in absolute/screen coordinates.
      */
     math::Vec getInSceneCoords(const math::Vec& v) const {
-        return getRelativeOffset(v, nullptr);
+        return const_cast<Widget*>(this)->getRelativeOffset(v, nullptr);
     }
 
     /** Returns the zoom level in the coordinate system of `ancestor`.
      * Only `ZoomWidget` should override this to return value other than 1.
      */
     virtual float getRelativeZoom(Widget* ancestor);
-    float getAbsoluteZoom() {
-        return getRelativeZoom(NULL);
-    }
 
-    /** Converts a Scene space vector to local widget coordinates.
-     * Only accounts for position, not zooming. Zooming is handled by
-     * an override in ZoomWidget of getScreenVecInLocalCoords().
-     * @param vec The vector in Scene coordinates.
-     * @return The vector in local widget coordinates.
-     */
-    virtual math::Vec getScenePosInLocalCoords(const math::Vec& vec) const;
+	/** Returns the absolute zoom level (relative to the Screen). */
+    float getAbsoluteZoom() {
+        return getRelativeZoom(nullptr);
+    }
 
     /** Returns a subset of the given Rect bounded by the box of this widget
      * and all ancestors. Does this by doing the transformation for each
@@ -228,6 +248,10 @@ class Widget : public WeakBase {
 	/** Checks if the given widget is a child of `this` widget.
 	*/
 	bool hasChild(Widget* child);
+
+	bool hasChild(Widget* child) const {
+		return const_cast<Widget*>(this)->hasChild(child);
+	}	
 
 	/** Adds widget to the top of the children.
 	Gives ownership of widget to this widget instance.
@@ -316,21 +340,21 @@ class Widget : public WeakBase {
     /** Recurses an event to all visible Widgets until it is consumed. */
 	template <typename TMethod, class TEvent>
 	void recursePositionEvent(TMethod f, const TEvent& e) {
-    for (auto it = children_.rbegin(); it != children_.rend(); it++) {
-        // Stop propagation if requested
-        if (!e.isPropagating()) break;
-        Widget* child = *it;
-        // Filter child by visibility and position
-        if (!child->visible_) continue;
-        if (!child->box_.contains(e.pos)) continue;
+		for (auto it = children_.rbegin(); it != children_.rend(); it++) {
+			// Stop propagation if requested
+			if (!e.isPropagating()) break;
+			Widget* child = *it;
+			// Filter child by visibility and position
+			if (!child->visible_) continue;
+			if (!child->box_.contains(e.pos)) continue;
 
-        // Clone event and adjust its position
-        TEvent e2 = e;
-        e2.pos = e.pos.minus(child->getPos());
-        // Call child event handler
-        (child->*f)(e2);
-    }
-}
+			// Clone event and adjust its position
+			TEvent e2 = e;
+			e2.pos = e.pos.minus(child->getPos());
+			// Call child event handler
+			(child->*f)(e2);
+		}
+	}
 
     using BaseEvent = widget::BaseEvent;
 
@@ -643,6 +667,21 @@ class Widget : public WeakBase {
     onContextDestroy(const ContextDestroyEvent& e) {
         recurseEvent(&Widget::onContextDestroy, e);
     }
+
+	/** Converts a Scene space vector to local widget coordinates.
+	 * If a zoom widdget then zooming is handled by
+	 * by a method in ZoomWidget called getScreenVecInLocalCoordsForZoomWidget().
+	 * Cannot just add and use a virtual function since plugins compiled to the Rack SDK
+	 * and inherited classes that have virtual function would then have corrupted vtable.
+	 * @param vec The vector in Scene coordinates.
+	 * @return The vector in local widget coordinates.
+	 */
+	math::Vec getScenePosInLocalCoords(const math::Vec& vec) const;
+
+  private:
+	/** Base implementation of getScenePosInLocalCoords without zooming.
+	 */
+	math::Vec getScenePosInLocalCoordsBase(const math::Vec& vec) const;
 
    private:
     /** Position relative to parent and size of widget. */

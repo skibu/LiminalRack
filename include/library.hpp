@@ -59,8 +59,12 @@ PRIVATE void checkUpdates();
 /** Returns true if there are any plugin updates available and downloaded. */
 PRIVATE bool hasUpdates();
 
+/** Downloads and installs the update for the specified plugin slug. */
 PRIVATE void syncUpdate(std::string slug);
+
+/** Downloads and installs all available plugin updates. */
 PRIVATE void syncUpdates();
+
 PRIVATE bool isSyncing();
 
 PRIVATE bool isRestartRequested();

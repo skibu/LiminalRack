@@ -73,11 +73,11 @@ class Scene : public widget::OpaqueWidget {
     RackWidget* rack_;
     widget::Widget* menuBar_;
     browser::Browser* browser_;
-    widget::Widget* browserOverlay_;
-    SplashWidget* splashWidget_;
-
     // The last mouse position in the Scene's local coordinates
     math::Vec mousePos_;
+
+    widget::Widget* browserOverlay_;
+    SplashWidget* splashWidget_;
 
     void onHover(const HoverEvent& e) override;
     void onDragHover(const DragHoverEvent& e) override;

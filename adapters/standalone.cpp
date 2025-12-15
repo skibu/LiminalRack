@@ -332,6 +332,8 @@ int main(int argc, char* argv[]) {
 	}
 	INFO("Destroying library");
 	library::destroy();
+	INFO("Destroying keyboard");
+	keyboard::destroy();
 	INFO("Destroying MIDI");
 	midi::destroy();
 	INFO("Destroying audio");

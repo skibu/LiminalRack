@@ -11,9 +11,12 @@ namespace keyboard {
 PRIVATE void init();
 void press(int key);
 void release(int key);
+
 /** pos is in the unit box. */
 void mouseMove(math::Vec pos);
 
+/** Destroys the keyboard driver. Needed so can restart successfully */
+void destroy();
 
 } // namespace keyboard
 } // namespace rack

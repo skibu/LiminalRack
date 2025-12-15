@@ -93,8 +93,8 @@ bool Widget::isDescendantOf(Widget* ancestor) {
 	return parent_->isDescendantOf(ancestor);
 }
 
-math::Vec Widget::getRelativeOffset(const math::Vec& v,
-                                    Widget* ancestor) const {
+math::Vec Widget::getRelativeOffset(const math::Vec v,
+                                    Widget* ancestor) {
     // If reach the ancestor, return accumulated offset
     if (this == ancestor) return v;
 
@@ -116,7 +116,7 @@ float Widget::getRelativeZoom(Widget* ancestor) {
 	return parent_->getRelativeZoom(ancestor);
 }
 
-math::Vec Widget::getScenePosInLocalCoords(const math::Vec& vec) const {
+math::Vec Widget::getScenePosInLocalCoordsBase(const math::Vec& vec) const {
     if (parent_ != nullptr) {
         // There is a parent so continue to go up the widget hierarchy first.
         // This will cause the offsets to be accumulated back down in the next
@@ -130,6 +130,23 @@ math::Vec Widget::getScenePosInLocalCoords(const math::Vec& vec) const {
         // by this
         return vec.minus(getPos());
     }
+}
+
+math::Vec Widget::getScenePosInLocalCoords(const math::Vec& vec) const {
+	// Handle determining position without zooming
+	math::Vec localVec = Widget::getScenePosInLocalCoordsBase(vec);
+
+	// Handle ZoomWidget case. Of course would like to use a virtual function
+	// but cannot because plugins compiled to the Rack SDK that inherit from
+	// Widget would then have corrupted vtable.
+	if (typeid(*this) == typeid(ZoomWidget)) {
+		// This is a ZoomWidget so call the special ZoomWidget method
+		const ZoomWidget* zoomWidget = static_cast<const ZoomWidget*>(this);
+		return zoomWidget->getScreenVecInLocalCoordsForZoomWidget(localVec);
+	} else {
+		// Normal non-ZoomWidget case, just return localVec
+		return localVec;
+	}
 }
 
 math::Rect Widget::getViewport(math::Rect r) {
