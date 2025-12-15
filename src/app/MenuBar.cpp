@@ -1045,15 +1045,25 @@ class AccountPasswordField : public ui::PasswordField {
     }
 };
 
+/** A menu item button for actually logging in */
 struct LogInItem : ui::MenuItem {
 	ui::TextField* emailField;
 	ui::TextField* passwordField;
 
+    /** Called when user hits menu login button. Logs in the user
+     * via a separate thread so as to not block the UI. */
 	void onAction(const ActionEvent& e) override {
 		std::string email = emailField->getText();
 		std::string password = passwordField->getText();
 		std::thread t([=] {
 			library::logIn(email, password);
+            if (library::isLoggedIn()) {
+                // Close the login menu since login was successful
+                DEBUG("Login successful, closing login menu");
+                auto menu = getParent();
+                menu->hide();
+            }
+
 			library::checkUpdates();
 		});
 		t.detach();
@@ -1216,25 +1226,30 @@ struct LibraryMenu : ui::Menu {
 
 		// If user not logged in to VCV then they need to log in first
 		else if (!library::isLoggedIn()) {
+            // Create menu item for registering a new account on VCV website
 			addChild(createMenuItem(string::translate("MenuBar.library.register"), "", [=]() {
 				system::openBrowser("https://vcvrack.com/login");
 			}));
 
+            // Create separator before email and password fields
             addChild(new ui::MenuSeparator);
             addChild(createMenuLabel(string::translate("MenuBar.library.loginHeader")));
 
+            // Create email field
 			ui::TextField* emailField = new ui::TextField;
 			emailField->setPlaceholder(string::translate("MenuBar.library.email"));
-			emailField->setWidth(350.0);
+			emailField->setWidth(390.0);
 			addChild(emailField);
 
+            // Create password field
 			AccountPasswordField* passwordField = new AccountPasswordField();
 			passwordField->setPlaceholder(string::translate("MenuBar.library.password"));
-			passwordField->setWidth(350.0);
+			passwordField->setWidth(390.0);
 			passwordField->setNextField(emailField);
 			emailField->setNextField(passwordField);
 			addChild(passwordField);
 
+            // Create menu item button for actually logging in
 			LogInItem* logInItem = new LogInItem;
 			logInItem->emailField = emailField;
 			logInItem->passwordField = passwordField;
