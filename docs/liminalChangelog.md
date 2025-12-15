@@ -1,5 +1,9 @@
 # Liminal Rack Change Log
 
+- 12/14/25
+  - Fixed changes to Widget and other classes so that 3rd-party plugin libraries will work without requiring them to be recompiled to Liminal Rack.
+  - Got the default patch working again.
+
 - 12/10/25 
   - Improved VCV Rack login menu
 
