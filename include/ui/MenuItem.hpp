@@ -15,10 +15,12 @@ class MenuItem : public MenuEntry {
    public:
     MenuItem(const std::string& text = "") : text(text) {}
 
+    /** Sets the text of the menu item */
     void setText(const std::string& text) {
         this->text = text;
     }
 
+    /** Returns the text of the menu item */
     const std::string& getText() const {
         return text;
     }
