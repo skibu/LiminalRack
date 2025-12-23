@@ -197,7 +197,7 @@ class Browser : public widget::OpaqueWidget {
    public:
     Browser();
 
-    // These functions are used exxternally so must be public
+    // These functions are used externally so must be public
     void refresh();
     void clearSelectorsInHeader();
     bool hasVisibleModel(const std::string& brand, std::set<int> tagIds, bool favoritesEnabled);
