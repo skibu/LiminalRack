@@ -27,22 +27,22 @@ class Button : public widget::OpaqueWidget {
     Button();
 
     void setText(const std::string& text) {
-        this->text = text;
+        this->text_ = text;
     }
 
     void setQuantity(Quantity* quantity) {
-        this->quantity = quantity;
+        this->quantity_ = quantity;
     }
 
     Quantity* getQuantity() {
-        return quantity;
+        return quantity_;
     }
 
    protected:
-    std::string text;
+    std::string text_;
 
     /** Not owned. Tracks the pressed state of the button.*/
-    Quantity* quantity = NULL;
+    Quantity* quantity_ = NULL;
 
    private:
     void draw(const DrawArgs& args) override;

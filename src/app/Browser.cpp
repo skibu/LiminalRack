@@ -853,19 +853,19 @@ static std::vector<std::string> getSortNames() {
 };
 
 void Browser::SortButton::step() {
-    text = string::translate("Browser.sort");
-    text += getSortNames()[settings::browserSort];
-    text = string::ellipsize(text, 20);
+    text_ = string::translate("Browser.sort");
+    text_ += getSortNames()[settings::browserSort];
+    text_ = string::ellipsize(text_, 20);
     ChoiceButton::step();
 }
 
 void Browser::ZoomButton::step() {
     // Determine the current zoom level to display
-    text = string::translate("Browser.zoom");
+    text_ = string::translate("Browser.zoom");
     float zoom_fraction = settings::isNotVCVRack
                               ? settings::browserZoom
                               : std::pow(2.f, settings::browserZoom);
-    text += string::f("%.0f%%", zoom_fraction * 100.f);
+    text_ += string::f("%.0f%%", zoom_fraction * 100.f);
     ChoiceButton::step();
 }
 
@@ -936,9 +936,9 @@ void Browser::BrandButton::onAction(const ActionEvent& e) {
     menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
     menu->setWidth(getWidth());
 
-    BrandItem* noneItem =
+    BrandItem* noneSelectedItem =
         new BrandItem(browser, string::translate("Browser.allBrands"));
-    menu->addChild(noneItem);
+    menu->addChild(noneSelectedItem);
 
     menu->addChild(new ui::MenuSeparator);
 
@@ -957,12 +957,12 @@ void Browser::BrandButton::onAction(const ActionEvent& e) {
 }
 
 void Browser::BrandButton::step() {
-	text = string::translate("Browser.brand");
+	text_ = string::translate("Browser.brand");
     if (!browser.getBrand().empty()) {
-        text += ": ";
-        text += browser.getBrand();
+        text_ += ": ";
+        text_ += browser.getBrand();
     }
-	text = string::ellipsize(text, 20);
+	text_ = string::ellipsize(text_, 20);
 	ChoiceButton::step();
 }
 
@@ -1046,19 +1046,19 @@ void Browser::TagButton::onAction(const ActionEvent& e) {
 }
 
 void Browser::TagButton::step() {
-	text = string::translate("Browser.tags");
+	text_ = string::translate("Browser.tags");
 	if (!browser.getTagIds().empty()) {
-		text += ": ";
+		text_ += ": ";
 		bool firstTag = true;
 		for (int tagId : browser.getTagIds()) {
 			if (!firstTag)
-				text += ", ";
+				text_ += ", ";
 			std::string tag = string::translate("tag." + tag::getTag(tagId));
-			text += tag;
+			text_ += tag;
 			firstTag = false;
 		}
 	}
-	text = string::ellipsize(text, 20);
+	text_ = string::ellipsize(text_, 20);
 	ChoiceButton::step();
 }
 

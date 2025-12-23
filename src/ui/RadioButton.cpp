@@ -11,14 +11,14 @@ void RadioButton::draw(const DrawArgs& args) {
 	if (getEvent()->getHoveredWidget() == this)
 		state = BND_HOVER;
 
-	if (quantity) {
-		if (quantity->isMax())
+	if (quantity_) {
+		if (quantity_->isMax())
 			state = BND_ACTIVE;
 	}
 
-	std::string text = this->text;
-	if (text.empty() && quantity)
-		text = quantity->getLabel();
+	std::string text = this->text_;
+	if (text.empty() && quantity_)
+		text = quantity_->getLabel();
 	bndRadioButton(args.vg, 0.0, 0.0, getWidth(), getHeight(), BND_CORNER_NONE, state, -1, text.c_str());
 }
 
@@ -35,8 +35,8 @@ void RadioButton::onDragEnd(const DragEndEvent& e) {
 
 void RadioButton::onDragDrop(const DragDropEvent& e) {
 	if (e.origin == this) {
-		if (quantity)
-			quantity->toggle();
+		if (quantity_)
+			quantity_->toggle();
 
 		ActionEvent eAction;
 		onAction(eAction);

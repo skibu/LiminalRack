@@ -21,8 +21,8 @@ void Button::draw(const DrawArgs& args) {
     if (getEvent()->getHoveredWidget() == this) state = BND_HOVER;
     if (getEvent()->getDraggedWidget() == this) state = BND_ACTIVE;
 
-    std::string text = this->text;
-    if (text.empty() && quantity) text = quantity->getLabel();
+    std::string text = this->text_;
+    if (text.empty() && quantity_) text = quantity_->getLabel();
     bndToolButton(args.vg, 0.0, 0.0, getWidth(), getHeight(), BND_CORNER_NONE,
                   state, -1, text.c_str());
 }
@@ -31,14 +31,14 @@ void Button::onDragStart(const DragStartEvent& e) {
 	if (e.button != GLFW_MOUSE_BUTTON_LEFT)
 		return;
 
-	if (quantity)
-		quantity->setMax();
+	if (quantity_)
+		quantity_->setMax();
 }
 
 
 void Button::onDragEnd(const DragEndEvent& e) {
-	if (quantity)
-		quantity->setMin();
+	if (quantity_)
+		quantity_->setMin();
 }
 
 

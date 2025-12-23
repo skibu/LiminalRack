@@ -10,7 +10,7 @@ void ChoiceButton::draw(const DrawArgs& args) {
     if (getEvent()->getHoveredWidget() == this) state = BND_HOVER;
     if (getEvent()->getDraggedWidget() == this) state = BND_ACTIVE;
 
-    std::string text = this->text;
+    std::string text = this->text_;
     if (text.empty() && getQuantity()) text = getQuantity()->getLabel();
     bndChoiceButton(args.vg, 0.0, 0.0, getWidth(), getHeight(), BND_CORNER_NONE,
                     state, -1, text.c_str());
