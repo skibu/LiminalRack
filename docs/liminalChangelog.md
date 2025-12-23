@@ -1,5 +1,8 @@
 # Liminal Rack Change Log
 
+- 12/22/25
+  - Now can set colors for any scrollbar. Used this to have very light opacity for the rack scroll widget so that scrollbars don't cover cables. But use regular opacity for other scrollbars so that they are easy to see.
+  
 - 12/14/25
   - Fixed changes to Widget and other classes so that 3rd-party plugin libraries will work without requiring them to be recompiled to Liminal Rack.
   - Got the default patch working again.
