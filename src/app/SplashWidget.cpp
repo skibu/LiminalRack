@@ -10,7 +10,7 @@ SplashWidget::SplashWidget() {}
 
 static bool shouldClose_s = false;
 static int stepCount_s = 0;
-static const float FADE_OUT_STEPS = 75;
+static const float FADE_OUT_STEPS = 35;
 
 void SplashWidget::step() {
     // Only do fade out if shouldClose_s is true. This way splash screen
