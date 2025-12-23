@@ -6,8 +6,15 @@ namespace rack {
 namespace ui {
 
 
+const NVGcolor NULL_COLOR = color::BLACK_TRANSPARENT;
+
+/** Internal data structure for ScrollWidget to hide implementation details. */
 struct ScrollWidget::Internal {
 	bool scrolling = false;
+
+	// Colors for the main rectangle within the scrolled window
+	NVGcolor bg_color = NULL_COLOR;
+	NVGcolor outline_color = NULL_COLOR;
 };
 
 
@@ -17,15 +24,15 @@ ScrollWidget::ScrollWidget() {
 	container = new widget::Widget;
 	addChild(container);
 
-	horizontalScrollbar = new Scrollbar;
-	horizontalScrollbar->vertical = false;
-	horizontalScrollbar->hide();
-	addChild(horizontalScrollbar);
+	horizontalScrollbar_ = new Scrollbar;
+	horizontalScrollbar_->vertical = false;
+	horizontalScrollbar_->hide();
+	addChild(horizontalScrollbar_);
 
-	verticalScrollbar = new Scrollbar;
-	verticalScrollbar->vertical = true;
-	verticalScrollbar->hide();
-	addChild(verticalScrollbar);
+	verticalScrollbar_ = new Scrollbar;
+	verticalScrollbar_->vertical = true;
+	verticalScrollbar_->hide();
+	addChild(verticalScrollbar_);
 }
 
 
@@ -33,6 +40,16 @@ ScrollWidget::~ScrollWidget() {
 	delete internal_;
 }
 
+void ScrollWidget::setColors(NVGcolor bg_color, NVGcolor outline_color) {
+	internal_->bg_color = bg_color;
+	internal_->outline_color = outline_color;
+}
+
+void ScrollWidget::setScrollbarColors(NVGcolor track_color,
+									   NVGcolor handle_color) {
+	verticalScrollbar_->setScrollbarColors(track_color, handle_color);
+	horizontalScrollbar_->setScrollbarColors(track_color, handle_color);
+}	
 
 void ScrollWidget::scrollTo(math::Rect r) {
 	math::Rect bound = math::Rect::fromMinMax(r.getBottomRight().minus(getSize()), r.getPos());
@@ -65,6 +82,14 @@ bool ScrollWidget::isScrolling() {
 
 void ScrollWidget::draw(const DrawArgs& args) {
 	nvgScissor(args.vg, RECT_ARGS(args.clipBox));
+
+	// Draw rectangle that scrolls with a different background to differentiate it
+	if (!color::isEqual(internal_->bg_color, color::BLACK_TRANSPARENT) ||
+		!color::isEqual(internal_->outline_color, color::BLACK_TRANSPARENT)) {
+		bndBackgroundColor(args.vg, 0.0, 0.0, getWidth(), getHeight(), 0,
+						   internal_->bg_color, internal_->outline_color);
+	}
+
 	Widget::draw(args);
 	nvgResetScissor(args.vg);
 }
@@ -84,21 +109,21 @@ void ScrollWidget::step() {
 	container->setPos(offset.neg().round());
 
 	// Make scrollbars visible only if there is a positive range to scroll.
-	if (hideScrollbars) {
-		horizontalScrollbar->setVisible(false);
-		verticalScrollbar->setVisible(false);
+	if (hideScrollbars_) {
+		horizontalScrollbar_->setVisible(false);
+		verticalScrollbar_->setVisible(false);
 	}
 	else {
-		horizontalScrollbar->setVisible(offsetBounds.getWidth() > 0.f);
-		verticalScrollbar->setVisible(offsetBounds.getHeight() > 0.f);
+		horizontalScrollbar_->setVisible(offsetBounds.getWidth() > 0.f);
+		verticalScrollbar_->setVisible(offsetBounds.getHeight() > 0.f);
 	}
 
 	// Reposition and resize scroll bars
-	math::Vec inner = getSize().minus(math::Vec(verticalScrollbar->getWidth(), horizontalScrollbar->getHeight()));
-	horizontalScrollbar->setY(inner.getY());
-	verticalScrollbar->setX(inner.getX());
-	horizontalScrollbar->setWidth(verticalScrollbar->isVisible() ? inner.getX() : getWidth());
-	verticalScrollbar->setHeight(horizontalScrollbar->isVisible() ? inner.getY() : getHeight());
+	math::Vec inner = getSize().minus(math::Vec(verticalScrollbar_->getWidth(), horizontalScrollbar_->getHeight()));
+	horizontalScrollbar_->setY(inner.getY());
+	verticalScrollbar_->setX(inner.getX());
+	horizontalScrollbar_->setWidth(verticalScrollbar_->isVisible() ? inner.getX() : getWidth());
+	verticalScrollbar_->setHeight(horizontalScrollbar_->isVisible() ? inner.getY() : getHeight());
 }
 
 

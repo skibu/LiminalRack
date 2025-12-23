@@ -2,7 +2,7 @@
 #include <ui/common.hpp>
 #include <widget/OpaqueWidget.hpp>
 #include <ui/Scrollbar.hpp>
-
+#include <color.hpp>
 
 namespace rack {
 namespace ui {
@@ -16,18 +16,31 @@ struct ScrollWidget : widget::OpaqueWidget {
 
     public:
 	widget::Widget* container;
-	Scrollbar* horizontalScrollbar;
-	Scrollbar* verticalScrollbar;
+	Scrollbar* horizontalScrollbar_;
+	Scrollbar* verticalScrollbar_;
 
 	math::Vec offset;
 	math::Rect containerBox;
-	bool hideScrollbars = false;
+	bool hideScrollbars_ = false;
 
 	ScrollWidget();
 	~ScrollWidget();
-	math::Vec getScrollOffset() {
+
+	/** For optionally setting the colors for the main rectangle within the 
+	 * scrolled window. It contains all the content.
+	 */
+	void setColors(NVGcolor bg_color,
+				   NVGcolor outline_color = color::BLACK_TRANSPARENT);
+
+	/** For optionally setting the colors for the scrollbars. Especially
+	 * useful if need to change opacity for certain scrollbars.
+	*/
+    void setScrollbarColors(NVGcolor track_color, NVGcolor handle_color);
+
+    math::Vec getScrollOffset() {
 		return offset;
 	}
+
 	void scrollTo(math::Rect r);
 	/** Returns the bound of allowed `offset` values in pixels. */
 	math::Rect getContainerOffsetBound();

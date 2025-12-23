@@ -207,31 +207,31 @@ class Browser : public widget::OpaqueWidget {
     void updateZoom();
 
     void setSearch(const std::string& searchStr) {
-        search = searchStr;
+        search_ = searchStr;
     }
 
     void setBrand(const std::string& brand) {
-        this->brand = brand;
+        this->brand_ = brand;
     }
 
     std::string getBrand() const {
-        return brand;
+        return brand_;
     }
 
     FavoriteButton* getFavoriteButton() {
-        return favoriteButton;
+        return favoriteButton_;
     }
 
     std::set<int>& getTagIds() {
-        return tagIds;
+        return tagIds_;
     }
 
     void setTagIds(const std::set<int>& tagIds) {
-        this->tagIds = tagIds;
+        this->tagIds_ = tagIds;
     }
 
     ui::SequentialLayout* getModuleLayoutContainer() const {
-        return moduleLayoutContainer;
+        return moduleLayoutContainer_;
     }
 
     /** Updates the list of plugins in the browser. To be called when the global
@@ -254,30 +254,30 @@ class Browser : public widget::OpaqueWidget {
     void onButton(const ButtonEvent& e) override;
     void onHoverKey(const HoverKeyEvent& e) override;
 
-    ui::Label* titleLabel;
-    ui::SequentialLayout* headerLayout;
-    BrowserSearchField* searchField;
-    BrandButton* brandButton;
-    TagButton* tagButton;
-    FavoriteButton* favoriteButton;
-    ClearButton* clearButton;
-    ui::Label* countLabel = nullptr; // Null it because not always created
+    ui::Label* titleLabel_;
+    ui::SequentialLayout* headerLayout_;
+    BrowserSearchField* searchField_;
+    BrandButton* brandButton_;
+    TagButton* tagButton_;
+    FavoriteButton* favoriteButton_;
+    ClearButton* clearButton_;
+    ui::Label* countLabel_ = nullptr; // Nulled here because not always created
 
-    ui::ScrollWidget* moduleScroll;
-    widget::Widget* moduleMargin;
-    ui::SequentialLayout* moduleLayoutContainer;
+    ui::ScrollWidget* moduleScroll_;
+    widget::Widget* moduleMargin_;
+    ui::SequentialLayout* moduleLayoutContainer_;
 
-    std::string search;
-    std::string brand;
-    std::set<int> tagIds = {};
-    bool lastPreferDarkPanels = false;
+    std::string search_;
+    std::string brand_;
+    std::set<int> tagIds_ = {};
+    bool lastPreferDarkPanels_ = false;
 
     // Caches and temporary state
-    std::map<plugin::Model*, float> prefilteredModelScores;
-    std::map<plugin::Model*, int> modelOrders;
+    std::map<plugin::Model*, float> prefilteredModelScores_;
+    std::map<plugin::Model*, int> modelOrders_;
 
     // Margin used for the small border around the Browser window
-    const float MARGIN = 8.0;
+    const float MARGIN_ = 10.0;
 }; // end of class Browser
 
 

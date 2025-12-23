@@ -9,7 +9,6 @@ namespace ui {
 /** A Scrollbar. Uses blendish to actually draw the scrollbar. Parent must be a
  * ScrollWidget */
 struct Scrollbar : widget::OpaqueWidget {
-    // Note: Internal not actually used for Scrollbar. Just a placeholder.
    private:
     struct Internal;
     Internal* internal_;
@@ -19,6 +18,11 @@ struct Scrollbar : widget::OpaqueWidget {
 
     Scrollbar();
     ~Scrollbar();
+
+    /** For optionally setting the colors for the scrollbars. Especially
+     * useful if need to change opacity for certain scrollbars.
+     */
+    void setScrollbarColors(NVGcolor track_color, NVGcolor handle_color);
 
     /** Draws the scrollbar */
 	void draw(const DrawArgs& args) override;

@@ -29,6 +29,14 @@ RackScrollWidget::RackScrollWidget() {
 	rackWidget->setSize(RACK_OFFSET.mult(2));
 	zoomWidget->addChild(rackWidget);
 
+	// Use really low opacity for handles and tracks so that can easily see
+	// cables underneath
+	NVGcolor track_color = bndGetTheme()->regularTheme.innerColor;
+	track_color.a = 0.3f;
+	NVGcolor handle_color = bndGetTheme()->regularTheme.itemColor;
+	handle_color.a = 0.3f;
+	setScrollbarColors(track_color, handle_color);
+
 	reset();
 }
 
@@ -144,7 +152,7 @@ void RackScrollWidget::step() {
 	}
 
 	// Hide scrollbars if fullscreen
-	hideScrollbars = getWindow()->isFullScreen();
+	hideScrollbars_ = getWindow()->isFullScreen();
 
 	ScrollWidget::step();
 

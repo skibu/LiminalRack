@@ -7,16 +7,30 @@
 namespace rack {
 namespace ui {
 
+const NVGcolor NULL_COLOR = color::BLACK_TRANSPARENT;
 
-// Internal not currently used
+/** Internal data structure for Scrollbar to hide implementation details. */
+struct Scrollbar::Internal {
+    // Colors for the scrollbars
+	NVGcolor track_color = NULL_COLOR;
+	NVGcolor handle_color = NULL_COLOR;
+};
 
 
 Scrollbar::Scrollbar() {
+    internal_ = new Internal;
 	setSize(BND_SCROLLBAR_WIDTH, BND_SCROLLBAR_HEIGHT);
 }
 
 
 Scrollbar::~Scrollbar() {
+    delete internal_;
+}
+
+void Scrollbar::setScrollbarColors(NVGcolor track_color,
+                                   NVGcolor handle_color) {
+  internal_->track_color = track_color;
+  internal_->handle_color = handle_color;
 }
 
 void Scrollbar::draw(const DrawArgs& args) {
@@ -30,8 +44,19 @@ void Scrollbar::draw(const DrawArgs& args) {
     // Draw the scrollbar
     float handleOffset = sw->getHandleOffset()[vertical];
     float handleSize = sw->getHandleSize()[vertical];
-    bndScrollBar(args.vg, 0.0, 0.0, getWidth(), getHeight(), state,
-                 handleOffset, handleSize);
+
+    // Draw the scrollbar using blendish
+    if (color::isEqual(internal_->track_color, NULL_COLOR) &&
+        color::isEqual(internal_->handle_color, NULL_COLOR)) {
+      // Use default colors
+      bndScrollBar(args.vg, 0.0, 0.0, getWidth(), getHeight(), state,
+                   handleOffset, handleSize);
+    } else {
+      // Use custom colors
+      bndColoredScrollBar(args.vg, 0.0, 0.0, getWidth(), getHeight(), state,
+                          handleOffset, handleSize, internal_->track_color,
+                          internal_->handle_color);
+    }
 }
 
 void Scrollbar::onButton(const ButtonEvent& e) {
