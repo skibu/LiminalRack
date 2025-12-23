@@ -39,6 +39,7 @@ class SequentialLayout : public widget::Widget {
         min_spacing_ = spacing;
     }
 
+    /** Sets the margin around the entire layout */
     void setMargin(const math::Vec& margin) {
         margin_ = margin;
     }
