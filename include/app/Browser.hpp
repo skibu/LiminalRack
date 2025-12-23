@@ -42,10 +42,10 @@ class Browser : public widget::OpaqueWidget {
    private:
     class BrowserSearchField : public ui::TextField {
        public:
-        BrowserSearchField(Browser& browser) : browser(browser) {}
+        BrowserSearchField(Browser& browser) : browser_(browser) {}
 
        private:
-        Browser& browser;
+        Browser& browser_;
 
         void step() override {
             // Steal focus when step is called
@@ -70,22 +70,24 @@ class Browser : public widget::OpaqueWidget {
 
     class BrandButton : public ui::ChoiceButton {
        public:
-        BrandButton(Browser& browser) : browser(browser) {}
+        BrandButton(Browser& browser) : browser_(browser) {}
 
        private:
-        Browser& browser;
+        Browser& browser_;
 
+        /** Called when user clicks on Brand button so popup brand menu */
         void onAction(const ActionEvent& e) override;
+
         void step() override;
     };
 
     /** Button for choosing types/tags */
     class TagButton : public ui::ChoiceButton {
        public:
-        TagButton(Browser& browser) : browser(browser) {}
+        TagButton(Browser& browser) : browser_(browser) {}
 
        private:
-        Browser& browser;
+        Browser& browser_;
 
         void onAction(const ActionEvent& e) override;
         void step() override;
@@ -96,13 +98,15 @@ class Browser : public widget::OpaqueWidget {
     class TagItem : public ui::MenuItem {
        public:
         TagItem(Browser& browser, int tagId = -1)
-            : browser(browser), tagId(tagId) {}
+            : browser_(browser), tagId_(tagId) {}
 
        private:
-        Browser& browser;
-        int tagId;
+        Browser& browser_;
+        int tagId_;
 
+        /** Called when user clicks on an item in the tag/type menu */
         void onAction(const ActionEvent& e) override;
+
         void step() override;
     };
 
@@ -112,20 +116,20 @@ class Browser : public widget::OpaqueWidget {
        public:
         FavoriteButton(Browser& browser)
             : Button(string::translate("Browser.favorites")),
-              browser(browser) {}
+              browser_(browser) {}
 
         bool isEnabled() {
-            return enabled;
+            return enabled_;
         }
 
         void disable() {
-            this->enabled = false;
+            this->enabled_ = false;
         }
 
        private:
-        Browser& browser;
+        Browser& browser_;
 
-        bool enabled = false;
+        bool enabled_ = false;
 
        public:
         void onAction(const ActionEvent& e) override;
@@ -136,10 +140,10 @@ class Browser : public widget::OpaqueWidget {
        public:
         ClearButton(Browser& browser)
             : Button(string::translate("Browser.resetFilters")),
-              browser(browser) {}
+              browser_(browser) {}
 
        private:
-        Browser& browser;
+        Browser& browser_;
 
         void onAction(const ActionEvent& e) override;
     };
@@ -147,21 +151,23 @@ class Browser : public widget::OpaqueWidget {
     class BrandItem : public ui::MenuItem {
        public:
         BrandItem(Browser& browser, const std::string& brand = "")
-            : MenuItem(brand), browser(browser) {}
+            : MenuItem(brand), browser_(browser) {}
 
        private:
-        Browser& browser;
+        Browser& browser_;
 
+        /** Called when user clicks on an item in the brand menu */
         void onAction(const ActionEvent& e) override;
+
         void step() override;
     };
 
     class SortButton : public ui::ChoiceButton {
        public:
-        SortButton(Browser& browser) : browser(browser) {}
+        SortButton(Browser& browser) : browser_(browser) {}
 
        private:
-        Browser& browser;
+        Browser& browser_;
 
         void onAction(const ActionEvent& e) override;
         void step() override;
@@ -170,10 +176,10 @@ class Browser : public widget::OpaqueWidget {
     /** Zoom selector for the browser */
     class ZoomButton : public ui::ChoiceButton {
        public:
-        ZoomButton(Browser& browser) : browser(browser) {}
+        ZoomButton(Browser& browser) : browser_(browser) {}
 
        private:
-        Browser& browser;
+        Browser& browser_;
 
         // Shows the choices
         void onAction(const ActionEvent& e) override;
@@ -184,10 +190,10 @@ class Browser : public widget::OpaqueWidget {
     class UrlButton : public ui::Button {
        public:
         UrlButton(const std::string& url, const std::string& text)
-            : Button(text), url(url) {}
+            : Button(text), url_(url) {}
 
        private:
-        std::string url;
+        std::string url_;
 
         void onAction(const ActionEvent& e) override;
     };
@@ -210,10 +216,12 @@ class Browser : public widget::OpaqueWidget {
         search_ = searchStr;
     }
 
+    /** Sets brand selected for the Browser window */
     void setBrand(const std::string& brand) {
         this->brand_ = brand;
     }
 
+    /** Returns the brand selected for the Browser window */
     std::string getBrand() const {
         return brand_;
     }
@@ -239,6 +247,9 @@ class Browser : public widget::OpaqueWidget {
      */
     void updateBrowserPlugins() {
         resetModuleBoxes();
+
+        // Need to update the module list
+        refresh();
     }
 
     // The following are only used internally so are private

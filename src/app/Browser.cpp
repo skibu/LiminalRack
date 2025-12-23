@@ -826,18 +826,18 @@ void Browser::onHoverKey(const HoverKeyEvent& e) {
 
 void Browser::FavoriteButton::onAction(const ActionEvent& e) {
     // Toggle enabled state
-    enabled = !enabled;
+    enabled_ = !enabled_;
 
     // Set the checkmark on right side of button if now enabled
     std::string label = string::translate("Browser.favorites");
-    if (enabled) {
+    if (enabled_) {
         label += "  ";
         label += CHECKMARK_STRING;
     }
     setText(label);
 
     // Redisplay everything
-    browser.refresh();
+    browser_.refresh();
 }
 
 
@@ -870,14 +870,14 @@ void Browser::ZoomButton::step() {
 }
 
 void Browser::UrlButton::onAction(const ActionEvent& e) {
-    system::openBrowser(url);
+    system::openBrowser(url_);
 }
 
 // Implementations to resolve dependencies
 
 
 void Browser::ClearButton::onAction(const ActionEvent& e) {
-	browser.clearSelectorsInHeader();
+	browser_.clearSelectorsInHeader();
 }
 
 void Browser::BrowserSearchField::onSelectKey(const SelectKeyEvent& e) {
@@ -885,7 +885,7 @@ void Browser::BrowserSearchField::onSelectKey(const SelectKeyEvent& e) {
 		// Backspace when the field is empty to clear filters.
 		if (e.isKeyCommand(GLFW_KEY_BACKSPACE) || e.isKeyCommand(GLFW_KEY_BACKSPACE, RACK_MOD_CTRL)) {
 			if (getText() == "") {
-				browser.clearSelectorsInHeader();
+				browser_.clearSelectorsInHeader();
 				e.consume(this);
 			}
 		}
@@ -896,14 +896,14 @@ void Browser::BrowserSearchField::onSelectKey(const SelectKeyEvent& e) {
 }
 
 void Browser::BrowserSearchField::onChange(const ChangeEvent& e) {
-    browser.setSearch(string::trim(getText()));
-    browser.refresh();
+    browser_.setSearch(string::trim(getText()));
+    browser_.refresh();
 }
 
 void Browser::BrowserSearchField::onAction(const ActionEvent& e) {
 	// Get first ModelBox
 	ModelBox* mb = NULL;
-	for (Widget* w : browser.getModuleLayoutContainer()->getChildren()) {
+	for (Widget* w : browser_.getModuleLayoutContainer()->getChildren()) {
 		if (w->isVisible()) {
 			mb = reinterpret_cast<ModelBox*>(w);
 			break;
@@ -916,18 +916,18 @@ void Browser::BrowserSearchField::onAction(const ActionEvent& e) {
 }
 
 void Browser::BrandItem::onAction(const ActionEvent& e) {
-	if (browser.getBrand() == getText()) {
+	if (string::translate("Browser.allBrands") == getText()) {
         // Set to all brands
-		browser.setBrand("");
+		browser_.setBrand("");
     } else {
         // Set to this brand
-		browser.setBrand(getText());
+		browser_.setBrand(getText());
     }
-	browser.refresh();
+	browser_.refresh();
 }
 
 void Browser::BrandItem::step() {
-    setRightText(CHECKMARK(browser.getBrand() == getText()));
+    setRightText(CHECKMARK(browser_.getBrand() == getText()));
     MenuItem::step();
 }
 
@@ -937,7 +937,7 @@ void Browser::BrandButton::onAction(const ActionEvent& e) {
     menu->setWidth(getWidth());
 
     BrandItem* noneSelectedItem =
-        new BrandItem(browser, string::translate("Browser.allBrands"));
+        new BrandItem(browser_, string::translate("Browser.allBrands"));
     menu->addChild(noneSelectedItem);
 
     menu->addChild(new ui::MenuSeparator);
@@ -949,64 +949,64 @@ void Browser::BrandButton::onAction(const ActionEvent& e) {
     }
 
     for (const std::string& brand : brands) {
-        BrandItem* brandItem = new BrandItem(browser, brand);
-        brandItem->setDisabled(!browser.hasVisibleModel(
-            brand, browser.getTagIds(), browser.getFavoriteButton()->isEnabled()));
+        BrandItem* brandItem = new BrandItem(browser_, brand);
+        brandItem->setDisabled(!browser_.hasVisibleModel(
+            brand, browser_.getTagIds(), browser_.getFavoriteButton()->isEnabled()));
         menu->addChild(brandItem);
     }
 }
 
 void Browser::BrandButton::step() {
 	text_ = string::translate("Browser.brand");
-    if (!browser.getBrand().empty()) {
+    if (!browser_.getBrand().empty()) {
         text_ += ": ";
-        text_ += browser.getBrand();
+        text_ += browser_.getBrand();
     }
 	text_ = string::ellipsize(text_, 20);
 	ChoiceButton::step();
 }
 
-/** Called when user clicks on an item in the tag menu */
+/** Called when user clicks on an item in the tag/type menu */
 void Browser::TagItem::onAction(const ActionEvent& e) {
-	auto it = browser.getTagIds().find(tagId);
-	bool isSelected = (it != browser.getTagIds().end());
+	auto it = browser_.getTagIds().find(tagId_);
+	bool isSelected = (it != browser_.getTagIds().end());
 
-	if (tagId >= 0) {
+	if (tagId_ >= 0) {
 		// Specific tag
 		if (!e.isConsumed()) {
 			// Multi select
 			if (isSelected)
-				browser.getTagIds().erase(tagId);
+				browser_.getTagIds().erase(tagId_);
 			else
-				browser.getTagIds().insert(tagId);
+				browser_.getTagIds().insert(tagId_);
 			e.unconsume();
 		}
 		else {
 			// Single select
 			if (isSelected)
-				browser.setTagIds({});
+				browser_.setTagIds({});
 			else {
-				browser.setTagIds({tagId});
+				browser_.setTagIds({tagId_});
 			}
 		}
 	}
 	else {
 		// All tags
-		browser.setTagIds({});
+		browser_.setTagIds({});
 	}
 
-	browser.refresh();
+	browser_.refresh();
 }
 
 void Browser::TagItem::step() {
 	// TODO Disable tags with no modules
-	if (tagId >= 0) {
-		auto it = browser.getTagIds().find(tagId);
-		bool isSelected = (it != browser.getTagIds().end());
+	if (tagId_ >= 0) {
+		auto it = browser_.getTagIds().find(tagId_);
+		bool isSelected = (it != browser_.getTagIds().end());
 		setRightText(CHECKMARK(isSelected));
 	}
 	else {
-		setRightText(CHECKMARK(browser.getTagIds().empty()));
+		setRightText(CHECKMARK(browser_.getTagIds().empty()));
 	}
 	MenuItem::step();
 }
@@ -1017,7 +1017,7 @@ void Browser::TagButton::onAction(const ActionEvent& e) {
     menu->setWidth(getWidth());
 
     // So user can select no tags/types
-    TagItem* noneItem = new TagItem(browser);
+    TagItem* noneItem = new TagItem(browser_);
     noneItem->setText(string::translate("Browser.allTags"));
     menu->addChild(noneItem);
 
@@ -1037,20 +1037,20 @@ void Browser::TagButton::onAction(const ActionEvent& e) {
     menu->addChild(new ui::MenuSeparator);
 
     for (int tagId = 0; tagId < (int)tag::tagAliases.size(); tagId++) {
-        TagItem* tagItem = new TagItem(browser, tagId);
+        TagItem* tagItem = new TagItem(browser_, tagId);
         tagItem->setText(string::translate("tag." + tag::getTag(tagId)));
-        tagItem->setDisabled(!browser.hasVisibleModel(
-            browser.getBrand(), {tagId}, browser.getFavoriteButton()->isEnabled()));
+        tagItem->setDisabled(!browser_.hasVisibleModel(
+            browser_.getBrand(), {tagId}, browser_.getFavoriteButton()->isEnabled()));
         menu->addChild(tagItem);
     }
 }
 
 void Browser::TagButton::step() {
 	text_ = string::translate("Browser.tags");
-	if (!browser.getTagIds().empty()) {
+	if (!browser_.getTagIds().empty()) {
 		text_ += ": ";
 		bool firstTag = true;
-		for (int tagId : browser.getTagIds()) {
+		for (int tagId : browser_.getTagIds()) {
 			if (!firstTag)
 				text_ += ", ";
 			std::string tag = string::translate("tag." + tag::getTag(tagId));
@@ -1072,7 +1072,7 @@ void Browser::SortButton::onAction(const ActionEvent& e) {
 			[=]() {return settings::browserSort == sortId;},
 			[=]() {
 				settings::browserSort = (settings::BrowserSort) sortId;
-				browser.refresh();
+				browser_.refresh();
 			}
 		));
 	}
@@ -1093,7 +1093,7 @@ void Browser::ZoomButton::onAction(const ActionEvent& e) {
                 [=]() {
                     if (zoom == settings::browserZoom) return;
                     settings::browserZoom = zoom;
-                    browser.updateZoom();
+                    browser_.updateZoom();
                 }));
         }
     } else {
@@ -1107,7 +1107,7 @@ void Browser::ZoomButton::onAction(const ActionEvent& e) {
                 [=]() {
                     if (zoom == settings::browserZoom) return;
                     settings::browserZoom = zoom;
-                    browser.updateZoom();
+                    browser_.updateZoom();
                 }));
         }
     }
