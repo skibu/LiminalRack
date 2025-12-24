@@ -395,7 +395,7 @@ Window::Window() {
 		throw Exception("Could not initialize NanoVG");
 	}
 
-	// Load UI fonts
+	// Load and set the main font to be used
 	uiFont_ = loadFont(asset::system("res/fonts/DejaVuSans.ttf"));
 	if (uiFont_)
 		bndSetFont(uiFont_->handle);
