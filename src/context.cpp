@@ -84,6 +84,9 @@ widget::EventState* getEvent() {
     if (ctx) {
         return ctx->getEvent();
     }
+    
+    ERROR("Called getEvent() before context was created.");
+
     return nullptr;
 }
 
@@ -92,6 +95,9 @@ app::Scene* getScene() {
     if (ctx) {
         return ctx->getScene();
     }
+
+    ERROR("Called getScene() before context was created.");
+
     return nullptr;
 }
 
@@ -100,6 +106,9 @@ window::Window* getWindow() {
     if (ctx) {
         return ctx->getWindow();
     }
+
+    ERROR("Called getWindow() before context was created.");
+
     return nullptr;
 }
 
@@ -108,6 +117,9 @@ app::RackWidget* getRack() {
     if (ctx) {
         return ctx->getRack();
     }
+
+    ERROR("Called getRack() before context was created.");
+
     return nullptr;
 }
 
@@ -116,6 +128,9 @@ engine::Engine* getEngine() {
     if (ctx) {
         return ctx->getEngine();
     }
+
+    ERROR("Called getEngine() before context was created.");
+
     return nullptr;
 }
 
@@ -124,6 +139,9 @@ history::State* getHistory() {
     if (ctx) {
         return ctx->getHistory();
     }
+
+    ERROR("Called getHistory() before context was created.");
+
     return nullptr;
 }
 
@@ -132,6 +150,9 @@ patch::Manager* getPatch() {
     if (ctx) {
         return ctx->getPatch();
     }
+
+    ERROR("Called getPatch() before context was created.");
+
     return nullptr;
 }
 
@@ -140,6 +161,9 @@ midiloopback::Context* getMidiLoopbackContext() {
     if (ctx) {
         return ctx->getMidiLoopbackContext();
     }
+
+    ERROR("Called getMidiLoopbackContext() before context was created.");
+
     return nullptr;
 }
 

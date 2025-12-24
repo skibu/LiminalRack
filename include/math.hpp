@@ -692,7 +692,18 @@ class Rect {
 		return Rect(Vec(), size_);
 	}
 
-    /** Returns copy of this rectangle, expands=ed each corner by the delta
+    /** Returns copy of this rectangle, adding deltaSize to size */
+    Rect addSize(Vec deltaSize) const {
+        // Use copy of this rectangle
+        Rect r = *this;
+
+        // Add deltaSize to size
+        r.size_ = size_.plus(deltaSize);
+
+        return r;
+    }
+
+    /** Returns copy of this rectangle, expanding each corner by the delta
      * parameter. */
     Rect grow(Vec delta) const {
         Rect r;
