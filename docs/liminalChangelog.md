@@ -1,5 +1,9 @@
 # Liminal Rack Change Log
 
+- 12/23/25
+  - Added to module Browser window text labels for each module. It can be quite nice to see text for some modules that don't clearly indicate what they are. Nice complement to the tooltip info.
+  - Improved module shadow in Browser window. Originally shadow was on all 4 sides, which defies physics and good UI design. So now only have shadows on bottom and left side, which is pretty standard.
+  
 - 12/22/25
   - Now can set colors for any scrollbar. Used this to have very light opacity for the rack scroll widget so that scrollbars don't cover cables. But use regular opacity for other scrollbars so that they are easy to see.
   - Fixed module Browser window so that modules displayed when select "All brands". 

@@ -146,7 +146,8 @@ struct BrowserOverlay : ui::MenuOverlay {
 	}
 };
 
-
+/** Container for ModuleWidget that handles drawing of all components of the
+ * module */
 struct ModuleWidgetContainer : widget::Widget {
 	void draw(const DrawArgs& args) override {
 		Widget::draw(args);
@@ -155,22 +156,32 @@ struct ModuleWidgetContainer : widget::Widget {
 };
 
 
+/** For drawing a module in the Browser */
 struct ModelBox : widget::OpaqueWidget {
-	plugin::Model* model;
-	ui::Tooltip* tooltip = NULL;
+	plugin::Model* model_;
+	ui::Tooltip* tooltip_ = nullptr;
 	// Lazily created widgets
-	widget::Widget* previewWidget = NULL;
-	widget::ZoomWidget* zoomWidget = NULL;
-	widget::FramebufferWidget* fb = NULL;
-	ModuleWidgetContainer* mwc = NULL;
-	ModuleWidget* moduleWidget = NULL;
+	widget::Widget* previewWidget_ = nullptr;
+	widget::ZoomWidget* zoomWidget_ = nullptr;
+	widget::FramebufferWidget* fb_ = nullptr;
+	ModuleWidgetContainer* mwc_ = nullptr;
+	ModuleWidget* moduleWidget_ = nullptr;
+    // Used just for module labels in the Browser window
+    static std::shared_ptr<window::Font> moduleLabelFont_;
 
-	ModelBox() {
-		updateZoom();
-	}
+    ModelBox() {
+      // Load label font if not already loaded
+      if (moduleLabelFont_ == nullptr) {
+        DEBUG("Loading module label font for Browser");
+        moduleLabelFont_ =
+            getWindow()->loadFontWithoutFallbacks("res/fonts/Roboto-Bold.ttf");
+      }
 
-	void setModel(plugin::Model* model) {
-		this->model = model;
+      updateZoom();
+    }
+
+    void setModel(plugin::Model* model) {
+		this->model_ = model;
 	}
 
     /** Updates the zoom level of this module */
@@ -181,10 +192,10 @@ struct ModelBox : widget::OpaqueWidget {
                          ? settings::browserZoom
                          : std::pow(2.f, settings::browserZoom);
 
-        if (previewWidget) {
-            fb->setDirty();
-            zoomWidget->setZoom(zoom);
-            setWidth(moduleWidget->getWidth() * zoom);
+        if (previewWidget_) {
+            fb_->setDirty();
+            zoomWidget_->setZoom(zoom);
+            setWidth(moduleWidget_->getWidth() * zoom);
         } else {
             // Approximate size as 12HP before we know the actual size.
             // We need a nonzero size, otherwise too many ModelBoxes will lazily
@@ -196,35 +207,64 @@ struct ModelBox : widget::OpaqueWidget {
 	}
 
 	void createPreview() {
-		if (previewWidget)
+		if (previewWidget_)
 			return;
 
-		previewWidget = new widget::TransparentWidget;
-		addChild(previewWidget);
+		previewWidget_ = new widget::TransparentWidget;
+		addChild(previewWidget_);
 
-		zoomWidget = new widget::ZoomWidget;
-		previewWidget->addChild(zoomWidget);
+		zoomWidget_ = new widget::ZoomWidget;
+		previewWidget_->addChild(zoomWidget_);
 
-		fb = new widget::FramebufferWidget;
+		fb_ = new widget::FramebufferWidget;
 		if (getWindow()->pixelRatio_ < 2.0) {
 			// Small details draw poorly at low DPI, so oversample when drawing to the framebuffer
-			fb->setOversample(2.0);
+			fb_->setOversample(2.0);
 		}
-		zoomWidget->addChild(fb);
+		zoomWidget_->addChild(fb_);
 
-		mwc = new ModuleWidgetContainer;
-		fb->addChild(mwc);
+		mwc_ = new ModuleWidgetContainer;
+		fb_->addChild(mwc_);
 
-		INFO("Creating module widget %s", model->getFullName().c_str());
-		moduleWidget = model->createModuleWidget(NULL);
-		mwc->addChild(moduleWidget);
-		mwc->setSize(moduleWidget->getSize());
+		INFO("Creating module widget \"%s\" for Browser", model_->getFullName().c_str());
+		moduleWidget_ = model_->createModuleWidget(nullptr);
+		mwc_->addChild(moduleWidget_);
+		mwc_->setSize(moduleWidget_->getSize());
 
 		// Step ModuleWidget so it can set its default appearance.
-		moduleWidget->step();
+		moduleWidget_->step();
 
 		updateZoom();
 	}
+
+    /** Draws label for the module. Draws the text vertically,
+     * and on the left bottom side of the module.
+     */
+    void drawLabel(const DrawArgs& args) {
+        // Determine parameters
+        std::string label_str = model_->getFullName().c_str();
+        const char* label = label_str.c_str();
+        const int font_size_pts = 26 * settings::browserZoom;
+        const NVGcolor text_color = color::BLACK;
+
+        // Determine x,y position for rotated text. But note that need to
+        // determine the values before rotating. Since rotating by -90 degrees,
+        // x becomes -y and y becomes -x.
+        math::Rect module_box = getBox().zeroPos();
+        const float x = -module_box.getHeight();
+        const float y = -font_size_pts * 0.9f; // 0.9 puts text closer to module
+
+        // Configure the drawing
+        nvgFontFaceId(args.vg, moduleLabelFont_->handle);
+        nvgFontSize(args.vg, font_size_pts);
+        nvgBeginPath(args.vg);
+        nvgFillColor(args.vg, text_color);
+        nvgTextAlign(args.vg, NVG_ALIGN_LEFT|NVG_ALIGN_TOP);
+        nvgRotate(args.vg, -NVG_PI/2);
+
+        // Actually draw the text
+        nvgText(args.vg, x, y, label, NULL);
+    }
 
     void draw(const DrawArgs& args) override {
         // Lazily create preview when drawn
@@ -232,14 +272,17 @@ struct ModelBox : widget::OpaqueWidget {
 
         // Draw shadow
         nvgBeginPath(args.vg);
-        float r = 10;  // Blur radius
-        float c = 5;   // Corner radius
-        math::Rect shadowBox = getBox().zeroPos().grow(math::Vec(r, r));
-        nvgRect(args.vg, RECT_ARGS(shadowBox));
-        NVGcolor shadowColor = nvgRGBAf(0, 0, 0, 0.5);
-        nvgFillPaint(args.vg, nvgBoxGradient(args.vg, 0, 0, getWidth(),
-                                                getHeight(), c, r, shadowColor,
-                                                color::BLACK_TRANSPARENT));
+        float shadow_feather_distance = 12 * settings::browserZoom;
+        float shadow_radius = 2;             // Corner radius
+        math::Rect shadow_box = getBox().zeroPos().addSize(
+            math::Vec(shadow_feather_distance, shadow_feather_distance));
+        nvgRect(args.vg, RECT_ARGS(shadow_box));
+        NVGcolor shadow_start_color = nvgRGBAf(0, 0, 0, 0.7);
+        NVGcolor shadow_end_color = color::BLACK_TRANSPARENT;
+        nvgFillPaint(args.vg,
+                     nvgBoxGradient(args.vg, 0, 0, getWidth(), getHeight(),
+                                    shadow_radius, shadow_feather_distance,
+                                    shadow_start_color, shadow_end_color));
         nvgFill(args.vg);
 
         // To avoid blinding the user when rack brightness is low, draw
@@ -247,11 +290,15 @@ struct ModelBox : widget::OpaqueWidget {
         float b = math::clamp(settings::rackBrightness + 0.2f, 0.f, 1.f);
         nvgGlobalTint(args.vg, nvgRGBAf(b, b, b, 1));
 
+        // Actually draw the module
         OpaqueWidget::draw(args);
+
+        // Draw label for module
+        drawLabel(args);
 
         // Draw favorite border if module has been favorited
         const settings::ModuleInfo* mi =
-            settings::getModuleInfo(model->plugin->slug, model->slug);
+            settings::getModuleInfo(model_->plugin->slug, model_->slug);
         if (mi && mi->favorite) {
             nvgBeginPath(args.vg);
             math::Rect borderBox = getBox().zeroPos();
@@ -267,20 +314,20 @@ struct ModelBox : widget::OpaqueWidget {
 	}
 
 	void setTooltip(ui::Tooltip* tooltip) {
-		if (this->tooltip) {
-			this->tooltip->requestDelete();
-			this->tooltip = NULL;
+		if (this->tooltip_) {
+			this->tooltip_->requestDelete();
+			this->tooltip_ = NULL;
 		}
 
 		if (tooltip) {
 			getScene()->addChild(tooltip);
-			this->tooltip = tooltip;
+			this->tooltip_ = tooltip;
 		}
 	}
 
 	void onButton(const ButtonEvent& e) override {
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
-			ModuleWidget* mw = chooseModel(model);
+			ModuleWidget* mw = chooseModel(model_);
 
 			// Pretend the moduleWidget was clicked so it can be dragged in the RackWidget
 			e.consume(mw);
@@ -293,7 +340,7 @@ struct ModelBox : widget::OpaqueWidget {
 
 		// Toggle favorite
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == RACK_MOD_CTRL) {
-			model->setFavorite(!model->isFavorite());
+			model_->setFavorite(!model_->isFavorite());
 			e.consume(this);
 		}
 
@@ -307,7 +354,7 @@ struct ModelBox : widget::OpaqueWidget {
 	void onHoverKey(const HoverKeyEvent& e) override {
 		if (e.action == GLFW_PRESS || e.action == GLFW_REPEAT) {
 			if (e.isKeyCommand(GLFW_KEY_F1, RACK_MOD_CTRL)) {
-				system::openBrowser(model->getManualUrl());
+				system::openBrowser(model_->getManualUrl());
 				e.consume(this);
 			}
 		}
@@ -330,19 +377,19 @@ struct ModelBox : widget::OpaqueWidget {
     */
 	ui::Tooltip* createTooltip() {
 		std::string text;
-        text += model->plugin->brand;
+        text += model_->plugin->brand;
 		text += " - ";
-		text += model->name;
+		text += model_->name;
 		
 		// Description
-		if (model->description != "") {
-			text += "\n" + model->description;
+		if (model_->description != "") {
+			text += "\n" + model_->description;
 		}
 
 		// Tags (aka Types)
 		text += "\n" + string::translate("Browser.tooltipTags");
 		std::vector<std::string> tags;
-		for (int tagId : model->tagIds) {
+		for (int tagId : model_->tagIds) {
             // Filter out certain tags that are not helpful to show to the user
             if (shouldFilterTag(tagId))
                 continue;
@@ -373,11 +420,14 @@ struct ModelBox : widget::OpaqueWidget {
 	void createContextMenu() {
 		ui::Menu* menu = createMenu();
 
-		menu->addChild(createMenuLabel(model->name));
-		menu->addChild(createMenuLabel(model->plugin->brand));
-		model->appendContextMenu(menu, true);
+		menu->addChild(createMenuLabel(model_->name));
+		menu->addChild(createMenuLabel(model_->plugin->brand));
+		model_->appendContextMenu(menu, true);
 	}
-};
+};  // End of struct ModelBox
+
+// Initialize static member
+std::shared_ptr<window::Font> ModelBox::moduleLabelFont_ = nullptr;
 
 
 /**
@@ -524,16 +574,24 @@ Browser::Browser() {
     moduleMargin_ = new widget::Widget();
     moduleScroll_->container->addChild(moduleMargin_);
 
-    const float MIN_HORIZONTAL_SPACING = 2 * MARGIN_;;
     moduleLayoutContainer_ =
         new ui::SequentialLayout(ui::SequentialLayout::TAKE_ENTIRE_WIDTH);
-    moduleLayoutContainer_->setMargin(
-        math::Vec(MIN_HORIZONTAL_SPACING, MARGIN_)); 
-    moduleLayoutContainer_->setMinSpacing(math::Vec(MIN_HORIZONTAL_SPACING, MARGIN_));
+    setBrowserParamsAccordingToZoom();
     moduleMargin_->addChild(moduleLayoutContainer_);
 
+    // Finish up initialization
     resetModuleBoxes();
     clearSelectorsInHeader();
+}
+
+void Browser::setBrowserParamsAccordingToZoom() {
+    const float MIN_HORIZONTAL_SPACING = 2 * MARGIN_;
+    moduleLayoutContainer_->setMargin(
+        math::Vec(MIN_HORIZONTAL_SPACING * settings::browserZoom,
+                  MARGIN_ * settings::browserZoom));
+    moduleLayoutContainer_->setMinSpacing(
+        math::Vec(MIN_HORIZONTAL_SPACING * settings::browserZoom,
+                  MARGIN_ * settings::browserZoom));
 }
 
 void Browser::resetModuleBoxes() {
@@ -556,6 +614,9 @@ void Browser::resetModuleBoxes() {
 }
 
 void Browser::updateZoom() {
+    // So that the module layout is zoom dependent
+    setBrowserParamsAccordingToZoom();
+
     moduleScroll_->offset = math::Vec();
 
     for (Widget* w : moduleLayoutContainer_->getChildren()) {
@@ -685,7 +746,7 @@ void Browser::refresh() {
     // Filter ModelBoxes by brand and tag
     for (Widget* w : moduleLayoutContainer_->getChildren()) {
         ModelBox* m = reinterpret_cast<ModelBox*>(w);
-        m->setVisible(isModelVisible(m->model, brand_, tagIds_,
+        m->setVisible(isModelVisible(m->model_, brand_, tagIds_,
                                      favoriteButton_->isEnabled()));
     }
 
@@ -694,49 +755,49 @@ void Browser::refresh() {
         // Add all models to prefilteredModelScores with scores of 1
         for (Widget* w : moduleLayoutContainer_->getChildren()) {
             ModelBox* m = reinterpret_cast<ModelBox*>(w);
-            prefilteredModelScores_[m->model] = 1.f;
+            prefilteredModelScores_[m->model_] = 1.f;
         }
 
         // Sort ModelBoxes
         if (settings::browserSort == settings::BROWSER_SORT_UPDATED) {
             sortModels([this](ModelBox* m) {
-                plugin::Plugin* p = m->model->plugin;
-                int modelOrder = get(modelOrders_, m->model, 0);
+                plugin::Plugin* p = m->model_->plugin;
+                int modelOrder = get(modelOrders_, m->model_, 0);
                 return std::make_tuple(-p->modifiedTimestamp, p->brand, p->name,
                                        modelOrder);
             });
         } else if (settings::browserSort == settings::BROWSER_SORT_LAST_USED) {
             sortModels([this](ModelBox* m) {
-                plugin::Plugin* p = m->model->plugin;
+                plugin::Plugin* p = m->model_->plugin;
                 const settings::ModuleInfo* mi =
-                    settings::getModuleInfo(p->slug, m->model->slug);
+                    settings::getModuleInfo(p->slug, m->model_->slug);
                 double lastAdded = mi ? mi->lastAdded : -INFINITY;
-                int modelOrder = get(modelOrders_, m->model, 0);
+                int modelOrder = get(modelOrders_, m->model_, 0);
                 return std::make_tuple(-lastAdded, -p->modifiedTimestamp,
                                        p->brand, p->name, modelOrder);
             });
         } else if (settings::browserSort == settings::BROWSER_SORT_MOST_USED) {
             sortModels([this](ModelBox* m) {
-                plugin::Plugin* p = m->model->plugin;
+                plugin::Plugin* p = m->model_->plugin;
                 const settings::ModuleInfo* mi =
-                    settings::getModuleInfo(p->slug, m->model->slug);
+                    settings::getModuleInfo(p->slug, m->model_->slug);
                 int added = mi ? mi->added : 0;
                 double lastAdded = mi ? mi->lastAdded : -INFINITY;
-                int modelOrder = get(modelOrders_, m->model, 0);
+                int modelOrder = get(modelOrders_, m->model_, 0);
                 return std::make_tuple(-added, -lastAdded,
                                        -p->modifiedTimestamp, p->brand, p->name,
                                        modelOrder);
             });
         } else if (settings::browserSort == settings::BROWSER_SORT_BRAND) {
             sortModels([this](ModelBox* m) {
-                plugin::Plugin* p = m->model->plugin;
-                int modelOrder = get(modelOrders_, m->model, 0);
+                plugin::Plugin* p = m->model_->plugin;
+                int modelOrder = get(modelOrders_, m->model_, 0);
                 return std::make_tuple(p->brand, p->name, modelOrder);
             });
         } else if (settings::browserSort == settings::BROWSER_SORT_NAME) {
             sortModels([](ModelBox* m) {
-                plugin::Plugin* p = m->model->plugin;
-                return std::make_tuple(m->model->name, p->brand);
+                plugin::Plugin* p = m->model_->plugin;
+                return std::make_tuple(m->model_->name, p->brand);
             });
         } else if (settings::browserSort == settings::BROWSER_SORT_RANDOM) {
             std::map<ModelBox*, uint64_t> randomOrder;
@@ -757,14 +818,14 @@ void Browser::refresh() {
         }
         // Sort by score
         sortModels([&](ModelBox* m) {
-            return -get(prefilteredModelScores_, m->model, 0.f);
+            return -get(prefilteredModelScores_, m->model_, 0.f);
         });
         // Filter by whether the score is above the threshold
         for (Widget* w : moduleLayoutContainer_->getChildren()) {
             ModelBox* m = reinterpret_cast<ModelBox*>(w);
             assert(m);
             if (m->isVisible()) {
-                if (prefilteredModelScores_.find(m->model) ==
+                if (prefilteredModelScores_.find(m->model_) ==
                     prefilteredModelScores_.end())
                     m->hide();
             }
@@ -813,8 +874,8 @@ void Browser::onHoverKey(const HoverKeyEvent& e) {
                 if (!mb->isVisible()) continue;
                 count++;
                 DEBUG("Dumping into rack (%d): %s/%s", count,
-                      mb->model->plugin->slug.c_str(), mb->model->slug.c_str());
-                chooseModel(mb->model);
+                      mb->model_->plugin->slug.c_str(), mb->model_->slug.c_str());
+                chooseModel(mb->model_);
             }
             e.consume(this);
         }
@@ -902,7 +963,7 @@ void Browser::BrowserSearchField::onChange(const ChangeEvent& e) {
 
 void Browser::BrowserSearchField::onAction(const ActionEvent& e) {
 	// Get first ModelBox
-	ModelBox* mb = NULL;
+	ModelBox* mb = nullptr;
 	for (Widget* w : browser_.getModuleLayoutContainer()->getChildren()) {
 		if (w->isVisible()) {
 			mb = reinterpret_cast<ModelBox*>(w);
@@ -911,7 +972,7 @@ void Browser::BrowserSearchField::onAction(const ActionEvent& e) {
 	}
 
 	if (mb) {
-		chooseModel(mb->model);
+		chooseModel(mb->model_);
 	}
 }
 

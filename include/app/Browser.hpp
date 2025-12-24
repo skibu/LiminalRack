@@ -256,6 +256,9 @@ class Browser : public widget::OpaqueWidget {
    private:
     void resetModuleBoxes();
 
+    // Sets browser parameters like margin and spacing according to zoom
+    void setBrowserParamsAccordingToZoom();
+
     template <typename F>
     void sortModels(F f);
 
