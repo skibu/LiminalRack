@@ -182,7 +182,9 @@ class Window {
     /** Loads and caches a Font without adding fallback fonts. */
     std::shared_ptr<Font> loadFontWithoutFallbacks(const std::string& filename);
 
-    /** Overrides the current font used for drawing text in Blendish. */
+    /** Sets the current font used for drawing text in Blendish. The font
+     * is specified by the filename parameter, such as "res/fonts/DejaVuSans.ttf".
+    */
     void overrideFontFace(const std::string& filename);
 
     /** Resets the font to the default UI font. */
