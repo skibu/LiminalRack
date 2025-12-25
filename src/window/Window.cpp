@@ -396,7 +396,7 @@ Window::Window() {
 	}
 
 	// Load and set the main font to be used
-	uiFont_ = loadFont(asset::system("res/fonts/DejaVuSans.ttf"));
+	uiFont_ = loadFont(asset::system(settings::systemFontFileName));
 	if (uiFont_)
 		bndSetFont(uiFont_->handle);
 

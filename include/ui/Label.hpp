@@ -47,7 +47,9 @@ class Label : public widget::Widget {
         return fontSize_;
     }
 
-    /** Sets the font face to use for this label in place of default one */
+    /** Sets the font face to use for this label in place of default one.
+     * Should be a resource file path like "res/fonts/Roboto-Regular.ttf"
+     */
     void setFontFaceOverride(const std::string& fontFile) {
         this->fontFaceOverride_ = fontFile;
     }

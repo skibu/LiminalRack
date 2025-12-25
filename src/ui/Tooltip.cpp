@@ -20,7 +20,7 @@ void Tooltip::step() {
     nvgSave(getWindow()->vg_);
 
     // Set line height to reasonable value
-    nvgTextLineHeight(getWindow()->vg_, 1.2);
+    nvgTextLineHeight(getWindow()->vg_, 1.0);
 
     // Set size of tooltip to fit contents
     setWidth(std::min(maxTooltipWidth(), bndLabelWidthForFontSize(
@@ -112,7 +112,7 @@ static std::string formatFloatingPoints(const std::string& inputString) {
 
 void Tooltip::draw(const DrawArgs& args) {
     bndTooltipBackground(args.vg, 0.0, 0.0, getWidth(), getHeight());
-    nvgTextLineHeight(args.vg, 1.2);
+    nvgTextLineHeight(args.vg, 1.0);
 
     // Because there is no bndThemeLabel() function, temporarily replace the
     // menu text color with tooltip text color and draw a menu label

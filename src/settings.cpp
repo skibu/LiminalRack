@@ -30,6 +30,10 @@ bool isLiminal = false;
 bool hasTouchscreen = false;
 // When keyboard not used then don't display keyboard shortcuts in menus
 bool hasKeyboard = true;
+// Font file to use for UI
+std::string systemFontFileName = "res/fonts/Oregano-Regular.ttf";
+// Monospaced font file to use for UI
+std::string systemMonospacedFontFileName = "res/fonts/SyneMono-Regular.ttf";
 // Font size to use for blendish
 int bndLabelFontSize = BND_LABEL_FONT_SIZE;
 // Size of widgets in pixels
@@ -50,7 +54,7 @@ NVGcolor darkModeThemeFg = color::fromHexString("#D0D0D0");
 // For tooltips customize the colors */
 NVGcolor tooltipBg = color::fromHexString("#3b3434");
 NVGcolor tooltipFg = color::fromHexString("#F0F0F0");
-int tooltipFontSize = 15;
+int tooltipFontSize = 22;
 
 // For selecting modules
 NVGcolor selectModuleFillColor = nvgRGBAf(0.0f, 1.0f, 0.0f, 0.2f); // semi-transparent green
@@ -217,6 +221,10 @@ json_t* toJson() {
     json_object_set_new(rootJ, "isLiminal", json_boolean(isLiminal));
     json_object_set_new(rootJ, "hasTouchscreen", json_boolean(hasTouchscreen));
     json_object_set_new(rootJ, "hasKeyboard", json_boolean(hasKeyboard));
+    json_object_set_new(rootJ, "systemFontFileName",
+                        json_string(systemFontFileName.c_str()));
+    json_object_set_new(rootJ, "systemMonospacedFontFileName",
+                        json_string(systemMonospacedFontFileName.c_str()));
     json_object_set_new(rootJ, "bndLabelFontSize",
                         json_integer(bndLabelFontSize));
     json_object_set_new(rootJ, "bndWidgetHeight",
@@ -461,6 +469,14 @@ void fromJson(json_t* rootJ) {
 
     json_t* hasKeyboardJ = json_object_get(rootJ, "hasKeyboard");
     if (hasKeyboardJ) hasKeyboard = json_boolean_value(hasKeyboardJ);
+
+    json_t* systemFontFileNameJ = json_object_get(rootJ, "systemFontFileName");
+    if (systemFontFileNameJ)
+        systemFontFileName = json_string_value(systemFontFileNameJ);
+
+    json_t* systemMonospacedFontFileNameJ = json_object_get(rootJ, "systemMonospacedFontFileName");
+    if (systemMonospacedFontFileNameJ)
+        systemMonospacedFontFileName = json_string_value(systemMonospacedFontFileNameJ);
 
     json_t* bndLabelFontSizeJ = json_object_get(rootJ, "bndLabelFontSize");
     if (bndLabelFontSizeJ)

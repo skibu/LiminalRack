@@ -175,6 +175,8 @@ struct ModelBox : widget::OpaqueWidget {
         DEBUG("Loading module label font for Browser");
         moduleLabelFont_ =
             getWindow()->loadFontWithoutFallbacks("res/fonts/Roboto-Bold.ttf");
+        moduleLabelFont_ = // FIXME
+            getWindow()->loadFontWithoutFallbacks("res/fonts/Oregano-Regular.ttf");
       }
 
       updateZoom();
@@ -252,7 +254,7 @@ struct ModelBox : widget::OpaqueWidget {
         // x becomes -y and y becomes -x.
         math::Rect module_box = getBox().zeroPos();
         const float x = -module_box.getHeight();
-        const float y = -font_size_pts * 0.9f; // 0.9 puts text closer to module
+        const float y = -font_size_pts * 0.84f; // 0.84 puts text closer to module
 
         // Configure the drawing
         nvgFontFaceId(args.vg, moduleLabelFont_->handle);
@@ -443,7 +445,7 @@ class BrowserHeader : public ui::SequentialLayout {
     BrowserHeader() : SequentialLayout(CENTER_ALIGNMENT, true) {}
 
     /** Font size to use for all widgets in the header */
-    static const int HEADER_WIDGETS_FONT_SIZE = 16;
+    static const int HEADER_WIDGETS_FONT_SIZE = 20;
     /** Height of all widgets in the header */
     static const int HEADER_WIDGET_HEIGHT = 24;
 
@@ -472,7 +474,8 @@ class BrowserHeader : public ui::SequentialLayout {
 Browser::Browser() {
     // Browser big title label at the top
     titleLabel_ = new ui::Label(string::translate("Browser.title"));
-    titleLabel_->setFontSize(40);
+    titleLabel_->setFontFaceOverride("res/fonts/Oregano-Bold.ttf");
+    titleLabel_->setFontSize(52);
 
     // Set color of title to contrast with background
     titleLabel_->setColor(color::BLACK);

@@ -26,9 +26,11 @@ void Label::draw(const DrawArgs& args) {
     // bndBackgroundColor(args.vg, 0.0, 0.0, box.size.x, box.size.y, 0,
     // color::RED, color::GREEN);
 
-    // Set font face to a bold one
-    getWindow()->overrideFontFace(asset::system("res/fonts/Roboto-Bold.ttf"));
-
+    // Temporarily set to special font face if so configured
+    if (!fontFaceOverride_.empty()) {
+      getWindow()->overrideFontFace(asset::system(fontFaceOverride_));
+    }
+    
     // Align the text as specified.
     float x;
     switch (alignment_) {

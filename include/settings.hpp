@@ -69,6 +69,10 @@ extern bool isLiminal;
 extern bool hasTouchscreen;
 /** Whether keyboard being used */
 extern bool hasKeyboard;
+/** Font file to use for UI */
+extern std::string systemFontFileName;
+/** Monospaced font file to use for UI */
+extern std::string systemMonospacedFontFileName;
 /** Font size to use for blendish */
 extern int bndLabelFontSize;
 /** Height of widgets in pixels */

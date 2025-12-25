@@ -50,7 +50,7 @@ void SplashWidget::draw(const DrawArgs& args) {
     nvgFill(args.vg);
 
     // Logo/Title
-    nvgFontSize(args.vg, 54);
+    nvgFontSize(args.vg, 60);
     nvgFontFaceId(args.vg, getWindow()->uiFont_->handle);
     nvgFillColor(args.vg, nvgRGBAf(1.0f, 1.0f, 1.0f, fadeAlpha_));
     nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
@@ -59,9 +59,9 @@ void SplashWidget::draw(const DrawArgs& args) {
                "Liminal Rack\nAn Instrument or a Computer?", nullptr);
 
     // Version info
-    nvgFontSize(args.vg, 18);
+    nvgFontSize(args.vg, 24);
     nvgFillColor(args.vg, nvgRGBAf(0.8f, 0.8f, 0.8f, fadeAlpha_));
-    nvgText(args.vg, getParent()->getWidth() * 0.5f,
+    nvgText(args.vg, getParent()->getWidth() * 0.54f,
             getParent()->getHeight() * 0.6f, "Contemplating...", nullptr);
 }
 

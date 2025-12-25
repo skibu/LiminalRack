@@ -1503,6 +1503,7 @@ static double getCachedPotentialFrameRate() {
     return cachedPotentialFrameRate;
 }
 
+/** For displaying system values like cpu and fps */
 class InfoLabel : public ui::Label {
     void step() override {
         std::string label = "";
@@ -1580,8 +1581,10 @@ struct MenuBar : widget::OpaqueWidget {
 		infoLabel = new InfoLabel();
 		infoLabel->setWidth(600);
 		infoLabel->setAlignment(ui::Label::RIGHT_ALIGNMENT);
+        infoLabel->setFontSize(16);
+        infoLabel->setFontFaceOverride(settings::systemMonospacedFontFileName);
         // Lower a bit so alignts vertically with menu buttons
-        infoLabel->setYOffset(3);
+        infoLabel->setYOffset(7);
 		layout->addChild(infoLabel);
 	}
 
