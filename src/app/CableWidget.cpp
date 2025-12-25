@@ -456,18 +456,26 @@ void CableWidget::step() {
     // the cable might be below the scene bottom.
     math::Vec originalSlumpVertexInRackCoords = slumpVertexInRackCoords_;
 
-    // Determine p1 slump vertex such that bottom of cable is right at
-    // bottom of scene and therefore fully visible
-    math::Vec slumpVertexForCurveAtScreenBottomInRackCoords =
-        getSlumpVertexForCableAtScreenBottomInRackCoords();
-
-    // If the slump vertex Y is below where it needs to be to keep cable
-    // within screen bounds, then adjust slump vertex upward
+    // Determine if should possibly adjust slump vertex to keep cable
+    // within screen bounds. Only need to check whether to adjust is if slump
+    // vertex is below both ports.
     if (originalSlumpVertexInRackCoords.getY() >
-        slumpVertexForCurveAtScreenBottomInRackCoords.getY()) {
+        std::max(cableOutputPlugInRackCoords_.getY(),
+                 cableInputPlugInRackCoords_.getY())) {
+      // Determine p1 slump vertex such that bottom of cable is right at
+      // bottom of scene and therefore fully visible
+      math::Vec slumpVertexForCurveAtScreenBottomInRackCoords =
+          getSlumpVertexForCableAtScreenBottomInRackCoords();
+
+      // If the slump vertex Y is below where it needs to be to keep cable
+      // within screen bounds, then adjust slump vertex upward
+      if (originalSlumpVertexInRackCoords.getY() >
+          slumpVertexForCurveAtScreenBottomInRackCoords.getY()) {
         // Current slumpVertex is below where it needs to be to keep cable
         // within screen bounds, so adjust it upward
-        slumpVertexInRackCoords_ = slumpVertexForCurveAtScreenBottomInRackCoords;
+        slumpVertexInRackCoords_ =
+            slumpVertexForCurveAtScreenBottomInRackCoords;
+      }
     }
 
     // The endpoints of cable shouldn't go all the way to center of plug.

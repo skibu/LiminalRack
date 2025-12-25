@@ -2,7 +2,8 @@
 
 - 12/24/25
   - Changed to use a more "artistic" font, Oregano, so that doesn't look so much like a computer. Also adjusted font heights.
-  
+   - Improved handling of keeping cables visible. Now only straightens cables when it is actually useful.
+   
 - 12/23/25
   - Added to module Browser window text labels for each module. It can be quite nice to see text for some modules that don't clearly indicate what they are. Nice complement to the tooltip info.
   - Improved module shadow in Browser window. Originally shadow was on all 4 sides, which defies physics and good UI design. So now only have shadows on bottom and left side, which is pretty standard.
