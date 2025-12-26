@@ -326,17 +326,39 @@ void Knob::onLeave(const LeaveEvent& e) {
 	internal_->oldValue = NAN;
 }
 
-void Knob::draw(const DrawArgs& args) {
-    // Call parent draw to actually draw the knob
-    ParamWidget::draw(args);
+void Knob::draw3DEffects(const DrawArgs& args) {
+    // If not a circular knob, can't draw 3D effects
+    float heightToWidthRatio = getHeight() / getWidth();
+    if (heightToWidthRatio < 0.9f || heightToWidthRatio > 1.1f) return;
 
-    // If currently manipulating the knob, highlight it slightly
-    // to make it clear that it is being turned
+    // It is a circular knob so draw 3D effects.
+    // Setup drawing of highlight
+    NVGcontext* vg = args.vg;
+    nvgBeginPath(vg);
+
+    // Determine where and what to draw
+    math::Vec center = getSize().div(2);
+    float radius = getWidth() / 2.f;
+    nvgCircle(vg, center.getX() + radius, center.getY() + radius, radius);
+    float strokeWidth = math::clamp(getWidth() / 2.0f, 5.0f, 20.0f);
+    nvgStrokeWidth(vg, strokeWidth);
+
+    // Use a grey stroke that is mostly transparent. This shows up both 
+    // on light and dark panels.
+    nvgStrokeColor(vg, nvgRGBAf(0.8f, 0.8f, 0.8f, 0.1f));
+
+    // Actually draw the stroke
+    nvgStroke(vg);
+}
+
+void Knob::drawHighlight(const DrawArgs& args) {
     if (internal_->dragging_) {
         // Setup drawing of highlight
         NVGcontext* vg = args.vg;
         nvgBeginPath(vg);
 
+        // If the knob area is not square then it is not a circle knob must be a
+        // slider
         float heightToWidthRatio = getHeight() / getWidth();
         if (heightToWidthRatio < 0.9f || heightToWidthRatio > 1.1f) {
             // Use a rounded rectangle for non-circular knobs (e.g. sliders)
@@ -362,6 +384,18 @@ void Knob::draw(const DrawArgs& args) {
         // Actually draw the stroke
         nvgStroke(vg);
     }
+}
+
+void Knob::draw(const DrawArgs& args) {
+    // Call parent draw to actually draw the knob
+    ParamWidget::draw(args);
+
+    // Draw the shadows
+    draw3DEffects(args);
+
+    // If currently manipulating the knob, highlight it slightly
+    // to make it clear that it is being turned
+    drawHighlight(args);
 }
 
 } // namespace app

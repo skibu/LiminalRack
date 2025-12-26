@@ -54,6 +54,13 @@ struct Knob : ParamWidget {
 
     void draw(const DrawArgs& args) override;
 
+   private:
+    // Draw 3D effects such as shadows
+    void draw3DEffects(const DrawArgs& args);
+
+    // Highlights knob if dragging it
+    void drawHighlight(const DrawArgs& args);
+
     /** Called when user clicks the knob without moving it.
     Useful for handling emulating push-knobs in hardware.
     */
