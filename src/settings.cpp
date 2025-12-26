@@ -31,7 +31,7 @@ bool hasTouchscreen = false;
 // When keyboard not used then don't display keyboard shortcuts in menus
 bool hasKeyboard = true;
 // Font file to use for UI
-std::string systemFontFileName = "res/fonts/Oregano-Regular.ttf";
+std::string systemFontFileName = "res/fonts/StoryScript-Regular.ttf";
 // Monospaced font file to use for UI
 std::string systemMonospacedFontFileName = "res/fonts/SyneMono-Regular.ttf";
 // Font size to use for blendish
