@@ -100,15 +100,15 @@ T sgn(T x) {
 // basic float functions
 ////////////////////
 
-/** Limits `x` between `min` and `b`.
-If `b < min`, returns min.
+/** Limits `x` between `min` and `max`.
+If `max < min`, returns min.
 */
 inline float clamp(float x, float min = 0.f, float max = 1.f) {
 	return std::fmax(std::fmin(x, max), min);
 }
 
-/** Limits `x` between `min` and `b`.
-If `b < min`, switches the two values.
+/** Limits `x` between `min` and `max`.
+If `max < min`, switches the two values.
 */
 inline float clampSafe(float x, float min = 0.f, float max = 1.f) {
 	return (min <= max) ? clamp(x, min, max) : clamp(x, max, min);
