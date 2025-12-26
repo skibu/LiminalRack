@@ -184,7 +184,7 @@
 	"MenuBar.help.changelog": "Changelog",
 	"MenuBar.help.update": "Update %s",
 	"MenuBar.help.checkUpdate": "Check for %s update",
-	"MenuBar.infoLabel": "%.1ffps  possible:%.1ffps  cpu:%4.1f%%",
+	"MenuBar.infoLabel": "%.1ffps  max:%5.1ffps  cpu:%4.1f%%",
 	"ModuleWidget.history.pastePreset": "paste module preset",
 	"ModuleWidget.history.loadPreset": "load module preset",
 	"ModuleWidget.savePresetFailed": "Could not save preset to file %s",

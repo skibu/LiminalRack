@@ -1599,9 +1599,11 @@ struct MenuBar : widget::OpaqueWidget {
 		Widget::step();
 		infoLabel->setWidth(getWidth() - infoLabel->getX() - 5);
 
-		// Setting 40% alpha prevents Label from using the default UI theme color, so set the color manually here.
-		infoLabel->setColor(color::alpha(bndGetTheme()->regularTheme.textColor, 0.4));
-	}
+        // Setting 50% alpha prevents Label from using the default UI
+        // theme color, so set the color manually here.
+        infoLabel->setColor(
+            color::alpha(bndGetTheme()->regularTheme.textColor, 0.5));
+}
 };
 
 }  // namespace menuBar
