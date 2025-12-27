@@ -2,6 +2,7 @@
 #include <ui/MenuOverlay.hpp>
 #include <ui/MenuSeparator.hpp>
 #include <ui/TextField.hpp>
+#include <app/Knob.hpp>
 #include <app/Scene.hpp>
 #include <context.hpp>
 #include <engine/Engine.hpp>
@@ -206,6 +207,7 @@ void ParamWidget::step() {
 
 
 void ParamWidget::draw(const DrawArgs& args) {
+    // Call parent draw to actually draw the param widget
 	Widget::draw(args);
 
 	// Param map indicator
@@ -222,6 +224,14 @@ void ParamWidget::draw(const DrawArgs& args) {
 		nvgStrokeWidth(args.vg, 1.0);
 		nvgStroke(args.vg);
 	}
+
+    // Wanted to have Knob::draw() override this draw() function to add 3D effects,
+    // but since 3rd-party plugins are compiled against the legacy Rack SDK, they
+    // will not call an overriden function. So we create a new function drawOverride()
+    // that does the work, and call that from here.
+    // If this object is derived from Knob, call Knob::drawOverride().
+    if (Knob* derived_obj = dynamic_cast<Knob*>(this))
+        derived_obj->drawOverride(args);
 }
 
 

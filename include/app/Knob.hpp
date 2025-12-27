@@ -43,6 +43,7 @@ struct Knob : ParamWidget {
     Knob();
     ~Knob();
     void initParamQuantity() override;
+
     void onHover(const HoverEvent& e) override;
     void onButton(const ButtonEvent& e) override;
     void onDragStart(const DragStartEvent& e) override;
@@ -52,7 +53,11 @@ struct Knob : ParamWidget {
     void onHoverScroll(const HoverScrollEvent& e) override;
     void onLeave(const LeaveEvent& e) override;
 
-    void draw(const DrawArgs& args) override;
+    // Want to override draw() to add 3D effects. But since 3rd-party plugins
+    // are compiled against the legacy Rack SDK, they will not call an overriden
+    // function. So we create a new function drawOverride() that does the work,
+    // and call that from ParamWidget::draw().
+    void drawOverride(const DrawArgs& args);
 
    private:
     // Draw 3D effects such as shadows

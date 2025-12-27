@@ -341,18 +341,40 @@ void Knob::draw3DEffects(const DrawArgs& args) {
     nvgBeginPath(vg);
 
     // Determine where to draw shadow
-    math::Vec center = getSize().div(2);
-    float radius = getWidth() / 2.f;
-    nvgCircle(vg, center.getX() + radius, center.getY() + radius, radius);
-    float strokeWidth = math::clamp(getWidth() / 2.0f, 5.0f, 20.0f);
-    nvgStrokeWidth(vg, strokeWidth);
+    math::Vec knobCenter = getSize().div(2);
 
-    // Use a grey stroke that is mostly transparent. This shows up both 
-    // on light and dark panels.
-    nvgStrokeColor(vg, nvgRGBAf(0.8f, 0.8f, 0.8f, 0.1f));
+    // Draw shadow down and to the right. Use 45 degree angle for simplicity.
+    // Use constant shadowLength no matter the size of the knob.
+    // Radius of the knob
+    const float knobRadius = getWidth() / 2.f;
+    const float knobRadius_x_Sin45 = knobRadius * 0.7071f; // sin(45 degrees)
+    // Depth of shadow. Could make this relative to knobRadius if wider knobs are in general taller
+    const float shadowLength = 15.0f;
+    const float shadowLength_x_Sin45 = shadowLength * 0.7071f; // sin(45 degrees)
 
-    // Actually draw the stroke
-    nvgStroke(vg);
+    // Starting point of outline is lower left of knob circle
+    const float pathStartX = knobCenter.getX() - knobRadius_x_Sin45;;
+    const float pathStartY = knobCenter.getY() + knobRadius_x_Sin45;
+    nvgMoveTo(vg, pathStartX, pathStartY);
+
+    // Arc at far end of shadow, from 135 degrees to -45 degrees
+    const float endOfShadowCenterX = knobCenter.getX() + shadowLength_x_Sin45;
+    const float endOfShadowCenterY = knobCenter.getY() + shadowLength_x_Sin45;
+    nvgArc(vg, endOfShadowCenterX, endOfShadowCenterY, knobRadius, 3 * M_PI_4,
+           -M_PI_4, NVG_CCW);
+
+    // Arc along edge of knob circle, from -45 degrees to 135 degrees
+    nvgArc(vg, knobCenter.getX(), knobCenter.getY(), knobRadius, -M_PI_4, 3 * M_PI_4,
+           NVG_CW);
+
+    // Close things so can fill
+    nvgClosePath(vg);
+
+    // Specify color and opacity for shadow
+    nvgFillColor(vg, nvgRGBAf(0.0f, 0.0f, 0.0f, 0.4f));
+
+    // Actually draw the shadow
+    nvgFill(vg);
 }
 
 void Knob::drawHighlight(const DrawArgs& args) {
@@ -390,9 +412,11 @@ void Knob::drawHighlight(const DrawArgs& args) {
     }
 }
 
-void Knob::draw(const DrawArgs& args) {
-    // Call parent draw to actually draw the knob
-    ParamWidget::draw(args);
+void Knob::drawOverride(const DrawArgs& args) {
+    // If the plugins can be compiled against this version of the SDK
+    // then drawOverride() would simply be called draw(), and it would
+    // call ParamWidget::draw() to actually draw the knob
+    //ParamWidget::draw(args);
 
     // Draw the shadows
     draw3DEffects(args);
