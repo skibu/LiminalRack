@@ -123,6 +123,8 @@ extern float sampleRate;
 extern int threadCount;
 /** Whether tooltips are enabled  */
 extern bool tooltips;
+/** Whether knob shadows are shown */
+extern bool showKnobShadows;
 /** Whether CPU meter is enabled */
 extern bool cpuMeter;
 /** Don't allow user to drag modules around */

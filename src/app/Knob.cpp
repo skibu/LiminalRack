@@ -327,6 +327,10 @@ void Knob::onLeave(const LeaveEvent& e) {
 }
 
 void Knob::draw3DEffects(const DrawArgs& args) {
+    // If feature disabled, do nothing
+    if (!settings::showKnobShadows)
+        return;
+
     // If not a circular knob, can't draw 3D effects
     float heightToWidthRatio = getHeight() / getWidth();
     if (heightToWidthRatio < 0.9f || heightToWidthRatio > 1.1f) return;
@@ -336,7 +340,7 @@ void Knob::draw3DEffects(const DrawArgs& args) {
     NVGcontext* vg = args.vg;
     nvgBeginPath(vg);
 
-    // Determine where and what to draw
+    // Determine where to draw shadow
     math::Vec center = getSize().div(2);
     float radius = getWidth() / 2.f;
     nvgCircle(vg, center.getX() + radius, center.getY() + radius, radius);

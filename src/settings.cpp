@@ -83,6 +83,7 @@ float sampleRate = 0;
 // default yet doesn't take over entire computer
 int threadCount = 3;
 bool tooltips = true;
+bool showKnobShadows = true;
 bool cpuMeter = false;
 bool lockModules = false;
 bool squeezeModules = true;
@@ -277,6 +278,8 @@ json_t* toJson() {
     json_object_set_new(rootJ, "threadCount", json_integer(threadCount));
 
     json_object_set_new(rootJ, "tooltips", json_boolean(tooltips));
+
+    json_object_set_new(rootJ, "showKnobShadows", json_boolean(showKnobShadows));
 
     json_object_set_new(rootJ, "cpuMeter", json_boolean(cpuMeter));
 
@@ -562,6 +565,10 @@ void fromJson(json_t* rootJ) {
     json_t* tooltipsJ = json_object_get(rootJ, "tooltips");
     if (tooltipsJ) tooltips = json_boolean_value(tooltipsJ);
 
+    json_t* showKnobShadowsJ = json_object_get(rootJ, "showKnobShadows");
+    if (showKnobShadowsJ)
+        showKnobShadows = json_boolean_value(showKnobShadowsJ);
+        
     json_t* cpuMeterJ = json_object_get(rootJ, "cpuMeter");
     if (cpuMeterJ) cpuMeter = json_boolean_value(cpuMeterJ);
 

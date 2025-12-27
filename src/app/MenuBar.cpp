@@ -672,6 +672,10 @@ class ViewButton : public MenuButton {
         haloBrightnessSlider->setWidth(250.0);
         menu->addChild(haloBrightnessSlider);
 
+        menu->addChild(createBoolPtrMenuItem(
+            string::translate("MenuBar.view.showKnobShadows"), "",
+            &settings::showKnobShadows));
+
         // Cable colors
         menu->addChild(createSubmenuItem(
             string::translate("MenuBar.view.cableColors"), "",
