@@ -297,7 +297,7 @@ static bool isPatchLegacyV1(std::string path) {
 
 
 void Manager::load(std::string path) {
-	INFO("Loading patch %s", path.c_str());
+	INFO("Trying to load patch %s ...", path.c_str());
 
 	clear();
 	clearAutosave();
@@ -312,17 +312,23 @@ void Manager::load(std::string path) {
 		system::unarchiveToDirectory(path, autosavePath);
 	}
 
+    INFO("Patch successfully extracted to %s", autosavePath.c_str());
+
 	loadAutosave();
 }
 
 
 void Manager::loadTemplate() {
 	try {
+        INFO("Trying to load user template patch %s ...", templatePath.c_str());
 		load(templatePath);
 	}
 	catch (Exception& e) {
+        WARN("Caught exception loading user template: %s", e.what());
+
 		// Try loading the system template patch
 		try {
+            INFO("Trying to load factory template patch %s ...", factoryTemplatePath.c_str());
 			load(factoryTemplatePath);
 		}
 		catch (Exception& e) {
