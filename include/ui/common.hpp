@@ -13,8 +13,10 @@
 #define CHECKMARK_STRING "✔"
 #define CHECKMARK(_cond) ((_cond) ? CHECKMARK_STRING : "")
 
-/** Useful for menu items that open a sub-menu */
-#define RIGHT_ARROW "▸"
+/** Useful for menu items that open a sub-menu.
+ * Originally used "→" but that character does not render well with some fonts.
+ */
+#define RIGHT_ARROW "=>"
 
 
 namespace rack {
