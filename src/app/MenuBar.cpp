@@ -95,6 +95,8 @@ class FileButton : public MenuButton {
 
    private:
     void onAction(const ActionEvent& e) override {
+        DEBUG("FileButton::onAction() called");
+
         ui::Menu* menu = createMenu();
         menu->cornerFlags = BND_CORNER_TOP;
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
@@ -124,7 +126,10 @@ class FileButton : public MenuButton {
         menu->addChild(
             createMenuItem(string::translate("MenuBar.file.save"),
                            widget::getKeyCommandName(GLFW_KEY_S, RACK_MOD_CTRL),
-                           []() { getPatch()->saveDialog(); }));
+                           []() { 
+                            DEBUG("FileButton::onAction() calling getPatch()->saveDialog()");
+                            getPatch()->saveDialog(); 
+                        }));
 
         menu->addChild(
             createMenuItem(string::translate("MenuBar.file.saveAs"),
@@ -176,6 +181,8 @@ class EditButton : public MenuButton {
 
    private:
     void onAction(const ActionEvent& e) override {
+        DEBUG("EditButton::onAction called");
+
         ui::Menu* menu = createMenu();
         menu->cornerFlags = BND_CORNER_TOP;
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
@@ -194,6 +201,7 @@ class EditButton : public MenuButton {
 				MenuItem::step();
 			}
 			void onAction(const ActionEvent& e) override {
+                DEBUG("UndoItem::onAction called");
 				getHistory()->undo();
 			}
 		};

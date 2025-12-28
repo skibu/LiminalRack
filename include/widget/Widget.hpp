@@ -396,7 +396,9 @@ class Widget : public WeakBase {
 	Must consume the Button event (on left button press) to receive this event.
 	*/
 	struct DoubleClickEvent : BaseEvent {};
-	virtual void onDoubleClick(const DoubleClickEvent& e) {}
+	virtual void onDoubleClick(const DoubleClickEvent& e) {
+        DEBUG("Widget::onDoubleClick called"); // FIXME
+    }
 
 	/** An event prototype with a GLFW key. */
 	struct KeyBaseEvent {

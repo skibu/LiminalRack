@@ -224,6 +224,7 @@ TMenuItem* createMenuItem(std::string text, std::string rightText, std::function
 		bool alwaysConsume;
 
 		void onAction(const event::Action& e) override {
+            DEBUG("MenuItem::onAction() called"); // FIXME
 			action();
 			if (alwaysConsume)
 				e.consume(this);
