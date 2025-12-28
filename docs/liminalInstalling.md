@@ -100,7 +100,7 @@ And you should get the Liminal version of Rack!
 Log files can be a bit difficultl to find. Can always search for log.txt file.
 
 ### On Mac
-~/Library/Application Support/LiminalRack2/
+~/Library/Application Support/Rack2/
 
 ### On Raspberry Pi
-~/.local/share/LiminalRack2
+~/.local/share/Rack2
