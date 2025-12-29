@@ -166,17 +166,18 @@ class EventState {
 	/** Prepares a widget for deletion */
 	void finalizeWidget(Widget* w);
 
-    /** Called when mouse button pressed. Calls onButton() on widget that
-     * was clicked on. Sets draggedWidget on press, and clears it on release.
-     * Handles double-click detection.
-     * 
+    /** A callback to be called when mouse button pressed. Calls onButton()
+     * on widget that was clicked on. Sets draggedWidget on press, and
+     * clears it on release. Handles double-click detection.
+     *
      * @param pos Position of mouse in Scene coordinates.
-     * @param button which mouse button clicked on, e.g. GLFW_MOUSE_BUTTON_LEFT
+     * @param button which mouse button clicked on, e.g.
+     * GLFW_MOUSE_BUTTON_LEFT
      * @param action GLFW_PRESS or GLFW_RELEASE
      * @param mods Bitwise OR of modifier keys, e.g. RACK_MOD_CTRL
      * @return true if event was consumed by a widget.
      */
-	bool handleButton(math::Vec pos, int button, int action, int mods);
+    bool handleButton(math::Vec pos, int button, int action, int mods);
 
 	bool handleHover(math::Vec pos, math::Vec mouseDelta);
 	bool handleLeave();
