@@ -200,6 +200,11 @@ static void mouseButtonCallback(GLFWwindow* win, int button, int action, int mod
 	getEvent()->handleButton(getWindow()->getLastMousePos(), button, action, mods);
 }
 
+static void cursorPosCallbackTest(GLFWwindow* win, double xpos, double ypos) {
+	DEBUG("==> cursorPosCallbackTest x=%.2f y=%.2f", xpos, ypos);
+    auto thing = (Context*) glfwGetWindowUserPointer(win);
+}
+
 static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
 	//DEBUG("cursorPosCallback x=%.2f y=%.2f", xpos, ypos);
 
@@ -355,6 +360,7 @@ Window::Window() {
 	glfwSetWindowSizeCallback(glfWin_, windowSizeCallback);
 	glfwSetWindowMaximizeCallback(glfWin_, windowMaximizeCallback);
 	glfwSetMouseButtonCallback(glfWin_, mouseButtonCallback);
+    glfwSetCursorPosCallback(glfWin_, cursorPosCallbackTest); // FIXME 
 	// Call this ourselves, but on every frame instead of only when the mouse moves
 	// glfwSetCursorPosCallback(win, cursorPosCallback);
 	glfwSetCursorEnterCallback(glfWin_, cursorEnterCallback);

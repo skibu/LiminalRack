@@ -212,7 +212,7 @@ void EventState::finalizeWidget(widget::Widget* w) {
 }
 
 bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
-	DEBUG("handleButton pos (%.1f, %.1f) button %d action %d mods 0x%02x", 
+	DEBUG("====> handleButton pos (%.1f, %.1f) button %d action %d mods 0x%02x", 
 		pos.getX(), pos.getY(), button, action, mods);
 
 	bool cursorLocked = getWindow()->isCursorLocked();
