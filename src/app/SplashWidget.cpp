@@ -11,6 +11,7 @@ SplashWidget::SplashWidget() {}
 static bool shouldClose_s = false;
 static int stepCount_s = 0;
 static const float FADE_OUT_STEPS = 35;
+static int image_handle_s = -1;
 
 void SplashWidget::step() {
     // Only do fade out if shouldClose_s is true. This way splash screen
@@ -27,42 +28,123 @@ void SplashWidget::step() {
     OpaqueWidget::step();
 }
 
+/** Loads a random image from the "res/splashScreen" directory. Can handle
+ * image formats supported by NanoVG which includes PNG and JPEG. Caches the
+ * image handle so that the same image is used on subsequent calls.
+ */
+static int getRandomImageHandle(NVGcontext* vg) {
+  if (image_handle_s < 0) {
+    std::string images_dir = "res/splashScreen";
+    std::vector<std::string> images_file_names = system::getEntries(images_dir);
+
+    int index = rand() % images_file_names.size();
+    std::string random_image_path = images_file_names[index];
+
+    // For now, just return a fixed image handle
+    image_handle_s = nvgCreateImage(vg, random_image_path.c_str(),
+                                    0 /* FIXME NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY) */);
+  }
+
+  return image_handle_s;
+}
+
 void SplashWidget::draw(const DrawArgs& args) {
+    // Determine image scaling so that 
+    float windowWidth = getParent()->getWidth();
+    float windowHeight = getParent()->getHeight();
+
     nvgBeginPath(args.vg);
 
     // Draw darkish background
-    nvgRect(args.vg, 0, 0, getParent()->getWidth(), getParent()->getHeight());
+    nvgRect(args.vg, 0, 0, windowWidth, windowHeight);
     nvgFillColor(args.vg, nvgRGBAf(0.1f, 0.04f, 0.04f, fadeAlpha_));
     nvgFill(args.vg);
 
-    // Load in image using nanovg function, since that is what is used here
-    int imageHandle = nvgCreateImage(args.vg, "res/Liminal/liminal-spaces-classroom.png", 
-        NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);
+    // Get a random image from the "res/splashScreen" directory
+    int imageHandle = getRandomImageHandle(args.vg);
+
+    // Determine unscaled image size
     int imageWidth, imageHeight;
     nvgImageSize(args.vg, imageHandle, &imageWidth, &imageHeight);
+
+    // Determine image scaling so that image fits within window with some margin
+    const float imageMargin = 10.0f;
+    float imageScaling =
+        std::min((windowWidth * 0.52f) / imageWidth,
+                 (windowHeight - 2 * imageMargin) / imageHeight);
+
+    // Create image pattern
+    float imageYMargin = (windowHeight - imageScaling * imageHeight) / 2;
     NVGpaint imagePattern = nvgImagePattern(
-        args.vg, 0, 0, imageWidth, imageHeight, 0.0f /* angle */, imageHandle, fadeAlpha_);
+        args.vg, imageMargin, imageYMargin, imageWidth * imageScaling,
+        imageHeight * imageScaling, 0.0f /* angle */, imageHandle, fadeAlpha_);
 
     // Draw splash image
     nvgBeginPath(args.vg);
-    nvgRect(args.vg, 20, 20, imageWidth, imageHeight);
+    nvgRect(args.vg, imageMargin, imageYMargin, imageWidth * imageScaling,
+            imageHeight * imageScaling);
     nvgFillPaint(args.vg, imagePattern);
     nvgFill(args.vg);
 
     // Logo/Title
-    nvgFontSize(args.vg, 60);
     nvgFontFaceId(args.vg, getWindow()->uiFont_->handle);
     nvgFillColor(args.vg, nvgRGBAf(1.0f, 1.0f, 1.0f, fadeAlpha_));
-    nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-    nvgTextBox(args.vg, getParent()->getWidth() * 0.5f - 350.0f,
-               getParent()->getHeight() * 0.4f, 800,
-               "Liminal Rack\nAn Instrument or a Computer?", nullptr);
 
-    // Version info
-    nvgFontSize(args.vg, 24);
+    const float title1FontSize = 68.f;
+    const float title2FontSize = 46.f;
+    const float additionalTextFontSize = 24.f;
+    const float rightMargin = 10.f;
+
+    // Figure out width of text1
+    std::string title1 = string::translate("splashScreen.title1");
+    nvgFontSize(args.vg, title1FontSize);
+    float bounds1[4];  // xMin, yMin, xMax, yMax
+    nvgTextBounds(args.vg, 0, 0, title1.c_str(), nullptr, bounds1);
+    float textWidth1 = bounds1[2] - bounds1[0];
+    float maxTextWidth = textWidth1;
+    float textCenterX = windowWidth - maxTextWidth/ 2 - rightMargin;
+    float textHeight1 = bounds1[3] - bounds1[1];
+    float textY1 = windowHeight * 0.3f;
+    float nextLineY = textY1 + textHeight1;
+
+    // Draw text2 if it is set
+    std::string title2 = string::translate("splashScreen.title2");
+    if (title2 != "") {
+        // If text2 is wider, use that width for centering all text
+        nvgFontSize(args.vg, title2FontSize);
+        float bounds2[4];  // xMin, yMin, xMax, yMax
+        nvgTextBounds(args.vg, 0, 0, title2.c_str(), nullptr, bounds2);
+        float textWidth2 = bounds2[2] - bounds2[0];
+        float textHeight2 = bounds2[3] - bounds2[1];
+
+        if (textWidth2 > maxTextWidth) {
+            maxTextWidth = textWidth2;
+            textCenterX = windowWidth - maxTextWidth / 2 - rightMargin;
+        }
+
+        // Draw text2
+        nextLineY += 0;  // Extra space between lines
+        nvgText(args.vg, textCenterX - textWidth2 / 2, nextLineY,
+                title2.c_str(), nullptr);
+
+        nextLineY += textHeight2;
+    }   
+
+    // Draw text1
+    nvgFontSize(args.vg, title1FontSize);
+    nvgText(args.vg, textCenterX - textWidth1 / 2, textY1, title1.c_str(),
+            nullptr);
+
+    // Additional text
+    std::string additionalText =
+        string::translate("splashScreen.additionalText");
+    nvgFontSize(args.vg, additionalTextFontSize);
     nvgFillColor(args.vg, nvgRGBAf(0.8f, 0.8f, 0.8f, fadeAlpha_));
-    nvgText(args.vg, getParent()->getWidth() * 0.54f,
-            getParent()->getHeight() * 0.6f, "Contemplating...", nullptr);
+    float boundsAdditional[4];  // xMin, yMin, xMax, yMax
+    nvgTextBounds(args.vg, 0, 0, additionalText.c_str(), nullptr, boundsAdditional);
+    float additionalTextWidth = boundsAdditional[2] - boundsAdditional[0];
+    nvgText(args.vg, textCenterX - additionalTextWidth / 2, nextLineY + 20,
+            additionalText.c_str(), nullptr);
 }
 
 void SplashWidget::waitTillSplashShouldCloseAutomatically(
