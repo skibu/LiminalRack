@@ -16,6 +16,8 @@
 /build
 /Rack
 /dep
+!dep/Makefile
+!dep/README.md
 /dist
 
 # Rack folders

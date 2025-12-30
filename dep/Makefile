@@ -100,8 +100,15 @@ $(glew): | glew-2.2.0
 
 $(glfw): | glfw
 	cd glfw && mkdir -p build
+ifdef ARCH_LIN
 	cd glfw/build && $(CMAKE) .. \
-		-DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
+		-DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF \
+		-DGLFW_BUILD_WAYLAND=ON
+else
+	cd glfw/build && $(CMAKE) .. \
+		-DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF \
+		-DGLFW_BUILD_WAYLAND=OFF
+endif
 	$(MAKE) -C glfw/build
 	$(MAKE) -C glfw/build install
 
