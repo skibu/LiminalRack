@@ -96,8 +96,8 @@ void SplashWidget::draw(const DrawArgs& args) {
     const float title2FontSize = 46.f;
     const float additionalTextFontSize = 24.f;
     const float rightMargin = 20.f;
-    const float textBgPadding = 10.f;
-    const float textBgOpacity = 0.35f;
+    const float textBgPadding = 20.f;
+    const float textBgOpacity = 0.40f;
     NVGcolor textBgColor = color::alpha(bgColor, textBgOpacity); 
 
     // Figure out width of text1
