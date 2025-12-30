@@ -24,6 +24,7 @@ Liminal Rack to repo to the fork. For example:
 
 ```
 # Make the change
+cd LiminalRack
 git submodule set-url -- dep/oui-blendish https://github.com/skibu/oui-blendish.git
 # Commit the change
 git add .gitmodules
