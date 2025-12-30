@@ -13,7 +13,7 @@ The configuration of the submodules is contained in the .gitmodules file. But
 you should not edit this file manually. Instead, you should use commands like
 `git submodule update path/to/local/copy` to update things.
 
-If you need to make modifications to any of the submodules you should fork the
+If you need to make modifications to the contents of any of the submodules you should fork the
 project into your own github site, make the modifications to your forked version,
 and then use `git submodule update path` and check in the changes for your changes to 
 take effect.
