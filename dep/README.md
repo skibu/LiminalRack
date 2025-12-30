@@ -35,7 +35,7 @@ git push
 At this point you should be able to edit a file using VSCode in the forked submodule.
 Could not figure out how to check in modified file using VSCode, but could do it from command line. Using dep/oui-blendish/blendish.c as an example.
 ```
-cd dep/oui-blendish/
+cd LiminalRack/dep/oui-blendish/
 # Confirm that file in submodule was edited
 git status
 # Stage file so can commit it
