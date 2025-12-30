@@ -180,6 +180,9 @@ int main(int argc, char* argv[]) {
 		patchPath = argv[optind];
 	}
 
+    // Seed random number generator so actually get random numbers
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
 	// Initialize environment
 	system::init();
 	system::resetFpuFlags();

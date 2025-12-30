@@ -37,7 +37,7 @@ static int getRandomImageHandle(NVGcontext* vg) {
     std::string images_dir = "res/splashScreen";
     std::vector<std::string> images_file_names = system::getEntries(images_dir);
 
-    int index = rand() % images_file_names.size();
+    int index = std::rand() % images_file_names.size();
     std::string random_image_path = images_file_names[index];
 
     // For now, just return a fixed image handle
@@ -57,7 +57,8 @@ void SplashWidget::draw(const DrawArgs& args) {
 
     // Draw darkish background
     nvgRect(args.vg, 0, 0, windowWidth, windowHeight);
-    nvgFillColor(args.vg, nvgRGBAf(0.1f, 0.04f, 0.04f, fadeAlpha_));
+    NVGcolor bgColor = nvgRGBAf(0.1f, 0.04f, 0.04f, fadeAlpha_);
+    nvgFillColor(args.vg, bgColor);
     nvgFill(args.vg);
 
     // Get a random image from the "res/splashScreen" directory
@@ -70,7 +71,7 @@ void SplashWidget::draw(const DrawArgs& args) {
     // Determine image scaling so that image fits within window with some margin
     const float imageMargin = 10.0f;
     float imageScaling =
-        std::min((windowWidth * 0.52f) / imageWidth,
+        std::min((windowWidth * 0.75f) / imageWidth,
                  (windowHeight - 2 * imageMargin) / imageHeight);
 
     // Create image pattern
@@ -86,14 +87,18 @@ void SplashWidget::draw(const DrawArgs& args) {
     nvgFillPaint(args.vg, imagePattern);
     nvgFill(args.vg);
 
-    // Logo/Title
+    // Display text
     nvgFontFaceId(args.vg, getWindow()->uiFont_->handle);
-    nvgFillColor(args.vg, nvgRGBAf(1.0f, 1.0f, 1.0f, fadeAlpha_));
+    const NVGcolor fontColor = nvgRGBAf(1.0f, 1.0f, 1.0f, fadeAlpha_);
 
+    // Parameters for drawing text
     const float title1FontSize = 68.f;
     const float title2FontSize = 46.f;
     const float additionalTextFontSize = 24.f;
-    const float rightMargin = 10.f;
+    const float rightMargin = 20.f;
+    const float textBgPadding = 10.f;
+    const float textBgOpacity = 0.35f;
+    NVGcolor textBgColor = color::alpha(bgColor, textBgOpacity); 
 
     // Figure out width of text1
     std::string title1 = string::translate("splashScreen.title1");
@@ -122,27 +127,60 @@ void SplashWidget::draw(const DrawArgs& args) {
             textCenterX = windowWidth - maxTextWidth / 2 - rightMargin;
         }
 
+        nextLineY += 0;  // Extra space between lines, if needed. Currently none.
+
+        // Draw background box for text2 so it is readable over image
+        nvgFillColor(args.vg, textBgColor);
+        nvgBeginPath(args.vg);
+        nvgRoundedRect(args.vg, textCenterX - textWidth2 / 2 - textBgPadding,
+                       nextLineY - title2FontSize + bounds2[3],
+                       textWidth2 + 2 * textBgPadding, textHeight2,
+                       20.f /* radius */);
+        nvgFill(args.vg);
+
         // Draw text2
-        nextLineY += 0;  // Extra space between lines
+        nvgFillColor(args.vg, fontColor);
         nvgText(args.vg, textCenterX - textWidth2 / 2, nextLineY,
                 title2.c_str(), nullptr);
 
+        // For subsequent text, move down
         nextLineY += textHeight2;
     }   
 
+    // Draw background box for text1 so it is readable over image
+    nvgFillColor(args.vg, textBgColor);
+    nvgBeginPath(args.vg);
+    nvgRoundedRect(args.vg, textCenterX - textWidth1 / 2 - textBgPadding,
+                    textY1 - title1FontSize + bounds1[3],
+                    textWidth1 + 2 * textBgPadding, textHeight1,
+                    20.f /* radius */);
+    nvgFill(args.vg);
+
     // Draw text1
     nvgFontSize(args.vg, title1FontSize);
+    nvgFillColor(args.vg, fontColor);
     nvgText(args.vg, textCenterX - textWidth1 / 2, textY1, title1.c_str(),
             nullptr);
 
-    // Additional text
+    // Draw background box for additional text so it is readable over image
+    nvgFontSize(args.vg, additionalTextFontSize);
     std::string additionalText =
         string::translate("splashScreen.additionalText");
-    nvgFontSize(args.vg, additionalTextFontSize);
-    nvgFillColor(args.vg, nvgRGBAf(0.8f, 0.8f, 0.8f, fadeAlpha_));
     float boundsAdditional[4];  // xMin, yMin, xMax, yMax
     nvgTextBounds(args.vg, 0, 0, additionalText.c_str(), nullptr, boundsAdditional);
     float additionalTextWidth = boundsAdditional[2] - boundsAdditional[0];
+
+    nvgFillColor(args.vg, textBgColor);
+    nvgBeginPath(args.vg);
+    nvgRoundedRect(
+        args.vg, textCenterX - additionalTextWidth / 2 - textBgPadding,
+        nextLineY + 20 - additionalTextFontSize + boundsAdditional[3],
+        additionalTextWidth + 2 * textBgPadding, additionalTextFontSize,
+        20.f /* radius */);
+    nvgFill(args.vg);
+
+    // Draw additional text
+    nvgFillColor(args.vg, fontColor);
     nvgText(args.vg, textCenterX - additionalTextWidth / 2, nextLineY + 20,
             additionalText.c_str(), nullptr);
 }
