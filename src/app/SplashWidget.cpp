@@ -39,10 +39,11 @@ static int getRandomImageHandle(NVGcontext* vg) {
 
     int index = std::rand() % images_file_names.size();
     std::string random_image_path = images_file_names[index];
+    INFO("SplashWidget: using random splash image: %s",
+         random_image_path.c_str());
 
     // For now, just return a fixed image handle
-    image_handle_s = nvgCreateImage(vg, random_image_path.c_str(),
-                                    0 /* FIXME NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY) */);
+    image_handle_s = nvgCreateImage(vg, random_image_path.c_str(), 0);
   }
 
   return image_handle_s;
