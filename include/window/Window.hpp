@@ -136,6 +136,8 @@ class Window {
     /** Returns internal last mouse position as vector */
     math::Vec getLastMousePos();
 
+    math::Vec getCursorLockedPos();
+
     /** Sets internal last mouse position as vector */
     void setLastMousePos(const math::Vec& pos);
 
