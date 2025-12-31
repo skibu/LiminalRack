@@ -142,6 +142,8 @@ void RackWidget::step() {
 }
 
 void RackWidget::draw(const DrawArgs& args) {
+    float b = settings::rackBrightness;
+
     // Draw rack rails and modules
     Widget::draw(args);
 
@@ -158,6 +160,7 @@ void RackWidget::draw(const DrawArgs& args) {
     auto spotlightInnerColor =
         nvgRGBAf(1.0f, 0.7f, 0.7f, (1.1f - rackBrightness) * innerGradientBrightness);
     auto spotlightOuterColor = nvgRGBAf(0, 0, 0, 1.0f - rackBrightness);
+    
 	// Draw translucent dark rectangle
 	if (b < 1.f) {
 		// Get zoom level
