@@ -919,27 +919,28 @@ std::string getOperatingSystemInfo() {
 #elif defined ARCH_MAC
 	// From https://opensource.apple.com/source/cctools/cctools-973.0.1/libstuff/macosx_deployment_target.c.auto.html
 	char osversion[32];
-	int osversion_name[2] = {CTL_KERN, KERN_OSRELEASE};
 	size_t osversion_len = sizeof(osversion) - 1;
-	if (sysctl(osversion_name, 2, osversion, &osversion_len, NULL, 0) != 0)
+
+	// Available in Mac >=10.13
+	if (sysctlbyname("kern.osproductversion", osversion, &osversion_len, NULL, 0) == 0)
+		return string::f("Mac %s", osversion);
+
+	// Fallback: Get Darwin version and convert to Mac version
+	if (sysctlbyname("kern.osrelease", osversion, &osversion_len, NULL, 0) != 0)
 		return "Mac";
 
 	int major = 0;
 	int minor = 0;
 	if (sscanf(osversion, "%d.%d", &major, &minor) != 2)
-		return "Mac";
+		return string::f("Mac Darwin %s", osversion);
 
-	// Try to match version numbers to retail versions
-	if (major >= 20) {
-		if (major == 22) {
-			minor -= 1;
-		}
-		major -= 9;
-		return string::f("Mac %d.%d", major, minor);
-	}
-	else {
+	if (5 <= major && major <= 19) {
+		// Darwin 5 -> Mac 10.1, through Mac 10.15
 		major -= 4;
 		return string::f("Mac 10.%d.%d", major, minor);
+	}
+	else {
+		return string::f("Mac Darwin %s", osversion);
 	}
 #elif defined ARCH_WIN
 	OSVERSIONINFOW info;

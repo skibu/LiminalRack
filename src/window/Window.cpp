@@ -101,6 +101,12 @@ struct Window::Internal {
 	int lastWindowWidth_ = 0;
 	int lastWindowHeight_ = 0;
 
+	int frame = 0;
+	double frameTime = NAN;
+	double lastFrameDuration = NAN;
+
+	bool cursorLocked_ = false;
+	math::Vec cursorLockedPos_;
 	// int frame = 0; No longer used
 	double ignoreMouseDeltaUntil_ = -INFINITY;
 	double monitorRefreshRate_ = 0.0;
@@ -155,7 +161,6 @@ static void windowPosCallback(GLFWwindow* win, int x, int y) {
 	DEBUG("windowPosCallback %d %d", x, y);
 }
 
-
 static void windowSizeCallback(GLFWwindow* win, int width, int height) {
 	if (glfwGetWindowAttrib(win, GLFW_MAXIMIZED))
 		return;
@@ -206,31 +211,36 @@ static void cursorPosCallbackTest(GLFWwindow* win, double xpos, double ypos) {
 }
 
 static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
-	//DEBUG("cursorPosCallback x=%.2f y=%.2f", xpos, ypos);
+	contextSet((Context*) glfwGetWindowUserPointer(win));
+	Window* window = getWindow();
+	int width, height;
+	glfwGetWindowSize(win, &width, &height);
+	float ratio = window->pixelRatio_ / window->windowRatio_;
 
-    contextSet((Context*)glfwGetWindowUserPointer(win));
-    math::Vec mousePos =
-        math::Vec(xpos, ypos)
-            .div(getWindow()->pixelRatio_ / getWindow()->windowRatio_)
-            .round();
-    math::Vec mouseDelta = mousePos.minus(getWindow()->getLastMousePos());
+	math::Vec mousePos;
+	math::Vec mouseDelta;
 
-    // Workaround for GLFW warping mouse to a different position when the cursor
-    // is locked or unlocked.
-    if (getWindow()->getIgnoreMouseDeltaUntil() >
-        getWindow()->getFrameStartTime()) {
-        mouseDelta = math::Vec();
-    }
+	if (window->isCursorLocked()) {
+		mousePos = (window->getCursorLockedPos() / ratio).round();
+		mouseDelta = math::Vec(xpos - width / 2, ypos - height / 2) / ratio;
 
-    getWindow()->setLastMousePos(mousePos);
+		// Reset cursor to center of screen
+		glfwSetCursorPos(win, width / 2, height / 2);
+	}
+	else {
+		mousePos = (math::Vec(xpos, ypos) / ratio).round();
+		mouseDelta = mousePos - window->getLastMousePos();
+
+		window->setLastMousePos(mousePos);
+	}
 
     getEvent()->handleHover(mousePos, mouseDelta);
 
-    // Keyboard/mouse MIDI driver
-    int width, height;
-    glfwGetWindowSize(win, &width, &height);
-    math::Vec scaledPos(xpos / width, ypos / height);
-    keyboard::mouseMove(scaledPos);
+	if (!window->isCursorLocked()) {
+		// Keyboard/mouse MIDI driver
+		math::Vec scaledPos(xpos / width, ypos / height);
+		keyboard::mouseMove(scaledPos);
+	}
 }
 
 static void cursorEnterCallback(GLFWwindow* win, int entered) {
@@ -701,30 +711,40 @@ void Window::close() {
 }
 
 void Window::cursorLock() {
-    if (!settings::allowCursorLock) return;
+	if (!settings::allowCursorLock)
+		return;
+	if (isCursorLocked())
+		return;
 
-    glfwSetInputMode(glfWin_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// GLFW_CURSOR_DISABLED is buggy.
+	// https://github.com/glfw/glfw/issues/2523
+	// So instead, hide the cursor, move cursor to center of window, and reset mouse position every frame in cursorPosCallback().
+    double xpos, ypos;
+	glfwGetCursorPos(glfWin_, &xpos, &ypos);
+    internal_->cursorLockedPos_ = math::Vec(xpos, ypos); 
+	internal_->cursorLocked_ = true;
+	glfwSetInputMode(glfWin_, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
-    // Due to a bug in GLFW, setting GLFW_CURSOR_DISABLED causes a spurious
-    // mouse position delta after a few frames.
-    // https://github.com/glfw/glfw/issues/2523
-    // Emperically, this seems to be up to 3-6 frames at 60 Hz but in fewer
-    // frames at lower framerates.
-#if defined ARCH_MAC
-    internal_->ignoreMouseDeltaUntil_ = internal_->frameStartTime_ + 0.09;
-#endif
+	int width, height;
+	glfwGetWindowSize(glfWin_, &width, &height);
+	glfwSetCursorPos(glfWin_, width / 2, height / 2);
 }
 
 void Window::cursorUnlock() {
 	if (!settings::allowCursorLock)
 		return;
+	if (!internal_->cursorLocked_)
+		return;
 
+	// Restore cursor position when locked
+	glfwSetCursorPos(glfWin_, getCursorLockedPos().getX(), getCursorLockedPos().getY());
+	internal_->cursorLocked_ = false;
 	glfwSetInputMode(glfWin_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
 
 bool Window::isCursorLocked() {
-	return glfwGetInputMode(glfWin_, GLFW_CURSOR) != GLFW_CURSOR_NORMAL;
+	return internal_->cursorLocked_;
 }
 
 int Window::getMods() {
@@ -789,6 +809,10 @@ bool Window::isFullScreen() {
 
 math::Vec Window::getLastMousePos() {
     return internal_->lastMousePos_;
+}
+
+math::Vec Window::getCursorLockedPos() {
+    return internal_->cursorLockedPos_;
 }
 
 void Window::setLastMousePos(const math::Vec& pos) {

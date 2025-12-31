@@ -40,7 +40,8 @@ bool isDirectory(const std::string& path);
 uint64_t getFileSize(const std::string& path);
 
 /** Moves a file or directory.
-Does not overwrite the destination. If this behavior is needed, use remove() or removeRecursively() before moving.
+If destination exists and both are files, overwrites.
+If destination exists and both are directories, overwrites if the destination is empty.
 Returns whether the rename was successful.
 */
 bool rename(const std::string& srcPath, const std::string& destPath);

@@ -118,6 +118,8 @@ private:
 
     void cursorToPrevWord();
     void cursorToNextWord();
+	void cursorToLineStart();
+	void cursorToLineEnd();
 
     /** Called when user right-clicks the text field. Pops up a context menu
      * that allows copy, cut, paste, and select all.

@@ -188,8 +188,12 @@ void TextField::onSelectKey(const SelectKeyEvent& e) {
 		}
 		// Left
 		if (e.isKeyCommand(GLFW_KEY_LEFT)) {
-			cursor = string::UTF8PrevCodepoint(text, cursor);
-			selection = cursor;
+			if (selection == cursor) {
+				selection = cursor = string::UTF8PrevCodepoint(text, cursor);
+			}
+			else {
+				selection = cursor = std::min(selection, cursor);
+			}
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_LEFT, TEXTFIELD_MOD_CTRL)) {
@@ -207,8 +211,12 @@ void TextField::onSelectKey(const SelectKeyEvent& e) {
 		}
 		// Right
 		if (e.isKeyCommand(GLFW_KEY_RIGHT)) {
-			cursor = string::UTF8NextCodepoint(text, cursor);
-			selection = cursor;
+			if (selection == cursor) {
+				selection = cursor = string::UTF8NextCodepoint(text, cursor);
+			}
+			else {
+				selection = cursor = std::max(selection, cursor);
+			}
 			e.consume(this);
 		}
 		if (e.isKeyCommand(GLFW_KEY_RIGHT, TEXTFIELD_MOD_CTRL)) {
@@ -224,12 +232,23 @@ void TextField::onSelectKey(const SelectKeyEvent& e) {
 			cursorToNextWord();
 			e.consume(this);
 		}
-		// Up (placeholder)
+		// Up
 		if (e.isKeyCommand(GLFW_KEY_UP)) {
+			string::Location location = string::positionToLocation(text, cursor);
+			if (location.line == 0)
+				location.column = 0;
+			else
+				location.line--;
+			cursor = locationToPosition(text, location);
+			selection = cursor;
 			e.consume(this);
 		}
-		// Down (placeholder)
+		// Down
 		if (e.isKeyCommand(GLFW_KEY_DOWN)) {
+			string::Location location = string::positionToLocation(text, cursor);
+			location.line++;
+			cursor = locationToPosition(text, location);
+			selection = cursor;
 			e.consume(this);
 		}
 		// Home
@@ -238,7 +257,8 @@ void TextField::onSelectKey(const SelectKeyEvent& e) {
 			|| e.isKeyCommand(GLFW_KEY_LEFT, RACK_MOD_CTRL)
 #endif
 		) {
-			selection = cursor = 0;
+			cursorToLineStart();
+			selection = cursor;
 			e.consume(this);
 		}
 		// Shift+Home
@@ -247,7 +267,7 @@ void TextField::onSelectKey(const SelectKeyEvent& e) {
 			|| e.isKeyCommand(GLFW_KEY_LEFT, RACK_MOD_CTRL | GLFW_MOD_SHIFT)
 #endif
 		) {
-			cursor = 0;
+			cursorToLineStart();
 			e.consume(this);
 		}
 		// End
@@ -256,7 +276,8 @@ void TextField::onSelectKey(const SelectKeyEvent& e) {
 			|| e.isKeyCommand(GLFW_KEY_RIGHT, RACK_MOD_CTRL)
 #endif
 		) {
-			selection = cursor = text.size();
+			cursorToLineEnd();
+			selection = cursor;
 			e.consume(this);
 		}
 		// Shift+End
@@ -265,7 +286,7 @@ void TextField::onSelectKey(const SelectKeyEvent& e) {
 			|| e.isKeyCommand(GLFW_KEY_RIGHT, RACK_MOD_CTRL | GLFW_MOD_SHIFT)
 #endif
 		) {
-			cursor = text.size();
+			cursorToLineEnd();
 			e.consume(this);
 		}
 		// Ctrl+V
@@ -397,7 +418,6 @@ void TextField::cursorToPrevWord() {
 		cursor = 0;
 		return;
 	}
-	// This works for valid UTF-8 text
 	size_t pos = text.rfind(' ', std::max(cursor - 2, 0));
 	if (pos == std::string::npos)
 		cursor = 0;
@@ -410,11 +430,34 @@ void TextField::cursorToNextWord() {
 		cursor = text.size();
 		return;
 	}
-	// This works for valid UTF-8 text
 	size_t pos = text.find(' ', std::min(cursor + 1, (int) text.size()));
 	if (pos == std::string::npos)
 		pos = text.size();
 	cursor = pos;
+}
+
+void TextField::cursorToLineStart() {
+	if (password) {
+		cursor = 0;
+		return;
+	}
+	size_t pos = text.rfind('\n', std::max(cursor - 1, 0));
+	if (pos == std::string::npos)
+		cursor = 0;
+	else
+		cursor = std::min((int) pos + 1, (int) text.size());
+}
+
+void TextField::cursorToLineEnd() {
+	if (password) {
+		cursor = text.size();
+		return;
+	}
+	size_t pos = text.find('\n', cursor);
+	if (pos == std::string::npos)
+		cursor = text.size();
+	else
+		cursor = pos;
 }
 
 void TextField::createContextMenu() {

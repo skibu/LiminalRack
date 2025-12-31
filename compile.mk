@@ -16,7 +16,7 @@ FLAGS += -g
 # Optimization
 FLAGS += -O0 -funsafe-math-optimizations -fno-omit-frame-pointer
 # Warnings
-FLAGS += -Wall -Wextra -Wno-unused-parameter
+FLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-vla-extension
 # Needed because of hack at dep/include/nanovg_gl_utils.h:46:11
 #FLAGS += -Wmacro-redefined
 # C++ standard

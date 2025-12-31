@@ -24,9 +24,17 @@ Example:
 	double r = normal(rng);
 */
 struct Xoroshiro128Plus {
+	using result_type = uint64_t;
+
 	uint64_t state[2] = {};
 
-	void seed(uint64_t s0, uint64_t s1) {
+	Xoroshiro128Plus() {}
+
+	explicit Xoroshiro128Plus(uint64_t s0, uint64_t s1 = 0) {
+		seed(s0, s1);
+	}
+
+	void seed(uint64_t s0, uint64_t s1 = 0) {
 		state[0] = s0;
 		state[1] = s1;
 		// A bad seed will give a bad first result, so shift the state
@@ -52,10 +60,11 @@ struct Xoroshiro128Plus {
 
 		return result;
 	}
-	constexpr uint64_t min() const {
+
+	static constexpr uint64_t min() {
 		return 0;
 	}
-	constexpr uint64_t max() const {
+	static constexpr uint64_t max() {
 		return UINT64_MAX;
 	}
 };

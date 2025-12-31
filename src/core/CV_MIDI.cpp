@@ -7,6 +7,7 @@ namespace core {
 
 struct MidiOutput : dsp::MidiGenerator<PORT_MAX_CHANNELS>, midi::Output {
 	void onMessage(const midi::Message& message) override {
+		// DEBUG("MIDI: %ld %s", message.getFrame(), message.toString().c_str());
 		Output::sendMessage(message);
 	}
 
@@ -78,7 +79,10 @@ struct CV_MIDI : Module {
 
 		midiOutput.setFrame(args.frame);
 
-		for (int c = 0; c < inputs[PITCH_INPUT].getChannels(); c++) {
+		uint8_t channels = inputs[PITCH_INPUT].getChannels();
+		midiOutput.setChannels(channels);
+
+		for (int c = 0; c < channels; c++) {
 			int vel = (int) std::round(inputs[VEL_INPUT].getNormalPolyVoltage(10.f * 100 / 127, c) / 10.f * 127);
 			vel = clamp(vel, 0, 127);
 			midiOutput.setVelocity(vel, c);
@@ -197,9 +201,10 @@ struct CV_MIDIWidget : ModuleWidget {
 
         menu->addChild(new MenuSeparator);
 
-        menu->addChild(
-            createMenuItem("Panic", "", [=]() { module->midiOutput.panic(); }));
-    }
+		menu->addChild(createMenuItem("Reset MIDI (Panic)", "",
+			[=]() {module->midiOutput.panic();}
+		));
+	}
 };
 
 Model* modelCV_MIDI = createModel<CV_MIDI, CV_MIDIWidget>("CV-MIDI");

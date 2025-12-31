@@ -1100,6 +1100,13 @@ void Browser::TagButton::onAction(const ActionEvent& e) {
     }
     menu->addChild(new ui::MenuSeparator);
 
+	// Sort tag IDs by translation string
+	std::vector<int> tagIds(tag::tagAliases.size());
+	std::iota(tagIds.begin(), tagIds.end(), 0);
+	std::sort(tagIds.begin(), tagIds.end(), [](int a, int b) {
+		return string::translate("tag." + tag::getTag(a)) < string::translate("tag." + tag::getTag(b));
+	});
+
     for (int tagId = 0; tagId < (int)tag::tagAliases.size(); tagId++) {
         TagItem* tagItem = new TagItem(browser_, tagId);
         tagItem->setText(string::translate("tag." + tag::getTag(tagId)));

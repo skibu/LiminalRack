@@ -173,30 +173,61 @@ struct MIDI_CVWidget : ModuleWidget {
 
         menu->addChild(new MenuSeparator);
 
-        static const std::vector<float> pwRanges = {
-            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 24, 36, 48};
-        auto getPwRangeLabel = [](float pwRange) -> std::string {
-            if (pwRange == 0)
-                return "Off";
-            else if (std::abs(pwRange) < 12)
-                return string::f("%g semitone", pwRange) +
-                       (pwRange == 1 ? "" : "s");
-            else
-                return string::f("%g octave", pwRange / 12) +
-                       (pwRange / 12 == 1 ? "" : "s");
-        };
-        menu->addChild(createSubmenuItem(
-            "Pitch bend range", getPwRangeLabel(module->midiParser.pwRange),
-            [=](Menu* menu) {
-                for (size_t i = 0; i < pwRanges.size(); i++) {
-                    menu->addChild(createCheckMenuItem(
-                        getPwRangeLabel(pwRanges[i]), "",
-                        [=]() {
-                            return module->midiParser.pwRange == pwRanges[i];
-                        },
-                        [=]() { module->midiParser.pwRange = pwRanges[i]; }));
-                }
-            }));
+		menu->addChild(createSubmenuItem("Polyphony channels", string::f("%d", module->midiParser.channels), [=](Menu* menu) {
+			for (int c = 1; c <= 16; c++) {
+				std::string channelsLabel = (c == 1) ? "Monophonic" : string::f("%d", c);
+				menu->addChild(createCheckMenuItem(channelsLabel, "",
+					[=]() {return module->midiParser.channels == c;},
+					[=]() {module->midiParser.setChannels(c);}
+				));
+			}
+		}));
+
+		menu->addChild(createIndexSubmenuItem("Monophonic priority", {
+			"Last",
+			"First",
+			"Lowest",
+			"Highest",
+		}, [=]() {
+			return module->midiParser.monoMode;
+		}, [=](size_t monoMode) {
+			module->midiParser.setMonoMode(decltype(module->midiParser)::MonoMode(monoMode));
+		}));
+
+		menu->addChild(createIndexSubmenuItem("Polyphony allocation", {
+			"Rotate",
+			"Reuse",
+			"Reset",
+			"MPE",
+		}, [=]() {
+			return module->midiParser.polyMode;
+		}, [=](size_t polyMode) {
+			module->midiParser.setPolyMode(decltype(module->midiParser)::PolyMode(polyMode));
+		}));
+
+		menu->addChild(createBoolPtrMenuItem("Retrigger on legato release", "", &module->midiParser.retriggerOnResume));
+
+		menu->addChild(new MenuSeparator);
+
+		menu->addChild(createBoolPtrMenuItem("Use release velocity", "", &module->midiParser.releaseVelocityEnabled));
+
+		static const std::vector<float> pwRanges = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 24, 36, 48};
+		auto getPwRangeLabel = [](float pwRange) -> std::string {
+			if (pwRange == 0)
+				return "Off";
+			else if (std::fmod(pwRange, 12) == 0.f)
+				return string::f("%g octave%s", pwRange / 12, pwRange / 12 == 1 ? "" : "s");
+			else
+				return string::f("%g semitone%s", pwRange, pwRange == 1 ? "" : "s");
+		};
+		menu->addChild(createSubmenuItem("Pitch bend range", getPwRangeLabel(module->midiParser.pwRange), [=](Menu* menu) {
+			for (size_t i = 0; i < pwRanges.size(); i++) {
+				menu->addChild(createCheckMenuItem(getPwRangeLabel(pwRanges[i]), "",
+					[=]() {return module->midiParser.pwRange == pwRanges[i];},
+					[=]() {module->midiParser.pwRange = pwRanges[i];}
+				));
+			}
+		}));
 
         menu->addChild(createBoolPtrMenuItem("Smooth pitch/mod wheel", "",
                                              &module->midiParser.smooth));
@@ -230,30 +261,11 @@ struct MIDI_CVWidget : ModuleWidget {
                 }
             }));
 
-        menu->addChild(createSubmenuItem(
-            "Polyphony channels", string::f("%d", module->midiParser.channels),
-            [=](Menu* menu) {
-                for (int c = 1; c <= 16; c++) {
-                    std::string channelsLabel =
-                        (c == 1) ? "Monophonic" : string::f("%d", c);
-                    menu->addChild(createCheckMenuItem(
-                        channelsLabel, "",
-                        [=]() { return module->midiParser.channels == c; },
-                        [=]() { module->midiParser.setChannels(c); }));
-                }
-            }));
+		menu->addChild(new MenuSeparator);
 
-        menu->addChild(createIndexPtrSubmenuItem("Polyphony mode",
-                                                 {
-                                                     "Rotate",
-                                                     "Reuse",
-                                                     "Reset",
-                                                     "MPE",
-                                                 },
-                                                 &module->midiParser.polyMode));
-
-        menu->addChild(
-            createMenuItem("Panic", "", [=]() { module->midiParser.panic(); }));
+		menu->addChild(createMenuItem("Reset MIDI (Panic)", "",
+			[=]() {module->midiParser.panic();}
+		));
 
         // Example of using appendMidiMenu()
         // menu->addChild(new MenuSeparator);

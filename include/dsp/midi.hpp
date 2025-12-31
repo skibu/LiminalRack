@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <dsp/common.hpp>
 #include <dsp/filter.hpp>
 #include <dsp/digital.hpp>
@@ -15,6 +16,7 @@ CHANNELS is the number of polyphony channels. Use 1 for monophonic.
 */
 template <int CHANNELS>
 struct MidiGenerator {
+	uint8_t channels;
 	int8_t vels[CHANNELS];
 	int8_t notes[CHANNELS];
 	bool gates[CHANNELS];
@@ -33,6 +35,7 @@ struct MidiGenerator {
 	}
 
 	void reset() {
+		channels = CHANNELS;
 		for (int c = 0; c < CHANNELS; c++) {
 			vels[c] = 100;
 			notes[c] = 60;
@@ -62,6 +65,16 @@ struct MidiGenerator {
 			m.setFrame(frame);
 			onMessage(m);
 		}
+	}
+
+	void setChannels(uint8_t channels) {
+		if (this->channels == channels)
+			return;
+		// Disable notes when channels decreases
+		for (uint8_t c = channels; c < this->channels; c++) {
+			setNoteGate(notes[c], false, c);
+		}
+		this->channels = channels;
 	}
 
 	/** Must be called before setNoteGate(). */
@@ -242,17 +255,20 @@ template <uint8_t MAX_CHANNELS>
 struct MidiParser {
 	// Settings
 
-	/** Number of semitones to bend up/down by pitch wheel */
-	float pwRange;
-
-	/** Enables pitch-wheel and mod-wheel exponential smoothing */
-	bool smooth;
-
-	/** Number of 24 PPQN clocks between clock divider pulses */
-	uint32_t clockDivision;
-
-	/** Actual number of polyphonic channels */
+	/** Actual number of output polyphonic channels */
 	uint8_t channels;
+
+	enum MonoMode {
+		LAST_PRIORITY_MODE,
+		FIRST_PRIORITY_MODE,
+		LOWEST_PRIORITY_MODE,
+		HIGHEST_PRIORITY_MODE,
+		NUM_MONO_MODES
+	};
+	MonoMode monoMode;
+
+	/** In monophonic mode, generate Retrigger pulse when the active note is released and another takes over. */
+	bool retriggerOnResume;
 
 	/** Method for assigning notes to polyphony channels */
 	enum PolyMode {
@@ -263,6 +279,18 @@ struct MidiParser {
 		NUM_POLY_MODES
 	};
 	PolyMode polyMode;
+
+	/** Set Velocity output from Note Off velocity */
+	bool releaseVelocityEnabled;
+
+	/** Number of semitones to bend up/down by pitch wheel */
+	float pwRange;
+
+	/** Enables pitch-wheel and mod-wheel exponential smoothing */
+	bool smooth;
+
+	/** Number of 24 PPQN clocks between clock divider pulses */
+	uint32_t clockDivision;
 
 	// States
 
@@ -304,11 +332,13 @@ struct MidiParser {
 
 	/** Resets settings and performance state */
 	void reset() {
-		clock = 0;
-		smooth = true;
 		channels = 1;
+		monoMode = LAST_PRIORITY_MODE;
+		retriggerOnResume = false;
 		polyMode = ROTATE_MODE;
+		releaseVelocityEnabled = false;
 		pwRange = 2.f;
+		smooth = true;
 		clockDivision = 24;
 		setFilterLambda(30.f);
 		panic();
@@ -316,6 +346,8 @@ struct MidiParser {
 
 	/** Resets performance state */
 	void panic() {
+		clock = 0;
+		pedal = false;
 		for (uint8_t c = 0; c < MAX_CHANNELS; c++) {
 			// Middle C
 			notes[c] = 60;
@@ -327,7 +359,6 @@ struct MidiParser {
 			pwFilters[c].reset();
 			modFilters[c].reset();
 		}
-		pedal = false;
 		rotateIndex = -1;
 		heldNotes.clear();
 	}
@@ -368,18 +399,17 @@ struct MidiParser {
 		switch (msg.getStatus()) {
 			// note off
 			case 0x8: {
-				releaseNote(msg.getNote());
+				releaseNote(msg.getNote(), msg.getChannel(), msg.getValue());
 			} break;
 			// note on
 			case 0x9: {
-				if (msg.getValue() > 0) {
-					uint8_t c = msg.getChannel();
-					c = pressNote(msg.getNote(), c);
-					velocities[c] = msg.getValue();
+				uint8_t velocity = msg.getValue();
+				if (velocity > 0) {
+					pressNote(msg.getNote(), msg.getChannel(), velocity);
 				}
 				else {
 					// Note-on event with velocity 0 is an alternative for note-off event.
-					releaseNote(msg.getNote());
+					releaseNote(msg.getNote(), msg.getChannel(), -1);
 				}
 			} break;
 			// key pressure
@@ -397,7 +427,7 @@ struct MidiParser {
 			} break;
 			// channel pressure
 			case 0xd: {
-				if (polyMode == MPE_MODE) {
+				if (channels > 1 && polyMode == MPE_MODE) {
 					// Set the channel aftertouch
 					aftertouches[msg.getChannel()] = msg.getNote();
 				}
@@ -410,7 +440,7 @@ struct MidiParser {
 			} break;
 			// pitch wheel
 			case 0xe: {
-				uint8_t c = (polyMode == MPE_MODE) ? msg.getChannel() : 0;
+				uint8_t c = (channels > 1 && polyMode == MPE_MODE) ? msg.getChannel() : 0;
 				int16_t pw = msg.getValue();
 				pw <<= 7;
 				pw |= msg.getNote();
@@ -428,7 +458,7 @@ struct MidiParser {
 		switch (msg.getNote()) {
 			// mod
 			case 0x01: {
-				uint8_t c = (polyMode == MPE_MODE) ? msg.getChannel() : 0;
+				uint8_t c = (channels > 1 && polyMode == MPE_MODE) ? msg.getChannel() : 0;
 				mods[c] = msg.getValue();
 			} break;
 			// sustain
@@ -481,94 +511,158 @@ struct MidiParser {
 	}
 
 	uint8_t assignChannel(uint8_t note) {
-		if (channels == 1)
+		if (channels <= 1)
 			return 0;
 
-		switch (polyMode) {
-			case REUSE_MODE: {
-				// Find channel with the same note
-				for (uint8_t c = 0; c < channels; c++) {
-					if (notes[c] == note)
-						return c;
-				}
-			} // fallthrough
-
-			case ROTATE_MODE: {
-				// Find next available channel
-				for (uint8_t i = 0; i < channels; i++) {
-					rotateIndex++;
-					if (rotateIndex >= channels)
-						rotateIndex = 0;
-					if (!gates[rotateIndex])
-						return rotateIndex;
-				}
-				// No notes are available. Advance rotateIndex once more.
+		if (polyMode == REUSE_MODE) {
+			// Try to find channel with the same note
+			for (uint8_t c = 0; c < channels; c++) {
+				if (notes[c] == note)
+					return c;
+			}
+		}
+		if (polyMode == REUSE_MODE || polyMode == ROTATE_MODE) {
+			// Find next available channel
+			for (uint8_t i = 0; i < channels; i++) {
 				rotateIndex++;
 				if (rotateIndex >= channels)
 					rotateIndex = 0;
-				return rotateIndex;
-			} break;
-
-			case RESET_MODE: {
-				for (uint8_t c = 0; c < channels; c++) {
-					if (!gates[c])
-						return c;
-				}
-				return channels - 1;
-			} break;
-
-			case MPE_MODE: {
-				// This case is handled by querying the MIDI message channel.
-				return 0;
-			} break;
-
-			default: return 0;
+				if (!gates[rotateIndex])
+					return rotateIndex;
+			}
+			// No notes are available. Advance rotateIndex once more.
+			rotateIndex++;
+			if (rotateIndex >= channels)
+				rotateIndex = 0;
+			return rotateIndex;
 		}
+		if (polyMode == RESET_MODE) {
+			for (uint8_t c = 0; c < channels; c++) {
+				if (!gates[c])
+					return c;
+			}
+			return channels - 1;
+		}
+		if (polyMode == MPE_MODE) {
+			// This case is handled by querying the MIDI message channel.
+			return 0;
+		}
+		return 0;
 	}
 
-	/** Returns actual assigned channel */
-	uint8_t pressNote(uint8_t note, uint8_t channel) {
+	void pressNote(uint8_t note, uint8_t channel, uint8_t velocity) {
 		// Remove existing similar note
-		auto it = std::find(heldNotes.begin(), heldNotes.end(), note);
-		if (it != heldNotes.end())
-			heldNotes.erase(it);
-		// Push note
+		heldNotes.erase(std::remove(heldNotes.begin(), heldNotes.end(), note), heldNotes.end());
+		// Push note to end
 		heldNotes.push_back(note);
-		// Determine actual channel
-		if (polyMode == MPE_MODE) {
-			// Channel is already decided for us
+		// Handle polyphony modes
+		if (channels > 1) {
+			if (polyMode == MPE_MODE) {
+				// Output channel equals MIDI channel
+			}
+			else {
+				channel = assignChannel(note);
+			}
 		}
+		// Handle monophonic modes
 		else {
-			channel = assignChannel(note);
+			channel = 0;
+			if (monoMode == LAST_PRIORITY_MODE) {
+				// Always play note
+			}
+			if (monoMode == FIRST_PRIORITY_MODE) {
+				if (heldNotes.size() > 1)
+					return;
+			}
+			if (monoMode == LOWEST_PRIORITY_MODE) {
+				uint8_t minNote = *std::min_element(heldNotes.begin(), heldNotes.end());
+				if (note != minNote)
+					return;
+			}
+			if (monoMode == HIGHEST_PRIORITY_MODE) {
+				uint8_t maxNote = *std::max_element(heldNotes.begin(), heldNotes.end());
+				if (note != maxNote)
+					return;
+			}
 		}
 		// Set note
 		notes[channel] = note;
 		gates[channel] = true;
+		velocities[channel] = velocity;
 		retriggerPulses[channel].trigger(1e-3);
-		return channel;
 	}
 
-	void releaseNote(uint8_t note) {
+	/** -1 velocity means unset. */
+	void releaseNote(uint8_t note, int8_t channel, int8_t velocity) {
 		// Remove the note
-		auto it = std::find(heldNotes.begin(), heldNotes.end(), note);
-		if (it != heldNotes.end())
-			heldNotes.erase(it);
+		heldNotes.erase(std::remove(heldNotes.begin(), heldNotes.end(), note), heldNotes.end());
 		// Hold note if pedal is pressed
 		if (pedal)
 			return;
-		// Turn off gate of all channels with note
-		for (uint8_t c = 0; c < channels; c++) {
-			if (notes[c] == note) {
-				gates[c] = false;
+		// Find output channel of released note, if any
+		if (channels > 1 && polyMode == MPE_MODE) {
+			// Each MPE channel must be monophonic so the output channel must be the released note channel
+		}
+		else {
+			// Find channel of active note
+			channel = -1;
+			for (uint8_t c = 0; c < channels; c++) {
+				if (gates[c] && notes[c] == note) {
+					channel = c;
+					break;
+				}
 			}
 		}
-		// Set last note if monophonic
-		if (channels == 1) {
-			if (note == notes[0] && !heldNotes.empty()) {
-				uint8_t lastNote = heldNotes.back();
-				notes[0] = lastNote;
+		if (channel < 0) {
+			// Released note is not active on any channel
+			return;
+		}
+		// Deactivate note
+		gates[channel] = false;
+		refreshHeld();
+		// Set velocity
+		if (releaseVelocityEnabled && velocity >= 0) {
+			velocities[channel] = velocity;
+		}
+	}
+
+	/** Deactivates all notes that are not held, and reactivates notes that are. */
+	void refreshHeld() {
+		// Monophonic
+		if (channels <= 1) {
+			// Reactivate note if at least one is held
+			if (!heldNotes.empty()) {
+				if (monoMode == LAST_PRIORITY_MODE) {
+					notes[0] = heldNotes.back();
+				}
+				if (monoMode == FIRST_PRIORITY_MODE) {
+					notes[0] = heldNotes.front();
+				}
+				if (monoMode == LOWEST_PRIORITY_MODE) {
+					notes[0] = *std::min_element(heldNotes.begin(), heldNotes.end());
+				}
+				if (monoMode == HIGHEST_PRIORITY_MODE) {
+					notes[0] = *std::max_element(heldNotes.begin(), heldNotes.end());
+				}
 				gates[0] = true;
-				return;
+				if (retriggerOnResume) {
+					retriggerPulses[0].trigger(1e-3);
+				}
+			}
+			else {
+				gates[0] = false;
+			}
+		}
+		// Polyphonic
+		else {
+			// Deactivate notes that are not held
+			for (uint8_t c = 0; c < channels; c++) {
+				if (!gates[c])
+					continue;
+				// Check if note is still held
+				bool held = std::find(heldNotes.begin(), heldNotes.end(), notes[c]) != heldNotes.end();
+				if (!held)
+					gates[c] = false;
 			}
 		}
 	}
@@ -583,34 +677,7 @@ struct MidiParser {
 		if (!pedal)
 			return;
 		pedal = false;
-		// Set last note if monophonic
-		if (channels == 1) {
-			if (!heldNotes.empty()) {
-				// Replace note with last held note
-				uint8_t lastNote = heldNotes.back();
-				notes[0] = lastNote;
-			}
-			else {
-				// Disable gate
-				gates[0] = false;
-			}
-		}
-		// Clear notes that are not held if polyphonic
-		else {
-			for (uint8_t c = 0; c < channels; c++) {
-				if (!gates[c])
-					continue;
-				// Disable all gates
-				gates[c] = false;
-				// Re-enable gate if channel's note is still held
-				for (uint8_t note : heldNotes) {
-					if (notes[c] == note) {
-						gates[c] = true;
-						break;
-					}
-				}
-			}
-		}
+		refreshHeld();
 	}
 
 	uint8_t getChannels() {
@@ -624,6 +691,13 @@ struct MidiParser {
 		panic();
 	}
 
+	void setMonoMode(MonoMode monoMode) {
+		if (monoMode == this->monoMode)
+			return;
+		this->monoMode = monoMode;
+		panic();
+	}
+
 	void setPolyMode(PolyMode polyMode) {
 		if (polyMode == this->polyMode)
 			return;
@@ -632,7 +706,7 @@ struct MidiParser {
 	}
 
 	float getPitchVoltage(uint8_t channel) {
-		uint8_t wheelChannel = (polyMode == MPE_MODE) ? channel : 0;
+		uint8_t wheelChannel = (channels > 1 && polyMode == MPE_MODE) ? channel : 0;
 		return (notes[channel] - 60.f + pwFilters[wheelChannel].out * pwRange) / 12.f;
 	}
 
@@ -656,18 +730,23 @@ struct MidiParser {
 
 	/** Returns number of polyphonic channels for pitch and mod wheels. */
 	uint8_t getWheelChannels() {
-		return (polyMode == MPE_MODE) ? MAX_CHANNELS : 1;
+		return (channels > 1 && polyMode == MPE_MODE) ? MAX_CHANNELS : 1;
 	}
 
 	json_t* toJson() {
 		json_t* rootJ = json_object();
+		json_object_set_new(rootJ, "channels", json_integer(channels));
+		json_object_set_new(rootJ, "monoMode", json_integer(monoMode));
+		json_object_set_new(rootJ, "retriggerOnResume", json_boolean(retriggerOnResume));
+		json_object_set_new(rootJ, "polyMode", json_integer(polyMode));
+		json_object_set_new(rootJ, "releaseVelocityEnabled", json_boolean(releaseVelocityEnabled));
 		json_object_set_new(rootJ, "pwRange", json_real(pwRange));
 		json_object_set_new(rootJ, "smooth", json_boolean(smooth));
-		json_object_set_new(rootJ, "channels", json_integer(channels));
-		json_object_set_new(rootJ, "polyMode", json_integer(polyMode));
 		json_object_set_new(rootJ, "clockDivision", json_integer(clockDivision));
-		// Saving/restoring pitch and mod doesn't make much sense for MPE.
-		if (polyMode != MPE_MODE) {
+		if (channels > 1 && polyMode == MPE_MODE) {
+			// Saving/restoring pitch and mod doesn't make much sense for MPE.
+		}
+		else {
 			json_object_set_new(rootJ, "lastPw", json_integer(pws[0]));
 			json_object_set_new(rootJ, "lastMod", json_integer(mods[0]));
 		}
@@ -677,6 +756,26 @@ struct MidiParser {
 	}
 
 	void fromJson(json_t* rootJ) {
+		json_t* channelsJ = json_object_get(rootJ, "channels");
+		if (channelsJ)
+			setChannels(json_integer_value(channelsJ));
+
+		json_t* monoModeJ = json_object_get(rootJ, "monoMode");
+		if (monoModeJ)
+			monoMode = (MonoMode) json_integer_value(monoModeJ);
+
+		json_t* retriggerOnResumeJ = json_object_get(rootJ, "retriggerOnResume");
+		if (retriggerOnResumeJ)
+			retriggerOnResume = json_boolean_value(retriggerOnResumeJ);
+
+		json_t* polyModeJ = json_object_get(rootJ, "polyMode");
+		if (polyModeJ)
+			polyMode = (PolyMode) json_integer_value(polyModeJ);
+
+		json_t* releaseVelocityEnabledJ = json_object_get(rootJ, "releaseVelocityEnabled");
+		if (releaseVelocityEnabledJ)
+			releaseVelocityEnabled = json_boolean_value(releaseVelocityEnabledJ);
+
 		json_t* pwRangeJ = json_object_get(rootJ, "pwRange");
 		if (pwRangeJ)
 			pwRange = json_number_value(pwRangeJ);
@@ -684,14 +783,6 @@ struct MidiParser {
 		json_t* smoothJ = json_object_get(rootJ, "smooth");
 		if (smoothJ)
 			smooth = json_boolean_value(smoothJ);
-
-		json_t* channelsJ = json_object_get(rootJ, "channels");
-		if (channelsJ)
-			setChannels(json_integer_value(channelsJ));
-
-		json_t* polyModeJ = json_object_get(rootJ, "polyMode");
-		if (polyModeJ)
-			polyMode = (PolyMode) json_integer_value(polyModeJ);
 
 		json_t* clockDivisionJ = json_object_get(rootJ, "clockDivision");
 		if (clockDivisionJ)

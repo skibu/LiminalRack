@@ -155,6 +155,52 @@ bool endsWith(const std::string& str, const std::string& suffix) {
 }
 
 
+Location positionToLocation(const std::string& s, size_t pos) {
+	if (pos > s.size())
+		pos = s.size();
+
+	// Count number of newlines until pos
+	size_t line = 0;
+	size_t linePos = 0;
+	for (size_t i = 0; i < pos; i++) {
+		if (s[i] == '\n') {
+			line++;
+			linePos = i + 1;
+		}
+	}
+
+	// Count number of codepoints from line until pos
+	size_t column = 0;
+	for (size_t i = linePos; i < pos;) {
+		i = UTF8NextCodepoint(s, i);
+		column++;
+	}
+
+	return {line, column};
+}
+
+
+size_t locationToPosition(const std::string& s, Location location) {
+	size_t pos = 0;
+
+	// Advance `location.line` newlines
+	for (size_t lines = 0; lines < location.line && pos < s.size(); pos++) {
+		if (s[pos] == '\n')
+			lines++;
+	}
+
+	// Advance `location.column` codepoints
+	for (size_t columns = 0; columns < location.column && pos < s.size(); columns++) {
+		// Stop if column is beyond newline
+		if (s[pos] == '\n')
+			break;
+		pos = UTF8NextCodepoint(s, pos);
+	}
+
+	return pos;
+}
+
+
 void replaceAll(std::string& str, const std::string& from, const std::string& to) {
     if (from.empty())
         return;
@@ -249,17 +295,20 @@ std::vector<uint8_t> fromBase64(const std::string& str) {
 }
 
 
-bool CaseInsensitiveCompare::operator()(const std::string& a, const std::string& b) const {
-	for (size_t i = 0;; i++) {
-		char ai = std::tolower(a[i]);
-		char bi = std::tolower(b[i]);
-		if (ai < bi)
-			return true;
-		if (ai > bi)
-			return false;
-		if (!ai || !bi)
-			return false;
+int strcasecmp(const char* s1, const char* s2) {
+	for (size_t i = 0; s1[i] || s2[i]; i++) {
+		// Cast [-128, -1] char to [128, 255] because negative ints are undefined
+		int c1 = std::tolower((unsigned char) s1[i]);
+		int c2 = std::tolower((unsigned char) s2[i]);
+		if (c1 != c2)
+			return c1 - c2;
 	}
+	return 0;
+}
+
+
+bool CaseInsensitiveCompare::operator()(const std::string& a, const std::string& b) const {
+	return strcasecmp(a.c_str(), b.c_str()) < 0;
 }
 
 

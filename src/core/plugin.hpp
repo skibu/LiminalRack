@@ -212,10 +212,13 @@ struct NoteChoice : LedDisplayChoice {
 	}
 
 	void onSelectText(const SelectTextEvent& e) override {
-		int c = e.codepoint;
+		uint32_t c = e.codepoint;
+		static const int majorNotes[7] = {9, 11, 0, 2, 4, 5, 7};
 		if ('a' <= c && c <= 'g') {
-			static const int majorNotes[7] = {9, 11, 0, 2, 4, 5, 7};
 			focusNote = majorNotes[c - 'a'];
+		}
+		else if ('A' <= c && c <= 'G') {
+			focusNote = majorNotes[c - 'A'];
 		}
 		else if (c == '#') {
 			if (focusNote >= 0) {

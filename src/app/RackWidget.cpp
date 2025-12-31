@@ -158,6 +158,22 @@ void RackWidget::draw(const DrawArgs& args) {
     auto spotlightInnerColor =
         nvgRGBAf(1.0f, 0.7f, 0.7f, (1.1f - rackBrightness) * innerGradientBrightness);
     auto spotlightOuterColor = nvgRGBAf(0, 0, 0, 1.0f - rackBrightness);
+	// Draw translucent dark rectangle
+	if (b < 1.f) {
+		// Get zoom level
+		float t[6];
+		nvgCurrentTransform(args.vg, t);
+		float zoom = t[3];
+		// Draw mouse spotlight
+		nvgBeginPath(args.vg);
+		nvgRect(args.vg, 0.0, 0.0, VEC_ARGS(getSize()));
+		nvgFillPaint(args.vg, nvgRadialGradient(args.vg,
+			VEC_ARGS(internal_->mousePos), 0.0,
+			settings::spotlightRadius / zoom,
+			nvgRGBAf(0, 0, 0, 1.f - b - settings::spotlightBrightness),
+			nvgRGBAf(0, 0, 0, 1.f - b)));
+		nvgFill(args.vg);
+	}
 
     // Specify the radial gradient fill to be used and then do the fill
     float radius = 130.0 / getAbsoluteZoom();

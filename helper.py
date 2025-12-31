@@ -374,24 +374,28 @@ def panel_to_components(tree):
 		# Get color from CSS fill style
 		if not color:
 			style = el.get('style')
-			if style:
-				color_match = re.search(r'fill:\S*(#[0-9a-fA-F]{6})', style)
-				color = color_match.group(1)
+			styles = {}
+			for pair in style.split(';'):
+				pair = pair.strip()
+				if pair:
+					key, value = pair.split(':', 1)
+					styles[key.strip()] = value.strip()
+			color = styles['fill']
 		if not color:
 			eprint(f"Cannot get color of component: {el}")
 			continue
 
 		color = color.lower()
 
-		if color == '#ff0000' or color == '#f00' or color == 'red':
+		if color in ['#ff0000', '#f00', 'rgb(255,0,0)', 'red']:
 			components['params'].append(c)
-		if color == '#00ff00' or color == '#0f0' or color == 'lime':
+		if color in ['#00ff00', '#0f0', 'rgb(0,255,0)', 'lime']:
 			components['inputs'].append(c)
-		if color == '#0000ff' or color == '#00f' or color == 'blue':
+		if color in ['#0000ff', '#00f', 'rgb(0,0,255)', 'blue']:
 			components['outputs'].append(c)
-		if color == '#ff00ff' or color == '#f0f' or color == 'magenta':
+		if color in ['#ff00ff', '#f0f', 'rgb(255,0,255)', 'magenta']:
 			components['lights'].append(c)
-		if color == '#ffff00' or color == '#ff0' or color == 'yellow':
+		if color in ['#ffff00', '#ff0', 'rgb(255,255,0)', 'yellow']:
 			components['widgets'].append(c)
 
 	# Sort components
@@ -561,7 +565,10 @@ Model* model{identifier} = createModel<{identifier}, {identifier}Widget>("{slug}
 
 
 def usage(script):
-	text = f"""VCV Rack Plugin Development Helper
+	text = f"""
+⢿⣆⠀⠀⣼⡗⢀⣴⡿⠿⢷⠄⢺⣧⠀⠀⣰⡿
+⠈⢿⣆⣼⡟⠀⢸⣿⠰⣿⠀⠀⠀⢻⣧⣰⡿⠁
+⠀⠈⢿⡟⠀⠀⠈⠻⣷⣶⡾⠂⠀⠀⢻⡿⠁
 
 Usage: {script} <command> ...
 Commands:
@@ -580,10 +587,11 @@ createmodule <module slug> [panel file] [source file]
 
 	Adds a new module to the plugin manifest in the current directory.
 	If a panel and source file are given, generates a template source file initialized with components from a panel file.
+	If only a panel is given, prints the generated source code.
 	Example:
 		{script} createmodule MyModule res/MyModule.svg src/MyModule.cpp
 
-	See https://vcvrack.com/manual/PanelTutorial.html for creating SVG panel files.
+	See https://vcvrack.com/manual/Panel for creating SVG panel files.
 """
 	eprint(text)
 

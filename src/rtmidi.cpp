@@ -183,11 +183,13 @@ struct RtMidiOutputDevice : midi::OutputDevice {
 				const MessageSchedule& ms = messageQueue.top();
 				double duration = ms.timestamp - system::getTime();
 
-				// If we need to wait, release the lock and wait for the timeout, or if the CV is notified.
-				// This correctly handles MIDI messages with no timestamp, because duration will be NAN.
-				if (duration > 0) {
-					if (cv.wait_for(lock, std::chrono::duration<double>(duration)) != std::cv_status::timeout)
-						continue;
+				// If we need to wait, release the lock and wait for the timeout or notify_one().
+				// If the top message has a NAN timestamp, this condition is false and the message is sent immediately.
+				// Don't bother waiting if duration is close to zero. Just send the message immediately. 100 us is less than typical jitter for MIDI output devices.
+				if (duration > 1e-4) {
+					// If this returns std::cv_status::timeout, it does NOT imply that notify_one() was not called, so a new message may have been pushed. So we must always restart the loop and get the top message again.
+					cv.wait_for(lock, std::chrono::duration<double>(duration));
+					continue;
 				}
 
 				// Send and remove from queue
@@ -403,7 +405,7 @@ void rtmidiInit() {
 			midi::addDriver(driverId, driver);
 		}
 		catch (Exception& e) {
-			WARN("Could not create RtMidiDriver %d", api);
+			WARN("%s", e.what());
 		}
 	}
 }

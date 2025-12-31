@@ -97,6 +97,8 @@ extern float cableTension;
 extern float cableTensionRandomFactor;
 /** Sometimes nice to dim rack so that it isn't too bright */
 extern float rackBrightness;
+extern float spotlightBrightness;
+extern float spotlightRadius;
 /** When dimming rack it can be nice to have system draw halos around the lights
  * on the module */
 extern float haloBrightness;
