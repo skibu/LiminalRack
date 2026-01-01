@@ -207,7 +207,11 @@ PRIVATE json_t* toJson();
 /** Converts JSON object to settings */
 PRIVATE void fromJson(json_t* rootJ);
 
-/** Saves settings to file, in JSON format */
+/** Saves settings to file, in JSON format. The data is first written to
+ * a temporary file, then renamed to the target file to avoid corruption
+ * if system goes down during write. This of course is important for
+ * computers like raspberry pis that can lose power unexpectedly.
+ */
 PRIVATE void save(std::string path = "");
 
 /** Loads settings from file, in JSON format */

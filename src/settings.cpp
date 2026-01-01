@@ -770,6 +770,9 @@ void save(std::string path) {
 
 	json_dumpf(rootJ, file, JSON_INDENT(2));
 	std::fclose(file);
+
+    // Atomically replace settings file. This avoids settings file corruption
+    // if the program crashes while writing.
 	system::rename(tmpPath, path);
 }
 
