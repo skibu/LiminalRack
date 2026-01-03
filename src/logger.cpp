@@ -5,7 +5,8 @@
 #include <system.hpp>
 #include <settings.hpp>
 #include <string>
-
+#include <sched.h>
+#include <thread>
 
 namespace rack {
 namespace logger {
@@ -106,41 +107,74 @@ static const int levelColors[] = {
 	31,
 };
 
-static void logVa(Level level, const char* filename, int line, const char* func, const char* format, va_list args) {
-	if (!outputFile)
-		return;
+static void logVa(Level level, const char* filename, int line, const char* func,
+                  const char* format, va_list args) {
+    if (!outputFile) return;
 
-	// Record logging time before calling OS functions
-	double nowTime = system::getTime();
+    // Record logging time before calling OS functions
+    double nowTime = system::getTime();
 
-	// Check if log size is full
-	if (outputFile != stderr) {
-		long pos = std::ftell(outputFile);
-		if (pos >= maxSize)
-			return;
-	}
+    // Check if log size is full
+    if (outputFile != stderr) {
+        long pos = std::ftell(outputFile);
+        if (pos >= maxSize) return;
+    }
 
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
-	if (outputFile == stderr)
-		std::fprintf(outputFile, "\x1B[%dm", levelColors[level]);
-	std::fprintf(outputFile, "[%.03f %s %s:%d %s] ", nowTime, levelLabels[level], filename, line, func);
-	if (outputFile == stderr)
-		std::fprintf(outputFile, "\x1B[0m");
-	std::vfprintf(outputFile, format, args);
-	std::fprintf(outputFile, "\n");
-	// Note: This adds around 10us, but it's important for logging to finish writing the file, and logging is not used in performance critical code.
-	std::fflush(outputFile);
+    // If stderr then add color codes
+    if (outputFile == stderr)
+        std::fprintf(outputFile, "\x1B[%dm", levelColors[level]);
+
+    // Determine core ID to output
+    std::string core_str = "";
+#ifdef __linux__
+    // Only output core ID for more verbose levels
+    if (level < INFO_LEVEL) {
+        int core_id = sched_getcpu();
+        core_str = "Core " + std::to_string(core_id) + " ";
+    }
+#endif
+
+    // Determine thread name to output
+    std::string thread_str = "";
+    // Only output core thread name for more verbose levels
+    if (level < INFO_LEVEL) {
+        auto thread_id = std::this_thread::get_id();
+        std::ostringstream oss;
+        oss << thread_id;
+        thread_str = "Thr " + oss.str() + " ";
+    }
+
+    // Outline context info
+    std::fprintf(outputFile, "[%.03f %s %s%s%s:%d %s] ", 
+        nowTime, levelLabels[level], core_str.c_str(), thread_str.c_str(),
+                filename, line, func);
+
+    // Reset color
+    if (outputFile == stderr) std::fprintf(outputFile, "\x1B[0m");
+
+    // Print the actual log message and a newline
+    std::vfprintf(outputFile, format, args);
+    std::fprintf(outputFile, "\n");
+
+    // Note: This adds around 10us, but it's important for logging to finish
+    // writing the file, and logging is not used in performance critical
+    // code.
+    std::fflush(outputFile);
 }
 
-void log(Level level, const char* filename, int line, const char* func, const char* format, ...) {
-	// If log level for the logging statement is below the level set for the system then don't log
-	if (level < systemLogLevel) return;
+void log(Level level, const char* filename, int line, const char* func,
+         const char* format, ...) {
+    // If log level for the logging statement is below the level set for the
+    // system then don't log
+    if (level < systemLogLevel) return;
 
-	va_list args;
-	va_start(args, format);
-	logVa(level, filename, line, (std::string(func) + "()").c_str(), format, args);
-	va_end(args);
+    va_list args;
+    va_start(args, format);
+    logVa(level, filename, line, (std::string(func) + "()").c_str(), format,
+            args);
+    va_end(args);
 }
 
 bool wasTruncated() {
