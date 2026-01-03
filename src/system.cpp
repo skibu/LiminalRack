@@ -1040,11 +1040,14 @@ std::string executeCommand(const std::string& command) {
     }
     int status = pclose(pipe);
     if (status == -1) {
-        ERROR("Error closing pipe for command: %s", command.c_str());
+        ERROR("Error closing pipe for command: %s", 
+            command.c_str());
     } else if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-        ERROR("Command exited with non-zero status: %d", WEXITSTATUS(status));
+        ERROR("Command \"%s\" exited with non-zero status: %d", 
+            command.c_str(), WEXITSTATUS(status));
     } else if (WIFSIGNALED(status)) {
-        ERROR("Command terminated by signal: %d", WTERMSIG(status));
+        ERROR("Command \"%s\" terminated by signal: %d", 
+            command.c_str(), WTERMSIG(status));
     }
 
     // Trim trailing newlines
