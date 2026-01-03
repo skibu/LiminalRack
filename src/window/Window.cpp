@@ -102,13 +102,10 @@ struct Window::Internal {
 	int lastWindowWidth_ = 0;
 	int lastWindowHeight_ = 0;
 
-	int frame = 0;
-	double frameTime = NAN;
-	double lastFrameDuration = NAN;
+	int frameCount_ = 0;
 
 	bool cursorLocked_ = false;
 	math::Vec cursorLockedPos_;
-	// int frame = 0; No longer used
 	double ignoreMouseDeltaUntil_ = -INFINITY;
 	double monitorRefreshRate_ = 0.0;
 
@@ -206,8 +203,9 @@ static void mouseButtonCallback(GLFWwindow* win, int button, int action, int mod
 	getEvent()->handleButton(getWindow()->getLastMousePos(), button, action, mods);
 }
 
+// FIXME just for testing
 static void cursorPosCallbackTest(GLFWwindow* win, double xpos, double ypos) {
-	DEBUG("==> cursorPosCallbackTest x=%.2f y=%.2f", xpos, ypos);
+	DEBUG("==> FIXME cursorPosCallbackTest x=%.2f y=%.2f", xpos, ypos);
     auto thing = (Context*) glfwGetWindowUserPointer(win);
 }
 
@@ -516,6 +514,12 @@ void Window::mainLoop() {
         // Process the frame and recurse through all child widgets
         step();
 
+        // Log every 180 frames just to show that app is still running
+        static logger::LogCounter frameCounter(180);
+        if (frameCounter.shouldLog()) {
+            DEBUG("Processed frame %d", internal_->frameCount_);
+        }
+
         // Wait till done with allocated frame time
         internal_->endOfFrame();
     }
@@ -524,6 +528,9 @@ void Window::mainLoop() {
 }
 
 void Window::step() {
+    // Keep track of number of frames processed
+    ++internal_->frameCount_;
+
     internal_->fbCount_ = 0;
 
     // Make event handlers and step() have a clean NanoVG context
