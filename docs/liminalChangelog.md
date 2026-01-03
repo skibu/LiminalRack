@@ -1,7 +1,11 @@
 # Liminal Rack Change Log
 
+- 1/3/26
+  - Fixed determination of number of cores on raspberry pi.
+  - Improved logging by adding stack trace to ERROR messages. This way can better see context of error.
+  
 - 1/2/26
-  - For DEBUG and TRACE now loglevel ging core and thread ids
+  - For DEBUG and TRACE now logging core and thread ids
     so that can better understand how things are running. 
     Note: core ID only currently works for Linux.
 
