@@ -658,7 +658,7 @@ static int _getPhysicalCoreCount() {
 #if defined ARCH_LIN
     // For linux use lscpu command
     std::string num_str =
-        executeCommand("lscpu | grep \"CPU(s):\" | grep -o \"[0-9]+\"");
+        executeCommand("lscpu | grep \"^CPU(s):\" | grep -o \"[0-9]\"");
     if (num_str.empty()) {
         // Fallback to logical core count
         return getLogicalCoreCount();
