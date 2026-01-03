@@ -163,7 +163,7 @@ static void logVa(Level level, const char* filename, int line, const char* func,
     // understand context of the warning/error
     if (level >= WARN_LEVEL) {
         std::string stackTrace = system::getStackTrace();
-        std::fprintf(outputFile, "%s\n", stackTrace.c_str());
+        std::fprintf(outputFile, "Stack trace:\n%s", stackTrace.c_str());
     }
 
     // Note: This adds around 10us, but it's important for logging to finish
