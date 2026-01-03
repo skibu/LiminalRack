@@ -1,5 +1,10 @@
 # Liminal Rack Change Log
 
+- 1/2/26
+  - For DEBUG and TRACE now loglevel ging core and thread ids
+    so that can better understand how things are running. 
+    Note: core ID only currently works for Linux.
+
 - 12/30/25
   - More refinements to splash screen so that text always readable
   - Merged changes from last few months from upstream VCVRack/Rack repo.
