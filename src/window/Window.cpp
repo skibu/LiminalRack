@@ -13,6 +13,7 @@
 #include <osdialog.h>
 
 #include <window/Window.hpp>
+#include <window/WaylandTouch.hpp>
 #include <asset.hpp>
 #include <widget/Widget.hpp>
 #include <app/Scene.hpp>
@@ -965,6 +966,9 @@ void Window::init() {
 		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, "Could not initialize GLFW.");
 		throw Exception("Could not initialize GLFW");
 	}
+
+    // Initialize touch screen support if available
+    window::WaylandTouch::init();
 
     INFO("Done initializing Window system");
 }
