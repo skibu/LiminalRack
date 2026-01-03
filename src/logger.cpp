@@ -138,8 +138,9 @@ static void logVa(Level level, const char* filename, int line, const char* func,
 
     // Determine thread name to output
     std::string thread_str = "";
-    // Only output core thread name for more verbose levels
-    if (level < INFO_LEVEL) {
+    // Could only output core thread name for more verbose levels but
+    // for now always output it
+    if (level <= FATAL_LEVEL) {
         auto thread_id = std::this_thread::get_id();
         std::ostringstream oss;
         oss << thread_id;
@@ -157,6 +158,13 @@ static void logVa(Level level, const char* filename, int line, const char* func,
     // Print the actual log message and a newline
     std::vfprintf(outputFile, format, args);
     std::fprintf(outputFile, "\n");
+
+    // If WARN or higher level then also output stack trace so that can
+    // understand context of the warning/error
+    if (level >= WARN_LEVEL) {
+        std::string stackTrace = system::getStackTrace();
+        std::fprintf(outputFile, "%s\n", stackTrace.c_str());
+    }
 
     // Note: This adds around 10us, but it's important for logging to finish
     // writing the file, and logging is not used in performance critical

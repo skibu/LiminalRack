@@ -57,6 +57,25 @@ void log(Level level, const char* filename, int line, const char* func, const ch
 */
 PRIVATE bool wasTruncated();
 
+/** A counter so that can easily log a message every max_count times.
+ * Useful if you have a frequent loop but don't want to spam the log.
+ */
+class LogCounter {
+ public:
+  LogCounter(int max_count) : count_(0), max_count_(max_count) {}
+
+  bool shouldLog() {
+    if (++count_ == max_count_) {
+      count_ = 0;
+      return true;
+    } else
+      return false;
+  }
+
+ private:
+  int count_;
+  int max_count_;
+};
 
 } // namespace logger
 } // namespace rack
