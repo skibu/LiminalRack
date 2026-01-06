@@ -95,6 +95,9 @@ void setLogLevel(Level level) {
     systemLogLevel = level;
 }
 
+Level getLogLevel() {
+    return systemLogLevel;
+}
 
 void logLogLevel() {
     INFO("Log level=%s", levelLabels[systemLogLevel]);

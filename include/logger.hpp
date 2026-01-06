@@ -12,9 +12,11 @@
 will print something like
 
         [0.123 debug myfile.cpp:45] error: 67
-*/
-#define TRACE(format, ...) rack::logger::log(rack::logger::TRACE_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
-#define DEBUG(format, ...) rack::logger::log(rack::logger::DEBUG_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
+*/ 
+#define TRACE(format, ...) if (rack::logger::getLogLevel() <= rack::logger::TRACE_LEVEL) \
+  rack::logger::log(rack::logger::TRACE_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
+#define DEBUG(format, ...) if (rack::logger::getLogLevel() <= rack::logger::DEBUG_LEVEL) \
+  rack::logger::log(rack::logger::DEBUG_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
 #define INFO(format, ...) rack::logger::log(rack::logger::INFO_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
 #define WARN(format, ...) rack::logger::log(rack::logger::WARN_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
 #define ERROR(format, ...) rack::logger::log(rack::logger::ERROR_LEVEL, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__)
@@ -39,6 +41,9 @@ enum Level {
 
 /** For setting log level to something besides the default of INFO_LEVEL */
 PRIVATE void setLogLevel(Level level);
+
+/** Returns the current log level */
+Level getLogLevel();
 
 // Logs the current log level
 void logLogLevel();
