@@ -12,9 +12,14 @@ OTOOL ?= otool
 # Generate dependency files alongside the object files
 FLAGS += -MMD -MP
 # Debugger symbols. These are removed with `strip`.
-FLAGS += -g
-# Optimization
-FLAGS += -O0 -funsafe-math-optimizations -fno-omit-frame-pointer
+# For development, using -g3 to include macro definitions in 
+# debug info. But for production should use -g1 for minimal 
+# debug info or -g2 (same as -g) for standard debug info.
+FLAGS += -g3
+# Optimization. -Og is good for development because it does 
+# some optimizations but does not hinder debugging. For production
+# builds should use -O3 for maximum optimization.
+FLAGS += -Og -funsafe-math-optimizations -fno-omit-frame-pointer
 # Warnings
 FLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-vla-extension
 # Needed because of hack at dep/include/nanovg_gl_utils.h:46:11
