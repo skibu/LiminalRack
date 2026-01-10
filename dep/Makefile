@@ -94,7 +94,7 @@ glew-2.2.0:
 $(glew): | glew-2.2.0
 	cd glew-2.2.0 && mkdir -p build
 	# Increase policy version to support building with Cmake 4
-	cd glew-2.2.0/build && $(CMAKE) -DCMAKE_POLICY_VERSION_MINIMUM=3.5 cmake
+	cd glew-2.2.0/build && $(CMAKE) -DGLEW_EGL=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 cmake
 	$(MAKE) -C glew-2.2.0/build
 	$(MAKE) -C glew-2.2.0/build install
 
@@ -103,7 +103,7 @@ $(glfw): | glfw
 ifdef ARCH_LIN
 	cd glfw/build && $(CMAKE) .. \
 		-DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF \
-		-DGLFW_BUILD_WAYLAND=ON
+		-DGLFW_BUILD_WAYLAND=ON -DGLFW_BUILD_X11=OFF
 else
 	cd glfw/build && $(CMAKE) .. \
 		-DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF \
