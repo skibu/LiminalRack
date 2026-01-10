@@ -40,7 +40,7 @@ ifdef ARCH_LIN
 	LDFLAGS += -static-libstdc++ -static-libgcc
 	LDFLAGS += dep/lib/libGLEW.a dep/lib/libglfw3.a dep/lib/libjansson.a dep/lib/libcurl.a dep/lib/libssl.a dep/lib/libcrypto.a dep/lib/libarchive.a dep/lib/libzstd.a dep/lib/libspeexdsp.a dep/lib/libsamplerate.a dep/lib/librtmidi.a dep/lib/librtaudio.a
 	LDFLAGS += -Wl,--no-whole-archive
-	LDFLAGS += -lpthread -lGL -ldl -lX11 -lasound -ljack -lpulse -lpulse-simple
+	LDFLAGS += -lpthread -lGL -lEGL -ldl -lX11 -lasound -ljack -lpulse -lpulse-simple
 endif
 
 ifdef ARCH_MAC
