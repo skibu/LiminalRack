@@ -16,7 +16,7 @@ FLAGS += -MMD -MP
 # debug info. But for production should use -g1 for minimal 
 # debug info or -g2 (same as -g) for standard debug info.
 FLAGS += -g3
-# Optimization. -Og is good for non releases because it does 
+# Optimization. -Og is good for development because it does 
 # some optimizations but does not hinder debugging. For production
 # builds should use -O3 for maximum optimization.
 FLAGS += -Og -funsafe-math-optimizations -fno-omit-frame-pointer
