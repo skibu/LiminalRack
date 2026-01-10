@@ -87,7 +87,7 @@ include $(RACK_DIR)/dep.mk
 
 glew-2.3.0:
 	$(WGET) "https://github.com/nigels-com/glew/releases/download/glew-2.3.0/glew-2.3.0.tgz"
-	$(SHA256) glew-2.3.0.tgz d4fc82893cfb00109578d0a1a2337fb8ca335b3ceccf97b97e5cc7f08e4353e1
+	$(SHA256) glew-2.3.0.tgz b261a06dfc8b970e0a1974488530e58dd2390acf68acb05b45235cd6fb17a086
 	$(UNTAR) glew-2.3.0.tgz
 	rm glew-2.3.0.tgz
 
