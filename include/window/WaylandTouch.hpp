@@ -1,5 +1,7 @@
 #pragma once
 
+extern "C" { void waylandMultitouchInit(); }
+
 namespace rack {
 namespace window {
 

@@ -36,6 +36,10 @@ ifdef ARCH_LIN
 	# I don't really understand the side effects (see GCC manual), but so far tests are positive.
 	FLAGS += -fno-gnu-unique
 
+    # For Wayland touch need to be able to access special glfw include files like internal.h.
+	# Also need to be able to access WAYLAND by setting compile property _GLFW_WAYLAND
+	FLAGS += -Idep/glfw/src -D_GLFW_WAYLAND
+
 	LDFLAGS += -Wl,--whole-archive
 	LDFLAGS += -static-libstdc++ -static-libgcc
 	LDFLAGS += dep/lib/libGLEW.a dep/lib/libglfw3.a dep/lib/libjansson.a dep/lib/libcurl.a dep/lib/libssl.a dep/lib/libcrypto.a dep/lib/libarchive.a dep/lib/libzstd.a dep/lib/libspeexdsp.a dep/lib/libsamplerate.a dep/lib/librtmidi.a dep/lib/librtaudio.a

@@ -1,25 +1,16 @@
-#include <window/WaylandTouch.hpp>
-#include <common.hpp>
-#include <stdio.h>
+/* C-code for handling multitouch using Wayland. Since this is for Wayland 
+ * it only works on Linux. */
+#ifdef __linux__
 
-#ifdef COMMENTED_OUT_BECAUSE_MOVING_TO_GLFW
+#include "internal.h"
+#include "wayland-client-protocol.h"
+                      
+#include <stdbool.h>
+#include <stdio.h>  // for stderr
+#include <string.h>
 
-#include <GLFW/glfw3.h>
 
-// Only include Wayland touch support if enabled during compilation
-#ifdef WAYLAND_TOUCHSCREEN_SUPPORT
-#include <wayland-client.h> 
-#include <wayland-client-protocol.h>
 
-// FIXME trying to find definition of wl_seat_interface and other things
-//#include <wl_platform.h>
-#include <../glfw/src/wl_platform.h>
-#endif  
-
-namespace rack {
-namespace window {
-
-#ifdef WAYLAND_TOUCHSCREEN_SUPPORT
 enum touch_event_mask {
        TOUCH_EVENT_DOWN = 1 << 0,
        TOUCH_EVENT_UP = 1 << 1,
@@ -59,14 +50,14 @@ struct client_state
 static struct touch_point *
 get_touch_point(struct client_state *client_state, int32_t id)
 {
-        DEBUG("Getting touch point for id %d", id);
+        //DEBUG("Getting touch point for id %d", id);
 
        struct touch_event *touch = &client_state->touch_event;
        const size_t nmemb = sizeof(touch->points) / sizeof(struct touch_point);
        int invalid = -1;
        for (size_t i = 0; i < nmemb; ++i) {
                if (touch->points[i].id == id) {
-                       DEBUG("Found touch point for id %d", id);
+                       //DEBUG("Found touch point for id %d", id);
                        return &touch->points[i];
                }
                if (invalid == -1 && !touch->points[i].valid) {
@@ -86,9 +77,10 @@ wl_touch_down(void *data, struct wl_touch *wl_touch, uint32_t serial,
                uint32_t time, struct wl_surface *surface, int32_t id,
                wl_fixed_t x, wl_fixed_t y)
 {
-       DEBUG("Touch down event: id=%d, x=%f, y=%f", id, wl_fixed_to_double(x), wl_fixed_to_double(y));
-
-       struct client_state *client_state = static_cast<struct client_state *>(data);
+       //DEBUG("Touch down event: id=%d, x=%f, y=%f", id, wl_fixed_to_double(x), wl_fixed_to_double(y));
+        fprintf(stderr, "FIXME Touch down event: id=%d, x=%f, y=%f\n", id, wl_fixed_to_double(x), wl_fixed_to_double(y));
+        fflush(stderr);
+       struct client_state *client_state = data;
        struct touch_point *point = get_touch_point(client_state, id);
        if (point == NULL) {
                return;
@@ -104,9 +96,11 @@ static void
 wl_touch_up(void *data, struct wl_touch *wl_touch, uint32_t serial,
                uint32_t time, int32_t id)
 {
-       DEBUG("Touch up event: id=%d", id);
+       //DEBUG("Touch up event: id=%d", id);
+        fprintf(stderr, "Touch up event: id=%d\n", id);
+        fflush(stderr);
 
-       struct client_state *client_state = static_cast<struct client_state *>(data);
+       struct client_state *client_state = data;
        struct touch_point *point = get_touch_point(client_state, id);
        if (point == NULL) {
                return;
@@ -118,9 +112,11 @@ static void
 wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
                int32_t id, wl_fixed_t x, wl_fixed_t y)
 {
-        DEBUG("Touch motion event: id=%d, x=%f, y=%f", id, wl_fixed_to_double(x), wl_fixed_to_double(y));
+        //DEBUG("Touch motion event: id=%d, x=%f, y=%f", id, wl_fixed_to_double(x), wl_fixed_to_double(y));
+        fprintf(stderr, "FIXME Touch motion event: id=%d, x=%f, y=%f\n", id, wl_fixed_to_double(x), wl_fixed_to_double(y));
+        fflush(stderr);
 
-       struct client_state *client_state = static_cast<struct client_state *>(data);
+       struct client_state *client_state = data;
        struct touch_point *point = get_touch_point(client_state, id);
        if (point == NULL) {
                return;
@@ -133,9 +129,11 @@ wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 static void
 wl_touch_cancel(void *data, struct wl_touch *wl_touch)
 {
-       DEBUG("Touch cancel event");
+       //DEBUG("Touch cancel event");
+        fprintf(stderr, "Touch cancel event\n");
+        fflush(stderr);
 
-       struct client_state *client_state = static_cast<struct client_state *>(data);
+       struct client_state *client_state = data;
        client_state->touch_event.event_mask |= TOUCH_EVENT_CANCEL;
 }
 
@@ -143,9 +141,11 @@ static void
 wl_touch_shape(void *data, struct wl_touch *wl_touch,
                int32_t id, wl_fixed_t major, wl_fixed_t minor)
 {
-       DEBUG("Touch shape event: id=%d, major=%f, minor=%f", id, wl_fixed_to_double(major), wl_fixed_to_double(minor));
+       //DEBUG("Touch shape event: id=%d, major=%f, minor=%f", id, wl_fixed_to_double(major), wl_fixed_to_double(minor));
+        fprintf(stderr, "Touch shape event: id=%d, major=%f, minor=%f\n", id, wl_fixed_to_double(major), wl_fixed_to_double(minor));
+        fflush(stderr);
 
-       struct client_state *client_state = static_cast<struct client_state *>(data);
+       struct client_state *client_state = data;
        struct touch_point *point = get_touch_point(client_state, id);
        if (point == NULL) {
                return;
@@ -158,9 +158,11 @@ static void
 wl_touch_orientation(void *data, struct wl_touch *wl_touch,
                int32_t id, wl_fixed_t orientation)
 {
-       DEBUG("Touch orientation event: id=%d, orientation=%f", id, wl_fixed_to_double(orientation));
+       //DEBUG("Touch orientation event: id=%d, orientation=%f", id, wl_fixed_to_double(orientation));
+        fprintf(stderr, "Touch orientation event: id=%d, orientation=%f\n", id, wl_fixed_to_double(orientation));
+        fflush(stderr);
 
-       struct client_state *client_state = static_cast<struct client_state *>(data);
+       struct client_state *client_state = data;
        struct touch_point *point = get_touch_point(client_state, id);
        if (point == NULL) {
                return;
@@ -172,59 +174,62 @@ wl_touch_orientation(void *data, struct wl_touch *wl_touch,
 static void
 wl_touch_frame(void *data, struct wl_touch *wl_touch)
 {
-       DEBUG("Touch frame event");
+       //DEBUG("Touch frame event");
 
-       struct client_state *client_state = static_cast<struct client_state *>(data);
-       struct touch_event *touch = &client_state->touch_event;
-       const size_t nmemb = sizeof(touch->points) / sizeof(struct touch_point);
-       fprintf(stderr, "touch event @ %d:\n", touch->time);
-       DEBUG("Touch frame event: @ %d", touch->time);
+       struct client_state *client_state = data;
+       struct touch_event *touchEvent = &client_state->touch_event;
+       const size_t nmemb = sizeof(touchEvent->points) / sizeof(struct touch_point);
+       fprintf(stderr, "touch frame event time %d:\n", touchEvent->time);
+       //DEBUG("Touch frame event: @ %d", touch->time);
+
+       struct wl_touch *foo = wl_touch;
 
        for (size_t i = 0; i < nmemb; ++i) {
-               struct touch_point *point = &touch->points[i];
+               struct touch_point *point = &touchEvent->points[i];
                if (!point->valid) {
-                       continue;
+                    continue;
                }
-               fprintf(stderr, "point %d: ", touch->points[i].id);
-               DEBUG("Touch frame event: point %d: ", touch->points[i].id);
+               fprintf(stderr, "point %d: ", touchEvent->points[i].id);
+               fflush(stderr);
+               //DEBUG("Touch frame event: point %d: ", touch->points[i].id);
 
                if (point->event_mask & TOUCH_EVENT_DOWN) {
                        fprintf(stderr, "down %f,%f ",
                                        wl_fixed_to_double(point->surface_x),
                                        wl_fixed_to_double(point->surface_y));
-                          DEBUG("Touch frame event: point %d: down %f,%f", touch->points[i].id,
-                                       wl_fixed_to_double(point->surface_x),
-                                       wl_fixed_to_double(point->surface_y));
+                          //DEBUG("Touch frame event: point %d: down %f,%f", touch->points[i].id,
+                                       //wl_fixed_to_double(point->surface_x),
+                                       //wl_fixed_to_double(point->surface_y));
                }
 
                if (point->event_mask & TOUCH_EVENT_UP) {
                        fprintf(stderr, "up ");
-                       DEBUG("Touch frame event: point %d: up", touch->points[i].id);
+                       //DEBUG("Touch frame event: point %d: up", touch->points[i].id);
                }
 
                if (point->event_mask & TOUCH_EVENT_MOTION) {
                        fprintf(stderr, "motion %f,%f ",
                                        wl_fixed_to_double(point->surface_x),
                                        wl_fixed_to_double(point->surface_y));
-                          DEBUG("Touch frame event: point %d: motion %f,%f", touch->points[i].id,
-                                       wl_fixed_to_double(point->surface_x),
-                                       wl_fixed_to_double(point->surface_y));
+                          //DEBUG("Touch frame event: point %d: motion %f,%f", touch->points[i].id,
+                                       //wl_fixed_to_double(point->surface_x),
+                                       //wl_fixed_to_double(point->surface_y));
                }
 
                if (point->event_mask & TOUCH_EVENT_SHAPE) {
                        fprintf(stderr, "shape %fx%f ",
                                        wl_fixed_to_double(point->major),
                                        wl_fixed_to_double(point->minor));
-                       DEBUG("Touch frame event: point %d: shape %fx%f", touch->points[i].id,
-                                       wl_fixed_to_double(point->major),
-                                       wl_fixed_to_double(point->minor));
+                       //DEBUG("Touch frame event: point %d: shape %fx%f", touch->points[i].id,
+                                       //wl_fixed_to_double(point->major),
+                                       //wl_fixed_to_double(point->minor));
                }
 
                if (point->event_mask & TOUCH_EVENT_ORIENTATION) {
                        fprintf(stderr, "orientation %f ",
                                        wl_fixed_to_double(point->orientation));
-                       DEBUG("Touch frame event: point %d: orientation %f", touch->points[i].id,
-                                       wl_fixed_to_double(point->orientation));
+                       //DEBUG("Touch frame event: point %d: orientation %f", touch->points[i].id,
+                                       //wl_fixed_to_double(point->orientation));
                }
 
                point->valid = false;
@@ -247,21 +252,23 @@ static const struct wl_touch_listener wl_touch_listener = {
 static void
 wl_seat_capabilities(void *data, struct wl_seat *wl_seat, uint32_t capabilities)
 {
-        DEBUG("Seat capabilities: %d\n", capabilities);
+        //DEBUG("Seat capabilities: %d\n", capabilities);
+        fprintf(stderr, "Seat capabilities: %d\n", capabilities);
+        fflush(stderr);
 
-        struct client_state *state = static_cast<struct client_state *>(data);
+        struct client_state *state = data;
 
         bool have_touch = capabilities & WL_SEAT_CAPABILITY_TOUCH;
         if (have_touch && state->wl_touch == NULL)
         {
                 state->wl_touch = wl_seat_get_touch(state->wl_seat);
-                DEBUG("Acquiring wl_touch interface via wl_touch_add_listener()");
+                //DEBUG("Acquiring wl_touch interface via wl_touch_add_listener()");
                 wl_touch_add_listener(state->wl_touch,
                                       &wl_touch_listener, state);
         }
         else if (!have_touch && state->wl_touch != NULL)
         {
-                DEBUG("Releasing wl_touch interface via wl_touch_release()");
+                //DEBUG("Releasing wl_touch interface via wl_touch_release()");
                 wl_touch_release(state->wl_touch);
                 state->wl_touch = NULL;
         }
@@ -270,8 +277,8 @@ wl_seat_capabilities(void *data, struct wl_seat *wl_seat, uint32_t capabilities)
 static void
 wl_seat_name(void *data, struct wl_seat *wl_seat, const char *name)
 {
-       fprintf(stderr, "seat name: %s\n", name);
-       DEBUG("Seat name: %s\n", name);
+       fprintf(stderr, "FIXME seat name: %s\n", name);
+       //DEBUG("Seat name: %s\n", name);
 }
 
 static const struct wl_seat_listener wl_seat_listener = {
@@ -284,17 +291,18 @@ static void
 registry_global(void *data, struct wl_registry *wl_registry,
         uint32_t name, const char *interface, uint32_t version)
 {
-        DEBUG("Adding registry global: interface %s (version %d)\n", interface, version);
+        //DEBUG("Adding registry global: interface %s (version %d)\n", interface, version);
+        fprintf(stderr, "Adding registry global: interface %s (version %d)\n", interface, version);
+        fflush(stderr);
 
-        struct client_state *state = static_cast<struct client_state *>(data);
-
+        struct client_state *state = data;
         if (strcmp(interface, wl_seat_interface.name) == 0)
         {
                 // uint32_t name = 1; // FIXME get actual name from registry
-                state->wl_seat = static_cast<struct wl_seat *> (wl_registry_bind(
-                    state->wl_registry, name, &wl_seat_interface, 7 /* seat version */));
-                DEBUG("Adding wl_seat listener via wl_seat_add_listener()");
-                wl_seat_add_listener(state->wl_seat, &wl_seat_listener, nullptr);
+                state->wl_seat = wl_registry_bind(
+                    state->wl_registry, name, &wl_seat_interface, 7 /* seat version */);
+                //DEBUG("Adding wl_seat listener via wl_seat_add_listener()");
+                wl_seat_add_listener(state->wl_seat, &wl_seat_listener, data);
         }
 
 //     if (strcmp(interface, wl_shm_interface.name) == 0) {
@@ -315,7 +323,9 @@ static void
 registry_global_remove(void *data,
         struct wl_registry *wl_registry, uint32_t name)
 {
-        DEBUG("Removing registry global: %d\n", name);
+        //DEBUG("Removing registry global: %d\n", name);
+        fprintf(stderr, "Removing registry global: %d\n", name);
+        fflush(stderr);
     /* This space deliberately left blank */
 }
 
@@ -323,20 +333,29 @@ static const struct wl_registry_listener wl_registry_listener = {
     .global = registry_global,
     .global_remove = registry_global_remove,
 };
+ 
 
-#endif  
+
+void waylandMultitouchInit() {
 
 
-void WaylandTouch::init() {
+    printf("Doing printf within waylandMultitouchInit()\n");
+    fflush(stdout);
 
-    // Only do something if Wayland touch support is enabled
-    #ifdef WAYLAND_TOUCHSCREEN_SUPPORT
-    INFO("Initializing Wayland touch support...");
+    //INFO("Initializing Wayland touch support...");
+    fprintf(stderr, "Flushig Initializing Wayland touch support...\n");
+    fflush(stderr);
 
     // FIXME need capabilities, state, and wl_touch_listener
     // Get access to Wayland registry
-    struct client_state state = {  };
+    static struct client_state state = {  };
+    /*
+    PFN_wl_display_connect wl_display_connect = (PFN_wl_display_connect)
+        _glfwPlatformGetModuleSymbol(module, "wl_display_connect");
     state.wl_display = wl_display_connect(NULL);
+    */
+    state.wl_display = _glfw.wl.display;
+
     state.wl_registry = wl_display_get_registry(state.wl_display);
     wl_registry_add_listener(state.wl_registry, &wl_registry_listener, &state);
     wl_display_roundtrip(state.wl_display);
@@ -350,40 +369,7 @@ void WaylandTouch::init() {
 
 
 
-    DEBUG("Done initializing Wayland touch support."); 
-    #endif 
+    //DEBUG("Done initializing Wayland touch support."); 
 }    
-
-}  // namespace window
-}  // namespace rack
-
-#else
-
-namespace rack {
-namespace window {
-
-    /*
-#ifdef __cplusplus
-extern "C" {
-#endif
-void waylandMultitouchInit();
-#ifdef __cplusplus
-}
-#endif
-*/
-
-/* extern "C" { void waylandMultitouchInit(); } */
-
-void WaylandTouch::init() {
-    INFO("Flushing Initializing Wayland touch support...");
-
-    printf("Doing printf before calling waylandMultitouchInit()\n");
-    fflush(stdout);
-
-    waylandMultitouchInit();
-}
-
-} // namespace window
-}  // namespace rack
 
 #endif

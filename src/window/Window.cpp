@@ -29,7 +29,7 @@
 	// For XkbGetState for directly getting mod keys
 	#include <X11/XKBlib.h>
 	// For glfwGetX11Display()
-	#define GLFW_EXPOSE_NATIVE_X11
+	#define GLFW_EXPOSE_NATIVE_WAYLAND
 	#include <GLFW/glfw3native.h>
 #endif
 
@@ -379,6 +379,7 @@ Window::Window() {
 	glfwSetDropCallback(glfWin_, dropCallback);
 
 	// Set up GLEW
+    //FIXME taken out because glewInit() not working with Wayland
 	glewExperimental = GL_TRUE;
 	err = glewInit();
 	if (err != GLEW_OK) {
@@ -759,18 +760,23 @@ int Window::getMods() {
     int mods = 0;
 #if defined ARCH_LIN
     // On Linux X11, get mods directly from X11 display, to support X11 key
-    // remapping
-    Display* display = glfwGetX11Display();
-    XkbStateRec state;
-    XkbGetState(display, XkbUseCoreKbd, &state);
+    // remapping.
+    // FIXME
+    INFO("About to call glfwGetWaylandDisplay()");
+    wl_display* wlDisplay = glfwGetWaylandDisplay();
+    INFO("Finished it");
+    // Display* display =  wlDisplay->display;
+    // //Display* display =  glfwGetX11Display();
+    // XkbStateRec state;
+    // XkbGetState(display, XkbUseCoreKbd, &state);
 
-    // Derived from GLFW's translateState() from x11_window.c
-    if (state.mods & ShiftMask) mods |= GLFW_MOD_SHIFT;
-    if (state.mods & ControlMask) mods |= GLFW_MOD_CONTROL;
-    if (state.mods & Mod1Mask) mods |= GLFW_MOD_ALT;
-    if (state.mods & Mod4Mask) mods |= GLFW_MOD_SUPER;
-    if (state.mods & LockMask) mods |= GLFW_MOD_CAPS_LOCK;
-    if (state.mods & Mod2Mask) mods |= GLFW_MOD_NUM_LOCK;
+    // // Derived from GLFW's translateState() from x11_window.c
+    // if (state.mods & ShiftMask) mods |= GLFW_MOD_SHIFT;
+    // if (state.mods & ControlMask) mods |= GLFW_MOD_CONTROL;
+    // if (state.mods & Mod1Mask) mods |= GLFW_MOD_ALT;
+    // if (state.mods & Mod4Mask) mods |= GLFW_MOD_SUPER;
+    // if (state.mods & LockMask) mods |= GLFW_MOD_CAPS_LOCK;
+    // if (state.mods & Mod2Mask) mods |= GLFW_MOD_NUM_LOCK;
 #else
     // Use GLFW key codes on other OS's
     if (glfwGetKey(glfWin_, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
