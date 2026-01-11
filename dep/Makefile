@@ -85,18 +85,18 @@ include $(RACK_DIR)/dep.mk
 # Targets
 # These targets are all order-only "|" because we usually don't care if a library was built before or after other libraries.
 
-glew-2.3.0:
-	$(WGET) "https://github.com/nigels-com/glew/releases/download/glew-2.3.0/glew-2.3.0.tgz"
-	$(SHA256) glew-2.3.0.tgz b261a06dfc8b970e0a1974488530e58dd2390acf68acb05b45235cd6fb17a086
-	$(UNTAR) glew-2.3.0.tgz
-	rm glew-2.3.0.tgz
+glew-2.2.0:
+	$(WGET) "https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.tgz"
+	$(SHA256) glew-2.2.0.tgz d4fc82893cfb00109578d0a1a2337fb8ca335b3ceccf97b97e5cc7f08e4353e1
+	$(UNTAR) glew-2.2.0.tgz
+	rm glew-2.2.0.tgz
 
-$(glew): | glew-2.3.0
-	cd glew-2.3.0 && mkdir -p build
+$(glew): | glew-2.2.0
+	cd glew-2.2.0 && mkdir -p build
 	# Increase policy version to support building with Cmake 4
-	cd glew-2.3.0/build && $(CMAKE) -DCMAKE_POLICY_VERSION_MINIMUM=3.5 cmake
-	$(MAKE) -C glew-2.3.0/build
-	$(MAKE) -C glew-2.3.0/build install
+	cd glew-2.2.0/build && $(CMAKE) -DCMAKE_POLICY_VERSION_MINIMUM=3.5 cmake
+	$(MAKE) -C glew-2.2.0/build
+	$(MAKE) -C glew-2.2.0/build install
 
 $(glfw): | glfw
 	cd glfw && mkdir -p build
@@ -279,7 +279,7 @@ $(simde): simde/simde
 
 # Helpers
 
-src: glew-2.3.0 glfw jansson-2.12 libsamplerate-0.2.1 openssl-3.3.2 curl-8.10.0 zstd-1.5.6 libarchive-3.7.7 rtaudio nanovg nanosvg oui-blendish osdialog
+src: glew-2.2.0 glfw jansson-2.12 libsamplerate-0.2.1 openssl-3.3.2 curl-8.10.0 zstd-1.5.6 libarchive-3.7.7 rtaudio nanovg nanosvg oui-blendish osdialog
 
 clean:
 	git clean -fdx
