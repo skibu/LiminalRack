@@ -94,7 +94,7 @@ glew-2.2.0:
 $(glew): | glew-2.2.0
 	cd glew-2.2.0 && mkdir -p build
 	# Increase policy version to support building with Cmake 4
-	cd glew-2.2.0/build && $(CMAKE) -DCMAKE_POLICY_VERSION_MINIMUM=3.5 cmake
+	cd glew-2.2.0/build && $(CMAKE) -DGLEW_EGL=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 cmake
 	$(MAKE) -C glew-2.2.0/build
 	$(MAKE) -C glew-2.2.0/build install
 
