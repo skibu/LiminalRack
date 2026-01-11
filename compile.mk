@@ -44,7 +44,7 @@ ifdef ARCH_LIN
 	CXXFLAGS += -Wsuggest-override
 # Unfortunately no way to tell if raspberry pi so turning on 
 # WAYLAND_TOUCHSCREEN_SUPPORT for all linux builds
-	CXXFLAGS += -DWAYLAND_TOUCHSCREEN_SUPPORT
+	CXXFLAGS += -DWAYLAND_TOUCHSCREEN_SUPPORT -DGLFW_BUILD_WAYLAND=ON -DGLFW_BUILD_X11=OFF
 endif
 ifdef ARCH_MAC
 	CXXFLAGS += -stdlib=libc++
