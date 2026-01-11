@@ -67,5 +67,6 @@
         "memory": "cpp",
         "tuple": "cpp"
     },
-    "C_Cpp.default.compilerPath": "/usr/bin/clang++"
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc",
+    "C_Cpp.clang_format_fallbackStyle": "Google"
 }
