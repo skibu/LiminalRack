@@ -6,6 +6,14 @@
 	path = dep/nanosvg
 	url = https://github.com/memononen/nanosvg.git
 	ignore = untracked
+[submodule "dep/boost"]
+        path = dep/boost
+        url = https://github.com/boostorg/boost.git
+        ignore = untracked
+[submodule "dep/nanosvg"]
+        path = dep/nanosvg
+        url = https://github.com/memononen/nanosvg.git
+        ignore = untracked
 [submodule "dep/osdialog"]
 	path = dep/osdialog
 	url = https://github.com/AndrewBelt/osdialog.git
