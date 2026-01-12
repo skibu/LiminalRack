@@ -50,6 +50,7 @@ endif
 
 nanovg = include/nanovg.h
 nanosvg = include/nanosvg.h
+boost = include/boost/stacktrace.hpp
 oui-blendish = include/blendish.h
 osdialog = include/osdialog.h
 pffft = include/pffft.h
@@ -69,6 +70,7 @@ DEPS += $(rtmidi)
 DEPS += $(rtaudio)
 DEPS += $(nanovg)
 DEPS += $(nanosvg)
+DEPS += $(boost)
 DEPS += $(oui-blendish)
 DEPS += $(osdialog)
 DEPS += $(pffft)
@@ -249,6 +251,10 @@ $(nanosvg): $(wildcard nanosvg/src/*.h)
 	mkdir -p include
 	cp $^ include/
 
+$(boost): $(wildcard boost/libs/stacktrace/include/boost/*.h)
+	mkdir -p include/boost
+	cp -R boost/libs/stacktrace/include/boost/stacktrace/ include/boost/
+
 $(oui-blendish): $(wildcard oui-blendish/*.h)
 	mkdir -p include
 	cp $^ include/
@@ -279,7 +285,7 @@ $(simde): simde/simde
 
 # Helpers
 
-src: glew-2.2.0 glfw jansson-2.12 libsamplerate-0.2.1 openssl-3.3.2 curl-8.10.0 zstd-1.5.6 libarchive-3.7.7 rtaudio nanovg nanosvg oui-blendish osdialog
+src: glew-2.2.0 glfw jansson-2.12 libsamplerate-0.2.1 openssl-3.3.2 curl-8.10.0 zstd-1.5.6 libarchive-3.7.7 rtaudio nanovg nanosvg boost oui-blendish osdialog
 
 clean:
 	git clean -fdx
