@@ -6,10 +6,6 @@
 	path = dep/nanosvg
 	url = https://github.com/memononen/nanosvg.git
 	ignore = untracked
-[submodule "dep/boost"]
-        path = dep/boost
-        url = https://github.com/boostorg/boost.git
-        ignore = untracked
 [submodule "dep/nanosvg"]
         path = dep/nanosvg
         url = https://github.com/memononen/nanosvg.git
@@ -52,3 +48,6 @@
 [submodule "dep/simde"]
 	path = dep/simde
 	url = https://github.com/simd-everywhere/simde.git
+[submodule "dep/boost"]
+	path = dep/boost
+	url = https://github.com/boostorg/boost.git
