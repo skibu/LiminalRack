@@ -203,11 +203,6 @@ static void mouseButtonCallback(GLFWwindow* win, int button, int action, int mod
 	getEvent()->handleButton(getWindow()->getLastMousePos(), button, action, mods);
 }
 
-// FIXME just for testing
-static void cursorPosCallbackTest(GLFWwindow* win, double xpos, double ypos) {
-	DEBUG("==> FIXME cursorPosCallbackTest x=%.2f y=%.2f", xpos, ypos);
-    auto thing = (Context*) glfwGetWindowUserPointer(win);
-}
 
 static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
 	contextSet((Context*) glfwGetWindowUserPointer(win));
@@ -369,8 +364,7 @@ Window::Window() {
 	glfwSetWindowSizeCallback(glfWin_, windowSizeCallback);
 	glfwSetWindowMaximizeCallback(glfWin_, windowMaximizeCallback);
 	glfwSetMouseButtonCallback(glfWin_, mouseButtonCallback);
-    glfwSetCursorPosCallback(glfWin_, cursorPosCallbackTest); // FIXME 
-	// Call this ourselves, but on every frame instead of only when the mouse moves
+ 	// Now calling cursorPosCallback ourselves, but on every frame instead of only when the mouse moves
 	// glfwSetCursorPosCallback(win, cursorPosCallback);
 	glfwSetCursorEnterCallback(glfWin_, cursorEnterCallback);
 	glfwSetScrollCallback(glfWin_, scrollCallback);
@@ -379,8 +373,7 @@ Window::Window() {
 	glfwSetDropCallback(glfWin_, dropCallback);
 
 	// Set up GLEW
-    //FIXME taken out because glewInit() not working with Wayland
-	glewExperimental = GL_TRUE;
+    glewExperimental = GL_TRUE;
 	err = glewInit();
 	if (err != GLEW_OK) {
 		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, "Could not initialize GLEW. Does your graphics card support OpenGL 2.0 or greater? If so, make sure you have the latest graphics drivers installed.");
@@ -758,27 +751,8 @@ bool Window::isCursorLocked() {
 
 int Window::getMods() {
     int mods = 0;
-#if defined ARCH_LIN
-    // On Linux X11, get mods directly from X11 display, to support X11 key
-    // remapping.
-    // FIXME
-    INFO("About to call glfwGetWaylandDisplay()");
-    wl_display* wlDisplay = glfwGetWaylandDisplay();
-    INFO("Finished it");
-    // Display* display =  wlDisplay->display;
-    // //Display* display =  glfwGetX11Display();
-    // XkbStateRec state;
-    // XkbGetState(display, XkbUseCoreKbd, &state);
 
-    // // Derived from GLFW's translateState() from x11_window.c
-    // if (state.mods & ShiftMask) mods |= GLFW_MOD_SHIFT;
-    // if (state.mods & ControlMask) mods |= GLFW_MOD_CONTROL;
-    // if (state.mods & Mod1Mask) mods |= GLFW_MOD_ALT;
-    // if (state.mods & Mod4Mask) mods |= GLFW_MOD_SUPER;
-    // if (state.mods & LockMask) mods |= GLFW_MOD_CAPS_LOCK;
-    // if (state.mods & Mod2Mask) mods |= GLFW_MOD_NUM_LOCK;
-#else
-    // Use GLFW key codes on other OS's
+    // Use GLFW key codes
     if (glfwGetKey(glfWin_, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
         glfwGetKey(glfWin_, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
         mods |= GLFW_MOD_SHIFT;
@@ -791,7 +765,6 @@ int Window::getMods() {
     if (glfwGetKey(glfWin_, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS ||
         glfwGetKey(glfWin_, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)
         mods |= GLFW_MOD_SUPER;
-#endif
     return mods;
 }
 
