@@ -1,26 +1,161 @@
 #pragma once
+#include <logger.hpp>
+#include <queue>
 
-extern "C" { void waylandMultitouchInit(); }
+extern "C" {
+void waylandMultitouchInit();
+}
 
 namespace rack {
 namespace window {
 
+/** Touch event received from Wayland. Does not include whether
+ * part of a special event such as double click, long hold etc.
+ */
+class WaylandTouchEvent {
+   public:
+    enum EventType { TOUCH_DOWN, TOUCH_UP, TOUCH_MOTION, TOUCH_SHAPE, TOUCH_ORIENTATION };
+
+    WaylandTouchEvent(int serialNumber, EventType eventType, int id, int x,
+                      int y)
+        : serialNumber_(serialNumber),
+          eventType_(eventType),
+          id_(id),
+          x_(x),
+          y_(y) {
+        // Record time event was created
+        time_ = getTime();
+    }
+
+    /** Helper function for returning time in milliseconds since epoch */
+    static long getTime();
+
+    // So that WaylandTouch can access private members
+    friend class WaylandTouch;
+
+   private:
+    // The serial number of the touch event
+    int serialNumber_;
+
+    // The time of the touch event in milliseconds
+    long time_;
+
+    // The type of touch event
+    EventType eventType_;
+
+    // The unique ID of the touch point
+    int id_;
+
+    // The x coordinate of the touch point
+    int x_;
+
+    // The y coordinate of the touch point
+    int y_;
+};
+
+class WaylandOrientationEvent : public WaylandTouchEvent {
+    public:
+     WaylandOrientationEvent(int id, float orientation)
+          : WaylandTouchEvent(0, TOUCH_ORIENTATION, id, 0, 0),
+             orientation_(orientation) {}
+
+    private:
+     float orientation_;
+};
+
+class WaylandShapeEvent : public WaylandTouchEvent {
+    public:
+     WaylandShapeEvent(int id, float major, float minor)
+          : WaylandTouchEvent(0, TOUCH_SHAPE, id, 0, 0),
+             major_(major),
+             minor_(minor) {}
+
+    private:
+     float major_;
+     float minor_;
+};
+
 /** For Raspberry Pis with a touch screen can use Wayland to handle touch input.
- * This way can use multi-touch gestures such as pinch to zoom. For other systems
- * need to use regular mouse input handling, which is more limited.
- * 
- * The program should call WaylandTouch::init() during window initialization. The
- * init() function will set up Wayland touch input handling if that ability
- * was included during compilation.  If Wayland touch input handling is not available
- * then the init() function does nothing.
+ * This way can use multi-touch gestures such as pinch to zoom. For other
+ * systems need to use regular mouse input handling, which is more limited.
+ *
+ * The program should call WaylandTouch::init() during window initialization.
+ * The init() function will set up Wayland touch input handling if that ability
+ * was included during compilation.  If Wayland touch input handling is not
+ * available then the init() function does nothing.
  */
 class WaylandTouch {
-   public:
+   private:
+    // Singleton class
     WaylandTouch() {};
-    ~WaylandTouch() {};
+    const static WaylandTouch singleton_;
 
+   public:
+    /** If Wayland multitouch support is available then initializes it.
+     * Otherwise does nothing.
+     */
     static void init();
-};    
+
+    /** To be called every frame to process any pending touch events.
+     * Used for processing raw touch events into things like double clicks, etc.
+     */
+    static void processEvents();
+
+    /** Callback for when get a down touch event. To be called by Wayland code.
+     * Simply creates the raw event and adds it to the event queue. Important
+     * to not block processing here.
+     */
+    static void downEventCallback(int serial, int time, int id, int x, int y) {
+        addEventToQueue(
+            WaylandTouchEvent(serial, WaylandTouchEvent::TOUCH_DOWN, id, x, y));
+    }
+
+    /** Callback for when get an up touch event. To be called by Wayland code.
+     * Simply creates the raw event and adds it to the event queue. Important
+     * to not block processing here.
+     */
+    static void upEventCallback(int serial, int time, int id) {
+        addEventToQueue(
+            WaylandTouchEvent(serial, WaylandTouchEvent::TOUCH_UP, id, 0, 0));
+    }
+
+    /** Callback for when get a motion touch event. To be called by Wayland
+     * code. Simply creates the raw event and adds it to the event queue.
+     * Important to not block processing here.
+     */
+    static void motionEventCallback(int time, int id, int x, int y) {
+        addEventToQueue(
+            WaylandTouchEvent(0, WaylandTouchEvent::TOUCH_MOTION, id, x, y));
+    }
+
+    /** Callback for when get a shape touch event. To be called by Wayland
+     * code. Simply creates the raw event and adds it to the event queue.
+     * Important to not block processing here.
+     */
+    static void shapeEventCallback(int id, float major, float minor) {
+        addEventToQueue(WaylandShapeEvent(id, major, minor));
+    }
+
+    /** Callback for when get an orientation touch event. To be called by
+     * Wayland code. Simply creates the raw event and adds it to the event
+     * queue. Important to not block processing here.
+     */
+    static void orientationEventCallback(int id, float orientation) {
+        addEventToQueue(WaylandOrientationEvent(id, orientation));
+    }
+
+    /** Callback for when get a frame touch event. To be called by Wayland
+     * code. Currently does nothing so touch events are aggregated instead by
+     * processEvents().
+     */
+    static void frameEventCallback() {}
+
+    static void addEventToQueue(const WaylandTouchEvent& event);
+
+   private:
+    static const int NUM_TOUCHPOINTS = 10;
+    static std::queue<WaylandTouchEvent> eventQueues_[NUM_TOUCHPOINTS];
+};
 
 }  // namespace window
 }  // namespace rack

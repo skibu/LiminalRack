@@ -508,6 +508,9 @@ void Window::mainLoop() {
         // Process the frame and recurse through all child widgets
         step();
 
+        // Process touch events if using Wayland
+        WaylandTouch::processEvents();
+
         // Log every 180 frames just to show that app is still running
         static logger::LogCounter frameCounter(180);
         if (frameCounter.shouldLog()) {
