@@ -120,51 +120,47 @@ struct BaseEvent {
 	}
 };
 
-
 class EventState {
-    public:
+   public:
     EventState() {}
 
-	Widget* rootWidget = NULL;
-	/** State widgets
-	Don't set these directly unless you know what you're doing. Use the set*() methods instead.
-	*/
-	Widget* hoveredWidget = NULL;
-	Widget* draggedWidget = NULL;
-	int dragButton = 0;
-	Widget* dragHoveredWidget = NULL;
-	Widget* selectedWidget = NULL;
-	/** For double-clicking */
-	double lastClickTime = -INFINITY;
-	Widget* lastClickedWidget = NULL;
-	std::set<int> heldKeys;
+   private:
+    Widget* rootWidget_ = nullptr;
+    /** State widgets
+    Don't set these directly unless you know what you're doing. Use the set*()
+    methods instead.
+    */
+    Widget* hoveredWidget_ = nullptr;
+    Widget* draggedWidget_ = nullptr;
+    int dragButton_ = 0;
+    Widget* dragHoveredWidget_ = nullptr;
+    Widget* selectedWidget_ = nullptr;
+    /** For double-clicking */
+    double lastClickTime_ = -INFINITY;
+    Widget* lastClickedWidget_ = nullptr;
+    std::set<int> heldKeys_;
 
-	Widget* getRootWidget() {
-		return rootWidget;
-	}
-	Widget* getHoveredWidget() {
-		return hoveredWidget;
-	}
-	Widget* getDraggedWidget() {
-		return draggedWidget;
-	}
-	Widget* getDragHoveredWidget() {
-		return dragHoveredWidget;
-	}
-	Widget* getSelectedWidget() {
-		return selectedWidget;
-	}
+   public:
+    void setRootWidget(Widget* w) { rootWidget_ = w; }
+    Widget* getRootWidget() { return rootWidget_; }
+    Widget* getHoveredWidget() { return hoveredWidget_; }
+    Widget* getDraggedWidget() { return draggedWidget_; }
+    Widget* getDragHoveredWidget() { return dragHoveredWidget_; }
+    Widget* getSelectedWidget() { return selectedWidget_; }
+    int getDragButton() { return dragButton_; }
 
-	void setHoveredWidget(Widget* w);
-	void setDraggedWidget(Widget* w, int button);
-	void setDragHoveredWidget(Widget* w);
-	void setSelectedWidget(Widget* w);
-	DEPRECATED void setHovered(Widget* w) {setHoveredWidget(w);}
-	DEPRECATED void setDragged(Widget* w, int button) {setDraggedWidget(w, button);}
-	DEPRECATED void setDragHovered(Widget* w) {setDragHoveredWidget(w);}
-	DEPRECATED void setSelected(Widget* w) {setSelectedWidget(w);}
-	/** Prepares a widget for deletion */
-	void finalizeWidget(Widget* w);
+    void setHoveredWidget(Widget* w);
+    void setDraggedWidget(Widget* w, int button);
+    void setDragHoveredWidget(Widget* w);
+    void setSelectedWidget(Widget* w);
+    DEPRECATED void setHovered(Widget* w) { setHoveredWidget(w); }
+    DEPRECATED void setDragged(Widget* w, int button) {
+        setDraggedWidget(w, button);
+    }
+    DEPRECATED void setDragHovered(Widget* w) { setDragHoveredWidget(w); }
+    DEPRECATED void setSelected(Widget* w) { setSelectedWidget(w); }
+    /** Prepares a widget for deletion */
+    void finalizeWidget(Widget* w);
 
     /** A callback to be called when mouse button pressed. Calls onButton()
      * on widget that was clicked on. Sets draggedWidget on press, and
@@ -179,15 +175,14 @@ class EventState {
      */
     bool handleButton(math::Vec pos, int button, int action, int mods);
 
-	bool handleHover(math::Vec pos, math::Vec mouseDelta);
-	bool handleLeave();
-	bool handleScroll(math::Vec pos, math::Vec scrollDelta);
-	bool handleText(math::Vec pos, uint32_t codepoint);
-	bool handleKey(math::Vec pos, int key, int scancode, int action, int mods);
-	bool handleDrop(math::Vec pos, const std::vector<std::string>& paths);
-	bool handleDirty();
+    bool handleHover(math::Vec pos, math::Vec mouseDelta);
+    bool handleLeave();
+    bool handleScroll(math::Vec pos, math::Vec scrollDelta);
+    bool handleText(math::Vec pos, uint32_t codepoint);
+    bool handleKey(math::Vec pos, int key, int scancode, int action, int mods);
+    bool handleDrop(math::Vec pos, const std::vector<std::string>& paths);
+    bool handleDirty();
 };
-
 
 } // namespace widget
 } // namespace rack

@@ -167,7 +167,7 @@ void LedDisplayTextField::drawLayer(const DrawArgs& args, int layer) {
             int cursor = getCursor();
             int selection = getSelection();
 			int begin = std::min(cursor, selection);
-			int end = (this == getEvent()->selectedWidget) ? std::max(cursor, selection) : -1;
+			int end = (this == getEvent()->getSelectedWidget()) ? std::max(cursor, selection) : -1;
 			bndIconLabelCaret(args.vg,
 				textOffset.getX(), textOffset.getY(),
 				getWidth() - 2 * textOffset.getX(), getHeight() - 2 * textOffset.getY(),

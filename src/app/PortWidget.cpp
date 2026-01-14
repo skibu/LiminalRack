@@ -386,7 +386,7 @@ void PortWidget::step() {
 void PortWidget::draw(const DrawArgs& args) {
     // Check if left-dragging a PortWidget
     PortWidget* draggedPw = dynamic_cast<PortWidget*>(getEvent()->getDraggedWidget());
-    if (draggedPw && getEvent()->dragButton == GLFW_MOUSE_BUTTON_LEFT) {
+    if (draggedPw && getEvent()->getDragButton() == GLFW_MOUSE_BUTTON_LEFT) {
         // Dragging a cable, which means should emphasize ports that can be connected to
         // and deemphasize ports that cannot be connected to. Use nvtTint to change the
         // colors and alpha used to draw the ports.

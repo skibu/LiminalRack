@@ -136,7 +136,7 @@ struct CcChoice : LedDisplayChoice {
 		if (e.action == GLFW_PRESS && (e.isKeyCommand(GLFW_KEY_ENTER) || e.isKeyCommand(GLFW_KEY_KP_ENTER))) {
 			DeselectEvent eDeselect;
 			onDeselect(eDeselect);
-			getEvent()->selectedWidget = NULL;
+			getEvent()->setSelectedWidget(nullptr);
 			e.consume(this);
 		}
 	}
@@ -240,7 +240,7 @@ struct NoteChoice : LedDisplayChoice {
 		if (e.action == GLFW_PRESS && (e.isKeyCommand(GLFW_KEY_ENTER) || e.isKeyCommand(GLFW_KEY_KP_ENTER))) {
 			DeselectEvent eDeselect;
 			onDeselect(eDeselect);
-			getEvent()->selectedWidget = NULL;
+			getEvent()->setSelectedWidget(nullptr);
 			e.consume(this);
 		}
 	}

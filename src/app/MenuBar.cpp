@@ -52,9 +52,9 @@ class MenuButton : public ui::Button {
     void draw(const DrawArgs& args) override {
         // Determine state to draw button
         BNDwidgetState state = BND_DEFAULT;  // Normal look
-        if (getEvent()->hoveredWidget == this)
+        if (getEvent()->getHoveredWidget() == this)
             state = BND_HOVER;  // Mouse over button
-        if (getEvent()->draggedWidget == this)
+        if (getEvent()->getDraggedWidget() == this)
             state = BND_ACTIVE;  // Clicked on and menu pulled down
 
         // Draw the button

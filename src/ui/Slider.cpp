@@ -15,9 +15,9 @@ Slider::Slider() {
 
 void Slider::draw(const DrawArgs& args) {
 	BNDwidgetState state = BND_DEFAULT;
-	if (getEvent()->hoveredWidget == this)
+	if (getEvent()->getHoveredWidget() == this)
 		state = BND_HOVER;
-	if (getEvent()->draggedWidget == this)
+	if (getEvent()->getDraggedWidget() == this)
 		state = BND_ACTIVE;
 
 	float progress = quantity ? quantity->getScaledValue() : 0.f;

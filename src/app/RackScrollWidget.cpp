@@ -137,7 +137,7 @@ void RackScrollWidget::step() {
 	math::Vec pos = getScene()->getMousePos() - getPos();
 	math::Rect viewport = getViewport(getBox().zeroPos());
 	widget::Widget* dw = getEvent()->getDraggedWidget();
-	if (dw && getEvent()->dragButton == GLFW_MOUSE_BUTTON_LEFT &&
+	if (dw && getEvent()->getDragButton() == GLFW_MOUSE_BUTTON_LEFT &&
 		(dynamic_cast<RackWidget*>(dw) || dynamic_cast<ModuleWidget*>(dw) || dynamic_cast<PortWidget*>(dw))) {
 		float margin = 1.0;
 		float speed = 15.0;

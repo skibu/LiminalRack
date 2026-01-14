@@ -21,7 +21,7 @@ Context::Context() {
 
 	INFO("Creating Event State");
 	event_ = new widget::EventState;
-    event_->rootWidget = getScene();
+    event_->setRootWidget(getScene());
 
 	INFO("Creating History State");
 	history_ = new history::State;

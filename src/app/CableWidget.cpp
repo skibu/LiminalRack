@@ -539,7 +539,7 @@ void CableWidget::drawLayer(const DrawArgs& args, int layer) {
         }
 
         // Draw opaque if mouse is hovering over a connected port
-        Widget* hoveredWidget = getEvent()->hoveredWidget;
+        Widget* hoveredWidget = getEvent()->getHoveredWidget();
         if (outputPort_ == hoveredWidget || inputPort_ == hoveredWidget) {
             opacity = 1.0;
         }

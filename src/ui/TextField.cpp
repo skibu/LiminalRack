@@ -78,9 +78,9 @@ void TextField::draw(const DrawArgs& args) {
     nvgScissor(args.vg, RECT_ARGS(args.clipBox));
 
     BNDwidgetState state;
-    if (this == getEvent()->selectedWidget)
+    if (this == getEvent()->getSelectedWidget())
         state = BND_ACTIVE;
-    else if (this == getEvent()->hoveredWidget)
+    else if (this == getEvent()->getHoveredWidget())
         state = BND_HOVER;
     else
         state = BND_DEFAULT;

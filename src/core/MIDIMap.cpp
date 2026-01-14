@@ -361,15 +361,15 @@ struct MIDIMapChoice : LedDisplayChoice {
 			bgColor.a = 0.15;
 
 			// HACK
-			if (getEvent()->selectedWidget != this)
+			if (getEvent()->getSelectedWidget() != this)
 				getEvent()->setSelectedWidget(this);
 		}
 		else {
 			bgColor = nvgRGBA(0, 0, 0, 0);
 
 			// HACK
-			if (getEvent()->selectedWidget == this)
-				getEvent()->setSelectedWidget(NULL);
+			if (getEvent()->getSelectedWidget() == this)
+				getEvent()->setSelectedWidget(nullptr);
 		}
 
 		// Set text

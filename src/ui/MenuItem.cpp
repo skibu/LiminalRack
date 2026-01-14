@@ -13,7 +13,7 @@ void MenuItem::draw(const DrawArgs& args) {
 void MenuItem::drawOffset(NVGcontext* vg, float x_offset) {
     BNDwidgetState state = BND_DEFAULT;
 
-    if (getEvent()->hoveredWidget == this) state = BND_HOVER;
+    if (getEvent()->getHoveredWidget() == this) state = BND_HOVER;
 
     // Set active state if this MenuItem is the Menu's active entry
     Menu* parentMenu = dynamic_cast<Menu*>(getParent());
