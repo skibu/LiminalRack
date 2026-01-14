@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-        "name": "Launch LiminalRack Standalone",
+        "name": "Rasp Pi Launch LiminalRack Standalone",
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/Rack",
@@ -12,6 +12,18 @@
         "preLaunchTask": "build-standalone",
         "externalConsole": false,
         "MIMode": "gdb"
+    },
+    {
+        "name": "MacOS Launch LiminalRack Standalone",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/Rack",
+        "args": ["-l", "-b"],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "preLaunchTask": "build-standalone",
+        "externalConsole": false,
+        "MIMode": "lldb"
     },
     {
         "name": "experimental Launch LiminalRack Standalone",
