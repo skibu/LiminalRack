@@ -4,7 +4,7 @@
 namespace rack {
 namespace window {
 
-long WaylandTouchEvent::getTime() {
+long WaylandTouchEvent::getCurrentTime() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
                std::chrono::system_clock::now().time_since_epoch())
         .count();
@@ -45,6 +45,9 @@ void WaylandTouch::addEventToQueue(const WaylandTouchEvent& event) {
     }
     eventQueues_[event.id_].push(event);
 }
+
+// Allocate static member
+std::queue<WaylandTouchEvent> WaylandTouch::eventQueues_[NUM_TOUCHPOINTS];
 
 }  // namespace window
 }  // namespace rack

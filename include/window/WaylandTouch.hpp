@@ -24,11 +24,18 @@ class WaylandTouchEvent {
           x_(x),
           y_(y) {
         // Record time event was created
-        time_ = getTime();
+        time_ = getCurrentTime();
     }
 
+    int getSerialNumber() const { return serialNumber_; }
+    long getTimeStamp() const { return time_; }
+    EventType getEventType() const { return eventType_; }
+    int getId() const { return id_; }
+    int getX() const { return x_; }
+    int getY() const { return y_; }
+
     /** Helper function for returning time in milliseconds since epoch */
-    static long getTime();
+    static long getCurrentTime();
 
     // So that WaylandTouch can access private members
     friend class WaylandTouch;
@@ -54,25 +61,30 @@ class WaylandTouchEvent {
 };
 
 class WaylandOrientationEvent : public WaylandTouchEvent {
-    public:
-     WaylandOrientationEvent(int id, float orientation)
-          : WaylandTouchEvent(0, TOUCH_ORIENTATION, id, 0, 0),
-             orientation_(orientation) {}
+   public:
+    WaylandOrientationEvent(int id, float orientation)
+        : WaylandTouchEvent(0, TOUCH_ORIENTATION, id, 0, 0),
+          orientation_(orientation) {}
 
-    private:
-     float orientation_;
+    float getOrientation() const { return orientation_; }
+
+   private:
+    float orientation_;
 };
 
 class WaylandShapeEvent : public WaylandTouchEvent {
-    public:
-     WaylandShapeEvent(int id, float major, float minor)
-          : WaylandTouchEvent(0, TOUCH_SHAPE, id, 0, 0),
-             major_(major),
-             minor_(minor) {}
+   public:
+    WaylandShapeEvent(int id, float major, float minor)
+        : WaylandTouchEvent(0, TOUCH_SHAPE, id, 0, 0),
+          major_(major),
+          minor_(minor) {}
 
-    private:
-     float major_;
-     float minor_;
+    float getMajor() const { return major_; }
+    float getMinor() const { return minor_; }
+
+   private:
+    float major_;
+    float minor_;
 };
 
 /** For Raspberry Pis with a touch screen can use Wayland to handle touch input.
