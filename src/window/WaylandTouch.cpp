@@ -1,3 +1,4 @@
+#include <context.hpp>
 #include <common.hpp>
 #include <window/WaylandTouch.hpp>
 
@@ -34,6 +35,14 @@ void WaylandTouch::processEvents() {
             // Process event
             DEBUG("Processing touch event: id=%d, type=%d", event.id_,
                   static_cast<int>(event.eventType_));
+
+            // FIXME for now just handle a button press
+            if (event.getEventType() == WaylandTouchEvent::TOUCH_DOWN) {
+                DEBUG("Touch down event at (%d, %d)", event.getX(),
+                      event.getY());
+                getEvent()->handleButton(math::Vec(event.getX(), event.getY()),
+                                         GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
+            }
         }
     }
 }
