@@ -147,7 +147,7 @@ static void logVa(Level level, const char* filename, int line, const char* func,
         auto thread_id = std::this_thread::get_id();
         std::ostringstream oss;
         oss << thread_id;
-        thread_str = "Thr " + oss.str() + " ";
+        thread_str = "Thr:" + oss.str() + " ";
     }
 
     // Outline context info
