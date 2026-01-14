@@ -57,7 +57,7 @@ static void wl_touch_down(void* data, struct wl_touch* wl_touch,
     fprintf(stderr, "FIXME Touch down event: id=%d, x=%f, y=%f\n", id,
             wl_fixed_to_double(x), wl_fixed_to_double(y));
 
-    WaylandTouch::downEventCallback(serial, time, id, wl_fixed_to_double(x),
+    rack::window::WaylandTouch::downEventCallback(serial, time, id, wl_fixed_to_double(x),
                                     wl_fixed_to_double(y));
 }
 
@@ -67,7 +67,7 @@ static void wl_touch_up(void* data, struct wl_touch* wl_touch, uint32_t serial,
     DEBUG("FIXME Touch up event: id=%d", id);
     fprintf(stderr, "FIXME Touch up event: id=%d\n", id);
 
-    WaylandTouch::upEventCallback(serial, time, id);
+    rack::window::WaylandTouch::upEventCallback(serial, time, id);
 }
 
 /** Callback that is called as soon as a touch motion event occurs. Get
@@ -81,8 +81,8 @@ static void wl_touch_motion(void* data, struct wl_touch* wl_touch,
     fprintf(stderr, "FIXME Touch motion event: id=%d, x=%f, y=%f\n", id,
             wl_fixed_to_double(x), wl_fixed_to_double(y));
 
-    WaylandTouch::motionEventCallback(time, id, wl_fixed_to_double(x),
-                                     wl_fixed_to_double(y));
+    rack::window::WaylandTouch::motionEventCallback(
+        time, id, wl_fixed_to_double(x), wl_fixed_to_double(y));
 }
 
 /** Callback that is called as soon as a touch cancel event occurs.
@@ -104,8 +104,8 @@ static void wl_touch_shape(void* data, struct wl_touch* wl_touch, int32_t id,
     fprintf(stderr, "FIXME Touch shape event: id=%d, major=%f, minor=%f\n", id,
             wl_fixed_to_double(major), wl_fixed_to_double(minor));
 
-    WaylandTouch::shapeEventCallback(id, wl_fixed_to_double(major),
-                                  wl_fixed_to_double(minor));
+    rack::window::WaylandTouch::shapeEventCallback(
+        id, wl_fixed_to_double(major), wl_fixed_to_double(minor));
 }
 
 /** Called when get an event that specifies the shape & orientation of the touch contact.
@@ -119,7 +119,7 @@ static void wl_touch_orientation(void* data, struct wl_touch* wl_touch,
     fprintf(stderr, "FIXME Touch orientation event: id=%d, orientation=%f\n",
             id, wl_fixed_to_double(orientation));
 
-    WaylandTouch::orientationEventCallback(id, orientation);
+    rack::window::WaylandTouch::orientationEventCallback(id, orientation);
 }
 
 /** Callback that is called as soon as a touch frame event occurs, which
@@ -132,7 +132,7 @@ static void wl_touch_frame(void* data, struct wl_touch* wl_touch) {
     fprintf(stderr, "Touch frame event time %d:\n", touchEvent->time);
     DEBUG("Touch frame event: @ %d", touchEvent->time);
 
-    WaylandTouch::frameEventCallback();
+    rack::window::WaylandTouch::frameEventCallback();
 }
 
 static const struct wl_touch_listener wl_touch_listener = {

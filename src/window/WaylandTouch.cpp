@@ -1,6 +1,7 @@
 #include <context.hpp>
 #include <common.hpp>
 #include <window/WaylandTouch.hpp>
+#include <chrono>
 
 namespace rack {
 namespace window {
