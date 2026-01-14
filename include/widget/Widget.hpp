@@ -245,18 +245,20 @@ class Widget : public WeakBase {
 		return NULL;
 	}
 
-	/** Checks if the given widget is a child of `this` widget.
-	*/
-	bool hasChild(Widget* child);
+    /** Checks if the given widget is a child of `this` widget.
+     */
+    bool hasChild(Widget* child);
 
-	bool hasChild(Widget* child) const {
+    /** Const version. Checks if the given widget is a child of `this` widget.
+     */
+    bool hasChild(Widget* child) const {
 		return const_cast<Widget*>(this)->hasChild(child);
-	}	
+	}
 
-	/** Adds widget to the top of the children.
-	Gives ownership of widget to this widget instance.
-	*/
-	void addChild(Widget* child);
+    /** Adds widget to the top of the children. Gives ownership of widget to
+     * this widget instance.
+     */
+    void addChild(Widget* child);
 
     /** Adds widget to the bottom of the children.
      */
@@ -266,6 +268,10 @@ class Widget : public WeakBase {
      * The sibling widget must already be a child of `this` widget.
      */
     void addChildBelow(Widget* child, Widget* sibling);
+
+    /** Adds widget directly above another widget.
+     * The sibling widget must already be a child of `this` widget.
+     */
     void addChildAbove(Widget* child, Widget* sibling);
 
     /** Removes widget from list of children if it exists.
@@ -364,40 +370,43 @@ class Widget : public WeakBase {
 		math::Vec pos;
 	};
 
-	/** Occurs every frame when the mouse is hovering over a Widget.
-	Recurses.
-	Consume this event to allow Enter and Leave to occur.
-	*/
-	struct HoverEvent : BaseEvent, PositionBaseEvent {
+    struct HoverEvent : BaseEvent, PositionBaseEvent {
 		/** Change in mouse position since the last frame. Can be zero. */
 		math::Vec mouseDelta;
 	};
+    /** Occurs every frame when the mouse is hovering over a Widget.
+     * Recurses. Consume this event to allow Enter and Leave to occur.
+     */
 	virtual void onHover(const HoverEvent& e) {
 		recursePositionEvent(&Widget::onHover, e);
-	}
+    }
 
-	/** Occurs each mouse button press or release.
-	Recurses.
-	Consume this event to allow DoubleClick, Select, Deselect, SelectKey, SelectText, DragStart, DragEnd, DragMove, and DragDrop to occur.
-	*/
-	struct ButtonEvent : BaseEvent, PositionBaseEvent {
-		/** GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_RIGHT, GLFW_MOUSE_BUTTON_MIDDLE, etc. */
-		int button;
-		/** GLFW_PRESS or GLFW_RELEASE */
-		int action;
-		/** GLFW_MOD_* */
-		int mods;
-	};
-	virtual void onButton(const ButtonEvent& e) {
-		recursePositionEvent(&Widget::onButton, e);
-	}
+    struct ButtonEvent : BaseEvent, PositionBaseEvent {
+        /** GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_RIGHT,
+         * GLFW_MOUSE_BUTTON_MIDDLE, etc. */
+        int button;
+        /** GLFW_PRESS or GLFW_RELEASE */
+        int action;
+        /** GLFW_MOD_* */
+        int mods;
+    };
 
-	/** Occurs when the left mouse button is pressed a second time on the same Widget within a time duration.
-	Must consume the Button event (on left button press) to receive this event.
-	*/
-	struct DoubleClickEvent : BaseEvent {};
+    /** Occurs each mouse button press or release.
+     * Recurses. Consume this event to allow DoubleClick, Select, Deselect,
+     * SelectKey, SelectText, DragStart, DragEnd, DragMove, and DragDrop to
+     * occur.
+     */
+    virtual void onButton(const ButtonEvent& e) {
+        recursePositionEvent(&Widget::onButton, e);
+    }
+
+    struct DoubleClickEvent : BaseEvent {};
+    /** Occurs when the left mouse button is pressed a second time on the same
+     * Widget within a time duration. Must consume the Button event (on left
+     * button press) to receive this event.
+     */
 	virtual void onDoubleClick(const DoubleClickEvent& e) {
-        DEBUG("Widget::onDoubleClick called"); // FIXME
+        DEBUG("Unused Widget::onDoubleClick called"); // FIXME
     }
 
 	/** An event prototype with a GLFW key. */
@@ -442,10 +451,10 @@ class Widget : public WeakBase {
 		bool isKeyCommand(int key, int mods = 0) const;
 	};
 
-	/** Occurs when a key is pressed, released, or repeated while the mouse is hovering a Widget.
-	Recurses.
-	*/
-	struct HoverKeyEvent : BaseEvent, PositionBaseEvent, KeyBaseEvent {};
+    struct HoverKeyEvent : BaseEvent, PositionBaseEvent, KeyBaseEvent {};
+    /** Occurs when a key is pressed, released, or repeated while the mouse is
+     * hovering a Widget. Recurses.
+     */
 	virtual void onHoverKey(const HoverKeyEvent& e) {
 		recursePositionEvent(&Widget::onHoverKey, e);
 	}
@@ -455,31 +464,31 @@ class Widget : public WeakBase {
 		/** Unicode code point of the character */
 		uint32_t codepoint;
 	};
-	/** Occurs when a character is typed while the mouse is hovering a Widget.
-	Recurses.
-	*/
-	struct HoverTextEvent : BaseEvent, PositionBaseEvent, TextBaseEvent {};
+    /** Occurs when a character is typed while the mouse is hovering a Widget.
+     * Recurses.
+     */
+    struct HoverTextEvent : BaseEvent, PositionBaseEvent, TextBaseEvent {};
 	virtual void onHoverText(const HoverTextEvent& e) {
 		recursePositionEvent(&Widget::onHoverText, e);
 	}
 
-	/** Occurs when the mouse scroll wheel is moved while the mouse is hovering a Widget.
-	Recurses.
-	*/
 	struct HoverScrollEvent : BaseEvent, PositionBaseEvent {
 		/** Change of scroll wheel position. */
 		math::Vec scrollDelta;
 	};
-	virtual void onHoverScroll(const HoverScrollEvent& e) {
+    /** Occurs when the mouse scroll wheel is moved while the mouse is hovering
+     * a Widget. Recurses.
+     */
+    virtual void onHoverScroll(const HoverScrollEvent& e) {
 		recursePositionEvent(&Widget::onHoverScroll, e);
 	}
 
-	/** Occurs when a Widget begins consuming the Hover event.
-	Must consume the Hover event to receive this event.
-	The target sets `hoveredWidget`, which allows Leave to occur.
-	*/
-	struct EnterEvent : BaseEvent {};
-	virtual void onEnter(const EnterEvent& e) {}
+    struct EnterEvent : BaseEvent {};
+    /** Occurs when a Widget begins consuming the Hover event.
+     * Must consume the Hover event to receive this event.
+     * The target sets `hoveredWidget`, which allows Leave to occur.
+     */
+    virtual void onEnter(const EnterEvent& e) {}
 
 	/** Occurs when a different Widget is entered.
 	Must consume the Hover event (when a Widget is entered) to receive this event.

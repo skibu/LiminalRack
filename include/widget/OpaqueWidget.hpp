@@ -17,27 +17,37 @@ struct OpaqueWidget : Widget {
 		if (!e.isConsumed())
 			e.consume(this);
 	}
+
 	void onButton(const ButtonEvent& e) override {
-		Widget::onButton(e);
-		e.stopPropagating();
+        DEBUG("OpaqueWidget::onButton called button=%d action=%d x=%.1f y=%.1f",
+              e.button, e.action, e.pos.getX(), e.pos.getY());
+        Widget::onButton(e);
+        e.stopPropagating();
 		if (e.button == GLFW_MOUSE_BUTTON_LEFT) {
 			// Consume if not consumed by child
 			if (!e.isConsumed())
 				e.consume(this);
 		}
 	}
+
 	void onHoverKey(const HoverKeyEvent& e) override {
+        DEBUG("OpaqueWidget::onHoverKey called");
 		Widget::onHoverKey(e);
 		e.stopPropagating();
 	}
+
 	void onHoverText(const HoverTextEvent& e) override {
+        DEBUG("OpaqueWidget::onHoverText called");
 		Widget::onHoverText(e);
 		e.stopPropagating();
 	}
+
 	void onHoverScroll(const HoverScrollEvent& e) override {
+        DEBUG("OpaqueWidget::onHoverScroll called");
 		Widget::onHoverScroll(e);
 		e.stopPropagating();
 	}
+
 	void onDragHover(const DragHoverEvent& e) override {
 		Widget::onDragHover(e);
 		e.stopPropagating();
@@ -45,7 +55,9 @@ struct OpaqueWidget : Widget {
 		if (!e.isConsumed())
 			e.consume(this);
 	}
+
 	void onPathDrop(const PathDropEvent& e) override {
+        DEBUG("OpaqueWidget::onPathDrop called");
 		Widget::onPathDrop(e);
 		e.stopPropagating();
 	}

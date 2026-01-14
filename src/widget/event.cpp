@@ -217,8 +217,10 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 
 	bool cursorLocked = getWindow()->isCursorLocked();
 
-	widget::Widget* clickedWidget = NULL;
-	if (!cursorLocked) {
+    // Determine which widget was clicked on. though if cursor is locked then no
+    // widget can be clicked.
+    widget::Widget* clickedWidget = nullptr;
+    if (!cursorLocked) {
 		// Dispatch ButtonEvent
 		EventContext cButton;
 		Widget::ButtonEvent eButton;
@@ -231,15 +233,21 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 		clickedWidget = cButton.target;
 	}
 
-	if (action == GLFW_PRESS) {
-		DEBUG("handleButton event action: GLFW_PRESS");
-		setDraggedWidget(clickedWidget, button);
-	}
+    if (action == GLFW_PRESS) {
+        // Initiates a drag of a widget if callbacks are setup for it
+        DEBUG(
+            "Action GLFW_PRESS so initiating dragging of widget "
+            "event action: GLFW_PRESS");
+        setDraggedWidget(clickedWidget, button);
+    }
 
-	if (action == GLFW_RELEASE) {
-		DEBUG("handleButton event action: GLFW_RELEASE");
-		setDragHoveredWidget(NULL);
+    if (action == GLFW_RELEASE) {
+		DEBUG("Action GLFW_RELEASE");
 
+        // Clear drag hovered widget if was dragging
+		setDragHoveredWidget(nullptr);
+
+        // If was dragging then drop the dragged widget onto the clicked widget
 		if (clickedWidget && draggedWidget_) {
 			// Dispatch DragDropEvent
 			Widget::DragDropEvent eDragDrop;
@@ -248,15 +256,19 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 			clickedWidget->onDragDrop(eDragDrop);
 		}
 
-		setDraggedWidget(NULL, 0);
+        // Keep track that no longer dragging a widget
+		setDraggedWidget(nullptr, 0);
 	}
 
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		DEBUG("handleButton event button: GLFW_MOUSE_BUTTON_LEFT");
+
+        // Left click so select the clicked widget
 		if (action == GLFW_PRESS) {
 			setSelectedWidget(clickedWidget);
 		}
 
+        // Handle double-click detection
 		if (action == GLFW_PRESS) {
 			const double doubleClickDuration = 0.3;
 			double clickTime = system::getTime();
@@ -277,6 +289,7 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 		}
 	}
 
+    // Return true if clicked on a widget
 	return !!clickedWidget;
 }
 

@@ -237,15 +237,14 @@ static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
 	}
 }
 
-static void cursorEnterCallback(GLFWwindow* win, int entered) {
-	DEBUG("cursorEnterCallback entered=%d", entered);
+static void cursorEnterWindowCallback(GLFWwindow* win, int entered) {
+    DEBUG("cursorEnterWindowCallback() for main Window entered=%d", entered);
 
-	contextSet((Context*) glfwGetWindowUserPointer(win));
-	if (!entered) {
-		getEvent()->handleLeave();
-	}
+    contextSet((Context*)glfwGetWindowUserPointer(win));
+    if (!entered) {
+        getEvent()->handleLeave();
+    }
 }
-
 
 static void scrollCallback(GLFWwindow* win, double x, double y) {
 	DEBUG("scrollCallback x=%.2f y=%.2f", x, y);
@@ -366,7 +365,7 @@ Window::Window() {
 	glfwSetMouseButtonCallback(glfWin_, mouseButtonCallback);
  	// Now calling cursorPosCallback ourselves, but on every frame instead of only when the mouse moves
 	// glfwSetCursorPosCallback(win, cursorPosCallback);
-	glfwSetCursorEnterCallback(glfWin_, cursorEnterCallback);
+	glfwSetCursorEnterCallback(glfWin_, cursorEnterWindowCallback);
 	glfwSetScrollCallback(glfWin_, scrollCallback);
 	glfwSetCharCallback(glfWin_, charCallback);
 	glfwSetKeyCallback(glfWin_, keyCallback);
@@ -512,7 +511,7 @@ void Window::mainLoop() {
         WaylandTouch::processEvents();
 
         // Log every 180 frames just to show that app is still running
-        static logger::LogCounter frameCounter(180);
+        static logger::LogCounter frameCounter(360);
         if (frameCounter.shouldLog()) {
             DEBUG("Processed frame %d", internal_->frameCount_);
         }
