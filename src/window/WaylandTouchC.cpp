@@ -2,16 +2,13 @@
  * it only works on Linux. */
 #ifdef __linux__
 
+// Special Waayland includes
 extern "C" {
 #include "internal.h"
 #include "wayland-client-protocol.h"
 }
 
-#include <stdbool.h>
-#include <stdio.h>  // for stderr
-#include <string.h>
 #include <logger.hpp>
-
 #include <window/WaylandTouch.hpp>
 
 enum touch_event_mask {
@@ -54,8 +51,6 @@ static void wl_touch_down(void* data, struct wl_touch* wl_touch,
                           wl_fixed_t y) {
     DEBUG("FIXME Touch down event: id=%d, x=%f, y=%f", id, wl_fixed_to_double(x),
           wl_fixed_to_double(y));
-    fprintf(stderr, "FIXME Touch down event: id=%d, x=%f, y=%f\n", id,
-            wl_fixed_to_double(x), wl_fixed_to_double(y));
 
     rack::window::WaylandTouch::downEventCallback(serial, time, id, wl_fixed_to_double(x),
                                     wl_fixed_to_double(y));
@@ -65,7 +60,6 @@ static void wl_touch_down(void* data, struct wl_touch* wl_touch,
 static void wl_touch_up(void* data, struct wl_touch* wl_touch, uint32_t serial,
                         uint32_t time, int32_t id) {
     DEBUG("FIXME Touch up event: id=%d", id);
-    fprintf(stderr, "FIXME Touch up event: id=%d\n", id);
 
     rack::window::WaylandTouch::upEventCallback(serial, time, id);
 }
@@ -78,8 +72,6 @@ static void wl_touch_motion(void* data, struct wl_touch* wl_touch,
                             wl_fixed_t y) {
     DEBUG("FIXME Touch motion event: id=%d, x=%f, y=%f", id, wl_fixed_to_double(x),
           wl_fixed_to_double(y));
-    fprintf(stderr, "FIXME Touch motion event: id=%d, x=%f, y=%f\n", id,
-            wl_fixed_to_double(x), wl_fixed_to_double(y));
 
     rack::window::WaylandTouch::motionEventCallback(
         time, id, wl_fixed_to_double(x), wl_fixed_to_double(y));
@@ -90,7 +82,6 @@ static void wl_touch_motion(void* data, struct wl_touch* wl_touch,
 */
 static void wl_touch_cancel(void* data, struct wl_touch* wl_touch) {
     DEBUG("FIXME Touch cancel event");
-    fprintf(stderr, "FIXME Touch cancel event\n");
 }
 
 /** Called when get an event that specifies the shape of the touch contact.
@@ -101,8 +92,6 @@ static void wl_touch_shape(void* data, struct wl_touch* wl_touch, int32_t id,
                            wl_fixed_t major, wl_fixed_t minor) {
     DEBUG("FIXME Touch shape event: id=%d, major=%f, minor=%f", id,
           wl_fixed_to_double(major), wl_fixed_to_double(minor));
-    fprintf(stderr, "FIXME Touch shape event: id=%d, major=%f, minor=%f\n", id,
-            wl_fixed_to_double(major), wl_fixed_to_double(minor));
 
     rack::window::WaylandTouch::shapeEventCallback(
         id, wl_fixed_to_double(major), wl_fixed_to_double(minor));
@@ -114,10 +103,8 @@ static void wl_touch_shape(void* data, struct wl_touch* wl_touch, int32_t id,
  */
 static void wl_touch_orientation(void* data, struct wl_touch* wl_touch,
                                  int32_t id, wl_fixed_t orientation) {
-    DEBUG("Touch orientation event: id=%d, orientation=%f", id,
+    DEBUG("FIXME Touch orientation event: id=%d, orientation=%f", id,
           wl_fixed_to_double(orientation));
-    fprintf(stderr, "FIXME Touch orientation event: id=%d, orientation=%f\n",
-            id, wl_fixed_to_double(orientation));
 
     rack::window::WaylandTouch::orientationEventCallback(id, orientation);
 }
@@ -129,8 +116,7 @@ static void wl_touch_orientation(void* data, struct wl_touch* wl_touch,
 static void wl_touch_frame(void* data, struct wl_touch* wl_touch) {
     struct client_state* client_state = (struct client_state*)data;
     struct touch_event* touchEvent = &client_state->touch_event;
-    fprintf(stderr, "Touch frame event time %d:\n", touchEvent->time);
-    DEBUG("Touch frame event: @ %d", touchEvent->time);
+    DEBUG("FIXME Touch frame event: @ %d", touchEvent->time);
 
     rack::window::WaylandTouch::frameEventCallback();
 }
@@ -153,7 +139,7 @@ static const struct wl_touch_listener wl_touch_listener = {
 static void wl_seat_capabilities(void* data, struct wl_seat* wl_seat,
                                  uint32_t capabilities) {
     // capabilities indicates if seat has keyboard, pointer, or touch
-    DEBUG("Setting seat capabilities: %d", capabilities);
+    DEBUG("Setting Wayland seat capabilities: %d", capabilities);
 
     struct client_state* state = (struct client_state*)data;
 
@@ -190,7 +176,7 @@ static void registry_global(void* data, struct wl_registry* wl_registry,
     if (strcmp(interface, wl_seat_interface.name) == 0) {
         state->wl_seat = (struct wl_seat*)wl_registry_bind(
             state->wl_registry, name, &wl_seat_interface, 7 /* seat version */);
-        DEBUG("Adding registry global: interface %s (version %d)", interface,
+        DEBUG("Adding Wayland registry global: interface %s (version %d)", interface,
               version);
         wl_seat_add_listener(state->wl_seat, &wl_seat_listener, data);
     }
@@ -199,7 +185,7 @@ static void registry_global(void* data, struct wl_registry* wl_registry,
 /** For when removing something from registry. Don't need to do anything here */
 static void registry_global_remove(void* data, struct wl_registry* wl_registry,
                                    uint32_t name) {
-    DEBUG("Removing registry global: %d\n", name);
+    DEBUG("Removing Wayland registry global: %d\n", name);
 }
 
 static const struct wl_registry_listener wl_registry_listener = {
