@@ -20,22 +20,23 @@ void WaylandTouch::init() {
 }
 
 void WaylandTouch::processEvents() {
-    DEBUG("Processing Wayland touch events...");
+    TRACE("Processing Wayland touch events...");
     
     // FIXME implement event processing
     for (int id = 0; id < NUM_TOUCHPOINTS; ++id) {
         auto& queue = eventQueues_[id];
-        if (!queue.empty()) continue;
+
+        // If no events for this touch point id then continue to next touch point
+        if (queue.empty()) continue;
 
         // Process all events for this touch point id
-        DEBUG("Processing events for touch id %d", id);
         while (!queue.empty()) {
             WaylandTouchEvent event = queue.front();
             queue.pop();
 
             // Process event
-            DEBUG("Processing touch event: id=%d, type=%d", event.id_,
-                  static_cast<int>(event.eventType_));
+            DEBUG("Processing touch event: id=%d, type=%d serial=%d time=%ld", event.id_,
+                  static_cast<int>(event.eventType_), event.getSerialNumber(), event.getTimeStamp());
 
             // FIXME for now just handle a button press
             if (event.getEventType() == WaylandTouchEvent::TOUCH_DOWN) {
