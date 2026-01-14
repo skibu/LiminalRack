@@ -212,7 +212,7 @@ void EventState::finalizeWidget(widget::Widget* w) {
 }
 
 bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
-	DEBUG("====> handleButton pos (%.1f, %.1f) button %d action %d mods 0x%02x", 
+	DEBUG("====> handleButton event pos (%.1f, %.1f) button %d action %d mods 0x%02x", 
 		pos.getX(), pos.getY(), button, action, mods);
 
 	bool cursorLocked = getWindow()->isCursorLocked();
@@ -232,12 +232,12 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 	}
 
 	if (action == GLFW_PRESS) {
-		DEBUG("handleButton action == GLFW_PRESS");
+		DEBUG("handleButton event action: GLFW_PRESS");
 		setDraggedWidget(clickedWidget, button);
 	}
 
 	if (action == GLFW_RELEASE) {
-		DEBUG("handleButton action == GLFW_RELEASE");
+		DEBUG("handleButton event action: GLFW_RELEASE");
 		setDragHoveredWidget(NULL);
 
 		if (clickedWidget && draggedWidget_) {
@@ -252,7 +252,7 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 	}
 
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
-		DEBUG("handleButton button == GLFW_MOUSE_BUTTON_LEFT");
+		DEBUG("handleButton event button: GLFW_MOUSE_BUTTON_LEFT");
 		if (action == GLFW_PRESS) {
 			setSelectedWidget(clickedWidget);
 		}
@@ -340,7 +340,7 @@ bool EventState::handleHover(math::Vec pos, math::Vec mouseDelta) {
 }
 
 bool EventState::handleLeave() {
-	DEBUG("handleLeave");
+	DEBUG("Leave window event");
 
 	heldKeys_.clear();
 	// When leaving the window, don't un-hover widgets because the mouse might be dragging.
@@ -350,7 +350,7 @@ bool EventState::handleLeave() {
 }
 
 bool EventState::handleScroll(math::Vec pos, math::Vec scrollDelta) {
-	DEBUG("handleScroll pos (%.1f, %.1f) scrollDelta (%.1f, %.1f)", 
+	DEBUG("handle scroll event pos (%.1f, %.1f) scrollDelta (%.1f, %.1f)", 
 		pos.getX(), pos.getY(), scrollDelta.getX(), scrollDelta.getY());
 
 	// Dispatch HoverScrollEvent
@@ -365,7 +365,7 @@ bool EventState::handleScroll(math::Vec pos, math::Vec scrollDelta) {
 }
 
 bool EventState::handleDrop(math::Vec pos, const std::vector<std::string>& paths) {
-	DEBUG("handleDrop pos (%.1f, %.1f) %zu paths", 
+	DEBUG("handleDrop event pos (%.1f, %.1f) %zu paths", 
 		pos.getX(), pos.getY(), paths.size());
 
 	// Dispatch PathDropEvent
