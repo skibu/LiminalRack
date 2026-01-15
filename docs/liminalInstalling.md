@@ -25,6 +25,12 @@ sudo apt install -y libasound2-dev libjack0 libjack-dev
 
 # For rtaudio
 sudo apt install -y libpulse-dev
+
+# For Wayland which is used for touchscreen. Probably only needed for development
+sudo apt install libwayland-dev libxkbcommon-dev wayland-protocols xorg-dev
+
+# For GLEW EGL which is used for touchscreen. Needed for egl library for running system.
+sudo apt install libegl1-mesa-dev
 ```
 
 ## Setup on MacOS
