@@ -262,8 +262,9 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		DEBUG("handleButton event button: GLFW_MOUSE_BUTTON_LEFT");
-        DEBUG("Clicked widget: %s", clickedWidget->getName().c_str());
-        
+        DEBUG("Clicked widget: %s",
+              clickedWidget ? clickedWidget->getName().c_str() : "NULL");
+
         // Left click so select the clicked widget
 		if (action == GLFW_PRESS) {
 			setSelectedWidget(clickedWidget);
