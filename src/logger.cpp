@@ -19,6 +19,7 @@ static FILE* outputFile = NULL;
 static std::mutex mutex;
 static bool truncated = false;
 const static long maxSize = 1000 * 1000 * 1000; // 1 GB
+const static bool enableColors = true;
 
 static bool fileEndsWith(FILE* file, std::string str) {
     // Seek to last `len` characters
@@ -103,12 +104,28 @@ void logLogLevel() {
     INFO("Log level=%s", levelLabels[systemLogLevel]);
 }
 
-static const int levelColors[] = {
-	35,
-	34,
-	33,
-	31,
+const char* CYAN = "\x1B[36m";
+const char* YELLOW = "\x1B[33m";
+const char* RED = "\x1B[31m";
+const char* MAGENTA = "\x1B[35m";
+const char* WHITE = "\x1B[37m";
+const char* RESET_COLOR = "\x1B[0m";
+
+static const char* levelColors[] = {
+	MAGENTA, // trace - magenta
+	MAGENTA, // debug - magenta
+	WHITE, // info - white
+	YELLOW, // warn - yellow
+	RED, // error - red
+	RED, // fatal - red
 };
+
+static const char* bracketColor() { return enableColors ? MAGENTA : ""; }
+static const char* timeColor() { return enableColors ? CYAN : ""; }
+static const char* levelColor(Level level) { return enableColors ? levelColors[level] : ""; }
+static const char* threadColor() { return enableColors ? CYAN : ""; }
+static const char* fileColor() { return enableColors ? MAGENTA : ""; }
+static const char* resetColor() { return enableColors ? RESET_COLOR : ""; }
 
 static void logVa(Level level, const char* filename, int line, const char* func,
                   const char* format, va_list args) {
@@ -124,10 +141,6 @@ static void logVa(Level level, const char* filename, int line, const char* func,
     }
 
     std::lock_guard<std::mutex> lock(mutex);
-
-    // If stderr then add color codes
-    if (outputFile == stderr)
-        std::fprintf(outputFile, "\x1B[%dm", levelColors[level]);
 
     // Determine core ID to output
     std::string core_str = "";
@@ -151,12 +164,13 @@ static void logVa(Level level, const char* filename, int line, const char* func,
     }
 
     // Outline context info
-    std::fprintf(outputFile, "[%.03f %s %s%s%s:%d %s] ", 
-        nowTime, levelLabels[level], core_str.c_str(), thread_str.c_str(),
-                filename, line, func);
-
-    // Reset color
-    if (outputFile == stderr) std::fprintf(outputFile, "\x1B[0m");
+    std::fprintf(outputFile, "%s[%s%s%7.03f%s %s%s%s %s%s%s%s%s%s:%d %s%s%s]%s ",
+        bracketColor(), resetColor(),                           // left bracket
+        timeColor(), nowTime, resetColor(),                     // time
+        levelColor(level), levelLabels[level], resetColor(),    // level
+        threadColor(), thread_str.c_str(), core_str.c_str(), resetColor(),
+        fileColor(), filename, line, func, resetColor(),        // file info
+        bracketColor(), resetColor());                          // right bracket   
 
     // Print the actual log message and a newline
     std::vfprintf(outputFile, format, args);
