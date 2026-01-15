@@ -13,7 +13,7 @@ namespace ui {
  */
 class MenuItem : public MenuEntry {
    public:
-    MenuItem(const std::string& text = "") : text(text) {}
+    MenuItem(const std::string& text = "", const std::string& name = "") : MenuEntry(name), text(text) {}
 
     /** Sets the text of the menu item */
     void setText(const std::string& text) {
@@ -78,6 +78,9 @@ class MenuItem : public MenuEntry {
  * the color.
  */
 struct ColorDotMenuItem : MenuItem {
+    ColorDotMenuItem(const std::string& text = "", const std::string& name = "")
+        : MenuItem(text, name) {}
+        
     NVGcolor color = color::BLACK_TRANSPARENT;
 
     void draw(const DrawArgs& args) override;

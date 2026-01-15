@@ -40,7 +40,8 @@ namespace menuBar {
  */
 class MenuButton : public ui::Button {
    public:
-    MenuButton(const std::string& text) : ui::Button(text) {}
+    MenuButton(const std::string& text, const std::string& name = "")
+        : ui::Button(text, name) {}
 
     // Handle actions
     void step() override {
@@ -94,6 +95,7 @@ class FileButton : public MenuButton {
     FileButton() : MenuButton(string::translate("MenuBar.file")) {}
 
    private:
+    /** Creates and shows the File menu when the File button is clicked. */
     void onAction(const ActionEvent& e) override {
         DEBUG("FileButton::onAction() called");
 
@@ -189,27 +191,33 @@ class EditButton : public MenuButton {
 
 		menu->addChild(new ui::MenuSeparator);
 
-		class UndoItem : public ui::MenuItem {
-            public:
-            UndoItem() {}
+        class UndoItem : public ui::MenuItem {
+           public:
+            UndoItem(const std::string& text, const std::string& name = "")
+                : ui::MenuItem(text, name) {}
 
-            private:
-			void step() override {
-				bool canUndo = getHistory()->canUndo();
-				setText(canUndo ? string::f(string::translate("MenuBar.edit.undoAction"), getHistory()->getUndoName()) : string::translate("MenuBar.edit.undo"));
-				setDisabled(!canUndo);
-				MenuItem::step();
-			}
-			void onAction(const ActionEvent& e) override {
+           private:
+            void step() override {
+                bool canUndo = getHistory()->canUndo();
+                setText(canUndo ? string::f(string::translate(
+                                                "MenuBar.edit.undoAction"),
+                                            getHistory()->getUndoName())
+                                : string::translate("MenuBar.edit.undo"));
+                setDisabled(!canUndo);
+                MenuItem::step();
+            }
+            void onAction(const ActionEvent& e) override {
                 DEBUG("UndoItem::onAction called");
-				getHistory()->undo();
-			}
-		};
-		menu->addChild(createMenuItem<UndoItem>("", widget::getKeyCommandName(GLFW_KEY_Z, RACK_MOD_CTRL)));
+                getHistory()->undo();
+            }
+        };
+        menu->addChild(createMenuItem<UndoItem>(
+            "", widget::getKeyCommandName(GLFW_KEY_Z, RACK_MOD_CTRL)));
 
-		class RedoItem : public ui::MenuItem {
+        class RedoItem : public ui::MenuItem {
             public:
-            RedoItem() {}
+            RedoItem(const std::string& text, const std::string& name = "")
+                : ui::MenuItem(text, name) {}
 
             private:
 			void step() override {
@@ -944,6 +952,9 @@ class ViewButton : public MenuButton {
 ////////////////////
 
 struct SampleRateItem : ui::MenuItem {
+    SampleRateItem(const std::string& text = "", const std::string& name = "")
+        : ui::MenuItem(text, name) {}
+        
     ui::Menu* createChildMenu() override {
         ui::Menu* menu = new ui::Menu;
 

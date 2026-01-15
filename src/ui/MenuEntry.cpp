@@ -5,7 +5,7 @@ namespace rack {
 namespace ui {
 
 
-MenuEntry::MenuEntry() {
+MenuEntry::MenuEntry(const std::string& name) : OpaqueWidget(name) {
     setSize(0, rack::settings::bndWidgetHeight);
 }
 

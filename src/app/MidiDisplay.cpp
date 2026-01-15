@@ -147,6 +147,9 @@ void MidiChannelChoice::step() {
 }
 
 struct MidiChannelItem : ui::MenuItem {
+    MidiChannelItem(const std::string& text = "", const std::string& name = "")
+        : ui::MenuItem(text, name) {}
+        
 	midi::Port* port;
 	ui::Menu* createChildMenu() override {
 		ui::Menu* menu = new ui::Menu;

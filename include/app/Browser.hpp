@@ -98,7 +98,7 @@ class Browser : public widget::OpaqueWidget {
     class TagItem : public ui::MenuItem {
        public:
         TagItem(Browser& browser, int tagId = -1)
-            : browser_(browser), tagId_(tagId) {}
+            : ui::MenuItem(), browser_(browser), tagId_(tagId){}
 
        private:
         Browser& browser_;

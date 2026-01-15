@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cxxabi.h> // For demangling on GCC/Clang
 
 #include <widget/Widget.hpp>
 #include <context.hpp>
@@ -7,11 +8,45 @@
 namespace rack {
 namespace widget {
 
+// Global for keeping track of widget names, but without changing the Widget
+// class itself (to avoid breaking ABI). 
+static std::map<Widget*, std::string> widgetNames_g;
+
+Widget::Widget(const std::string& name) {
+    // Store the name of the widget
+    widgetNames_g[this] = name;
+}
 
 Widget::~Widget() {
 	// You should only delete orphaned widgets
 	assert(!parent_);
 	clearChildren();
+
+    // Remove from widget names map
+    widgetNames_g.erase(this);
+}
+
+std::string Widget::getName() {
+    auto it = widgetNames_g.find(this);
+    if (it != widgetNames_g.end() && !it->second.empty()) {
+        // Name was set so return it
+        return it->second;
+    } else {
+        // Name was not set so return class name
+        auto className = typeid(*this).name();
+
+        // Demangle name if using GCC/Clang
+#ifdef __GNUC__
+        int status;
+        char* demangledName =
+            abi::__cxa_demangle(className, nullptr, nullptr, &status);
+        if (status == 0) {
+            className = demangledName;
+        }
+#endif
+
+        return className;
+    }
 }
 
 void Widget::setBox(math::Rect box) {

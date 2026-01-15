@@ -201,12 +201,12 @@ TMenuLabel* createMenuLabel(std::string text) {
 
 template <class TMenuItem = ui::MenuItem>
 TMenuItem* createMenuItem(std::string text, std::string rightText = "") {
-	TMenuItem* item = new TMenuItem;
-	item->setText(text);
+    // When creating the item specify name as well for easier debugging
+	TMenuItem* item = new TMenuItem(text, "\"" + text + "\" menu button");
+    item->setText(text);
 	item->setRightText(rightText);
 	return item;
 }
-
 
 /** Creates a MenuItem with an action that calls a lambda function.
 Example:
@@ -218,9 +218,14 @@ Example:
 	));
 */
 template <class TMenuItem = ui::MenuItem>
-TMenuItem* createMenuItem(std::string text, std::string rightText, std::function<void()> action, bool disabled = false, bool alwaysConsume = false) {
-	struct Item : TMenuItem {
-		std::function<void()> action;
+TMenuItem* createMenuItem(std::string text, std::string rightText,
+                          std::function<void()> action, bool disabled = false,
+                          bool alwaysConsume = false) {
+    struct Item : TMenuItem {
+        Item(const std::string& text = "", const std::string& name = "")
+            : TMenuItem(text, name) {}
+
+        std::function<void()> action;
 		bool alwaysConsume;
 
 		void onAction(const event::Action& e) override {
@@ -229,15 +234,14 @@ TMenuItem* createMenuItem(std::string text, std::string rightText, std::function
 			if (alwaysConsume)
 				e.consume(this);
 		}
-	};
+    };
 
-	Item* item = createMenuItem<Item>(text, rightText);
+    Item* item = createMenuItem<Item>(text, rightText);
 	item->action = action;
 	item->setDisabled(disabled);
 	item->alwaysConsume = alwaysConsume;
 	return item;
 }
-
 
 /** Creates a MenuItem with a check mark set by a lambda function.
 Example:
@@ -252,9 +256,16 @@ Example:
 	));
 */
 template <class TMenuItem = ui::MenuItem>
-TMenuItem* createCheckMenuItem(std::string text, std::string rightText, std::function<bool()> checked, std::function<void()> action, bool disabled = false, bool alwaysConsume = false) {
-	struct Item : TMenuItem {
-		std::string rightTextPrefix;
+TMenuItem* createCheckMenuItem(std::string text, std::string rightText,
+                               std::function<bool()> checked,
+                               std::function<void()> action,
+                               bool disabled = false,
+                               bool alwaysConsume = false) {
+    struct Item : TMenuItem {
+        Item(const std::string& text, const std::string& name = "")
+            : TMenuItem(text, name) {}
+
+        std::string rightTextPrefix;
 		std::function<bool()> checked;
 		std::function<void()> action;
 		bool alwaysConsume;
@@ -274,9 +285,10 @@ TMenuItem* createCheckMenuItem(std::string text, std::string rightText, std::fun
 			if (alwaysConsume)
 				e.consume(this);
 		}
-	};
+    };
 
-	Item* item = createMenuItem<Item>(text);
+    Item* item = createMenuItem<Item>(text);
+    item->setText(text);
 	item->rightTextPrefix = rightText;
 	item->checked = checked;
 	item->action = action;
@@ -284,7 +296,6 @@ TMenuItem* createCheckMenuItem(std::string text, std::string rightText, std::fun
 	item->alwaysConsume = alwaysConsume;
 	return item;
 }
-
 
 /** Creates a MenuItem that controls a boolean value with a check mark.
 Example:
@@ -299,12 +310,15 @@ Example:
 	));
 */
 template <class TMenuItem = ui::MenuItem>
-TMenuItem* createBoolMenuItem(std::string text, std::string rightText, std::function<bool()> getter, std::function<void(bool state)> setter, bool disabled = false, bool alwaysConsume = false) {
-	return createCheckMenuItem<TMenuItem>(text, rightText, getter, [=]() {
-		setter(!getter());
-	}, disabled, alwaysConsume);
+TMenuItem* createBoolMenuItem(std::string text, std::string rightText,
+                              std::function<bool()> getter,
+                              std::function<void(bool state)> setter,
+                              bool disabled = false,
+                              bool alwaysConsume = false) {
+    return createCheckMenuItem<TMenuItem>(
+        text, rightText, getter, [=]() { setter(!getter()); }, disabled,
+        alwaysConsume);
 }
-
 
 /** Easy wrapper for createBoolMenuItem() to modify a bool pointer.
 Example:
@@ -312,18 +326,14 @@ Example:
 	menu->addChild(createBoolPtrMenuItem("Loop", "", &module->loop));
 */
 template <typename T>
-ui::MenuItem* createBoolPtrMenuItem(std::string text, std::string rightText, T* ptr) {
-	return createBoolMenuItem(text, rightText,
-		[=]() {
-			return ptr ? *ptr : false;
-		},
-		[=](T val) {
-			if (ptr)
-				*ptr = val;
-		}
-	);
+ui::MenuItem* createBoolPtrMenuItem(std::string text, std::string rightText,
+                                    T* ptr) {
+    return createBoolMenuItem(
+        text, rightText, [=]() { return ptr ? *ptr : false; },
+        [=](T val) {
+            if (ptr) *ptr = val;
+        });
 }
-
 
 /** Creates a MenuItem that opens a submenu.
 Example:
@@ -336,23 +346,28 @@ Example:
 	));
 */
 template <class TMenuItem = ui::MenuItem>
-TMenuItem* createSubmenuItem(std::string text, std::string rightText, std::function<void(ui::Menu* menu)> createMenu, bool disabled = false) {
-	struct Item : TMenuItem {
-		std::function<void(ui::Menu* menu)> createMenu;
+TMenuItem* createSubmenuItem(std::string text, std::string rightText,
+                             std::function<void(ui::Menu* menu)> createMenu,
+                             bool disabled = false) {
+    struct Item : TMenuItem {
+        Item(const std::string& text, const std::string& name = "")
+            : TMenuItem(text, name) {}
 
-		ui::Menu* createChildMenu() override {
-			ui::Menu* menu = new ui::Menu;
-			createMenu(menu);
-			return menu;
-		}
-	};
+        std::function<void(ui::Menu* menu)> createMenu;
 
-	Item* item = createMenuItem<Item>(text, rightText + (rightText.empty() ? "" : "  ") + RIGHT_ARROW);
-	item->createMenu = createMenu;
-	item->setDisabled(disabled);
-	return item;
+        ui::Menu* createChildMenu() override {
+            ui::Menu* menu = new ui::Menu;
+            createMenu(menu);
+            return menu;
+        }
+    };
+
+    Item* item = createMenuItem<Item>(
+        text, rightText + (rightText.empty() ? "" : "  ") + RIGHT_ARROW);
+    item->createMenu = createMenu;
+    item->setDisabled(disabled);
+    return item;
 }
-
 
 /** Creates a MenuItem that when hovered, opens a submenu with several MenuItems indexed by an integer.
 Example:
@@ -368,41 +383,47 @@ Example:
 	));
 */
 template <class TMenuItem = ui::MenuItem>
-TMenuItem* createIndexSubmenuItem(std::string text, std::vector<std::string> labels, std::function<size_t()> getter, std::function<void(size_t val)> setter, bool disabled = false, bool alwaysConsume = false) {
-	struct Item : TMenuItem {
-		std::function<size_t()> getter;
-		std::function<void(size_t)> setter;
-		std::vector<std::string> labels;
-		bool alwaysConsume;
+TMenuItem* createIndexSubmenuItem(std::string text,
+                                  std::vector<std::string> labels,
+                                  std::function<size_t()> getter,
+                                  std::function<void(size_t val)> setter,
+                                  bool disabled = false,
+                                  bool alwaysConsume = false) {
+    struct Item : TMenuItem {
+        Item(const std::string& text, const std::string& name = "")
+            : TMenuItem(text, name) {}
 
-		void step() override {
-			size_t currIndex = getter();
-			std::string label = (currIndex < labels.size()) ? labels[currIndex] : "";
-			this->setRightText(label + "  " + RIGHT_ARROW);
-			TMenuItem::step();
-		}
-		ui::Menu* createChildMenu() override {
-			ui::Menu* menu = new ui::Menu;
-			for (size_t i = 0; i < labels.size(); i++) {
-				menu->addChild(createCheckMenuItem(labels[i], "", [=]() {
-					return getter() == i;
-				}, [=]() {
-					setter(i);
-				}, false, alwaysConsume));
-			}
-			return menu;
-		}
-	};
+        std::function<size_t()> getter;
+        std::function<void(size_t)> setter;
+        std::vector<std::string> labels;
+        bool alwaysConsume;
 
-	Item* item = createMenuItem<Item>(text);
-	item->getter = getter;
-	item->setter = setter;
-	item->labels = labels;
-	item->setDisabled(disabled);
-	item->alwaysConsume = alwaysConsume;
-	return item;
+        void step() override {
+            size_t currIndex = getter();
+            std::string label =
+                (currIndex < labels.size()) ? labels[currIndex] : "";
+            this->setRightText(label + "  " + RIGHT_ARROW);
+            TMenuItem::step();
+        }
+        ui::Menu* createChildMenu() override {
+            ui::Menu* menu = new ui::Menu;
+            for (size_t i = 0; i < labels.size(); i++) {
+                menu->addChild(createCheckMenuItem(
+                    labels[i], "", [=]() { return getter() == i; },
+                    [=]() { setter(i); }, false, alwaysConsume));
+            }
+            return menu;
+        }
+    };
+
+    Item* item = createMenuItem<Item>(text);
+    item->getter = getter;
+    item->setter = setter;
+    item->labels = labels;
+    item->setDisabled(disabled);
+    item->alwaysConsume = alwaysConsume;
+    return item;
 }
-
 
 /** Easy wrapper for createIndexSubmenuItem() that controls an integer index at a pointer address.
 Example:
@@ -413,17 +434,14 @@ Example:
 	));
 */
 template <typename T>
-ui::MenuItem* createIndexPtrSubmenuItem(std::string text, std::vector<std::string> labels, T* ptr) {
-	return createIndexSubmenuItem(text, labels,
-		[=]() {
-			return ptr ? *ptr : 0;
-		},
-		[=](size_t index) {
-			if (ptr)
-				*ptr = T(index);
-		}
-	);
+ui::MenuItem* createIndexPtrSubmenuItem(std::string text,
+                                        std::vector<std::string> labels,
+                                        T* ptr) {
+    return createIndexSubmenuItem(
+        text, labels, [=]() { return ptr ? *ptr : 0; },
+        [=](size_t index) {
+            if (ptr) *ptr = T(index);
+        });
 }
-
 
 } // namespace rack

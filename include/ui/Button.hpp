@@ -16,8 +16,12 @@ If text is not set, the quantity label is used.
 class Button : public widget::OpaqueWidget {
    public:
     /** Constructor with param for initialing text to a value. */
-    Button(const std::string& text) : Button() {
+    Button(const std::string& text, const std::string& name = "")
+        : OpaqueWidget(name) {
         setText(text);
+
+        // Do other initialization that default constructor does
+        setHeight(settings::bndWidgetHeight);
     }
 
     /** Need default constructor since module libraries might have used it, like

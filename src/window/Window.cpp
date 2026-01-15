@@ -511,7 +511,7 @@ void Window::mainLoop() {
         WaylandTouch::processEvents();
 
         // Log every 180 frames just to show that app is still running
-        static logger::LogCounter frameCounter(360);
+        static logger::LogCounter frameCounter(3600);
         if (frameCounter.shouldLog()) {
             DEBUG("Processed frame %d", internal_->frameCount_);
         }

@@ -10,6 +10,8 @@ namespace widget {
 Also consumes HoverEvent and ButtonEvent for left-clicks.
 */
 struct OpaqueWidget : Widget {
+    OpaqueWidget(const std::string& name = "") : Widget(name) {}
+
 	void onHover(const HoverEvent& e) override {
 		Widget::onHover(e);
 		e.stopPropagating();
@@ -31,7 +33,6 @@ struct OpaqueWidget : Widget {
 	}
 
 	void onHoverKey(const HoverKeyEvent& e) override {
-        DEBUG("OpaqueWidget::onHoverKey called");
 		Widget::onHoverKey(e);
 		e.stopPropagating();
 	}

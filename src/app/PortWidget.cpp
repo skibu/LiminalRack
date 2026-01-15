@@ -84,6 +84,9 @@ struct PortTooltip : ui::Tooltip {
 
 
 struct PortCloneCableItem : ui::MenuItem {
+    PortCloneCableItem(const std::string& text = "", const std::string& name = "")
+        : ui::MenuItem(text, name) {}
+
 	PortWidget* pw;
 	CableWidget* cw;
 
@@ -105,6 +108,9 @@ struct PortCloneCableItem : ui::MenuItem {
 
 
 struct CableColorItem : ui::ColorDotMenuItem {
+    CableColorItem(const std::string& text = "", const std::string& name = "")
+        : ui::ColorDotMenuItem(text, name) {}
+
 	CableWidget* cw;
 
 	void onAction(const ActionEvent& e) override {
@@ -121,6 +127,9 @@ struct CableColorItem : ui::ColorDotMenuItem {
 
 
 struct PortCableItem : ui::ColorDotMenuItem {
+    PortCableItem(const std::string& text = "", const std::string& name = "")
+        : ui::ColorDotMenuItem(text, name) {}
+
 	PortWidget* pw;
 	CableWidget* cw;
 
@@ -159,6 +168,9 @@ struct PortCableItem : ui::ColorDotMenuItem {
 
 
 struct PortAllCablesItem : ui::MenuItem {
+    PortAllCablesItem(const std::string& text = "", const std::string& name = "")
+        : ui::MenuItem(text, name) {}
+        
 	PortWidget* pw;
 	std::vector<CableWidget*> cws;
 
@@ -178,6 +190,9 @@ struct PortAllCablesItem : ui::MenuItem {
 
 
 struct PortCreateCableItem : ui::MenuItem {
+    PortCreateCableItem(const std::string& text = "", const std::string& name = "")
+        : ui::MenuItem(text, name) {}
+
 	PortWidget* pw;
 
 	void onButton(const ButtonEvent& e) override {
@@ -198,6 +213,9 @@ struct PortCreateCableItem : ui::MenuItem {
 
 
 struct PortCreateCableColorItem : ui::ColorDotMenuItem {
+    PortCreateCableColorItem(const std::string& text = "", const std::string& name = "")
+        : ui::ColorDotMenuItem(text, name) {}
+
 	PortWidget* pw;
 	size_t colorId;
 

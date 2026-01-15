@@ -1,5 +1,6 @@
 #pragma once
 #include <list>
+#include <map>
 
 #include <common.hpp>
 #include <math.hpp>
@@ -13,6 +14,7 @@ namespace rack {
 /** Base UI widget types */
 namespace widget {
 
+
 /** A node in the 2D [scene graph](https://en.wikipedia.org/wiki/Scene_graph).
  * The bounding box of a Widget is a rectangle specified by `box` relative to
  * their parent. The appearance is defined by overriding `draw()`, and the
@@ -20,7 +22,16 @@ namespace widget {
  */
 class Widget : public WeakBase {
    public:
+    /** Constructor. Stores name of widget. */
+    Widget(const std::string& name = std::string());
+
+    /** Destructor. Deletes all child widgets. You should only delete orphaned
+     * widgets*/
     virtual ~Widget();
+
+    /** Returns the name of the widget. Returns the class name if the name for
+     * the widget was not configured. */
+    std::string getName();
 
     /** Returns the bounding box of the widget in its parent's coordinate
      * system. Need separate const version of function since plugins compiled 
@@ -364,21 +375,23 @@ class Widget : public WeakBase {
 
     using BaseEvent = widget::BaseEvent;
 
-	/** An event prototype with a vector position. */
-	struct PositionBaseEvent {
-		/** The pixel coordinate where the event occurred, relative to the Widget it is called on. */
-		math::Vec pos;
-	};
+    /** An event prototype with a vector position. */
+    struct PositionBaseEvent {
+        /** The pixel coordinate where the event occurred, relative to the
+         * Widget it is called on. */
+        math::Vec pos;
+    };
 
     struct HoverEvent : BaseEvent, PositionBaseEvent {
-		/** Change in mouse position since the last frame. Can be zero. */
-		math::Vec mouseDelta;
-	};
+        /** Change in mouse position since the last frame. Can be zero. */
+        math::Vec mouseDelta;
+    };
+
     /** Occurs every frame when the mouse is hovering over a Widget.
      * Recurses. Consume this event to allow Enter and Leave to occur.
      */
-	virtual void onHover(const HoverEvent& e) {
-		recursePositionEvent(&Widget::onHover, e);
+    virtual void onHover(const HoverEvent& e) {
+        recursePositionEvent(&Widget::onHover, e);
     }
 
     struct ButtonEvent : BaseEvent, PositionBaseEvent {
@@ -459,208 +472,241 @@ class Widget : public WeakBase {
 		recursePositionEvent(&Widget::onHoverKey, e);
 	}
 
-	/** An event prototype with a Unicode character. */
-	struct TextBaseEvent {
-		/** Unicode code point of the character */
-		uint32_t codepoint;
-	};
+    /** An event prototype with a Unicode character. */
+    struct TextBaseEvent {
+        /** Unicode code point of the character */
+        uint32_t codepoint;
+    };
+    struct HoverTextEvent : BaseEvent, PositionBaseEvent, TextBaseEvent {};
+
     /** Occurs when a character is typed while the mouse is hovering a Widget.
      * Recurses.
      */
-    struct HoverTextEvent : BaseEvent, PositionBaseEvent, TextBaseEvent {};
-	virtual void onHoverText(const HoverTextEvent& e) {
-		recursePositionEvent(&Widget::onHoverText, e);
-	}
+    virtual void onHoverText(const HoverTextEvent& e) {
+        recursePositionEvent(&Widget::onHoverText, e);
+    }
 
-	struct HoverScrollEvent : BaseEvent, PositionBaseEvent {
-		/** Change of scroll wheel position. */
-		math::Vec scrollDelta;
-	};
+    struct HoverScrollEvent : BaseEvent, PositionBaseEvent {
+        /** Change of scroll wheel position. */
+        math::Vec scrollDelta;
+    };
+
     /** Occurs when the mouse scroll wheel is moved while the mouse is hovering
      * a Widget. Recurses.
      */
     virtual void onHoverScroll(const HoverScrollEvent& e) {
-		recursePositionEvent(&Widget::onHoverScroll, e);
-	}
+        recursePositionEvent(&Widget::onHoverScroll, e);
+    }
 
     struct EnterEvent : BaseEvent {};
+
     /** Occurs when a Widget begins consuming the Hover event.
      * Must consume the Hover event to receive this event.
      * The target sets `hoveredWidget`, which allows Leave to occur.
      */
     virtual void onEnter(const EnterEvent& e) {}
 
-	/** Occurs when a different Widget is entered.
-	Must consume the Hover event (when a Widget is entered) to receive this event.
-	*/
-	struct LeaveEvent : BaseEvent {};
-	virtual void onLeave(const LeaveEvent& e) {}
+    struct LeaveEvent : BaseEvent {};
 
-	/** Occurs when a Widget begins consuming the Button press event for the left mouse button.
-	Must consume the Button event (on left button press) to receive this event.
-	The target sets `selectedWidget`, which allows SelectText and SelectKey to occur.
-	*/
-	struct SelectEvent : BaseEvent {};
-	virtual void onSelect(const SelectEvent& e) {}
+    /** Occurs when a different Widget is entered.
+    Must consume the Hover event (when a Widget is entered) to receive this
+    event.
+    */
+    virtual void onLeave(const LeaveEvent& e) {}
 
-	/** Occurs when a different Widget is selected.
-	Must consume the Button event (on left button press, when the Widget is selected) to receive this event.
-	*/
-	struct DeselectEvent : BaseEvent {};
-	virtual void onDeselect(const DeselectEvent& e) {}
+    struct SelectEvent : BaseEvent {};
 
-	/** Occurs when a key is pressed, released, or repeated while a Widget is selected.
-	Must consume to prevent HoverKey from being triggered.
-	*/
-	struct SelectKeyEvent : BaseEvent, KeyBaseEvent {};
-	virtual void onSelectKey(const SelectKeyEvent& e) {}
+    /** Occurs when a Widget begins consuming the Button press event for the
+    left mouse button. Must consume the Button event (on left button press) to
+    receive this event. The target sets `selectedWidget`, which allows
+    SelectText and SelectKey to occur.
+    */
+    virtual void onSelect(const SelectEvent& e) {}
 
-	/** Occurs when text is typed while a Widget is selected.
-	Must consume to prevent HoverKey from being triggered.
-	*/
-	struct SelectTextEvent : BaseEvent, TextBaseEvent {};
-	virtual void onSelectText(const SelectTextEvent& e) {}
+    struct DeselectEvent : BaseEvent {};
 
-	struct DragBaseEvent : BaseEvent {
-		/** The mouse button held while dragging. */
-		int button;
-	};
-	/** Occurs when a Widget begins being dragged.
-	Must consume the Button event (on press) to receive this event.
-	The target sets `draggedWidget`, which allows DragEnd, DragMove, DragHover, DragEnter, and DragDrop to occur.
-	*/
-	struct DragStartEvent : DragBaseEvent {};
-	virtual void onDragStart(const DragStartEvent& e) {}
+    /** Occurs when a different Widget is selected.
+    Must consume the Button event (on left button press, when the Widget is
+    selected) to receive this event.
+    */
+    virtual void onDeselect(const DeselectEvent& e) {}
 
-	/** Occurs when a Widget stops being dragged by releasing the mouse button.
-	Must consume the Button event (on press, when the Widget drag begins) to receive this event.
-	*/
-	struct DragEndEvent : DragBaseEvent {};
-	virtual void onDragEnd(const DragEndEvent& e) {}
+    struct SelectKeyEvent : BaseEvent, KeyBaseEvent {};
 
-	/** Occurs every frame on the dragged Widget.
-	Must consume the Button event (on press, when the Widget drag begins) to receive this event.
-	*/
-	struct DragMoveEvent : DragBaseEvent {
-		/** Change in mouse position since the last frame. Can be zero. */
-		math::Vec mouseDelta;
-	};
-	virtual void onDragMove(const DragMoveEvent& e) {}
+    /** Occurs when a key is pressed, released, or repeated while a Widget is
+    selected. Must consume to prevent HoverKey from being triggered.
+    */
+    virtual void onSelectKey(const SelectKeyEvent& e) {}
 
-	/** Occurs every frame when the mouse is hovering over a Widget while another Widget (possibly the same one) is being dragged.
-	Recurses.
-	Consume this event to allow DragEnter and DragLeave to occur.
-	*/
-	struct DragHoverEvent : DragBaseEvent, PositionBaseEvent {
-		/** The dragged widget */
-		Widget* origin = NULL;
-		/** Change in mouse position since the last frame. Can be zero. */
-		math::Vec mouseDelta;
-	};
-	virtual void onDragHover(const DragHoverEvent& e) {
-		recursePositionEvent(&Widget::onDragHover, e);
-	}
+    struct SelectTextEvent : BaseEvent, TextBaseEvent {};
 
-	/** Occurs when the mouse enters a Widget while dragging.
-	Must consume the DragHover event to receive this event.
-	The target sets `draggedWidget`, which allows DragLeave to occur.
-	*/
-	struct DragEnterEvent : DragBaseEvent {
-		/** The dragged widget */
-		Widget* origin = NULL;
-	};
-	virtual void onDragEnter(const DragEnterEvent& e) {}
+    /** Occurs when text is typed while a Widget is selected.
+    Must consume to prevent HoverKey from being triggered.
+    */
+    virtual void onSelectText(const SelectTextEvent& e) {}
 
-	/** Occurs when the mouse leaves a Widget while dragging.
-	Must consume the DragHover event (when the Widget is entered) to receive this event.
-	*/
-	struct DragLeaveEvent : DragBaseEvent {
-		/** The dragged widget */
-		Widget* origin = NULL;
-	};
-	virtual void onDragLeave(const DragLeaveEvent& e) {}
+    struct DragBaseEvent : BaseEvent {
+        /** The mouse button held while dragging. */
+        int button;
+    };
+    struct DragStartEvent : DragBaseEvent {};
 
-	/** Occurs when the mouse button is released over a Widget while dragging.
-	Must consume the Button event (on release) to receive this event.
-	*/
-	struct DragDropEvent : DragBaseEvent {
-		/** The dragged widget */
-		Widget* origin = NULL;
-	};
-	virtual void onDragDrop(const DragDropEvent& e) {}
+    /** Occurs when a Widget begins being dragged.
+    Must consume the Button event (on press) to receive this event.
+    The target sets `draggedWidget`, which allows DragEnd, DragMove, DragHover,
+    DragEnter, and DragDrop to occur.
+    */
+    virtual void onDragStart(const DragStartEvent& e) {}
 
-	/** Occurs when a selection of files from the operating system is dropped onto a Widget.
-	Recurses.
-	*/
-	struct PathDropEvent : BaseEvent, PositionBaseEvent {
-		PathDropEvent(const std::vector<std::string>& paths) : paths(paths) {}
+    struct DragEndEvent : DragBaseEvent {};
 
-		/** List of file paths in the dropped selection */
-		const std::vector<std::string>& paths;
-	};
-	virtual void onPathDrop(const PathDropEvent& e) {
-		recursePositionEvent(&Widget::onPathDrop, e);
-	}
+    /** Occurs when a Widget stops being dragged by releasing the mouse button.
+     * Must consume the Button event (on press, when the Widget drag begins) to
+     * receive this event.
+     */
+    virtual void onDragEnd(const DragEndEvent& e) {}
 
-	/** Occurs after a certain action is triggered on a Widget.
-	The concept of an "action" is defined by the type of Widget.
-	*/
-	struct ActionEvent : BaseEvent {};
-	virtual void onAction(const ActionEvent& e) {}
+    struct DragMoveEvent : DragBaseEvent {
+        /** Change in mouse position since the last frame. Can be zero. */
+        math::Vec mouseDelta;
+    };
 
-	/** Occurs after the value of a Widget changes.
-	The concept of a "value" is defined by the type of Widget.
-	*/
-	struct ChangeEvent : BaseEvent {};
-	virtual void onChange(const ChangeEvent& e) {}
+    /** Occurs every frame on the dragged Widget.
+     * Must consume the Button event (on press, when the Widget drag begins) to
+     * receive this event.
+     */
+    virtual void onDragMove(const DragMoveEvent& e) {}
 
-	/** Occurs when the pixel buffer of this module must be refreshed.
-	Recurses.
-	*/
-	struct DirtyEvent : BaseEvent {};
-	virtual void onDirty(const DirtyEvent& e) {
-		recurseEvent(&Widget::onDirty, e);
-	}
+    struct DragHoverEvent : DragBaseEvent, PositionBaseEvent {
+        /** The dragged widget */
+        Widget* origin = NULL;
+        /** Change in mouse position since the last frame. Can be zero. */
+        math::Vec mouseDelta;
+    };
 
-	/** Occurs after a Widget's position is set by Widget::setPos().
-	*/
-	struct RepositionEvent : BaseEvent {};
-	virtual void onReposition(const RepositionEvent& e) {}
+    /** Occurs every frame when the mouse is hovering over a Widget while
+     * another Widget (possibly the same one) is being dragged. Recurses.
+     * Consume this event to allow DragEnter and DragLeave to occur.
+     */
+    virtual void onDragHover(const DragHoverEvent& e) {
+        recursePositionEvent(&Widget::onDragHover, e);
+    }
 
-	/** Occurs after a Widget's size is set by Widget::setSize().
-	*/
-	struct ResizeEvent : BaseEvent {};
-	virtual void onResize(const ResizeEvent& e) {}
+    struct DragEnterEvent : DragBaseEvent {
+        /** The dragged widget */
+        Widget* origin = NULL;
+    };
 
-	/** Occurs after a Widget is added to a parent.
-	*/
-	struct AddEvent : BaseEvent {};
-	virtual void onAdd(const AddEvent& e) {}
+    /** Occurs when the mouse enters a Widget while dragging.
+     * Must consume the DragHover event to receive this event.
+     * The target sets `draggedWidget`, which allows DragLeave to occur.
+     */
+    virtual void onDragEnter(const DragEnterEvent& e) {}
 
-	/** Occurs before a Widget is removed from its parent.
-	*/
-	struct RemoveEvent : BaseEvent {};
-	virtual void onRemove(const RemoveEvent& e) {}
+    struct DragLeaveEvent : DragBaseEvent {
+        /** The dragged widget */
+        Widget* origin = NULL;
+    };
 
-	/** Occurs after a Widget is shown with Widget::show().
-	Recurses.
-	*/
-	struct ShowEvent : BaseEvent {};
-	virtual void onShow(const ShowEvent& e) {
-		recurseEvent(&Widget::onShow, e);
-	}
+    /** Occurs when the mouse leaves a Widget while dragging.
+     * Must consume the DragHover event (when the Widget is entered) to receive
+     * this event.
+     */
+    virtual void onDragLeave(const DragLeaveEvent& e) {}
 
-	/** Occurs after a Widget is hidden with Widget::hide().
-	Recurses.
-	*/
-	struct HideEvent : BaseEvent {};
-	virtual void onHide(const HideEvent& e) {
-		recurseEvent(&Widget::onHide, e);
-	}
+    struct DragDropEvent : DragBaseEvent {
+        /** The dragged widget */
+        Widget* origin = NULL;
+    };
+
+    /** Occurs when the mouse button is released over a Widget while dragging.
+     * Must consume the Button event (on release) to receive this event.
+     */
+    virtual void onDragDrop(const DragDropEvent& e) {}
+
+    struct PathDropEvent : BaseEvent, PositionBaseEvent {
+        PathDropEvent(const std::vector<std::string>& paths) : paths(paths) {}
+
+        /** List of file paths in the dropped selection */
+        const std::vector<std::string>& paths;
+    };
+
+    /** Occurs when a selection of files from the operating system is dropped
+     * onto a Widget. Recurses.
+     */
+    virtual void onPathDrop(const PathDropEvent& e) {
+        recursePositionEvent(&Widget::onPathDrop, e);
+    }
+
+    struct ActionEvent : BaseEvent {};
+
+    /** Occurs after a certain action is triggered on a Widget.
+    The concept of an "action" is defined by the type of Widget.
+    */
+    virtual void onAction(const ActionEvent& e) {}
+
+    struct ChangeEvent : BaseEvent {};
+
+    /** Occurs after the value of a Widget changes.
+    The concept of a "value" is defined by the type of Widget.
+    */
+    virtual void onChange(const ChangeEvent& e) {}
+
+    struct DirtyEvent : BaseEvent {};
+
+    /** Occurs when the pixel buffer of this module must be refreshed.
+    Recurses.
+    */
+    virtual void onDirty(const DirtyEvent& e) {
+        recurseEvent(&Widget::onDirty, e);
+    }
+
+    struct RepositionEvent : BaseEvent {};
+
+    /** Occurs after a Widget's position is set by Widget::setPos().
+     */
+    virtual void onReposition(const RepositionEvent& e) {}
+
+    struct ResizeEvent : BaseEvent {};
+
+    /** Occurs after a Widget's size is set by Widget::setSize().
+     */
+    virtual void onResize(const ResizeEvent& e) {}
+
+    struct AddEvent : BaseEvent {};
+
+    /** Occurs after a Widget is added to a parent.
+     */
+    virtual void onAdd(const AddEvent& e) {}
+
+    struct RemoveEvent : BaseEvent {};
+
+    /** Occurs before a Widget is removed from its parent.
+     */
+    virtual void onRemove(const RemoveEvent& e) {}
+
+    struct ShowEvent : BaseEvent {};
+
+    /** Occurs after a Widget is shown with Widget::show().
+    Recurses.
+    */
+    virtual void onShow(const ShowEvent& e) {
+        recurseEvent(&Widget::onShow, e);
+    }
+
+    struct HideEvent : BaseEvent {};
+
+    /** Occurs after a Widget is hidden with Widget::hide().
+    Recurses.
+    */
+    virtual void onHide(const HideEvent& e) {
+        recurseEvent(&Widget::onHide, e);
+    }
 
     struct ContextCreateEvent : BaseEvent {
         NVGcontext* vg;
     };
+
     /** Called after the Window (including OpenGL and NanoVG contexts) are
      * created. Recurses.
      */
@@ -671,15 +717,15 @@ class Widget : public WeakBase {
     struct ContextDestroyEvent : BaseEvent {
         NVGcontext* vg;
     };
+
     /** Called before the Window (including OpenGL and NanoVG contexts) are
      * destroyed. Recurses.
      */
-    virtual void
-    onContextDestroy(const ContextDestroyEvent& e) {
+    virtual void onContextDestroy(const ContextDestroyEvent& e) {
         recurseEvent(&Widget::onContextDestroy, e);
     }
 
-	/** Converts a Scene space vector to local widget coordinates.
+    /** Converts a Scene space vector to local widget coordinates.
 	 * If a zoom widdget then zooming is handled by
 	 * by a method in ZoomWidget called getScreenVecInLocalCoordsForZoomWidget().
 	 * Cannot just add and use a virtual function since plugins compiled to the Rack SDK

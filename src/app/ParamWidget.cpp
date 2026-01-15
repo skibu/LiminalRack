@@ -65,11 +65,13 @@ struct ParamField : ui::TextField {
 
 class ParamValueItem : public ui::MenuItem {
 public:
-    ParamValueItem(ParamWidget* paramWidgetPtr = nullptr) : paramWidget(paramWidgetPtr) {}
+ ParamValueItem(const std::string& text = "", const std::string& name = "",
+                ParamWidget* paramWidgetPtr = nullptr)
+     : ui::MenuItem(text, name), paramWidget(paramWidgetPtr) {}
 
-    void setParamWidget(ParamWidget* paramWidgetPtr) {
-        paramWidget = paramWidgetPtr;
-    }
+ void setParamWidget(ParamWidget* paramWidgetPtr) {
+     paramWidget = paramWidgetPtr;
+ }
 
     // Could be used by module code so need to leave it as public
     float value;
