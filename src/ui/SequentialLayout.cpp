@@ -135,6 +135,9 @@ void SequentialLayout::updateLayout() {
                 // Same as CENTER_ALIGNMENT, except using a special spacing
                 left_starting_point = (available_width_ - rowWidth(row, spacing_to_use)) / 2;
                 break;
+            default:
+                // Should not happen, but this avoids compiler warning
+                left_starting_point = 0.0f;
         }
 
         // Go through each child and set its position
