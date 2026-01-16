@@ -419,49 +419,65 @@ class Widget : public WeakBase {
      * button press) to receive this event.
      */
 	virtual void onDoubleClick(const DoubleClickEvent& e) {
-        DEBUG("Unused Widget::onDoubleClick called"); // FIXME
+        DEBUG("Unused Widget::onDoubleClick() called for %s", getName().c_str());
     }
 
 	/** An event prototype with a GLFW key. */
 	struct KeyBaseEvent {
-		/** The key corresponding to what it would be called in its position on a QWERTY US keyboard.
-		For example, the WASD directional keys used for first-person shooters will always be reported as "WASD", regardless if they say "ZQSD" on an AZERTY keyboard.
-		You should usually not use these for printable characters such as "Ctrl+V" key commands. Instead, use `keyName`.
-		You *should* use these for non-printable keys, such as Escape, arrow keys, Home, F1-12, etc.
-		You should also use this for Enter, Tab, and Space. Although they are printable keys, they do not appear in `keyName`.
-		See GLFW_KEY_* for the list of possible values.
-		*/
-		int key;
-		/** Platform-dependent "software" key code.
-		This variable is only included for completion. There should be no reason for you to use this.
-		You should instead use `key` (for non-printable characters) or `keyName` (for printable characters).
-		Values are platform independent and can change between different keyboards or keyboard layouts on the same OS.
-		*/
-		int scancode;
-		/** String containing the lowercase key name, if it produces a printable character.
-		This is the only variable that correctly represents the label printed on any keyboard layout, whether it's QWERTY, AZERTY, QWERTZ, Dvorak, etc.
-		For example, if the user presses the key labeled "q" regardless of the key position, `keyName` will be "q".
-		For non-printable characters this is an empty string.
-		Enter, Tab, and Space do not give a `keyName`. Use `key` instead.
-		Shift has no effect on the key name. Shift+1 results in "1", Shift+q results in "q", etc.
-		*/
-		std::string keyName;
-		/** The type of event occurring with the key.
-		Possible values are GLFW_RELEASE, GLFW_PRESS, GLFW_REPEAT, or RACK_HELD.
-		RACK_HELD is sent every frame while the key is held.
-		*/
-		int action;
-		/** Bitwise OR of key modifiers, such as Ctrl or Shift.
-		Use (mods & RACK_MOD_MASK) == RACK_MOD_CTRL to check for Ctrl on Linux and Windows but Cmd on Mac.
-		See GLFW_MOD_* for the list of possible values.
-		*/
-		int mods;
-		/** Checks whether this KeyBaseEvent is the given key command. `mods` is OR'd GLFW modifier keys.
-		On Latin keyboards such as QWERTY, AZERTY, QWERTZ, and Dvorak, the key name is checked regardless of position. For example, pressing Q with key=GLFW_KEY_Q returns true for all of these layouts.
-		On non-Latin keyboards such as JCUKEN (ЙЦУКЕН), the layout is assumed to match QWERTY. For example, pressing Й with key=GLFW_KEY_Q returns true.
-		Implemented in event.cpp.
-		*/
-		bool isKeyCommand(int key, int mods = 0) const;
+        /** The key corresponding to what it would be called in its position on
+        a QWERTY US keyboard. For example, the WASD directional keys used for
+        first-person shooters will always be reported as "WASD", regardless if
+        they say "ZQSD" on an AZERTY keyboard. You should usually not use these
+        for printable characters such as "Ctrl+V" key commands. Instead, use
+        `keyName`. You *should* use these for non-printable keys, such as
+        Escape, arrow keys, Home, F1-12, etc. You should also use this for
+        Enter, Tab, and Space. Although they are printable keys, they do not
+        appear in `keyName`. See GLFW_KEY_* for the list of possible values.
+        */
+        int key;
+
+        /** Platform-dependent "software" key code.
+        This variable is only included for completion. There should be no reason
+        for you to use this. You should instead use `key` (for non-printable
+        characters) or `keyName` (for printable characters). Values are platform
+        independent and can change between different keyboards or keyboard
+        layouts on the same OS.
+        */
+        int scancode;
+
+        /** String containing the lowercase key name, if it produces a printable
+        character. This is the only variable that correctly represents the label
+        printed on any keyboard layout, whether it's QWERTY, AZERTY, QWERTZ,
+        Dvorak, etc. For example, if the user presses the key labeled "q"
+        regardless of the key position, `keyName` will be "q". For non-printable
+        characters this is an empty string. Enter, Tab, and Space do not give a
+        `keyName`. Use `key` instead. Shift has no effect on the key name.
+        Shift+1 results in "1", Shift+q results in "q", etc.
+        */
+        std::string keyName;
+
+        /** The type of event occurring with the key.
+        Possible values are GLFW_RELEASE, GLFW_PRESS, GLFW_REPEAT, or RACK_HELD.
+        RACK_HELD is sent every frame while the key is held.
+        */
+        int action;
+
+        /** Bitwise OR of key modifiers, such as Ctrl or Shift.
+        Use (mods & RACK_MOD_MASK) == RACK_MOD_CTRL to check for Ctrl on Linux
+        and Windows but Cmd on Mac. See GLFW_MOD_* for the list of possible
+        values.
+        */
+        int mods;
+
+        /** Checks whether this KeyBaseEvent is the given key command. `mods` is
+        OR'd GLFW modifier keys. On Latin keyboards such as QWERTY, AZERTY,
+        QWERTZ, and Dvorak, the key name is checked regardless of position. For
+        example, pressing Q with key=GLFW_KEY_Q returns true for all of these
+        layouts. On non-Latin keyboards such as JCUKEN (ЙЦУКЕН), the layout is
+        assumed to match QWERTY. For example, pressing Й with key=GLFW_KEY_Q
+        returns true. Implemented in event.cpp.
+        */
+        bool isKeyCommand(int key, int mods = 0) const;
 	};
 
     struct HoverKeyEvent : BaseEvent, PositionBaseEvent, KeyBaseEvent {};

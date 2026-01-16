@@ -103,18 +103,25 @@ bool Widget::KeyBaseEvent::isKeyCommand(int key, int mods) const {
 
 
 void EventState::setHoveredWidget(widget::Widget* w) {
+    // Only do something if actually changing hovered widget
 	if (w == hoveredWidget_)
 		return;
 
+    // If was hovering another widget then end that hover first
 	if (hoveredWidget_) {
 		// Dispatch LeaveEvent
 		Widget::LeaveEvent eLeave;
+        DEBUG("Widget no longer hovered so dispatching LeaveEvent to widget: %s",
+              hoveredWidget_ ? hoveredWidget_->getName().c_str() : "NULL");
 		hoveredWidget_->onLeave(eLeave);
 		hoveredWidget_ = NULL;
 	}
 
+    // Dispatch EnterEvent on new hovered widget
 	if (w) {
 		// Dispatch EnterEvent
+        DEBUG("New widget being hovered over so dispatching EnterEvent to widget: %s",
+              w ? w->getName().c_str() : "NULL");
 		EventContext cEnter;
 		cEnter.target = w;
 		Widget::EnterEvent eEnter;
@@ -125,9 +132,11 @@ void EventState::setHoveredWidget(widget::Widget* w) {
 }
 
 void EventState::setDraggedWidget(widget::Widget* w, int button) {
+    // Only do something if actually changing dragged widget
 	if (w == draggedWidget_)
 		return;
 
+    // If was dragging another widget then end that drag first
 	if (draggedWidget_) {
 		// Dispatch DragEndEvent
 		Widget::DragEndEvent eDragEnd;
@@ -136,8 +145,10 @@ void EventState::setDraggedWidget(widget::Widget* w, int button) {
 		draggedWidget_ = NULL;
 	}
 
+    // Remember which button was used to initiate the drag
 	dragButton_ = button;
 
+    // Dispatch DragStartEvent on new dragged widget
 	if (w) {
 		// Dispatch DragStartEvent
 		EventContext cDragStart;
@@ -177,9 +188,11 @@ void EventState::setDragHoveredWidget(widget::Widget* w) {
 }
 
 void EventState::setSelectedWidget(widget::Widget* w) {
+    // Only do something if actually changing selected widget
 	if (w == selectedWidget_)
 		return;
 
+    //
 	if (selectedWidget_) {
 		// Dispatch DeselectEvent
 		Widget::DeselectEvent eDeselect;
@@ -187,6 +200,7 @@ void EventState::setSelectedWidget(widget::Widget* w) {
 		selectedWidget_ = NULL;
 	}
 
+    // Dispatch SelectEvent on new selected widget
 	if (w) {
 		// Dispatch SelectEvent
 		EventContext cSelect;
@@ -211,15 +225,42 @@ void EventState::finalizeWidget(widget::Widget* w) {
 		lastClickedWidget_ = NULL;
 }
 
+void EventState::handleButtonForDrag(widget::Widget* clickedWidget,
+                                     math::Vec pos, int button, int action,
+                                     int mods) {
+    if (action == GLFW_PRESS) {
+        // Initiates a drag of a widget if callbacks are setup for it
+        DEBUG("Action GLFW_PRESS so handling possible dragging");
+        setDraggedWidget(clickedWidget, button);
+    } else if (action == GLFW_RELEASE) {
+        DEBUG("Action GLFW_RELEASE so handling possible end of dragging");
+
+        // Clear drag hovered widget if was dragging
+        setDragHoveredWidget(nullptr);
+
+        // If was dragging then drop the dragged widget onto the clicked widget
+        if (clickedWidget && draggedWidget_) {
+            // Dispatch DragDropEvent
+            Widget::DragDropEvent eDragDrop;
+            eDragDrop.button = dragButton_;
+            eDragDrop.origin = draggedWidget_;
+            clickedWidget->onDragDrop(eDragDrop);
+        }
+
+        // Keep track that no longer dragging a widget
+        setDraggedWidget(nullptr, 0);
+    }
+}
+
+// FIXME
 bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 	DEBUG("====> handleButton event pos (%.1f, %.1f) button %d action %d mods 0x%02x", 
 		pos.getX(), pos.getY(), button, action, mods);
 
-	bool cursorLocked = getWindow()->isCursorLocked();
-
-    // Determine which widget was clicked on. though if cursor is locked then no
-    // widget can be clicked.
+    // Determine which widget was clicked on, though if cursor is locked because dragging
+    // a knob or slider then no widget gets a new button event.
     widget::Widget* clickedWidget = nullptr;
+	bool cursorLocked = getWindow()->isCursorLocked();
     if (!cursorLocked) {
 		// Dispatch ButtonEvent
 		EventContext cButton;
@@ -231,72 +272,55 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 		eButton.mods = mods;
 		rootWidget_->onButton(eButton);
 		clickedWidget = cButton.target;
+        DEBUG("Button event clickedWidget: %s",
+              clickedWidget ? clickedWidget->getName().c_str() : "NULL");
 	}
 
-    if (action == GLFW_PRESS) {
-        // Initiates a drag of a widget if callbacks are setup for it
-        DEBUG(
-            "Action GLFW_PRESS so initiating dragging of widget "
-            "event action: GLFW_PRESS");
-        setDraggedWidget(clickedWidget, button);
+    // Do drag handling separately
+    handleButtonForDrag(clickedWidget, pos, button, action, mods);
+
+    // If left mouse button pressed then handle selection
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        DEBUG("Left mouse button pressed, selecting clicked widget %s",
+              clickedWidget ? clickedWidget->getName().c_str() : "NULL");
+        setSelectedWidget(clickedWidget);
     }
 
-    if (action == GLFW_RELEASE) {
-		DEBUG("Action GLFW_RELEASE");
-
-        // Clear drag hovered widget if was dragging
-		setDragHoveredWidget(nullptr);
-
-        // If was dragging then drop the dragged widget onto the clicked widget
-		if (clickedWidget && draggedWidget_) {
-			// Dispatch DragDropEvent
-			Widget::DragDropEvent eDragDrop;
-			eDragDrop.button = dragButton_;
-			eDragDrop.origin = draggedWidget_;
-			clickedWidget->onDragDrop(eDragDrop);
-		}
-
-        // Keep track that no longer dragging a widget
-		setDraggedWidget(nullptr, 0);
-	}
-
+    // Handle double-click detection for left mouse button
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
-		DEBUG("handleButton event button: GLFW_MOUSE_BUTTON_LEFT");
-        DEBUG("Clicked widget: %s",
+		DEBUG("Investigating double clicking for widget: %s",
               clickedWidget ? clickedWidget->getName().c_str() : "NULL");
 
-        // Left click so select the clicked widget
-		if (action == GLFW_PRESS) {
-			setSelectedWidget(clickedWidget);
-		}
-
         // Handle double-click detection
-		if (action == GLFW_PRESS) {
-			const double doubleClickDuration = 0.3;
-			double clickTime = system::getTime();
-			if (clickedWidget
-			    && clickTime - lastClickTime_ <= doubleClickDuration
-			    && lastClickedWidget_ == clickedWidget) {
-				// Dispatch DoubleClickEvent
-				Widget::DoubleClickEvent eDoubleClick;
-				clickedWidget->onDoubleClick(eDoubleClick);
-				// Reset double click
-				lastClickTime_ = -INFINITY;
-				lastClickedWidget_ = NULL;
-			}
-			else {
-				lastClickTime_ = clickTime;
-				lastClickedWidget_ = clickedWidget;
-			}
-		}
-	}
+        if (action == GLFW_PRESS) {
+            const double doubleClickDuration = 0.3;
+            double clickTime = system::getTime();
+            if (clickedWidget &&
+                clickTime - lastClickTime_ <= doubleClickDuration &&
+                lastClickedWidget_ == clickedWidget) {
+                // Dispatch DoubleClickEvent
+                DEBUG("Dbl click detected for widget %s so dbl click event",
+                      clickedWidget->getName().c_str());
+                Widget::DoubleClickEvent eDoubleClick;
+                clickedWidget->onDoubleClick(eDoubleClick);
+
+                // Reset double click
+                lastClickTime_ = -INFINITY;
+                lastClickedWidget_ = NULL;
+            } else {
+                lastClickTime_ = clickTime;
+                lastClickedWidget_ = clickedWidget;
+            }
+        }
+    }
 
     // Return true if clicked on a widget
 	return !!clickedWidget;
 }
 
 bool EventState::handleHover(math::Vec pos, math::Vec mouseDelta) {
-	// DEBUG("handleHover pos (%.1f, %.1f) mouseDelta (%.1f, %.1f)", 
+    // NOTE: this event happens constantly so don't want to log it.
+	//DEBUG("handleHover() pos (%.1f, %.1f) mouseDelta (%.1f, %.1f)", 
 	// 	pos.getX(), pos.getY(), mouseDelta.getX(), mouseDelta.getY());
 
 	bool cursorLocked = getWindow()->isCursorLocked();
@@ -355,7 +379,7 @@ bool EventState::handleHover(math::Vec pos, math::Vec mouseDelta) {
 }
 
 bool EventState::handleLeave() {
-	DEBUG("Leave window event");
+	DEBUG("Left main window event");
 
 	heldKeys_.clear();
 	// When leaving the window, don't un-hover widgets because the mouse might be dragging.

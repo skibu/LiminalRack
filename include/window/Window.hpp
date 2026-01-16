@@ -116,8 +116,15 @@ class Window {
     /** Request Window to be closed after rendering the current frame. */
     void close();
 
+    /** Locks the cursor to the window. Done when dragging a knob or a slider. */
     void cursorLock();
+
+    /** Unlocks the cursor from the window. */
     void cursorUnlock();
+
+    /** Returns true if the cursor is currently locked. Cursor is loccked when 
+     * dragging a knob or a slider.
+     */
     bool isCursorLocked();
 
     /** Gets the current keyboard mod state

@@ -126,45 +126,104 @@ class EventState {
 
    private:
     Widget* rootWidget_ = nullptr;
-    /** State widgets
-    Don't set these directly unless you know what you're doing. Use the set*()
-    methods instead.
-    */
+    /* State widgets
+     * Don't set these directly unless you know what you're doing. Use the
+     * set*() methods instead.
+     */
+    // Currently hovered widget
     Widget* hoveredWidget_ = nullptr;
+
+    // Currently dragged widget
     Widget* draggedWidget_ = nullptr;
+
+    // Which mouse button was used to initiate the drag.
+    // GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_RIGHT, etc.
     int dragButton_ = 0;
+
+    // Which widget is being drag-hovered
     Widget* dragHoveredWidget_ = nullptr;
+
+    // Currently selected widget
     Widget* selectedWidget_ = nullptr;
-    /** For double-clicking */
+
+    // For double-clicking
     double lastClickTime_ = -INFINITY;
+
+    // For double-clicking
     Widget* lastClickedWidget_ = nullptr;
+
+    // Any keyboard keys held down when event initiated
     std::set<int> heldKeys_;
 
    public:
+    /** For setting root widget (to the Scene widget) */
     void setRootWidget(Widget* w) { rootWidget_ = w; }
+
+    /** Returns root widget, which is typically the Scene */
     Widget* getRootWidget() { return rootWidget_; }
+
+    /** Returns the widget currently being hovered, or nullptr if none */
     Widget* getHoveredWidget() { return hoveredWidget_; }
+
+    /** Returns the widget currently being dragged, or nullptr if none */
     Widget* getDraggedWidget() { return draggedWidget_; }
+
+    /** Returns the widget currently being drag-hovered, or nullptr if none */
     Widget* getDragHoveredWidget() { return dragHoveredWidget_; }
+
+    /** Returns the widget currently being selected, or nullptr if none */
     Widget* getSelectedWidget() { return selectedWidget_; }
+
+    /** Returns the mouse button used to initiate the drag */
     int getDragButton() { return dragButton_; }
 
+    /** Keeps track of which is the widget being hovered. If first time called
+     * for this event then initiates an EnterEvent on the widget. Initiates a
+     * LeaveEvent on the previously hovered widget.
+     */
     void setHoveredWidget(Widget* w);
+
+    /** Keeps track of which is the widget being dragged. If first time
+     * called for this event then initiates a DragStartEvent on the widget.
+     * Initiates a DragEndEvent on the previously dragged widget.
+     * @param w The widget being dragged.
+     * @param button The mouse button used to initiate the drag. Either
+     * GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_RIGHT, etc.
+     */
     void setDraggedWidget(Widget* w, int button);
+    
+    /** Keeps track of which is the widget being drag-hovered. If first time
+     * called for this event then initiates a DragEnterEvent on the widget.
+     * Initiates a DragLeaveEvent on the previously drag-hovered widget.
+     */
     void setDragHoveredWidget(Widget* w);
+
+    /** Keeps track of which is the widget being selected. If first time called
+     * for this event then initiates a SelectEvent on the widget. Initiates a
+     * DeselectEvent on the previously selected widget.
+     */
     void setSelectedWidget(Widget* w);
+
+    /** DEPRECATED METHODS - use the set*Widget() methods instead */
     DEPRECATED void setHovered(Widget* w) { setHoveredWidget(w); }
+
+    /** DEPRECATED METHODS - use the set*Widget() methods instead */
     DEPRECATED void setDragged(Widget* w, int button) {
         setDraggedWidget(w, button);
     }
+
+    /** DEPRECATED METHODS - use the set*Widget() methods instead */
     DEPRECATED void setDragHovered(Widget* w) { setDragHoveredWidget(w); }
+
+    /** DEPRECATED METHODS - use the set*Widget() methods instead */
     DEPRECATED void setSelected(Widget* w) { setSelectedWidget(w); }
-    /** Prepares a widget for deletion */
+
+    /** Prepares event state a widget for deletion */
     void finalizeWidget(Widget* w);
 
-    /** A callback to be called when mouse button pressed. Calls onButton()
-     * on widget that was clicked on. Sets draggedWidget on press, and
-     * clears it on release. Handles double-click detection.
+    /** A callback to be called when mouse button pressed ore released. Calls
+     * onButton() on widget that was clicked on. Sets draggedWidget on press,
+     * and clears it on release. Handles double-click detection.
      *
      * @param pos Position of mouse in Scene coordinates.
      * @param button which mouse button clicked on, e.g.
@@ -175,10 +234,27 @@ class EventState {
      */
     bool handleButton(math::Vec pos, int button, int action, int mods);
 
+    void handleButtonForDrag(widget::Widget* clickedWidget, math::Vec pos,
+                             int button, int action, int mods);
+
     bool handleHover(math::Vec pos, math::Vec mouseDelta);
+
+    /** A callback to be called when the mouse leaves the main window.
+     * Always returns true.
+     */
     bool handleLeave();
+
     bool handleScroll(math::Vec pos, math::Vec scrollDelta);
+
+    /** A callback to be called when text input is received. Calls onText()
+     * on the hovered widget.
+     *
+     * @param pos Position of mouse in Scene coordinates.
+     * @param codepoint Unicode code point of the character.
+     * @return true if event was consumed by a widget.
+     */
     bool handleText(math::Vec pos, uint32_t codepoint);
+
     bool handleKey(math::Vec pos, int key, int scancode, int action, int mods);
     bool handleDrop(math::Vec pos, const std::vector<std::string>& paths);
     bool handleDirty();

@@ -21,8 +21,8 @@ struct OpaqueWidget : Widget {
 	}
 
 	void onButton(const ButtonEvent& e) override {
-        DEBUG("OpaqueWidget::onButton called button=%d action=%d x=%.1f y=%.1f",
-              e.button, e.action, e.pos.getX(), e.pos.getY());
+        DEBUG("OpaqueWidget::onButton() called widget=%s button=%d action=%d x=%.1f y=%.1f",
+              getName().c_str(), e.button, e.action, e.pos.getX(), e.pos.getY());
         Widget::onButton(e);
         e.stopPropagating();
 		if (e.button == GLFW_MOUSE_BUTTON_LEFT) {

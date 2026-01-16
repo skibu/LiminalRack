@@ -204,6 +204,10 @@ static void mouseButtonCallback(GLFWwindow* win, int button, int action, int mod
 }
 
 
+/** Called to handle mouses new position. Normally such a callback would be
+ * called whenever mouse is moved but currently it is called every frame
+ * in the main loop.
+ */
 static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
 	contextSet((Context*) glfwGetWindowUserPointer(win));
 	Window* window = getWindow();
