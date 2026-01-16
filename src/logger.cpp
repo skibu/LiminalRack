@@ -145,33 +145,33 @@ static void logVa(Level level, const char* filename, int line, const char* func,
     std::lock_guard<std::mutex> lock(mutex);
 
     // Determine core ID to output
-    std::string core_str = "";
+    std::string coreStr = "";
 #ifdef __linux__
     // Only output core ID for more verbose levels
     if (level < INFO_LEVEL) {
-        int core_id = sched_getcpu();
-        core_str = "Core " + std::to_string(core_id) + " ";
+        int coreId = sched_getcpu();
+        coreStr = "Core " + std::to_string(coreId) + " ";
     }
 #endif
 
     // Determine thread name to output
-    std::string thread_str = "";
+    std::string threadStr = "";
     // Could only output core thread name for more verbose levels but
     // for now always output it
     if (level <= FATAL_LEVEL) {
-        auto thread_id = std::this_thread::get_id();
+        auto threadId = std::this_thread::get_id();
         std::ostringstream oss;
-        oss << thread_id;
-        thread_str = "Thr:" + oss.str() + " ";
+        oss << threadId;
+        threadStr = "Thr:" + oss.str() + " ";
     }
 
     // Outline context info
     std::fprintf(outputFile, "%s%7.03f %s%s %s%s%s%s%s:%d %s%s-%s",
-        timeColor(), nowTime,                                // time
-        levelColor(level), levelLabels[level],               // level
-        threadColor(), thread_str.c_str(), core_str.c_str(), // thread/core
-        fileColor(), filename, line, func,                   // file info
-        bracketColor(), resetColor());                       // right bracket   
+        timeColor(), nowTime,                              // time
+        levelColor(level), levelLabels[level],             // level
+        threadColor(), threadStr.c_str(), coreStr.c_str(), // thread/core
+        fileColor(), filename, line, func,                 // file info
+        bracketColor(), resetColor());                     // right bracket   
 
     // Print the actual log message and a newline
     std::vfprintf(outputFile, format, args);
