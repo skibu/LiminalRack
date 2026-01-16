@@ -545,7 +545,7 @@ class KnobScrollSensitivitySlider : public ui::Slider {
 };
 
 /**
- * The View button for the main menu
+ * The View button to display the View menu
  */
 class ViewButton : public MenuButton {
    public:
