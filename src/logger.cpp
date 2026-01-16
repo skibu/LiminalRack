@@ -85,7 +85,7 @@ void destroy() {
 
 static const char* const levelLabels[] = {
     "TRACE",
-	"DEBUG",
+	"DBUG", // shortened to be same as INFO for better alignment
 	"INFO",
 	"WARN",
     "ERROR",
@@ -109,6 +109,8 @@ const char* YELLOW = "\x1B[33m";
 const char* RED = "\x1B[31m";
 const char* MAGENTA = "\x1B[35m";
 const char* WHITE = "\x1B[37m";
+const char* GREEN = "\x1B[32m";
+const char* GRAY = "\x1B[90m";
 const char* RESET_COLOR = "\x1B[0m";
 
 static const char* levelColors[] = {
@@ -120,7 +122,7 @@ static const char* levelColors[] = {
 	RED, // fatal - red
 };
 
-static const char* bracketColor() { return enableColors ? MAGENTA : ""; }
+static const char* bracketColor() { return enableColors ? GRAY : ""; }
 static const char* timeColor() { return enableColors ? CYAN : ""; }
 static const char* levelColor(Level level) { return enableColors ? levelColors[level] : ""; }
 static const char* threadColor() { return enableColors ? CYAN : ""; }
@@ -164,13 +166,12 @@ static void logVa(Level level, const char* filename, int line, const char* func,
     }
 
     // Outline context info
-    std::fprintf(outputFile, "%s[%s%s%7.03f%s %s%s%s %s%s%s%s%s%s:%d %s%s%s]%s ",
-        bracketColor(), resetColor(),                           // left bracket
-        timeColor(), nowTime, resetColor(),                     // time
-        levelColor(level), levelLabels[level], resetColor(),    // level
-        threadColor(), thread_str.c_str(), core_str.c_str(), resetColor(),
-        fileColor(), filename, line, func, resetColor(),        // file info
-        bracketColor(), resetColor());                          // right bracket   
+    std::fprintf(outputFile, "%s%7.03f %s%s %s%s%s%s%s:%d %s%s-%s",
+        timeColor(), nowTime,                                // time
+        levelColor(level), levelLabels[level],               // level
+        threadColor(), thread_str.c_str(), core_str.c_str(), // thread/core
+        fileColor(), filename, line, func,                   // file info
+        bracketColor(), resetColor());                       // right bracket   
 
     // Print the actual log message and a newline
     std::vfprintf(outputFile, format, args);
