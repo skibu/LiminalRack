@@ -10,7 +10,15 @@ namespace widget {
 Also consumes HoverEvent and ButtonEvent for left-clicks.
 */
 struct OpaqueWidget : Widget {
-    OpaqueWidget(const std::string& name = "") : Widget(name) {}
+    /** Constructor. Stores name of widget. Can't just use a default value for
+     * name param since the original published SDK has a constructor with no
+     * parameters. Therefore we provide both constructors.
+     */
+    OpaqueWidget(const std::string& name) : Widget(name) {}
+
+    /** Default constructor. Uses empty string for name.
+     */
+    OpaqueWidget() : OpaqueWidget("") {}
 
 	void onHover(const HoverEvent& e) override {
 		Widget::onHover(e);

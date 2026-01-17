@@ -22,8 +22,18 @@ namespace widget {
  */
 class Widget : public WeakBase {
    public:
-    /** Constructor. Stores name of widget. */
-    Widget(const std::string& name = std::string());
+    /** Constructor. Stores name of widget. Can't just use a default value for
+     * name param since the original published SDK has a constructor with no
+     * parameters. Therefore we provide both constructors.
+     */
+    Widget(const std::string& name);
+
+    /** Default constructor. Uses empty string for name.
+     * Has to be defined in cpp file so that will actually be
+     * created and will be accessible to plugins compiled to the legacy Rack
+     * SDK.
+     */
+    Widget();
 
     /** Destructor. Deletes all child widgets. You should only delete orphaned
      * widgets*/
@@ -34,11 +44,9 @@ class Widget : public WeakBase {
     std::string getName();
 
     /** Returns the bounding box of the widget in its parent's coordinate
-     * system. Need separate const version of function since plugins compiled 
-	 * to the legacy Rack SDK. */
-    math::Rect getBox() {
-        return box_;
-    }
+     * system. Need separate const version of function and need to define it
+     * in cpp file since plugins compiled to the legacy Rack SDK. */
+    math::Rect getBox();
 
 	/** Returns the bounding box of the widget in its parent's coordinate
 	 * system. Is properly a const function. */
@@ -125,12 +133,10 @@ class Widget : public WeakBase {
     }
 
     /** Returns the parent widget of this widget.
-	 * Cannot be const since plugins compiled to the legacy Rack SDK.
-	 */
-
-	widget::Widget* getParent() {
-        return parent_;
-    }
+     * Cannot be const and has to be defined in cpp file since plugins compiled
+     * to the legacy Rack SDK.
+     */
+    widget::Widget* getParent();
 
 	/** Returns the parent widget of this widget. Is properly a const 
 	 * function. 
@@ -142,14 +148,13 @@ class Widget : public WeakBase {
     /** Returns the list of child widgets */
     std::list<Widget*> getChildren() const {
         return children_;
-    }   
-
-    /** Returns whether the widget is visible. 
-	 * Cannot be const since plugins compiled to the legacy Rack SDK.
-	*/
-	bool isVisible() {
-        return visible_;
     }
+
+    /** Returns whether the widget is visible.
+     * Cannot be const and needs to be defined in cpp file since plugins
+     * compiled to the legacy Rack SDK.
+     */
+    bool isVisible();
 
 	/** Sets `visible` and triggers ShowEvent or HideEvent if changed. */
 	void setVisible(bool visible);
@@ -407,7 +412,7 @@ class Widget : public WeakBase {
 
         /** GLFW_PRESS or GLFW_RELEASE */
         int action;
-        
+
         /** GLFW_MOD_* */
         int mods;
     };

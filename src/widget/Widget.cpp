@@ -17,6 +17,8 @@ Widget::Widget(const std::string& name) {
     widgetNames_g[this] = name;
 }
 
+Widget::Widget() : Widget("") {}
+
 Widget::~Widget() {
 	// You should only delete orphaned widgets
 	assert(!parent_);
@@ -49,6 +51,10 @@ std::string Widget::getName() {
     }
 }
 
+math::Rect Widget::getBox() {
+    return box_;
+}
+
 void Widget::setBox(math::Rect box) {
 	setPos(box.getPos());
 	setSize(box.getSize());
@@ -72,6 +78,14 @@ void Widget::setSize(math::Vec size) {
 	// Dispatch Resize event
 	ResizeEvent eResize;
 	onResize(eResize);
+}
+
+widget::Widget* Widget::getParent() {
+    return parent_;
+}
+
+bool Widget::isVisible() {
+    return visible_;
 }
 
 void Widget::setVisible(bool visible) {
