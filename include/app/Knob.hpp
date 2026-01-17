@@ -7,7 +7,8 @@
 namespace rack {
 namespace app {
 
-/** Implements vertical dragging behavior for ParamWidgets */
+/** Implements knob interface for dragging and clicking behavior for a
+ * ParamWidgets */
 struct Knob : ParamWidget {
     // Internal data structure private because it is internal!
    private:
@@ -45,7 +46,12 @@ struct Knob : ParamWidget {
     void initParamQuantity() override;
 
     void onHover(const HoverEvent& e) override;
+
+    /** Determine if mouse position is in the circle (for x direction).
+     * If so, call ParamWidget::onButton().
+     */
     void onButton(const ButtonEvent& e) override;
+
     void onDragStart(const DragStartEvent& e) override;
     void onDragEnd(const DragEndEvent& e) override;
     void onDragMove(const DragMoveEvent& e) override;

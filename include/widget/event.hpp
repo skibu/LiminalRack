@@ -120,8 +120,15 @@ struct BaseEvent {
 	}
 };
 
+/** A global per context that keeps track of the current event.
+ * So there is not a new EventState for each event, but one that tracks
+ * the current hovered, dragged, and selected widgets.
+ */
 class EventState {
    public:
+    /** Constructor. Since this is a global per context, this only allocates
+     * space. The configuration is done elsewhere for each event. 
+     */
     EventState() {}
 
    private:

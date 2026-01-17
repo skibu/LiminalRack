@@ -336,7 +336,10 @@ class Widget : public WeakBase {
 
     // Events
 
-    /** Recurses an event to all visible Widgets */
+    /** Recurses an event through all of its children to find an event
+     * handler/consumer. For non-position related events like like onShow(),
+     * onHide(), and some context related ones. 
+     */
     template <typename TMethod, class TEvent>
     void recurseEvent(TMethod f, const TEvent& e) {
         for (auto it = children_.rbegin(); it != children_.rend(); it++) {
@@ -354,10 +357,13 @@ class Widget : public WeakBase {
         }
     }
 
-    /** Recurses an event to all visible Widgets until it is consumed. */
-	template <typename TMethod, class TEvent>
-	void recursePositionEvent(TMethod f, const TEvent& e) {
-		for (auto it = children_.rbegin(); it != children_.rend(); it++) {
+    /** Recurses an position event to all visible children widdgets until find
+     * an event handler/consumer. Used for many events like onButton() that
+     * include positional info.
+     */
+    template <typename TMethod, class TEvent>
+    void recursePositionEvent(TMethod f, const TEvent& e) {
+        for (auto it = children_.rbegin(); it != children_.rend(); it++) {
 			// Stop propagation if requested
 			if (!e.isPropagating()) break;
 			Widget* child = *it;
@@ -371,7 +377,7 @@ class Widget : public WeakBase {
 			// Call child event handler
 			(child->*f)(e2);
 		}
-	}
+    }
 
     using BaseEvent = widget::BaseEvent;
 
@@ -398,8 +404,10 @@ class Widget : public WeakBase {
         /** GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_RIGHT,
          * GLFW_MOUSE_BUTTON_MIDDLE, etc. */
         int button;
+
         /** GLFW_PRESS or GLFW_RELEASE */
         int action;
+        
         /** GLFW_MOD_* */
         int mods;
     };
