@@ -723,10 +723,10 @@ void RackWidget::addModuleAtMouse(ModuleWidget* mw) {
 
 void RackWidget::removeModule(ModuleWidget* m) {
 	// Unset touchedParamWidget
-	if (touchedParam) {
-		ModuleWidget* touchedModule = touchedParam->getAncestorOfType<ModuleWidget>();
+	if (touchedParam_) {
+		ModuleWidget* touchedModule = touchedParam_->getAncestorOfType<ModuleWidget>();
 		if (touchedModule == m)
-			touchedParam = NULL;
+			touchedParam_ = NULL;
 	}
 
 	// Disconnect cables
@@ -1697,12 +1697,12 @@ NVGcolor RackWidget::getNextCableColor() {
 
 
 ParamWidget* RackWidget::getTouchedParam() {
-	return touchedParam;
+	return touchedParam_;
 }
 
 
 void RackWidget::setTouchedParam(ParamWidget* pw) {
-	touchedParam = pw;
+	touchedParam_ = pw;
 }
 
 

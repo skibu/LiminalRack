@@ -331,7 +331,7 @@ struct MIDIMapChoice : LedDisplayChoice {
 		scroll->scrollTo(getBox());
 
 		// Reset touchedParam
-		getRack()->touchedParam = NULL;
+		getRack()->setTouchedParam(nullptr);
 		module->enableLearn(id);
 	}
 
@@ -339,9 +339,9 @@ struct MIDIMapChoice : LedDisplayChoice {
 		if (!module)
 			return;
 		// Check if a ParamWidget was touched
-		ParamWidget* touchedParam = getRack()->touchedParam;
+		ParamWidget* touchedParam = getRack()->getTouchedParam();
 		if (touchedParam) {
-			getRack()->touchedParam = NULL;
+			getRack()->setTouchedParam(nullptr);
 			int64_t moduleId = touchedParam->module->id;
 			int paramId = touchedParam->paramId;
 			module->learnParam(id, moduleId, paramId);
