@@ -119,11 +119,12 @@ int main(int argc, char* argv[]) {
 
 	// Parse command line arguments
 	static const struct option longOptions[] = {
-		{"safe", no_argument, NULL, 'a'},
+		{"liminal", no_argument, NULL, 'l'},
 		{"debug", no_argument, NULL, 'b'},
+		{"trace", no_argument, NULL, 'r'},
+		{"safe", no_argument, NULL, 'a'},
 		{"dev", no_argument, NULL, 'd'},
 		{"headless", no_argument, NULL, 'h'},
-		{"liminal", no_argument, NULL, 'l'},
 		{"screenshot", required_argument, NULL, 't'},
 		{"system", required_argument, NULL, 's'},
 		{"user", required_argument, NULL, 'u'},
@@ -134,48 +135,57 @@ int main(int argc, char* argv[]) {
 	int c;
 	opterr = 0;
 
-	while ((c = getopt_long(argc, argv, "abdhlt:s:u:vp:", longOptions, NULL)) != -1) {
-		switch (c) {
-			case 'a': {
-				settings::safeMode = true;
-			} break;
-			case 'b': {
-				// Turn on debug logging
-                logger::setLogLevel(logger::Level::DEBUG_LEVEL);
-            } break;
-			case 'd': {
-				settings::devMode = true;
-            } break;
-			case 'h': {
-				settings::headless = true;
-			} break;
-			case 'l': {
+	while ((c = getopt_long(argc, argv, "lbradht:s:u:vp:", longOptions, NULL)) != -1) {
+        switch (c) {
+            case 'l':
                 rack::ui::Liminal::configAsLiminal();
-            } break;			
-			case 't': {
-				screenshot = true;
-				std::sscanf(optarg, "%f", &screenshotZoom);
-			} break;
-			case 's': {
-				asset::systemDir = optarg;
-			} break;
-			case 'u': {
-				asset::userDir = optarg;
-			} break;
-			case 'v': {
-				std::fprintf(stderr, "%s\n", appInfo.c_str());
-				return 0;
-			}
-			case 256: { // --help
-				std::fprintf(stderr, "%s\n", appInfo.c_str());
-				std::fprintf(stderr, "https://vcvrack.com/manual/Installing#Command-line-usage\n");
-				return 0;
-			}
-			// Mac "app translocation" passes a nonsense -psn_... flag, so -p is reserved.
-			case 'p': break;
-			default: break;
-		}
-	}
+                break;
+            case 'b':
+                // Turn on debug logging
+                logger::setLogLevel(logger::Level::DEBUG_LEVEL);
+                break;
+            case 'r':
+                // Turn on debug logging
+                logger::setLogLevel(logger::Level::TRACE_LEVEL);
+                break;
+            case 'a':
+                settings::safeMode = true;
+                break;
+            case 'd':
+                settings::devMode = true;
+                break;
+            case 'h':
+                settings::headless = true;
+                break;
+            case 't':
+                screenshot = true;
+                std::sscanf(optarg, "%f", &screenshotZoom);
+                break;
+            case 's':
+                asset::systemDir = optarg;
+                break;
+            case 'u':
+                asset::userDir = optarg;
+                break;
+            case 'v':
+                std::fprintf(stderr, "%s\n", appInfo.c_str());
+                return 0;
+                break;
+            case 256:  // --help
+                std::fprintf(stderr, "%s\n", appInfo.c_str());
+                std::fprintf(stderr,
+                             "https://vcvrack.com/manual/"
+                             "Installing#Command-line-usage\n");
+                return 0;
+                break;
+            // Mac "app translocation" passes a nonsense -psn_... flag, so -p is
+            // reserved.
+            case 'p':
+                break;
+            default:
+                break;
+        }
+    }
 	if (optind < argc) {
 		patchPath = argv[optind];
 	}

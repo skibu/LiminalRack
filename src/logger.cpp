@@ -84,7 +84,7 @@ void destroy() {
 }
 
 static const char* const levelLabels[] = {
-    "TRACE",
+    "TRCE", // shortened to be same as INFO for better alignment
 	"DBUG", // shortened to be same as INFO for better alignment
 	"INFO",
 	"WARN",
