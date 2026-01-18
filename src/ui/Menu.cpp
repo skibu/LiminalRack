@@ -10,20 +10,22 @@ Menu::Menu() {
 }
 
 Menu::~Menu() {
-	setChildMenu(NULL);
+    DEBUG("~Menu() called for menu %s", getName().c_str());
+	setChildMenu(nullptr);
+    clearChildren();
 }
 
 void Menu::setChildMenu(Menu* menu) {
-	if (childMenu) {
-		childMenu->getParent()->removeChild(childMenu);
-		delete childMenu;
-		childMenu = NULL;
+	if (childMenu_) {
+		childMenu_->getParent()->removeChild(childMenu_);
+		delete childMenu_;
+		childMenu_ = NULL;
 	}
 
 	if (menu) {
-		childMenu = menu;
+		childMenu_ = menu;
 		assert(getParent());
-		getParent()->addChild(childMenu);
+		getParent()->addChild(childMenu_);
 	}
 }
 
@@ -56,7 +58,7 @@ void Menu::step() {
 }
 
 void Menu::draw(const DrawArgs& args) {
-	bndMenuBackground(args.vg, 0.0, 0.0, getWidth(), getHeight(), cornerFlags);
+	bndMenuBackground(args.vg, 0.0, 0.0, getWidth(), getHeight(), cornerFlags_);
 	Widget::draw(args);
 }
 

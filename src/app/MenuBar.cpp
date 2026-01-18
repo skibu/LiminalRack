@@ -97,10 +97,10 @@ class FileButton : public MenuButton {
    private:
     /** Creates and shows the File menu when the File button is clicked. */
     void onAction(const ActionEvent& e) override {
-        DEBUG("FileButton::onAction() called");
+        DEBUG("FileButton::onAction() called so creating File menu");
 
         ui::Menu* menu = createMenu();
-        menu->cornerFlags = BND_CORNER_TOP;
+        menu->setCornerFlags(BND_CORNER_TOP);
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
         menu->addChild(new ui::MenuSeparator);
 
@@ -183,10 +183,10 @@ class EditButton : public MenuButton {
 
    private:
     void onAction(const ActionEvent& e) override {
-        DEBUG("EditButton::onAction called");
+        DEBUG("EditButton::onAction() called so creating Edit menu");
 
         ui::Menu* menu = createMenu();
-        menu->cornerFlags = BND_CORNER_TOP;
+        menu->setCornerFlags(BND_CORNER_TOP);
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
 
 		menu->addChild(new ui::MenuSeparator);
@@ -553,8 +553,10 @@ class ViewButton : public MenuButton {
 
     // Called when popping up View menu
     void onAction(const ActionEvent& e) override {
+        DEBUG("ViewButton::onAction() called so creating View menu");
+
         ui::Menu* menu = createMenu();
-        menu->cornerFlags = BND_CORNER_TOP;
+        menu->setCornerFlags(BND_CORNER_TOP);
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
 
         // Add Window category menu label (inactive)
@@ -1007,7 +1009,7 @@ class EngineButton : public MenuButton {
     private:
     void onAction(const ActionEvent& e) override {
         ui::Menu* menu = createMenu();
-        menu->cornerFlags = BND_CORNER_TOP;
+        menu->setCornerFlags(BND_CORNER_TOP);
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
 
         menu->addChild(new ui::MenuSeparator);
@@ -1338,7 +1340,7 @@ class LibraryButton : public MenuButton {
 
 	void onAction(const ActionEvent& e) override {
 		ui::Menu* menu = createMenu<LibraryMenu>();
-		menu->cornerFlags = BND_CORNER_TOP;
+		menu->setCornerFlags(BND_CORNER_TOP);
 		menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
 
 		menu->addChild(new ui::MenuSeparator);
@@ -1391,7 +1393,7 @@ class HelpButton : public MenuButton {
 
     void onAction(const ActionEvent& e) override {
         ui::Menu* menu = createMenu();
-        menu->cornerFlags = BND_CORNER_TOP;
+        menu->setCornerFlags(BND_CORNER_TOP);
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
 
         menu->addChild(new ui::MenuSeparator);

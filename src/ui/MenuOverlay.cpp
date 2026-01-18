@@ -6,15 +6,25 @@ namespace ui {
 
 
 MenuOverlay::MenuOverlay() {
-	bgColor = nvgRGBA(0, 0, 0, 0);
+	bgColor_ = nvgRGBA(0, 0, 0, 0);
+}
+
+MenuOverlay::~MenuOverlay() {
+    TRACE("~MenuOverlay() called for widget %s so deleting children", getName().c_str());
+
+    // Delete all child widgets (menus, etc.) within the MenuOverlay.
+    // This is necessary since they are allocated on the heap.
+    for (Widget* child : getChildren()) {
+        child->requestDelete();
+    }
 }
 
 
 void MenuOverlay::draw(const DrawArgs& args) {
-	if (bgColor.a > 0.f) {
+	if (bgColor_.a > 0.f) {
 		nvgBeginPath(args.vg);
 		nvgRect(args.vg, 0, 0, VEC_ARGS(getSize()));
-		nvgFillColor(args.vg, bgColor);
+		nvgFillColor(args.vg, bgColor_);
 		nvgFill(args.vg);
 	}
 
@@ -31,6 +41,8 @@ void MenuOverlay::step() {
 
 
 void MenuOverlay::onButton(const ButtonEvent& e) {
+    DEBUG("MenuOverlay::onButton() called");
+
 	OpaqueWidget::onButton(e);
 	if (e.isConsumed() && e.getTarget() != this)
 		return;
@@ -62,6 +74,8 @@ void MenuOverlay::onHoverKey(const HoverKeyEvent& e) {
 
 
 void MenuOverlay::onAction(const ActionEvent& e) {
+    DEBUG("MenuOverlay::onAction() called, so requesting delete");
+    // Close the menu overlay, which closes the menus within it
 	requestDelete();
 }
 

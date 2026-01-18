@@ -74,17 +74,24 @@ struct BaseEvent {
 	EventContext* context = NULL;
 
 	/** Prevents the event from being handled by more Widgets.
+     * Mostly used by OpaqueWidget to indicate that done with recursive
+     * search for target Widget. Typically called along with consuming
+     * the event, further indicating that done with the event.
 	*/
 	void stopPropagating() const {
 		if (!context)
 			return;
 		context->propagating = false;
 	}
+
+    /** Returns true if the event should continue to propagate.
+    */
 	bool isPropagating() const {
 		if (!context)
 			return true;
 		return context->propagating;
 	}
+
 	/** Tells the event handler that a particular Widget consumed the event.
 	You usually want to stop propagation as well, so call consume() instead.
 	*/
@@ -93,11 +100,13 @@ struct BaseEvent {
 			return;
 		context->target = w;
 	}
+
 	Widget* getTarget() const {
 		if (!context)
 			return NULL;
 		return context->target;
 	}
+
 	/** Sets the target Widget and stops propagating.
 	A NULL Widget may be passed to consume but not set a target.
 	*/
@@ -225,7 +234,9 @@ class EventState {
     /** DEPRECATED METHODS - use the set*Widget() methods instead */
     DEPRECATED void setSelected(Widget* w) { setSelectedWidget(w); }
 
-    /** Prepares event state a widget for deletion */
+    /** Updates event state to indicate that the widget is being deleted
+     * and should no longer be referenced.
+     */
     void finalizeWidget(Widget* w);
 
     /** A callback to be called when mouse button pressed ore released. Calls

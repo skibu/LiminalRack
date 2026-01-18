@@ -1199,7 +1199,7 @@ Browser* browserCreate() {
     browser::BrowserOverlay* overlay = new browser::BrowserOverlay;
     // Set opacity for where drawing on top of the rack. Higher the value the
     // darker things get
-    overlay->bgColor = nvgRGBAf(0, 0, 0, 0.58);
+    overlay->setBgColor(nvgRGBAf(0, 0, 0, 0.58));
 
     // Now actually create the Browser window and add it to the overlay heirachy
 	Browser* browser = new Browser();

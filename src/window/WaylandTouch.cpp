@@ -20,7 +20,7 @@ void WaylandTouch::init() {
 }
 
 void WaylandTouch::processEvents() {
-    TRACE("Processing Wayland touch events...");
+    //TRACE("Processing Wayland touch events...");
     
     // FIXME implement event processing
     for (int id = 0; id < NUM_TOUCHPOINTS; ++id) {

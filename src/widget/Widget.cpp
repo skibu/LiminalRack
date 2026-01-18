@@ -20,6 +20,8 @@ Widget::Widget(const std::string& name) {
 Widget::Widget() : Widget("") {}
 
 Widget::~Widget() {
+    TRACE("~Widget() called for widget %s", getName().c_str());
+    
 	// You should only delete orphaned widgets
 	assert(!parent_);
 	clearChildren();
@@ -106,6 +108,7 @@ void Widget::setVisible(bool visible) {
 
 
 void Widget::requestDelete() {
+    TRACE("requestDelete() called for widget %s", getName().c_str());
 	requestedDelete_ = true;
 }
 
@@ -286,18 +289,21 @@ void Widget::removeChild(Widget* child) {
 	assert(it != children_.end());
 	children_.erase(it);
 	// Revoke child's parent
-	child->parent_ = NULL;
+	child->parent_ = nullptr;
 }
 
 
 void Widget::clearChildren() {
+    TRACE("clearChildren() called for widget %s", getName().c_str());
+
 	for (Widget* child : children_) {
 		// Dispatch Remove event
 		RemoveEvent eRemove;
 		child->onRemove(eRemove);
 		getEvent()->finalizeWidget(child);
-		child->parent_ = NULL;
-		delete child;
+		child->parent_ = nullptr;
+        TRACE("Deleting child widget %s", child->getName().c_str());
+        delete child;
 	}
 	children_.clear();
 }
@@ -308,16 +314,30 @@ void Widget::step() {
 		Widget* child = *it;
 		// Delete children if a delete is requested
 		if (child->requestedDelete_) {
+            DEBUG("step(): Starting of deleting child widget %s",
+                  child->getName().c_str());
+
 			// Dispatch Remove event
 			RemoveEvent eRemove;
 			child->onRemove(eRemove);
+
+            // Update the event state
 			getEvent()->finalizeWidget(child);
+
+            // Remove from children list
 			it = children_.erase(it);
-			child->parent_ = NULL;
-			delete child;
+
+            // Actually delete the child
+            DEBUG("Widget::step(): Deleting child widget %s",
+                  child->getName().c_str());
+            child->parent_ = nullptr;
+            delete child;
+
+            // Continue to next child
 			continue;
 		}
 
+        // Not deleting child so step it and then continue on to next child
 		child->step();
 		it++;
 	}

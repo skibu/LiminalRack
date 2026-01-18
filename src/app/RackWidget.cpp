@@ -228,6 +228,8 @@ void RackWidget::onHoverKey(const HoverKeyEvent& e) {
 }
 
 void RackWidget::onButton(const ButtonEvent& e) {
+    DEBUG("RackWidget::onButton() called. Passing event to OpaqueWidget::onButton()");
+
 	OpaqueWidget::onButton(e);
 	if (e.isConsumed())
 		return;

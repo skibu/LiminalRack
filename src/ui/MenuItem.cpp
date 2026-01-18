@@ -15,9 +15,9 @@ void MenuItem::drawOffset(NVGcontext* vg, float x_offset) {
 
     if (getEvent()->getHoveredWidget() == this) state = BND_HOVER;
 
-    // Set active state if this MenuItem is the Menu's active entry
-    Menu* parentMenu = dynamic_cast<Menu*>(getParent());
-    if (parentMenu && parentMenu->activeEntry == this) state = BND_ACTIVE;
+	// Set active state if this MenuItem is the Menu's active entry
+	Menu* parentMenu = dynamic_cast<Menu*>(getParent());
+	if (parentMenu && parentMenu->getActiveEntry() == this) state = BND_ACTIVE;
 
     // Want to center text vertically. At first thought that needed a
     // y_centering_offset
@@ -43,13 +43,13 @@ void MenuItem::drawOffset(NVGcontext* vg, float x_offset) {
         bndIconLabelValue(vg, x_offset, y_centering_offset,
                           getWidth() - x_offset, getHeight(), -1,
                           bndTextColor(&theme->menuItemTheme, state), BND_LEFT,
-                          rack::settings::bndLabelFontSize, text.c_str(), NULL);
+                          rack::settings::bndLabelFontSize, text.c_str(), nullptr);
     } else {
         // Feature currently disabled, so draw label as inactive by drawing
         // dimmer text
         bndIconLabelValue(vg, x_offset, y_centering_offset, getWidth(),
                           getHeight(), -1, theme->menuTheme.textColor, BND_LEFT,
-                          rack::settings::bndLabelFontSize, text.c_str(), NULL);
+                          rack::settings::bndLabelFontSize, text.c_str(), nullptr);
     }
 
     // Draw the text on the right of the menu item. Typically used for keyboard
@@ -60,19 +60,22 @@ void MenuItem::drawOffset(NVGcontext* vg, float x_offset) {
                               : bndGetTheme()->menuTheme.textSelectedColor;
     bndIconLabelValue(vg, x, y_centering_offset, getWidth(), getHeight(), -1,
                       rightColor, BND_LEFT, rack::settings::bndLabelFontSize,
-                      rightText.c_str(), NULL);
+                      rightText.c_str(), nullptr);
 }
 
 void MenuItem::step() {
-	// HACK use getWindow()->vg from the window.
-	// All this does is inspect the font, so it shouldn't modify getWindow()->vg and should work when called from a widget::FramebufferWidget for example.
-	setWidth(bndLabelWidth(getWindow()->vg_, -1, text.c_str()));
-	if (!rightText.empty())
-		setWidth(getWidth() + bndLabelWidth(getWindow()->vg_, -1, rightText.c_str()) - 10.0);
-	// Add 10 more pixels because measurements on high-DPI screens are sometimes too small for some reason
-	setWidth(getWidth() + 10.0);
+    // HACK use getWindow()->vg from the window.
+    // All this does is inspect the font, so it shouldn't modify getWindow()->vg
+    // and should work when called from a widget::FramebufferWidget for example.
+    setWidth(bndLabelWidth(getWindow()->vg_, -1, text.c_str()));
+    if (!rightText.empty())
+        setWidth(getWidth() +
+                 bndLabelWidth(getWindow()->vg_, -1, rightText.c_str()) - 10.0);
+    // Add 10 more pixels because measurements on high-DPI screens are sometimes
+    // too small for some reason
+    setWidth(getWidth() + 10.0);
 
-	Widget::step();
+    Widget::step();
 }
 
 void MenuItem::onEnter(const EnterEvent& e) {
@@ -80,12 +83,12 @@ void MenuItem::onEnter(const EnterEvent& e) {
 	if (!parentMenu)
 		return;
 
-	parentMenu->activeEntry = NULL;
+	parentMenu->setActiveEntry(nullptr);
 
 	// Try to create child menu
 	Menu* childMenu = createChildMenu();
 	if (childMenu) {
-		parentMenu->activeEntry = this;
+		parentMenu->setActiveEntry(this);
 		childMenu->setPos(parentMenu->getPos().plus(getBox().getTopRight()));
 	}
 	parentMenu->setChildMenu(childMenu);

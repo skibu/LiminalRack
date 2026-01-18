@@ -214,15 +214,15 @@ void EventState::setSelectedWidget(widget::Widget* w) {
 
 void EventState::finalizeWidget(widget::Widget* w) {
 	if (hoveredWidget_ == w)
-		setHoveredWidget(NULL);
+		setHoveredWidget(nullptr);
 	if (draggedWidget_ == w)
-		setDraggedWidget(NULL, 0);
+		setDraggedWidget(nullptr, 0);
 	if (dragHoveredWidget_ == w)
-		setDragHoveredWidget(NULL);
+		setDragHoveredWidget(nullptr);
 	if (selectedWidget_ == w)
-		setSelectedWidget(NULL);
+		setSelectedWidget(nullptr);
 	if (lastClickedWidget_ == w)
-		lastClickedWidget_ = NULL;
+		lastClickedWidget_ = nullptr;
 }
 
 void EventState::handleButtonForDrag(widget::Widget* clickedWidget,
@@ -254,8 +254,13 @@ void EventState::handleButtonForDrag(widget::Widget* clickedWidget,
 
 // FIXME
 bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
-	DEBUG("====> handleButton event pos (%.1f, %.1f) button %d action %d mods 0x%02x", 
-		pos.getX(), pos.getY(), button, action, mods);
+    DEBUG(
+        "====> handleButton event pos (%.1f, %.1f) button %d (%s) action %d (%s) mods "
+        "0x%02x",
+        pos.getX(), pos.getY(), button, 
+        button == 0 ? "LEFT" : "RIGHT",
+        action,
+        action == 0 ? "RELEASE" : "PRESS", mods);
 
     // Determine which widget was clicked on, though if cursor is locked because dragging
     // a knob or slider then no widget gets a new button event.

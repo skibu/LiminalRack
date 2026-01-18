@@ -20,55 +20,61 @@ struct OpaqueWidget : Widget {
      */
     OpaqueWidget() : OpaqueWidget("") {}
 
-	void onHover(const HoverEvent& e) override {
-		Widget::onHover(e);
-		e.stopPropagating();
+	void onHover(const HoverEvent& event) override {
+		Widget::onHover(event);
+		event.stopPropagating();
 		// Consume if not consumed by child
-		if (!e.isConsumed())
-			e.consume(this);
+		if (!event.isConsumed())
+			event.consume(this);
 	}
 
-	void onButton(const ButtonEvent& e) override {
+    /** Called for a left click (GLFW_MOUSE_BUTTON_LEFT) if the current widget
+     * doesn't have an override function. */
+    void onButton(const ButtonEvent& event) override {
         DEBUG("OpaqueWidget::onButton() called widget=%s button=%d action=%d x=%.1f y=%.1f",
-              getName().c_str(), e.button, e.action, e.pos.getX(), e.pos.getY());
-        Widget::onButton(e);
-        e.stopPropagating();
-		if (e.button == GLFW_MOUSE_BUTTON_LEFT) {
+              getName().c_str(), event.button, event.action, event.pos.getX(), event.pos.getY());
+
+        // Recurse through children first
+        Widget::onButton(event);
+
+        // Market the cloned event as done propagating through the branch
+        event.stopPropagating();
+		if (event.button == GLFW_MOUSE_BUTTON_LEFT) {
 			// Consume if not consumed by child
-			if (!e.isConsumed())
-				e.consume(this);
+			if (!event.isConsumed())
+				event.consume(this);
 		}
+    }
+
+    void onHoverKey(const HoverKeyEvent& event) override {
+		Widget::onHoverKey(event);
+		event.stopPropagating();
 	}
 
-	void onHoverKey(const HoverKeyEvent& e) override {
-		Widget::onHoverKey(e);
-		e.stopPropagating();
-	}
-
-	void onHoverText(const HoverTextEvent& e) override {
+	void onHoverText(const HoverTextEvent& event) override {
         DEBUG("OpaqueWidget::onHoverText called");
-		Widget::onHoverText(e);
-		e.stopPropagating();
+		Widget::onHoverText(event);
+		event.stopPropagating();
 	}
 
-	void onHoverScroll(const HoverScrollEvent& e) override {
+	void onHoverScroll(const HoverScrollEvent& event) override {
         DEBUG("OpaqueWidget::onHoverScroll called");
-		Widget::onHoverScroll(e);
-		e.stopPropagating();
+		Widget::onHoverScroll(event);
+		event.stopPropagating();
 	}
 
-	void onDragHover(const DragHoverEvent& e) override {
-		Widget::onDragHover(e);
-		e.stopPropagating();
+	void onDragHover(const DragHoverEvent& event) override {
+		Widget::onDragHover(event);
+		event.stopPropagating();
 		// Consume if not consumed by child
-		if (!e.isConsumed())
-			e.consume(this);
+		if (!event.isConsumed())
+			event.consume(this);
 	}
 
-	void onPathDrop(const PathDropEvent& e) override {
+	void onPathDrop(const PathDropEvent& event) override {
         DEBUG("OpaqueWidget::onPathDrop called");
-		Widget::onPathDrop(e);
-		e.stopPropagating();
+		Widget::onPathDrop(event);
+		event.stopPropagating();
 	}
 };
 

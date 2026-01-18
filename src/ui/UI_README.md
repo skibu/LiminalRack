@@ -20,7 +20,7 @@ MenuLabel - A non-selectable label that can be an item in a menu
 Widget - box, parent, children, visible
   OpaqueWidget -
     MenuBar - infoLabel
-    Menu - parentMenu, childMenu, activeEntry
+    Menu - childMenu, activeEntry
     MenuOverlay - bgcolor
     MenuEntry - sets box.size = math::Vec(0, rack::settings::bndWidgetHeight)
       MenuItem - text, rightText, disabled
