@@ -108,12 +108,12 @@ void FramebufferWidget::draw(const DrawArgs& args) {
 	// Anything less than 0.1 pixels isn't noticeable.
 	math::Vec offsetFDelta = offsetF.minus(internal_->fbOffsetF_);
 	if (dirtyOnSubpixelChange_ && getWindow()->fbDirtyOnSubpixelChange() && offsetFDelta.square() >= std::pow(0.1f, 2)) {
-		TRACE("%p dirty subpixel (%f, %f) (%f, %f)", this, VEC_ARGS(offsetF), VEC_ARGS(internal_->fbOffsetF_));
+		//TRACE("%p dirty subpixel (%f, %f) (%f, %f)", this, VEC_ARGS(offsetF), VEC_ARGS(internal_->fbOffsetF_));
 		setDirty();
 	}
 	// Re-render if rescaled.
 	else if (!scale.equals(internal_->fbScale_)) {
-		TRACE("%p dirty scale", this);
+		//TRACE("%p dirty scale", this);
 		setDirty();
 	}
 	// Re-render if viewport is outside framebuffer's clipbox when it was rendered.
@@ -140,10 +140,10 @@ void FramebufferWidget::draw(const DrawArgs& args) {
 	nvgResetTransform(args.vg);
 
 	math::Vec scaleRatio = scale.div(internal_->fbScale_);
-	TRACE("%f %f %f %f", VEC_ARGS(scaleRatio), VEC_ARGS(offsetF));
+	//TRACE("%f %f %f %f", VEC_ARGS(scaleRatio), VEC_ARGS(offsetF));
 
-	TRACE("%f %f %f %f, %f %f", RECT_ARGS(internal_->fbBox_), VEC_ARGS(internal_->fbSize_));
-	TRACE("offsetI (%f, %f) fbBox_ (%f, %f; %f, %f)", VEC_ARGS(offsetI), RECT_ARGS(internal_->fbBox_));
+	//TRACE("%f %f %f %f, %f %f", RECT_ARGS(internal_->fbBox_), VEC_ARGS(internal_->fbSize_));
+	//TRACE("offsetI (%f, %f) fbBox_ (%f, %f; %f, %f)", VEC_ARGS(offsetI), RECT_ARGS(internal_->fbBox_));
 	nvgBeginPath(args.vg);
 	nvgRect(args.vg,
 		offsetI.getX() + internal_->fbBox_.getX() * scaleRatio.getX(),
@@ -192,11 +192,11 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
         localBox = localBox.intersect(internal_->fbClipBox_);
     }
 
-    TRACE(
-        "rendering FramebufferWidget localBox (%f, %f; %f, %f) fbOffset (%f, "
-        "%f) fbScale_ (%f, %f)",
-        RECT_ARGS(localBox), VEC_ARGS(internal_->fbOffsetF_),
-        VEC_ARGS(internal_->fbScale_));
+    // TRACE(
+    //     "rendering FramebufferWidget localBox (%f, %f; %f, %f) fbOffset (%f, "
+    //     "%f) fbScale_ (%f, %f)",
+    //     RECT_ARGS(localBox), VEC_ARGS(internal_->fbOffsetF_),
+    //     VEC_ARGS(internal_->fbScale_));
     // Transform to world coordinates, then expand to nearest integer coordinates
     math::Vec min = localBox.getTopLeft()
                         .mult(internal_->fbScale_)
@@ -207,7 +207,7 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
                         .plus(internal_->fbOffsetF_)
                         .ceil();
     internal_->fbBox_ = math::Rect::fromMinMax(min, max);
-    TRACE("%g %g %g %g", RECT_ARGS(internal_->fbBox_));
+    //TRACE("%g %g %g %g", RECT_ARGS(internal_->fbBox_));
 
     float pixelRatio = std::fmax(1.f, std::floor(getWindow()->pixelRatio_));
     math::Vec newFbSize = internal_->fbBox_.getSize().mult(pixelRatio).ceil();
@@ -219,13 +219,13 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
 
         // Create a framebuffer
         if (newFbSize.isFinite() && !newFbSize.isZero()) {
-            TRACE("Creating framebuffer of size (%f, %f)", VEC_ARGS(newFbSize));
+            //TRACE("Creating framebuffer of size (%f, %f)", VEC_ARGS(newFbSize));
             internal_->fb_ =
                 nvgluCreateFramebuffer(vg, newFbSize.getX(), newFbSize.getY(), 0);
             FramebufferWidget_totalPixels += newFbSize.area();
         }
 
-        TRACE("Framebuffer total pixels: %.1f Mpx", FramebufferWidget_totalPixels / 1e6);
+        //TRACE("Framebuffer total pixels: %.1f Mpx", FramebufferWidget_totalPixels / 1e6);
         internal_->fbSize_ = newFbSize;
     }
     if (!internal_->fb_) {
@@ -236,7 +236,7 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
         return;
     }
 
-    TRACE("Drawing to framebuffer of size (%f, %f)", VEC_ARGS(internal_->fbSize_));
+    //TRACE("Drawing to framebuffer of size (%f, %f)", VEC_ARGS(internal_->fbSize_));
 
     // Render to framebuffer
     if (oversample_ == 1.0) {
@@ -249,8 +249,8 @@ void FramebufferWidget::render(math::Vec scale, math::Vec offsetF,
         // If oversampling, create another framebuffer and copy it to actual
         // size.
         math::Vec oversampledFbSize = internal_->fbSize_.mult(oversample_).ceil();
-        TRACE("Creating %0.fx oversampled framebuffer of size (%f, %f)",
-              oversample_, VEC_ARGS(internal_->fbSize_));
+        // TRACE("Creating %0.fx oversampled framebuffer of size (%f, %f)",
+        //       oversample_, VEC_ARGS(internal_->fbSize_));
         NVGLUframebuffer* oversampledFb = nvgluCreateFramebuffer(
             fbVg, oversampledFbSize.getX(), oversampledFbSize.getY(), 0);
 
