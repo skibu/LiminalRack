@@ -1,23 +1,23 @@
 {
     "tasks": [
-                {
-                    "label": "build-standalone",
-                    "type": "shell",
-                    "command": "make",
-                    "args": [
-                        "Rack"
-                    ],
-                    "group": {
-                        "kind": "build",
-                        "isDefault": true
-                    },
-                    "problemMatcher": [
-                        "$gcc"
-                    ]
-                },
         {
-            "type": "cppbuild",
+            "label": "build-standalone",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "Rack"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
             "label": "C/C++: clang build active file",
+            "type": "cppbuild",
             "command": "/usr/bin/clang",
             "args": [
                 "-fcolor-diagnostics",
