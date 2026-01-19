@@ -20,8 +20,6 @@ Widget::Widget(const std::string& name) {
 Widget::Widget() : Widget("") {}
 
 Widget::~Widget() {
-    TRACE("~Widget() called for widget %s", getName().c_str());
-
 	// You should only delete orphaned widgets
 	assert(!parent_);
 	clearChildren();
@@ -301,15 +299,12 @@ void Widget::removeChild(Widget* child) {
 
 
 void Widget::clearChildren() {
-    TRACE("clearChildren() called for widget %s", getName().c_str());
-
 	for (Widget* child : children_) {
 		// Dispatch Remove event
 		RemoveEvent eRemove;
 		child->onRemove(eRemove);
 		getEvent()->finalizeWidget(child);
 		child->parent_ = nullptr;
-        //TRACE("Deleting child widget %s", child->getName().c_str());
         delete child;
 	}
 	children_.clear();
