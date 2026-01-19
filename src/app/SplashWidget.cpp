@@ -58,7 +58,7 @@ void SplashWidget::draw(const DrawArgs& args) {
 
     // Draw darkish background
     nvgRect(args.vg, 0, 0, windowWidth, windowHeight);
-    NVGcolor bgColor = nvgRGBAf(0.1f, 0.04f, 0.04f, fadeAlpha_);
+    NVGcolor bgColor = nvgRGBAf(0.3f, 0.15f, 0.15f, fadeAlpha_);
     nvgFillColor(args.vg, bgColor);
     nvgFill(args.vg);
 
@@ -90,15 +90,17 @@ void SplashWidget::draw(const DrawArgs& args) {
 
     // Display text
     nvgFontFaceId(args.vg, getWindow()->uiFont_->handle);
-    const NVGcolor fontColor = nvgRGBAf(1.0f, 1.0f, 1.0f, fadeAlpha_);
+    const NVGcolor fontColor = nvgRGBAf(0.8f, 0.8f, 0.8f, fadeAlpha_);
+    const NVGcolor fontShadowColor = nvgRGBAf(0.0f, 0.0f, 0.0f, 1.0f);
 
     // Parameters for drawing text
-    const float title1FontSize = 68.f;
-    const float title2FontSize = 46.f;
-    const float additionalTextFontSize = 24.f;
+    const float title1FontSize = 74.f;
+    const float title2FontSize = 54.f;
+    const float additionalTextFontSize = 30.f;
     const float rightMargin = 20.f;
     const float textBgPadding = 20.f;
-    const float textBgOpacity = 0.40f;
+    const float shadowOffset = 3.f;
+    const float textBgOpacity = 0.30f;
     NVGcolor textBgColor = color::alpha(bgColor, textBgOpacity); 
 
     // Figure out width of text1
@@ -140,6 +142,10 @@ void SplashWidget::draw(const DrawArgs& args) {
         nvgFill(args.vg);
 
         // Draw text2
+        nvgFillColor(args.vg, fontShadowColor);
+        nvgText(args.vg, textCenterX - textWidth2 / 2 + shadowOffset,
+                nextLineY + shadowOffset, title2.c_str(), nullptr);
+
         nvgFillColor(args.vg, fontColor);
         nvgText(args.vg, textCenterX - textWidth2 / 2, nextLineY,
                 title2.c_str(), nullptr);
@@ -159,6 +165,10 @@ void SplashWidget::draw(const DrawArgs& args) {
 
     // Draw text1
     nvgFontSize(args.vg, title1FontSize);
+    nvgFillColor(args.vg, fontShadowColor);
+    nvgText(args.vg, textCenterX - textWidth1 / 2 + shadowOffset,
+            textY1 + shadowOffset, title1.c_str(), nullptr);
+
     nvgFillColor(args.vg, fontColor);
     nvgText(args.vg, textCenterX - textWidth1 / 2, textY1, title1.c_str(),
             nullptr);
@@ -181,6 +191,10 @@ void SplashWidget::draw(const DrawArgs& args) {
     nvgFill(args.vg);
 
     // Draw additional text
+    nvgFillColor(args.vg, fontShadowColor);
+    nvgText(args.vg, textCenterX - additionalTextWidth / 2 + shadowOffset/2,
+            nextLineY + 20 + shadowOffset/2, additionalText.c_str(), nullptr);
+
     nvgFillColor(args.vg, fontColor);
     nvgText(args.vg, textCenterX - additionalTextWidth / 2, nextLineY + 20,
             additionalText.c_str(), nullptr);
