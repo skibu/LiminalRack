@@ -22,8 +22,18 @@ namespace widget {
  */
 class Widget : public WeakBase {
    public:
-    /** Constructor. Stores name of widget. */
-    Widget(const std::string& name = std::string());
+    /** Constructor. Stores name of widget. Can't just use a default value for
+     * name param since the original published SDK has a constructor with no
+     * parameters. Therefore we provide both constructors.
+     */
+    Widget(const std::string& name);
+
+    /** Default constructor. Uses empty string for name.
+     * Has to be defined in cpp file so that will actually be
+     * created and will be accessible to plugins compiled to the legacy Rack
+     * SDK.
+     */
+    Widget();
 
     /** Destructor. Deletes all child widgets. You should only delete orphaned
      * widgets*/
@@ -34,11 +44,9 @@ class Widget : public WeakBase {
     std::string getName();
 
     /** Returns the bounding box of the widget in its parent's coordinate
-     * system. Need separate const version of function since plugins compiled 
-	 * to the legacy Rack SDK. */
-    math::Rect getBox() {
-        return box_;
-    }
+     * system. Need separate const version of function and need to define it
+     * in cpp file since plugins compiled to the legacy Rack SDK. */
+    math::Rect getBox();
 
 	/** Returns the bounding box of the widget in its parent's coordinate
 	 * system. Is properly a const function. */
@@ -125,12 +133,10 @@ class Widget : public WeakBase {
     }
 
     /** Returns the parent widget of this widget.
-	 * Cannot be const since plugins compiled to the legacy Rack SDK.
-	 */
-
-	widget::Widget* getParent() {
-        return parent_;
-    }
+     * Cannot be const and has to be defined in cpp file since plugins compiled
+     * to the legacy Rack SDK.
+     */
+    widget::Widget* getParent();
 
 	/** Returns the parent widget of this widget. Is properly a const 
 	 * function. 
@@ -139,17 +145,23 @@ class Widget : public WeakBase {
         return parent_;
     }
 
+    /** Before deleting a widget need to make sure it is orphaned by nulling
+     * its parent pointer.
+     */
+    void orphan() {
+        parent_ = nullptr;
+    }   
+
     /** Returns the list of child widgets */
     std::list<Widget*> getChildren() const {
         return children_;
-    }   
-
-    /** Returns whether the widget is visible. 
-	 * Cannot be const since plugins compiled to the legacy Rack SDK.
-	*/
-	bool isVisible() {
-        return visible_;
     }
+
+    /** Returns whether the widget is visible.
+     * Cannot be const and needs to be defined in cpp file since plugins
+     * compiled to the legacy Rack SDK.
+     */
+    bool isVisible();
 
 	/** Sets `visible` and triggers ShowEvent or HideEvent if changed. */
 	void setVisible(bool visible);
@@ -336,42 +348,58 @@ class Widget : public WeakBase {
 
     // Events
 
-    /** Recurses an event to all visible Widgets */
+    /** Recurses an event through all of its children in reverse order to find
+     * an event handler/consumer. For non-position related events like like
+     * onShow(), onHide(), and some context related ones.
+     */
     template <typename TMethod, class TEvent>
-    void recurseEvent(TMethod f, const TEvent& e) {
+    void recurseEvent(TMethod eventHandleFunc, const TEvent& event) {
         for (auto it = children_.rbegin(); it != children_.rend(); it++) {
             // Stop propagation if requested
-            if (!e.isPropagating()) break;
-            Widget* child = *it;
+            if (!event.isPropagating()) break;
+
             // Don't filter child by visibility. Typically only position
             // events need to be filtered by visibility. if
+            Widget* child = *it;
             // (!child->visible) 	continue;
 
-            // Clone event for (currently) no reason
-            TEvent e2 = e;
-            // Call child event handler
-            (child->*f)(e2);
+            // Clone event (for currently no reason) and call child event handler
+            TEvent clonedEvent = event;
+            (child->*eventHandleFunc)(clonedEvent); // Call child event handler
         }
     }
 
-    /** Recurses an event to all visible Widgets until it is consumed. */
-	template <typename TMethod, class TEvent>
-	void recursePositionEvent(TMethod f, const TEvent& e) {
-		for (auto it = children_.rbegin(); it != children_.rend(); it++) {
-			// Stop propagation if requested
-			if (!e.isPropagating()) break;
-			Widget* child = *it;
-			// Filter child by visibility and position
-			if (!child->visible_) continue;
-			if (!child->box_.contains(e.pos)) continue;
+    /** Recurses an position event to all visible children widdgets in reverse
+     * order until find an event handler/consumer. Used for many events like
+     * onButton() that include positional info. By looking through children in
+     * reverse order we process the last added one first. This way a MenuOverlay
+     * that was just popped up will get first chance to handle the event. Since
+     * MenuOverlay is handled first it will consume any click events, even outside]
+     * of its box, and use that event to close itself.
+     */
+    template <typename TMethod, class TEvent>
+    void recursePositionEvent(TMethod eventHandleFunc, const TEvent& event) {
+        //TRACE("recursePositionEvent() called for widget %s. Going through children in reverse...", getName().c_str());
+        for (auto it = children_.rbegin(); it != children_.rend(); it++) {
+            //TRACE("Checking child widget %s whether it can handle pos event",
+            //       (*it)->getName().c_str());
 
-			// Clone event and adjust its position
-			TEvent e2 = e;
-			e2.pos = e.pos.minus(child->getPos());
-			// Call child event handler
-			(child->*f)(e2);
-		}
-	}
+            // Stop propagation if requested
+			if (!event.isPropagating()) break;
+
+            // Filter child by visibility and position. If whild not visible
+            // continue to next child.
+            Widget* child = *it;
+			if (!child->visible_) continue;
+			if (!child->box_.contains(event.pos)) continue;
+
+			// Clone event and adjust its position and all child event handler
+            // TRACE(" -> passing event to child widget %s", child->getName().c_str());
+			TEvent clonedEvent = event;
+			clonedEvent.pos = event.pos.minus(child->getPos());
+			(child->*eventHandleFunc)(clonedEvent);  // Call child event handler
+        }
+    }
 
     using BaseEvent = widget::BaseEvent;
 
@@ -388,29 +416,33 @@ class Widget : public WeakBase {
     };
 
     /** Occurs every frame when the mouse is hovering over a Widget.
-     * Recurses. Consume this event to allow Enter and Leave to occur.
+     * Recurses through the children of this widget. Consume this event to allow
+     * Enter and Leave to occur.
      */
-    virtual void onHover(const HoverEvent& e) {
-        recursePositionEvent(&Widget::onHover, e);
+    virtual void onHover(const HoverEvent& event) {
+        recursePositionEvent(&Widget::onHover, event);
     }
 
     struct ButtonEvent : BaseEvent, PositionBaseEvent {
         /** GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_RIGHT,
          * GLFW_MOUSE_BUTTON_MIDDLE, etc. */
         int button;
+
         /** GLFW_PRESS or GLFW_RELEASE */
         int action;
+
         /** GLFW_MOD_* */
         int mods;
     };
 
     /** Occurs each mouse button press or release.
-     * Recurses. Consume this event to allow DoubleClick, Select, Deselect,
-     * SelectKey, SelectText, DragStart, DragEnd, DragMove, and DragDrop to
-     * occur.
+     * Recurses through the children of this widget. Consume this event to allow
+     * DoubleClick, Select, Deselect, SelectKey, SelectText, DragStart, DragEnd,
+     * DragMove, and DragDrop to occur.
      */
-    virtual void onButton(const ButtonEvent& e) {
-        recursePositionEvent(&Widget::onButton, e);
+    virtual void onButton(const ButtonEvent& event) {
+        DEBUG("onButton() called for %s", getName().c_str());
+        recursePositionEvent(&Widget::onButton, event);
     }
 
     struct DoubleClickEvent : BaseEvent {};
@@ -418,7 +450,7 @@ class Widget : public WeakBase {
      * Widget within a time duration. Must consume the Button event (on left
      * button press) to receive this event.
      */
-	virtual void onDoubleClick(const DoubleClickEvent& e) {
+	virtual void onDoubleClick(const DoubleClickEvent& event) {
         DEBUG("Unused Widget::onDoubleClick() called for %s", getName().c_str());
     }
 
@@ -484,8 +516,8 @@ class Widget : public WeakBase {
     /** Occurs when a key is pressed, released, or repeated while the mouse is
      * hovering a Widget. Recurses.
      */
-	virtual void onHoverKey(const HoverKeyEvent& e) {
-		recursePositionEvent(&Widget::onHoverKey, e);
+	virtual void onHoverKey(const HoverKeyEvent& event) {
+		recursePositionEvent(&Widget::onHoverKey, event);
 	}
 
     /** An event prototype with a Unicode character. */
@@ -498,8 +530,8 @@ class Widget : public WeakBase {
     /** Occurs when a character is typed while the mouse is hovering a Widget.
      * Recurses.
      */
-    virtual void onHoverText(const HoverTextEvent& e) {
-        recursePositionEvent(&Widget::onHoverText, e);
+    virtual void onHoverText(const HoverTextEvent& event) {
+        recursePositionEvent(&Widget::onHoverText, event);
     }
 
     struct HoverScrollEvent : BaseEvent, PositionBaseEvent {
@@ -510,8 +542,8 @@ class Widget : public WeakBase {
     /** Occurs when the mouse scroll wheel is moved while the mouse is hovering
      * a Widget. Recurses.
      */
-    virtual void onHoverScroll(const HoverScrollEvent& e) {
-        recursePositionEvent(&Widget::onHoverScroll, e);
+    virtual void onHoverScroll(const HoverScrollEvent& event) {
+        recursePositionEvent(&Widget::onHoverScroll, event);
     }
 
     struct EnterEvent : BaseEvent {};
@@ -520,7 +552,7 @@ class Widget : public WeakBase {
      * Must consume the Hover event to receive this event.
      * The target sets `hoveredWidget`, which allows Leave to occur.
      */
-    virtual void onEnter(const EnterEvent& e) {}
+    virtual void onEnter(const EnterEvent& event) {}
 
     struct LeaveEvent : BaseEvent {};
 
@@ -528,7 +560,7 @@ class Widget : public WeakBase {
     Must consume the Hover event (when a Widget is entered) to receive this
     event.
     */
-    virtual void onLeave(const LeaveEvent& e) {}
+    virtual void onLeave(const LeaveEvent& event) {}
 
     struct SelectEvent : BaseEvent {};
 
@@ -537,7 +569,7 @@ class Widget : public WeakBase {
     receive this event. The target sets `selectedWidget`, which allows
     SelectText and SelectKey to occur.
     */
-    virtual void onSelect(const SelectEvent& e) {}
+    virtual void onSelect(const SelectEvent& event) {}
 
     struct DeselectEvent : BaseEvent {};
 
@@ -545,21 +577,21 @@ class Widget : public WeakBase {
     Must consume the Button event (on left button press, when the Widget is
     selected) to receive this event.
     */
-    virtual void onDeselect(const DeselectEvent& e) {}
+    virtual void onDeselect(const DeselectEvent& event) {}
 
     struct SelectKeyEvent : BaseEvent, KeyBaseEvent {};
 
     /** Occurs when a key is pressed, released, or repeated while a Widget is
     selected. Must consume to prevent HoverKey from being triggered.
     */
-    virtual void onSelectKey(const SelectKeyEvent& e) {}
+    virtual void onSelectKey(const SelectKeyEvent& event) {}
 
     struct SelectTextEvent : BaseEvent, TextBaseEvent {};
 
     /** Occurs when text is typed while a Widget is selected.
     Must consume to prevent HoverKey from being triggered.
     */
-    virtual void onSelectText(const SelectTextEvent& e) {}
+    virtual void onSelectText(const SelectTextEvent& event) {}
 
     struct DragBaseEvent : BaseEvent {
         /** The mouse button held while dragging. */
@@ -572,7 +604,7 @@ class Widget : public WeakBase {
     The target sets `draggedWidget`, which allows DragEnd, DragMove, DragHover,
     DragEnter, and DragDrop to occur.
     */
-    virtual void onDragStart(const DragStartEvent& e) {}
+    virtual void onDragStart(const DragStartEvent& event) {}
 
     struct DragEndEvent : DragBaseEvent {};
 
@@ -580,7 +612,7 @@ class Widget : public WeakBase {
      * Must consume the Button event (on press, when the Widget drag begins) to
      * receive this event.
      */
-    virtual void onDragEnd(const DragEndEvent& e) {}
+    virtual void onDragEnd(const DragEndEvent& event) {}
 
     struct DragMoveEvent : DragBaseEvent {
         /** Change in mouse position since the last frame. Can be zero. */
@@ -591,7 +623,7 @@ class Widget : public WeakBase {
      * Must consume the Button event (on press, when the Widget drag begins) to
      * receive this event.
      */
-    virtual void onDragMove(const DragMoveEvent& e) {}
+    virtual void onDragMove(const DragMoveEvent& event) {}
 
     struct DragHoverEvent : DragBaseEvent, PositionBaseEvent {
         /** The dragged widget */
@@ -604,8 +636,8 @@ class Widget : public WeakBase {
      * another Widget (possibly the same one) is being dragged. Recurses.
      * Consume this event to allow DragEnter and DragLeave to occur.
      */
-    virtual void onDragHover(const DragHoverEvent& e) {
-        recursePositionEvent(&Widget::onDragHover, e);
+    virtual void onDragHover(const DragHoverEvent& event) {
+        recursePositionEvent(&Widget::onDragHover, event);
     }
 
     struct DragEnterEvent : DragBaseEvent {
@@ -617,7 +649,7 @@ class Widget : public WeakBase {
      * Must consume the DragHover event to receive this event.
      * The target sets `draggedWidget`, which allows DragLeave to occur.
      */
-    virtual void onDragEnter(const DragEnterEvent& e) {}
+    virtual void onDragEnter(const DragEnterEvent& event) {}
 
     struct DragLeaveEvent : DragBaseEvent {
         /** The dragged widget */
@@ -628,7 +660,7 @@ class Widget : public WeakBase {
      * Must consume the DragHover event (when the Widget is entered) to receive
      * this event.
      */
-    virtual void onDragLeave(const DragLeaveEvent& e) {}
+    virtual void onDragLeave(const DragLeaveEvent& event) {}
 
     struct DragDropEvent : DragBaseEvent {
         /** The dragged widget */
@@ -638,7 +670,7 @@ class Widget : public WeakBase {
     /** Occurs when the mouse button is released over a Widget while dragging.
      * Must consume the Button event (on release) to receive this event.
      */
-    virtual void onDragDrop(const DragDropEvent& e) {}
+    virtual void onDragDrop(const DragDropEvent& event) {}
 
     struct PathDropEvent : BaseEvent, PositionBaseEvent {
         PathDropEvent(const std::vector<std::string>& paths) : paths(paths) {}
@@ -650,8 +682,8 @@ class Widget : public WeakBase {
     /** Occurs when a selection of files from the operating system is dropped
      * onto a Widget. Recurses.
      */
-    virtual void onPathDrop(const PathDropEvent& e) {
-        recursePositionEvent(&Widget::onPathDrop, e);
+    virtual void onPathDrop(const PathDropEvent& event) {
+        recursePositionEvent(&Widget::onPathDrop, event);
     }
 
     struct ActionEvent : BaseEvent {};
@@ -659,55 +691,55 @@ class Widget : public WeakBase {
     /** Occurs after a certain action is triggered on a Widget.
     The concept of an "action" is defined by the type of Widget.
     */
-    virtual void onAction(const ActionEvent& e) {}
+    virtual void onAction(const ActionEvent& event) {}
 
     struct ChangeEvent : BaseEvent {};
 
     /** Occurs after the value of a Widget changes.
     The concept of a "value" is defined by the type of Widget.
     */
-    virtual void onChange(const ChangeEvent& e) {}
+    virtual void onChange(const ChangeEvent& event) {}
 
     struct DirtyEvent : BaseEvent {};
 
     /** Occurs when the pixel buffer of this module must be refreshed.
     Recurses.
     */
-    virtual void onDirty(const DirtyEvent& e) {
-        recurseEvent(&Widget::onDirty, e);
+    virtual void onDirty(const DirtyEvent& event) {
+        recurseEvent(&Widget::onDirty, event);
     }
 
     struct RepositionEvent : BaseEvent {};
 
     /** Occurs after a Widget's position is set by Widget::setPos().
      */
-    virtual void onReposition(const RepositionEvent& e) {}
+    virtual void onReposition(const RepositionEvent& event) {}
 
     struct ResizeEvent : BaseEvent {};
 
     /** Occurs after a Widget's size is set by Widget::setSize().
      */
-    virtual void onResize(const ResizeEvent& e) {}
+    virtual void onResize(const ResizeEvent& event) {}
 
     struct AddEvent : BaseEvent {};
 
     /** Occurs after a Widget is added to a parent.
      */
-    virtual void onAdd(const AddEvent& e) {}
+    virtual void onAdd(const AddEvent& event) {}
 
     struct RemoveEvent : BaseEvent {};
 
-    /** Occurs before a Widget is removed from its parent.
+    /** An event that occurs before a Widget is removed from its parent.
      */
-    virtual void onRemove(const RemoveEvent& e) {}
+    virtual void onRemove(const RemoveEvent& event) {}
 
     struct ShowEvent : BaseEvent {};
 
     /** Occurs after a Widget is shown with Widget::show().
     Recurses.
     */
-    virtual void onShow(const ShowEvent& e) {
-        recurseEvent(&Widget::onShow, e);
+    virtual void onShow(const ShowEvent& event) {
+        recurseEvent(&Widget::onShow, event);
     }
 
     struct HideEvent : BaseEvent {};
@@ -715,8 +747,8 @@ class Widget : public WeakBase {
     /** Occurs after a Widget is hidden with Widget::hide().
     Recurses.
     */
-    virtual void onHide(const HideEvent& e) {
-        recurseEvent(&Widget::onHide, e);
+    virtual void onHide(const HideEvent& event) {
+        recurseEvent(&Widget::onHide, event);
     }
 
     struct ContextCreateEvent : BaseEvent {
@@ -726,8 +758,8 @@ class Widget : public WeakBase {
     /** Called after the Window (including OpenGL and NanoVG contexts) are
      * created. Recurses.
      */
-    virtual void onContextCreate(const ContextCreateEvent& e) {
-        recurseEvent(&Widget::onContextCreate, e);
+    virtual void onContextCreate(const ContextCreateEvent& event) {
+        recurseEvent(&Widget::onContextCreate, event);
     }
 
     struct ContextDestroyEvent : BaseEvent {
@@ -737,8 +769,8 @@ class Widget : public WeakBase {
     /** Called before the Window (including OpenGL and NanoVG contexts) are
      * destroyed. Recurses.
      */
-    virtual void onContextDestroy(const ContextDestroyEvent& e) {
-        recurseEvent(&Widget::onContextDestroy, e);
+    virtual void onContextDestroy(const ContextDestroyEvent& event) {
+        recurseEvent(&Widget::onContextDestroy, event);
     }
 
     /** Converts a Scene space vector to local widget coordinates.
@@ -761,7 +793,7 @@ class Widget : public WeakBase {
 	math::Rect box_ = math::Rect(math::Vec(), math::Vec(INFINITY, INFINITY));
 
 	/** Automatically set when Widget is added as a child to another Widget */
-	Widget* parent_ = NULL;
+	Widget* parent_ = nullptr;
 
     /** Lazily created children */
 	std::list<Widget*> children_;

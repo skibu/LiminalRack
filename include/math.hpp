@@ -268,22 +268,21 @@ class Vec {
         return Vec(x_ - b.x_, y_ - b.y_);
     }
 
-    /** Returns copy of this vector scaled by s */
-    Vec mult(float s) const {
-        return Vec(x_ * s, y_ * s);
+    /** Returns copy of this vector scaled by multiplier */
+    Vec mult(float multiplier) const {
+        return Vec(x_ * multiplier, y_ * multiplier);
     }
 
-    /** Returns copy of this vector multiplied component-wise by b,
-     * Vec(x * b.x, y * b.y)
+    /** Returns copy of this vector multiplied component-wise by multiplier,
+     * Vec(x * multiplier.x, y * multiplier.y)
      */
-    Vec mult(Vec b) const {
-        return Vec(x_ * b.x_, y_ * b.y_);
+    Vec mult(Vec multiplier) const {
+        return Vec(x_ * multiplier.x_, y_ * multiplier.y_);
     }
 
-    /** Returns copy of this vector divided by s, Vec(x / s, y / s) */
-    Vec div(float s) const {
-        return Vec(x_ / s, y_ / s);
-    }
+    /** Returns copy of this vector divided by the divisor, Vec(x / divisor, y /
+     * divisor) */
+    Vec div(float divisor) const { return Vec(x_ / divisor, y_ / divisor); }
 
     /** Returns copy of this vector divided component-wise by b,
      * Vec(x / b.x, y / b.y)

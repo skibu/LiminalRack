@@ -184,7 +184,7 @@ TMenu* createMenu() {
 	TMenu* menu = new TMenu;
 	menu->setPos(getScene()->getMousePos());
 
-	ui::MenuOverlay* menuOverlay = new ui::MenuOverlay;
+	ui::MenuOverlay* menuOverlay = new ui::MenuOverlay();
 	menuOverlay->addChild(menu);
 
 	getScene()->addChild(menuOverlay);

@@ -14,17 +14,17 @@ Context::Context() {
     window = nullptr;
 
     INFO("Creating Patch Manager");
-	patch_ = new patch::Manager;
+	patch_ = new patch::Manager();
 
     INFO("Creating Scene");
 	scene_ = new app::Scene();
 
 	INFO("Creating Event State");
-	event_ = new widget::EventState;
+	event_ = new widget::EventState();
     event_->setRootWidget(getScene());
 
 	INFO("Creating History State");
-	history_ = new history::State;
+	history_ = new history::State();
 
     INFO("Creating Engine");
 	engine_ = new engine::Engine;

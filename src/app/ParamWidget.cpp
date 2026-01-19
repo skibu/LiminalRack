@@ -240,15 +240,15 @@ void ParamWidget::draw(const DrawArgs& args) {
 void ParamWidget::onButton(const ButtonEvent& e) {
 	OpaqueWidget::onButton(e);
 
-	// Touch parameter
+	// If left click remember that this param was the one clicked on
 	if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT && (e.mods & RACK_MOD_MASK) == 0) {
 		if (module) {
-			getRack()->touchedParam = this;
+			getRack()->setTouchedParam(this);
 		}
 		e.consume(this);
 	}
 
-	// Right click to open context menu
+	// If right click open context menu
 	if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_RIGHT && (e.mods & RACK_MOD_MASK) == 0) {
 		destroyTooltip();
 		createContextMenu();

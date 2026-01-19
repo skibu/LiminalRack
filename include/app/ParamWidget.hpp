@@ -33,7 +33,9 @@ struct ParamWidget : widget::OpaqueWidget {
     void step() override;
     void draw(const DrawArgs& args) override;
 
+    /** Records for rack that this ParamWidget was clicked on */
     void onButton(const ButtonEvent& e) override;
+
     void onDoubleClick(const DoubleClickEvent& e) override;
     void onEnter(const EnterEvent& e) override;
     void onLeave(const LeaveEvent& e) override;

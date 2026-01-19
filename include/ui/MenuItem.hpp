@@ -15,6 +15,11 @@ class MenuItem : public MenuEntry {
    public:
     MenuItem(const std::string& text = "", const std::string& name = "") : MenuEntry(name), text(text) {}
 
+    /** Destructor */
+    ~MenuItem() override {
+        TRACE("~MenuItem() called for %s", getName().c_str());
+    }
+
     /** Sets the text of the menu item */
     void setText(const std::string& text) {
         this->text = text;

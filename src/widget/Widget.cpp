@@ -17,6 +17,8 @@ Widget::Widget(const std::string& name) {
     widgetNames_g[this] = name;
 }
 
+Widget::Widget() : Widget("") {}
+
 Widget::~Widget() {
 	// You should only delete orphaned widgets
 	assert(!parent_);
@@ -32,21 +34,32 @@ std::string Widget::getName() {
         // Name was set so return it
         return it->second;
     } else {
-        // Name was not set so return class name
-        auto className = typeid(*this).name();
+		// Name was not set so return class name
+		const char* className = typeid(*this).name();
 
-        // Demangle name if using GCC/Clang
+		// Demangle name if using GCC/Clang
 #ifdef __GNUC__
-        int status;
-        char* demangledName =
-            abi::__cxa_demangle(className, nullptr, nullptr, &status);
-        if (status == 0) {
-            className = demangledName;
-        }
+		int status;
+		char* demangledName =
+			abi::__cxa_demangle(className, nullptr, nullptr, &status);
+		if (status == 0) {
+			className = demangledName;
+		}
 #endif
 
-        return className;
+		// If have namespace qualifiers, strip them
+		std::string classNameStr(className);
+		size_t pos = classNameStr.rfind("::");
+		if (pos != std::string::npos) {
+			return classNameStr.substr(pos + 2);
+		}
+
+		return classNameStr;
     }
+}
+
+math::Rect Widget::getBox() {
+    return box_;
 }
 
 void Widget::setBox(math::Rect box) {
@@ -74,6 +87,14 @@ void Widget::setSize(math::Vec size) {
 	onResize(eResize);
 }
 
+widget::Widget* Widget::getParent() {
+    return parent_;
+}
+
+bool Widget::isVisible() {
+    return visible_;
+}
+
 void Widget::setVisible(bool visible) {
 	if (visible == this->visible_)
 		return;
@@ -92,6 +113,7 @@ void Widget::setVisible(bool visible) {
 
 
 void Widget::requestDelete() {
+    TRACE("requestDelete() called for widget %s", getName().c_str());
 	requestedDelete_ = true;
 }
 
@@ -272,7 +294,7 @@ void Widget::removeChild(Widget* child) {
 	assert(it != children_.end());
 	children_.erase(it);
 	// Revoke child's parent
-	child->parent_ = NULL;
+	child->parent_ = nullptr;
 }
 
 
@@ -282,8 +304,8 @@ void Widget::clearChildren() {
 		RemoveEvent eRemove;
 		child->onRemove(eRemove);
 		getEvent()->finalizeWidget(child);
-		child->parent_ = NULL;
-		delete child;
+		child->parent_ = nullptr;
+        delete child;
 	}
 	children_.clear();
 }
@@ -294,16 +316,30 @@ void Widget::step() {
 		Widget* child = *it;
 		// Delete children if a delete is requested
 		if (child->requestedDelete_) {
+            DEBUG("step(): Starting of deleting child widget %s",
+                  child->getName().c_str());
+
 			// Dispatch Remove event
 			RemoveEvent eRemove;
 			child->onRemove(eRemove);
+
+            // Update the event state
 			getEvent()->finalizeWidget(child);
+
+            // Remove from children list
 			it = children_.erase(it);
-			child->parent_ = NULL;
-			delete child;
+
+            // Actually delete the child
+            DEBUG("Widget::step(): Deleting child widget %s",
+                  child->getName().c_str());
+            child->parent_ = nullptr;
+            delete child;
+
+            // Continue to next child
 			continue;
 		}
 
+        // Not deleting child so step it and then continue on to next child
 		child->step();
 		it++;
 	}

@@ -25,7 +25,7 @@ struct RackWidget : widget::OpaqueWidget {
 
     public:
 	/** DEPRECATED. Use get/setTouchedParam(). */
-	ParamWidget* touchedParam = NULL;
+	ParamWidget* touchedParam_ = NULL;
 
 	PRIVATE RackWidget();
 	PRIVATE ~RackWidget();

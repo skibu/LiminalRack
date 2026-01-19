@@ -50,9 +50,13 @@ class Button : public widget::OpaqueWidget {
 
    private:
     void draw(const DrawArgs& args) override;
+
+    void onButton(const ButtonEvent& event) override;
+    /* FIXME erase this
     void onDragStart(const DragStartEvent& e) override;
     void onDragEnd(const DragEndEvent& e) override;
     void onDragDrop(const DragDropEvent& e) override;
+    */
 };
 
 } // namespace ui

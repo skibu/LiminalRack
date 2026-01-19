@@ -84,7 +84,7 @@ void destroy() {
 }
 
 static const char* const levelLabels[] = {
-    "TRACE",
+    "TRCE", // shortened to be same as INFO for better alignment
 	"DBUG", // shortened to be same as INFO for better alignment
 	"INFO",
 	"WARN",
@@ -111,15 +111,16 @@ const char* MAGENTA = "\x1B[35m";
 const char* WHITE = "\x1B[37m";
 const char* GREEN = "\x1B[32m";
 const char* GRAY = "\x1B[90m";
+const char* BLUE = "\x1B[34m";
 const char* RESET_COLOR = "\x1B[0m";
 
 static const char* levelColors[] = {
-	MAGENTA, // trace - magenta
+	BLUE,    // trace - blue
 	MAGENTA, // debug - magenta
-	WHITE, // info - white
-	YELLOW, // warn - yellow
-	RED, // error - red
-	RED, // fatal - red
+	WHITE,   // info - white
+	YELLOW,  // warn - yellow
+	RED,     // error - red
+	RED,     // fatal - red
 };
 
 static const char* bracketColor() { return enableColors ? GRAY : ""; }

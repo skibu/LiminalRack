@@ -64,8 +64,10 @@ void Knob::onHover(const HoverEvent& e) {
 }
 
 void Knob::onButton(const ButtonEvent& e) {
-	math::Vec c = getSize().div(2);
-	float dist = e.pos.minus(c).norm();
+    // Determine if mouse position is in the circle (for x direction).
+    // If so, call ParamWidget::onButton().
+    math::Vec c = getSize().div(2);
+    float dist = e.pos.minus(c).norm();
 	if (dist <= c.getX()) {
 		ParamWidget::onButton(e);
 	}

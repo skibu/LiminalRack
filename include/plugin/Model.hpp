@@ -11,7 +11,7 @@ namespace rack {
 
 
 namespace ui {
-struct Menu;
+class Menu;
 } // namespace app
 
 
