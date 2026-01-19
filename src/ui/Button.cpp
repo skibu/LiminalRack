@@ -27,6 +27,32 @@ void Button::draw(const DrawArgs& args) {
                   state, -1, text.c_str());
 }
 
+void Button::onButton(const ButtonEvent& event) {
+    DEBUG("Button::onButton() called widget=%s button=%d action=%d x=%.1f y=%.1f",
+          getName().c_str(), event.button, event.action, event.pos.getX(),
+          event.pos.getY());
+
+    // Handle button press/release
+    if (event.button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (event.action == GLFW_PRESS) {
+            if (quantity_)
+                quantity_->setMax();
+        } else if (event.action == GLFW_RELEASE) {
+            if (quantity_)
+                quantity_->setMin();
+
+            // Dispatch Action event
+            ActionEvent e;
+            onAction(e);
+        }
+
+        // Consume if not consumed by child
+        if (!event.isConsumed())
+            event.consume(this);
+    }
+}
+
+/* FIXME erase this
 void Button::onDragStart(const DragStartEvent& e) {
 	if (e.button != GLFW_MOUSE_BUTTON_LEFT)
 		return;
@@ -48,7 +74,7 @@ void Button::onDragDrop(const DragDropEvent& e) {
 		onAction(eAction);
 	}
 }
-
+*/
 
 } // namespace ui
 } // namespace rack
