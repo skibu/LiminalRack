@@ -21,7 +21,7 @@ Widget::Widget() : Widget("") {}
 
 Widget::~Widget() {
     TRACE("~Widget() called for widget %s", getName().c_str());
-    
+
 	// You should only delete orphaned widgets
 	assert(!parent_);
 	clearChildren();
@@ -36,20 +36,27 @@ std::string Widget::getName() {
         // Name was set so return it
         return it->second;
     } else {
-        // Name was not set so return class name
-        auto className = typeid(*this).name();
+		// Name was not set so return class name
+		const char* className = typeid(*this).name();
 
-        // Demangle name if using GCC/Clang
+		// Demangle name if using GCC/Clang
 #ifdef __GNUC__
-        int status;
-        char* demangledName =
-            abi::__cxa_demangle(className, nullptr, nullptr, &status);
-        if (status == 0) {
-            className = demangledName;
-        }
+		int status;
+		char* demangledName =
+			abi::__cxa_demangle(className, nullptr, nullptr, &status);
+		if (status == 0) {
+			className = demangledName;
+		}
 #endif
 
-        return className;
+		// If have namespace qualifiers, strip them
+		std::string classNameStr(className);
+		size_t pos = classNameStr.rfind("::");
+		if (pos != std::string::npos) {
+			return classNameStr.substr(pos + 2);
+		}
+
+		return classNameStr;
     }
 }
 
@@ -302,7 +309,7 @@ void Widget::clearChildren() {
 		child->onRemove(eRemove);
 		getEvent()->finalizeWidget(child);
 		child->parent_ = nullptr;
-        TRACE("Deleting child widget %s", child->getName().c_str());
+        //TRACE("Deleting child widget %s", child->getName().c_str());
         delete child;
 	}
 	children_.clear();
