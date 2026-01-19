@@ -49,8 +49,13 @@ class Manager {
     void load(std::string path);
     /** Loads the template patch file. */
     void loadTemplate();
+
+    /** Loads template if user chooses to. */
     void loadTemplateDialog();
+
+    /** Returns whether an autosave patch exists. */
     bool hasAutosave();
+    
     /** Loads the patch from the autosave folder.
     Throws if loading failed.
     */

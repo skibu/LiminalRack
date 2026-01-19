@@ -87,7 +87,7 @@
     "splashScreen.title2": "An Instrument, or a Computer?",
     "splashScreen.additionalText": "Contemplating...",
 	"MenuBar.file": "File",
-	"MenuBar.file.new": "New",
+	"MenuBar.file.new": "Load template",
 	"MenuBar.file.open": "Open",
 	"MenuBar.file.openRecent": "Open recent",
 	"MenuBar.file.save": "Save",
