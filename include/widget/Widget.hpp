@@ -379,10 +379,9 @@ class Widget : public WeakBase {
      */
     template <typename TMethod, class TEvent>
     void recursePositionEvent(TMethod eventHandleFunc, const TEvent& event) {
-        // TRACE("recursePositionEvent() called for widget %s. Going through
-        // children in reverse...", getName().c_str());
+        //TRACE("recursePositionEvent() called for widget %s. Going through children in reverse...", getName().c_str());
         for (auto it = children_.rbegin(); it != children_.rend(); it++) {
-            // TRACE("Checking child widget %s whether it can handle pos event",
+            //TRACE("Checking child widget %s whether it can handle pos event",
             //       (*it)->getName().c_str());
 
             // Stop propagation if requested

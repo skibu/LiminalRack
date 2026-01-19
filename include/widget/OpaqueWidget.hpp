@@ -31,13 +31,14 @@ struct OpaqueWidget : Widget {
     /** Called for a left click (GLFW_MOUSE_BUTTON_LEFT) if the current widget
      * doesn't have an override function. */
     void onButton(const ButtonEvent& event) override {
-        DEBUG("OpaqueWidget::onButton() called widget=%s button=%d action=%d x=%.1f y=%.1f",
-              getName().c_str(), event.button, event.action, event.pos.getX(), event.pos.getY());
+        DEBUG("onButton() called widget=%s button=%d action=%d x=%.1f y=%.1f",
+              getName().c_str(), event.button, event.action, event.pos.getX(),
+              event.pos.getY());
 
         // Recurse through children first
         Widget::onButton(event);
 
-        // Market the cloned event as done propagating through the branch
+        // Mark the cloned event as done propagating through the branch
         event.stopPropagating();
 		if (event.button == GLFW_MOUSE_BUTTON_LEFT) {
 			// Consume if not consumed by child
@@ -52,13 +53,13 @@ struct OpaqueWidget : Widget {
 	}
 
 	void onHoverText(const HoverTextEvent& event) override {
-        DEBUG("OpaqueWidget::onHoverText called");
+        DEBUG("onHoverText called");
 		Widget::onHoverText(event);
 		event.stopPropagating();
 	}
 
 	void onHoverScroll(const HoverScrollEvent& event) override {
-        DEBUG("OpaqueWidget::onHoverScroll called");
+        DEBUG("onHoverScroll called");
 		Widget::onHoverScroll(event);
 		event.stopPropagating();
 	}

@@ -33,47 +33,55 @@ void MenuOverlay::draw(const DrawArgs& args) {
 
 
 void MenuOverlay::step() {
-	// Adopt parent's size
-	setBox(getParent()->getBox().zeroPos());
+    // Adopt parent's size. This is done here in step() since in constructor the
+    // parent isn't yet set because parent.addChild() not called until after the
+    // object has been constructed.
+    setBox(getParent()->getBox().zeroPos());
 
-	Widget::step();
+    Widget::step();
 }
 
 
-void MenuOverlay::onButton(const ButtonEvent& e) {
-    DEBUG("MenuOverlay::onButton() called");
+void MenuOverlay::onButton(const ButtonEvent& event) {
+    DEBUG(
+        "onButton() called for MenuOverlay widget %s action=%d button=%d "
+        "x=%.1f y=%.1f",
+        getName().c_str(), event.action, event.button, event.pos.getX(), event.pos.getY());
 
-	OpaqueWidget::onButton(e);
-	if (e.isConsumed() && e.getTarget() != this)
-		return;
+    // See if child widgets want to handle the button event first
+    OpaqueWidget::onButton(event);
+	if (event.isConsumed() && event.getTarget() != this)
+		return; // Child handled the event
 
-	if (e.action == GLFW_PRESS) {
+	if (event.action == GLFW_PRESS) {
 		ActionEvent eAction;
 		onAction(eAction);
 	}
 
-	// Consume all buttons.
-	e.consume(this);
+	// Consume all buttons. Since MenuOverlay covers everything, this way
+    // a click outside the menu will close it.
+	event.consume(this);
 }
 
 
-void MenuOverlay::onHoverKey(const HoverKeyEvent& e) {
-	OpaqueWidget::onHoverKey(e);
-	if (e.isConsumed())
+void MenuOverlay::onHoverKey(const HoverKeyEvent& event) {
+	OpaqueWidget::onHoverKey(event);
+	if (event.isConsumed())
 		return;
 
-	if (e.action == GLFW_PRESS && e.isKeyCommand(GLFW_KEY_ESCAPE)) {
+	if (event.action == GLFW_PRESS && event.isKeyCommand(GLFW_KEY_ESCAPE)) {
 		ActionEvent eAction;
 		onAction(eAction);
 	}
 
-	// Consume all keys.
-	// Unfortunately this prevents MIDI computer keyboard from playing while a menu is open, but that might be a good thing for safety.
-	e.consume(this);
+    // Consume all keys.
+    // Unfortunately this prevents MIDI computer keyboard from playing while a
+    // menu is open, but that might be a good thing for safety.
+    event.consume(this);
 }
 
 
-void MenuOverlay::onAction(const ActionEvent& e) {
+void MenuOverlay::onAction(const ActionEvent& event) {
     DEBUG("MenuOverlay::onAction() called, so requesting delete");
     // Close the menu overlay, which closes the menus within it
 	requestDelete();
