@@ -105,11 +105,6 @@ class FileButton : public MenuButton {
         menu->addChild(new ui::MenuSeparator);
 
         menu->addChild(
-            createMenuItem(string::translate("MenuBar.file.new"),
-                           widget::getKeyCommandName(GLFW_KEY_N, RACK_MOD_CTRL),
-                           []() { getPatch()->loadTemplateDialog(); }));
-
-        menu->addChild(
             createMenuItem(string::translate("MenuBar.file.open"),
                            widget::getKeyCommandName(GLFW_KEY_O, RACK_MOD_CTRL),
                            []() { getPatch()->loadDialog(); }));
@@ -148,6 +143,11 @@ class FileButton : public MenuButton {
             widget::getKeyCommandName(GLFW_KEY_O,
                                       RACK_MOD_CTRL | GLFW_MOD_SHIFT),
             []() { getPatch()->revertDialog(); }, getPatch()->path == ""));
+
+        menu->addChild(
+            createMenuItem(string::translate("MenuBar.file.new"),
+                           widget::getKeyCommandName(GLFW_KEY_N, RACK_MOD_CTRL),
+                           []() { getPatch()->loadTemplateDialog(); }));
 
         menu->addChild(
             createMenuItem(string::translate("MenuBar.file.overwriteTemplate"),
