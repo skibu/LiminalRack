@@ -1,5 +1,6 @@
 #pragma once
 #include <logger.hpp>
+#include <math.hpp>
 #include <queue>
 
 extern "C" {
