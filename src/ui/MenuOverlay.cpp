@@ -44,7 +44,7 @@ void MenuOverlay::step() {
 
 void MenuOverlay::onButton(const ButtonEvent& event) {
     DEBUG(
-        "onButton() called for MenuOverlay widget %s action=%d button=%d "
+        "MenuOverlay.onButton() called for MenuOverlay widget %s action=%d button=%d "
         "x=%.1f y=%.1f",
         getName().c_str(), event.action, event.button, event.pos.getX(), event.pos.getY());
 
@@ -54,6 +54,10 @@ void MenuOverlay::onButton(const ButtonEvent& event) {
 		return; // Child handled the event
 
 	if (event.action == GLFW_PRESS) {
+        DEBUG(
+            "MenuOverlay.onButton() detected button press, so calling onAction() to close "
+            "menu. widget=%s",
+            getName().c_str());
 		ActionEvent eAction;
 		onAction(eAction);
 	}
@@ -65,7 +69,9 @@ void MenuOverlay::onButton(const ButtonEvent& event) {
 
 
 void MenuOverlay::onHoverKey(const HoverKeyEvent& event) {
-	OpaqueWidget::onHoverKey(event);
+    // TRACE("MenuOverlay.onHoverKey() called for MenuOverlay widget %s",
+    //       getName().c_str());
+    OpaqueWidget::onHoverKey(event);
 	if (event.isConsumed())
 		return;
 
@@ -82,7 +88,8 @@ void MenuOverlay::onHoverKey(const HoverKeyEvent& event) {
 
 
 void MenuOverlay::onAction(const ActionEvent& event) {
-    DEBUG("MenuOverlay::onAction() called, so requesting delete");
+    DEBUG("MenuOverlay.onAction() called, so requesting delete. Widget %s",
+          getName().c_str());
     // Close the menu overlay, which closes the menus within it
 	requestDelete();
 }

@@ -97,7 +97,7 @@ class FileButton : public MenuButton {
    private:
     /** Creates and shows the File menu when the File button is clicked. */
     void onAction(const ActionEvent& e) override {
-        DEBUG("FileButton::onAction() called so creating File menu");
+        DEBUG("FileButton.onAction() called so creating File menu");
 
         ui::Menu* menu = createMenu();
         menu->setCornerFlags(BND_CORNER_TOP);

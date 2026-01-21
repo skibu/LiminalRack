@@ -83,6 +83,8 @@ void MenuItem::onEnter(const EnterEvent& e) {
 	if (!parentMenu)
 		return;
 
+    DEBUG("MenuItem.onEnter() called for MenuItem %s", getName().c_str());
+
 	parentMenu->setActiveEntry(nullptr);
 
 	// Try to create child menu
@@ -91,17 +93,37 @@ void MenuItem::onEnter(const EnterEvent& e) {
 		parentMenu->setActiveEntry(this);
 		childMenu->setPos(parentMenu->getPos().plus(getBox().getTopRight()));
 	}
-	parentMenu->setChildMenu(childMenu);
+	// FIXME parentMenu->setChildMenu(childMenu);
 }
 
+/** @deprecated replaced by onButton() */
 void MenuItem::onDragDrop(const DragDropEvent& e) {
+    DEBUG("deprecated MenuItem.onDragDrop() called for MenuItem %s", getName().c_str());
+    /*
 	if (e.origin == this && !disabled) {
 		int mods = getWindow()->getMods();
 		doAction((mods & RACK_MOD_MASK) != RACK_MOD_CTRL);
 	}
+    */
+}
+
+
+void MenuItem::onButton(const ButtonEvent& event) {
+    DEBUG(
+        "MenuItem.onButton() called for MenuItem %s button=%d %s action=%d %s",
+        getName().c_str(), event.button, event.button ? "LEFT" : "RIGHT",
+        event.action, event.action ? "PRESS" : "RELEASE");
+
+    if (event.button == GLFW_MOUSE_BUTTON_LEFT && event.action == GLFW_PRESS &&
+        !disabled) {
+        int mods = getWindow()->getMods();
+        doAction((mods & RACK_MOD_MASK) != RACK_MOD_CTRL);
+    }
 }
 
 void MenuItem::doAction(bool consume) {
+    DEBUG("MenuItem.doAction() called for MenuItem %s", getName().c_str());
+
 	widget::EventContext cAction;
 	ActionEvent eAction;
 	eAction.context = &cAction;
