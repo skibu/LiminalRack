@@ -118,17 +118,21 @@ class WaylandTouch {
      * to not block processing here.
      */
     static void downEventCallback(int serial, int time, int id, int x, int y) {
+        storePosition(id, math::Vec(x, y));
+
         addEventToQueue(
             WaylandTouchEvent(serial, WaylandTouchEvent::TOUCH_DOWN, id, x, y));
     }
 
     /** Callback for when get an up touch event. To be called by Wayland code.
      * Simply creates the raw event and adds it to the event queue. Important
-     * to not block processing here.
+     * to not block processing here. Uses last known position since up events
+     * don't provide position info.
      */
     static void upEventCallback(int serial, int time, int id) {
-        addEventToQueue(
-            WaylandTouchEvent(serial, WaylandTouchEvent::TOUCH_UP, id, 0, 0));
+        math::Vec pos = getLastPosition(id);
+        addEventToQueue(WaylandTouchEvent(serial, WaylandTouchEvent::TOUCH_UP,
+                                          id, pos.getX(), pos.getY()));
     }
 
     /** Callback for when get a motion touch event. To be called by Wayland
@@ -136,6 +140,8 @@ class WaylandTouch {
      * Important to not block processing here.
      */
     static void motionEventCallback(int time, int id, int x, int y) {
+        storePosition(id, math::Vec(x, y));
+
         addEventToQueue(
             WaylandTouchEvent(0, WaylandTouchEvent::TOUCH_MOTION, id, x, y));
     }
@@ -162,11 +168,24 @@ class WaylandTouch {
      */
     static void frameEventCallback() {}
 
+    /** Adds the given touch event to the appropriate event queue. */
     static void addEventToQueue(const WaylandTouchEvent& event);
+
+   private:
+    /** Stores the last known position for the given touch id. */
+    static void storePosition(int id, const math::Vec& pos);
+
+    /** Returns the last known position for the given touch id. */
+    static math::Vec getLastPosition(int id);
 
    private:
     static const int NUM_TOUCHPOINTS = 10;
     static std::queue<WaylandTouchEvent> eventQueues_[NUM_TOUCHPOINTS];
+
+    // For tracking last touch position for each touch point id. Needed since
+    // release events don't provide position, yet position is needed by event
+    // handers.
+    static math::Vec lastTouchPos_[NUM_TOUCHPOINTS];
 };
 
 }  // namespace window
