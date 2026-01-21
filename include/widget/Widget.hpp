@@ -308,7 +308,10 @@ class Widget : public WeakBase {
      */
     void clearChildren();
 
-    /** Advances the module by one frame */
+    /** Advances the module by one frame. Also, deletes any children that
+     * are marked for deletion via requestedDelete_. When overriding, call the
+     * superclass's `step()` so that this deletion can happen.
+     */
     virtual void step();
 
     struct DrawArgs {
@@ -441,7 +444,7 @@ class Widget : public WeakBase {
      * DragMove, and DragDrop to occur.
      */
     virtual void onButton(const ButtonEvent& event) {
-        DEBUG("onButton() called for %s", getName().c_str());
+        DEBUG("Widget.onButton() called for %s", getName().c_str());
         recursePositionEvent(&Widget::onButton, event);
     }
 
@@ -451,7 +454,7 @@ class Widget : public WeakBase {
      * button press) to receive this event.
      */
 	virtual void onDoubleClick(const DoubleClickEvent& event) {
-        DEBUG("Unused Widget::onDoubleClick() called for %s", getName().c_str());
+        DEBUG("Unused Widget.onDoubleClick() called for %s", getName().c_str());
     }
 
 	/** An event prototype with a GLFW key. */
