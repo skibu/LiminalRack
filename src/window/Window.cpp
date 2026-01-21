@@ -156,7 +156,7 @@ static void windowPosCallback(GLFWwindow* win, int x, int y) {
 	if (glfwGetWindowMonitor(win))
 		return;
 	settings::windowPos = math::Vec(x, y);
-	DEBUG("windowPosCallback %d %d", x, y);
+	TRACE("windowPosCallback %d %d", x, y);
 }
 
 static void windowSizeCallback(GLFWwindow* win, int width, int height) {
@@ -167,7 +167,7 @@ static void windowSizeCallback(GLFWwindow* win, int width, int height) {
 	if (glfwGetWindowMonitor(win))
 		return;
 	settings::windowSize = math::Vec(width, height);
-	DEBUG("windowSizeCallback(%d, %d)", width, height);
+	TRACE("windowSizeCallback(%d, %d)", width, height);
 }
 
 
@@ -557,14 +557,17 @@ void Window::step() {
 	gamepad::step();
 
 	// Set window title
-	std::string windowTitle = APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION;
-	if (getPatch()->path != "") {
-		windowTitle += " - ";
+    std::string windowTitle =
+        settings::isLiminal
+            ? "Liminal Rack"
+            : APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION;
+    if (getPatch()->path != "") {
+        windowTitle += " - ";
 		if (!getHistory()->isSaved())
 			windowTitle += "*";
 		windowTitle += system::getFilename(getPatch()->path);
-	}
-	if (windowTitle != internal_->lastWindowTitle_) {
+    }
+    if (windowTitle != internal_->lastWindowTitle_) {
 		glfwSetWindowTitle(glfWin_, windowTitle.c_str());
 		internal_->lastWindowTitle_ = windowTitle;
 	}
