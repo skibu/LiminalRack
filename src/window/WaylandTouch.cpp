@@ -67,8 +67,27 @@ void WaylandTouch::addEventToQueue(const WaylandTouchEvent& event) {
     eventQueues_[event.id_].push(event);
 }
 
-// Allocate static member
+math::Vec WaylandTouch::getLastPosition(int id) {
+    if (id < 0 || id >= NUM_TOUCHPOINTS) {
+        ERROR("WaylandTouch::getLastPosition: Invalid touch id %d", id);
+        return math::Vec();
+    }
+
+    return lastTouchPos_[id];
+}
+
+void WaylandTouch::storePosition(int id, const math::Vec& pos) {
+    if (id < 0 || id >= NUM_TOUCHPOINTS) {
+        ERROR("WaylandTouch::storePosition: Invalid touch id %d", id);
+        return;
+    }
+
+    lastTouchPos_[id] = pos;
+}
+
+// Allocate static members
 std::queue<WaylandTouchEvent> WaylandTouch::eventQueues_[NUM_TOUCHPOINTS];
+math::Vec WaylandTouch::lastTouchPos_[NUM_TOUCHPOINTS];
 
 }  // namespace window
 }  // namespace rack
