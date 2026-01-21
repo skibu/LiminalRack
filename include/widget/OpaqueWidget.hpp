@@ -20,6 +20,9 @@ struct OpaqueWidget : Widget {
      */
     OpaqueWidget() : OpaqueWidget("") {}
 
+    /** Called pretty much constantly, even without mouse movement. 
+     * Therefore should not log anything here.
+     */ 
 	void onHover(const HoverEvent& event) override {
 		Widget::onHover(event);
 		event.stopPropagating();
@@ -31,7 +34,7 @@ struct OpaqueWidget : Widget {
     /** Called for a left click (GLFW_MOUSE_BUTTON_LEFT) if the current widget
      * doesn't have an override function. */
     void onButton(const ButtonEvent& event) override {
-        DEBUG("onButton() called widget=%s button=%d action=%d x=%.1f y=%.1f",
+        DEBUG("OpaqueWidget.onButton() called widget=%s button=%d action=%d x=%.1f y=%.1f",
               getName().c_str(), event.button, event.action, event.pos.getX(),
               event.pos.getY());
 
@@ -48,23 +51,29 @@ struct OpaqueWidget : Widget {
     }
 
     void onHoverKey(const HoverKeyEvent& event) override {
+        // TRACE("OpaqueWidget.onHoverKey called for widget %s",
+        //       getName().c_str());
 		Widget::onHoverKey(event);
 		event.stopPropagating();
 	}
 
 	void onHoverText(const HoverTextEvent& event) override {
-        DEBUG("onHoverText called");
+        TRACE("OpaqueWidget.onHoverText called for widget %s",
+              getName().c_str());
 		Widget::onHoverText(event);
 		event.stopPropagating();
 	}
 
 	void onHoverScroll(const HoverScrollEvent& event) override {
-        DEBUG("onHoverScroll called");
+        TRACE("OpaqueWidget.onHoverScroll called for widget %s",
+              getName().c_str());
 		Widget::onHoverScroll(event);
 		event.stopPropagating();
 	}
 
 	void onDragHover(const DragHoverEvent& event) override {
+        TRACE("OpaqueWidget.onDragHover called for widget %s",
+              getName().c_str());
 		Widget::onDragHover(event);
 		event.stopPropagating();
 		// Consume if not consumed by child
@@ -73,7 +82,8 @@ struct OpaqueWidget : Widget {
 	}
 
 	void onPathDrop(const PathDropEvent& event) override {
-        DEBUG("OpaqueWidget::onPathDrop called");
+        TRACE("OpaqueWidget.onPathDrop called for widget %s",
+                getName().c_str());
 		Widget::onPathDrop(event);
 		event.stopPropagating();
 	}

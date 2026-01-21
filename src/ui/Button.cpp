@@ -28,7 +28,7 @@ void Button::draw(const DrawArgs& args) {
 }
 
 void Button::onButton(const ButtonEvent& event) {
-    DEBUG("Button::onButton() called widget=%s button=%d action=%d x=%.1f y=%.1f",
+    DEBUG("Button.onButton() called widget=%s button=%d action=%d x=%.1f y=%.1f",
           getName().c_str(), event.button, event.action, event.pos.getX(),
           event.pos.getY());
 
@@ -42,6 +42,8 @@ void Button::onButton(const ButtonEvent& event) {
                 quantity_->setMin();
 
             // Dispatch Action event
+            DEBUG("Button.onButton() called and calling onAction() for widget=%s ",
+                  getName().c_str());
             ActionEvent e;
             onAction(e);
         }
@@ -52,29 +54,43 @@ void Button::onButton(const ButtonEvent& event) {
     }
 }
 
-/* FIXME erase this
+/*
 void Button::onDragStart(const DragStartEvent& e) {
 	if (e.button != GLFW_MOUSE_BUTTON_LEFT)
 		return;
 
+    DEBUG("Button.onDragStart() called widget=%s button=%d", getName().c_str(),
+          e.button);
+
 	if (quantity_)
 		quantity_->setMax();
 }
-
+*/
 
 void Button::onDragEnd(const DragEndEvent& e) {
-	if (quantity_)
+    DEBUG("deprecatedButton.onDragEnd() called widget=%s button=%d", getName().c_str(),
+          e.button);
+    /*
+    if (quantity_)
 		quantity_->setMin();
+    */
 }
 
 
 void Button::onDragDrop(const DragDropEvent& e) {
+    DEBUG("deprecated Button.onDragDrop() called widget=%s button=%d", getName().c_str(),
+          e.button);
+
+    /*
 	if (e.origin == this) {
-		ActionEvent eAction;
+        DEBUG("Button.onDragDrop() called and calling onAction() for widget=%s ",
+              getName().c_str());
+
+        ActionEvent eAction;
 		onAction(eAction);
 	}
+    */
 }
-*/
 
 } // namespace ui
 } // namespace rack

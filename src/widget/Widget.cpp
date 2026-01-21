@@ -113,8 +113,9 @@ void Widget::setVisible(bool visible) {
 
 
 void Widget::requestDelete() {
-    TRACE("requestDelete() called for widget %s", getName().c_str());
-	requestedDelete_ = true;
+    TRACE("requestDelete() called so requestedDelete_ set for widget %s",
+          getName().c_str());
+    requestedDelete_ = true;
 }
 
 
@@ -316,8 +317,8 @@ void Widget::step() {
 		Widget* child = *it;
 		// Delete children if a delete is requested
 		if (child->requestedDelete_) {
-            DEBUG("step(): Starting of deleting child widget %s",
-                  child->getName().c_str());
+            DEBUG("step(): Starting of deleting child widget %s from parent %s",
+                  child->getName().c_str(), getName().c_str());
 
 			// Dispatch Remove event
 			RemoveEvent eRemove;
@@ -330,8 +331,8 @@ void Widget::step() {
 			it = children_.erase(it);
 
             // Actually delete the child
-            DEBUG("Widget::step(): Deleting child widget %s",
-                  child->getName().c_str());
+            DEBUG("Widget::step(): Deleting child widget %s from parent %s",
+                  child->getName().c_str(), getName().c_str());
             child->parent_ = nullptr;
             delete child;
 

@@ -94,6 +94,32 @@ static void initUI() {
     }
 }
 
+/** Prints command line usage to stderr */
+static void printUsage() {
+    std::string msg = R"(
+To launch Rack from the command line, cd into Rack\’s folder, and run ./Rack, optionally with the following options.
+
+ * <patch filename>: Loads a patch file.
+ * --help: Prints this help message and exits.
+ * -l / --liminal: Configures Rack to run as Liminal, a special edition of Rack for installations and live performance.
+ * -b / --debug: Enables debug logging to the log file.
+ * -r / --trace: Enables trace logging to the log file.
+ * -s / --system <Rack system folder>: Sets Rack’s system folder, containing read-only program resources. Defaults to
+   - MacOS: <app bundle path>/Contents/Resources
+   - Windows: install location, such as C:\\Program Files\\VCV\\Rack
+   - Linux: current working directory
+ * -u / --user <Rack user folder>: Sets Rack’s user folder, containing settings, plugins, and patches. See Where is the “Rack user folder”? for the default location.
+ * -d / --dev: Enables development mode. This sets the system and user folders to the current working directory, uses the terminal (stderr) for logging, and disables Rack’s Library menu to prevent overwriting plugins.
+ * -h / --headless: Launches the autosaved patch with no window. Great for generative patches in museum exhibits. Patch can be controlled with MIDI.
+ * -a / --safe: Launches Rack with no plugins or autosave patch. Useful for testing.
+ * -t / --screenshot <zoom factor>: Captures screenshots of all installed modules and saves each to <Rack user folder>/screenshots/<plugin slug>/<module slug>.png. A zoom factor of 1 generates a screenshot with 380px height.
+ * -v / --version: Prints Rack version and exits.
+ 
+See https://vcvrack.com/manual/Installing#Command-line-usage 
+)";
+    std::fprintf(stderr, "%s", msg.c_str());
+}
+
 /**
  * THe main entry point for Rack. Starts up the whole application.
  */
@@ -173,9 +199,7 @@ int main(int argc, char* argv[]) {
                 break;
             case 256:  // --help
                 std::fprintf(stderr, "%s\n", appInfo.c_str());
-                std::fprintf(stderr,
-                             "https://vcvrack.com/manual/"
-                             "Installing#Command-line-usage\n");
+                printUsage();
                 return 0;
                 break;
             // Mac "app translocation" passes a nonsense -psn_... flag, so -p is

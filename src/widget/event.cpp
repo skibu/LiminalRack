@@ -111,7 +111,7 @@ void EventState::setHoveredWidget(widget::Widget* w) {
 	if (hoveredWidget_) {
 		// Dispatch LeaveEvent
 		Widget::LeaveEvent eLeave;
-        DEBUG("Widget no longer hovered so dispatching LeaveEvent to widget: %s",
+        TRACE("Widget no longer hovered so dispatching LeaveEvent to widget: %s",
               hoveredWidget_ ? hoveredWidget_->getName().c_str() : "NULL");
 		hoveredWidget_->onLeave(eLeave);
 		hoveredWidget_ = NULL;
@@ -120,7 +120,7 @@ void EventState::setHoveredWidget(widget::Widget* w) {
     // Dispatch EnterEvent on new hovered widget
 	if (w) {
 		// Dispatch EnterEvent
-        DEBUG("New widget being hovered over so dispatching EnterEvent to widget: %s",
+        TRACE("New widget being hovered over so dispatching EnterEvent to widget: %s",
               w ? w->getName().c_str() : "NULL");
 		EventContext cEnter;
 		cEnter.target = w;
@@ -277,7 +277,7 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 		eButton.mods = mods;
 		rootWidget_->onButton(eButton);
 		clickedWidget = cButton.target;
-        DEBUG("Button event clickedWidget: %s",
+        DEBUG("Generated onButton() event clickedWidget: %s",
               clickedWidget ? clickedWidget->getName().c_str() : "NULL");
 	}
 

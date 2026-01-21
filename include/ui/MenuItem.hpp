@@ -65,15 +65,28 @@ class MenuItem : public MenuEntry {
     void draw(const DrawArgs& args) override;
 
     void onEnter(const EnterEvent& e) override;
+
+    /** @deprecated replaced by onButton() but have to keep for ABI compatibility
+     */
     void onDragDrop(const DragDropEvent& e) override;
+    
+
+    /** Handles button event.  Calls doAction() which pops up menu on left click
+     */
+    void onButton(const ButtonEvent& event) override;
+
+    /** Override to create a child menu when this menu item is hovered over.
+     * Return nullptr if no child menu.
+     */
     virtual Menu* createChildMenu() {
-        return NULL;
+        return nullptr;
     }
+
     /** Override to handle behavior when user clicks the menu item.
-    Event is consumed by default. Unconsume to prevent the menu from being
-    closed. If Ctrl (Cmd on Mac) is held, the event is *not* pre-consumed, so if
-    your menu must be closed, always consume the event.
-    */
+     * Event is consumed by default. Unconsume to prevent the menu from being
+     * closed. If Ctrl (Cmd on Mac) is held, the event is *not* pre-consumed, so
+     * if your menu must be closed, always consume the event.
+     */
     void onAction(const ActionEvent& e) override;
 };
 

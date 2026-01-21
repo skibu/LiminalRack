@@ -52,11 +52,14 @@ class Button : public widget::OpaqueWidget {
     void draw(const DrawArgs& args) override;
 
     void onButton(const ButtonEvent& event) override;
-    /* FIXME erase this
-    void onDragStart(const DragStartEvent& e) override;
+
+    //void onDragStart(const DragStartEvent& e) override;
+    /** @deprecated only reason kept around is because if modules
+     * by 3rd parties used Button then they need to access this
+     * function during linking.
+     */
     void onDragEnd(const DragEndEvent& e) override;
     void onDragDrop(const DragDropEvent& e) override;
-    */
 };
 
 } // namespace ui
