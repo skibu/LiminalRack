@@ -49,7 +49,7 @@ static void wl_touch_down(void* data, struct wl_touch* wl_touch,
                           uint32_t serial, uint32_t time,
                           struct wl_surface* surface, int32_t id, wl_fixed_t x,
                           wl_fixed_t y) {
-    DEBUG("FIXME Touch down event: id=%d, x=%f, y=%f", id, wl_fixed_to_double(x),
+    TRACE("Wayland touch down event: id=%d, x=%f, y=%f", id, wl_fixed_to_double(x),
           wl_fixed_to_double(y));
 
     rack::window::WaylandTouch::downEventCallback(serial, time, id, wl_fixed_to_double(x),
@@ -59,7 +59,7 @@ static void wl_touch_down(void* data, struct wl_touch* wl_touch,
 /** Callback that is called as soon as a touch up event occurs */
 static void wl_touch_up(void* data, struct wl_touch* wl_touch, uint32_t serial,
                         uint32_t time, int32_t id) {
-    DEBUG("FIXME Touch up event: id=%d", id);
+    TRACE("Wayland touch up event: id=%d", id);
 
     rack::window::WaylandTouch::upEventCallback(serial, time, id);
 }
@@ -70,7 +70,7 @@ static void wl_touch_up(void* data, struct wl_touch* wl_touch, uint32_t serial,
 static void wl_touch_motion(void* data, struct wl_touch* wl_touch,
                             uint32_t time, int32_t id, wl_fixed_t x,
                             wl_fixed_t y) {
-    DEBUG("FIXME Touch motion event: id=%d, x=%f, y=%f", id, wl_fixed_to_double(x),
+    TRACE("Wayland touch motion event: id=%d, x=%f, y=%f", id, wl_fixed_to_double(x),
           wl_fixed_to_double(y));
 
     rack::window::WaylandTouch::motionEventCallback(
@@ -81,7 +81,7 @@ static void wl_touch_motion(void* data, struct wl_touch* wl_touch,
  * Not sure when this actually happens.
 */
 static void wl_touch_cancel(void* data, struct wl_touch* wl_touch) {
-    DEBUG("FIXME Touch cancel event");
+    TRACE("Wayland touch cancel event");
 }
 
 /** Called when get an event that specifies the shape of the touch contact.
@@ -90,7 +90,7 @@ static void wl_touch_cancel(void* data, struct wl_touch* wl_touch) {
  */
 static void wl_touch_shape(void* data, struct wl_touch* wl_touch, int32_t id,
                            wl_fixed_t major, wl_fixed_t minor) {
-    DEBUG("FIXME Touch shape event: id=%d, major=%f, minor=%f", id,
+    TRACE("Wayland touch shape event: id=%d, major=%f, minor=%f", id,
           wl_fixed_to_double(major), wl_fixed_to_double(minor));
 
     rack::window::WaylandTouch::shapeEventCallback(
@@ -103,10 +103,10 @@ static void wl_touch_shape(void* data, struct wl_touch* wl_touch, int32_t id,
  */
 static void wl_touch_orientation(void* data, struct wl_touch* wl_touch,
                                  int32_t id, wl_fixed_t orientation) {
-    DEBUG("FIXME Touch orientation event: id=%d, orientation=%f", id,
+    TRACE("Wayland touch orientation event: id=%d, orientation=%f", id,
           wl_fixed_to_double(orientation));
 
-    rack::window::WaylandTouch::orientationEventCallback(id, orientation);
+    rack::window::WaylandTouch::orientationEventCallback(id, wl_fixed_to_double(orientation));
 }
 
 /** Callback that is called as soon as a touch frame event occurs, which
@@ -116,7 +116,7 @@ static void wl_touch_orientation(void* data, struct wl_touch* wl_touch,
 static void wl_touch_frame(void* data, struct wl_touch* wl_touch) {
     struct client_state* client_state = (struct client_state*)data;
     struct touch_event* touchEvent = &client_state->touch_event;
-    DEBUG("FIXME Touch frame event: @ %d", touchEvent->time);
+    TRACE("Wayland touch frame event: @ %d", touchEvent->time);
 
     rack::window::WaylandTouch::frameEventCallback();
 }
@@ -139,7 +139,7 @@ static const struct wl_touch_listener wl_touch_listener = {
 static void wl_seat_capabilities(void* data, struct wl_seat* wl_seat,
                                  uint32_t capabilities) {
     // capabilities indicates if seat has keyboard, pointer, or touch
-    DEBUG("Setting Wayland seat capabilities: %d", capabilities);
+    TRACE("Setting Wayland seat capabilities: %d", capabilities);
 
     struct client_state* state = (struct client_state*)data;
 
@@ -176,7 +176,7 @@ static void registry_global(void* data, struct wl_registry* wl_registry,
     if (strcmp(interface, wl_seat_interface.name) == 0) {
         state->wl_seat = (struct wl_seat*)wl_registry_bind(
             state->wl_registry, name, &wl_seat_interface, 7 /* seat version */);
-        DEBUG("Adding Wayland registry global: interface %s (version %d)", interface,
+        TRACE("Adding Wayland registry global: interface %s (version %d)", interface,
               version);
         wl_seat_add_listener(state->wl_seat, &wl_seat_listener, data);
     }
@@ -185,7 +185,7 @@ static void registry_global(void* data, struct wl_registry* wl_registry,
 /** For when removing something from registry. Don't need to do anything here */
 static void registry_global_remove(void* data, struct wl_registry* wl_registry,
                                    uint32_t name) {
-    DEBUG("Removing Wayland registry global: %d\n", name);
+    TRACE("Removing Wayland registry global: %d\n", name);
 }
 
 static const struct wl_registry_listener wl_registry_listener = {
