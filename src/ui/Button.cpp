@@ -1,6 +1,8 @@
 #include <ui/Button.hpp>
 #include <context.hpp>
 #include <settings.hpp>
+#include <widget/EventDelayer.hpp>
+#include <widget/event.hpp>
 
 namespace rack {
 namespace ui {
@@ -27,6 +29,32 @@ void Button::draw(const DrawArgs& args) {
                   state, -1, text.c_str());
 }
 
+void Button::triggerActionEvent(const ButtonEvent& buttonEvent) {
+    // Create the ActionEvent to be sent
+    ActionEvent actionEvent;
+    widget::EventContext eventContext;
+    actionEvent.context = &eventContext;
+
+    // If button press then delay processing the event
+    bool shouldDelayEventProcessing = true;
+    if (shouldDelayEventProcessing && buttonEvent.action == GLFW_PRESS) {
+        DEBUG("Button.onButton() delaying onAction processing for widget=%s ",
+              getName().c_str());
+
+        // Create a delay event that will processing the button event
+        const float DELAY_SECS = settings::doubleClickMaxDuration;
+        getEvent()->getEventDelayer()->addDelayedEvent(DELAY_SECS, actionEvent,
+                                                       this, &Widget::onAction);
+
+        return;
+    }
+
+    // Don't need to delay, so process the event now
+    DEBUG("Button.onButton() called and calling onAction() for widget=%s ",
+          getName().c_str());
+    onAction(actionEvent);
+}
+
 void Button::onButton(const ButtonEvent& event) {
     DEBUG("Button.onButton() called widget=%s button=%d action=%d x=%.1f y=%.1f",
           getName().c_str(), event.button, event.action, event.pos.getX(),
@@ -37,15 +65,14 @@ void Button::onButton(const ButtonEvent& event) {
         if (event.action == GLFW_PRESS) {
             if (quantity_)
                 quantity_->setMax();
+
+            // Initiate the onAction event, either immediately or delayed. This
+            // is done for a button press, instead of release, so that it occurs
+            // as rapidly as possible, which is important for music.
+            triggerActionEvent(event);
         } else if (event.action == GLFW_RELEASE) {
             if (quantity_)
                 quantity_->setMin();
-
-            // Dispatch Action event
-            DEBUG("Button.onButton() called and calling onAction() for widget=%s ",
-                  getName().c_str());
-            ActionEvent e;
-            onAction(e);
         }
 
         // Consume if not consumed by child
@@ -54,6 +81,19 @@ void Button::onButton(const ButtonEvent& event) {
     }
 }
 
+void Button::onDoubleClick(const DoubleClickEvent& event) {
+    DEBUG("Button.onDoubleClick() called for widget=%s", getName().c_str());
+
+    // Remove any delayed action events since double-click supersedes them
+    getEvent()->getEventDelayer()->removeDelayedEvent(this);
+}
+
+void Button::onAction(const ActionEvent& event) {
+    DEBUG("Button.onAction() called for widget=%s", getName().c_str());
+
+    // Trigger any action listeners
+    Widget::onAction(event);
+}
 /*
 void Button::onDragStart(const DragStartEvent& e) {
 	if (e.button != GLFW_MOUSE_BUTTON_LEFT)

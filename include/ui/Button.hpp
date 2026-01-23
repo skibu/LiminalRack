@@ -43,15 +43,37 @@ class Button : public widget::OpaqueWidget {
     }
 
    protected:
+    /** The text label of the button. If empty, the quantity label is used. */
     std::string text_;
 
     /** Not owned. Tracks the pressed state of the button.*/
-    Quantity* quantity_ = NULL;
+    Quantity* quantity_ = nullptr;
+
+   protected:
+    /** Handles button event, whether press or release, left click or whatever
+     */
+    void onButton(const ButtonEvent& event) override;
+
+    /** Handles double-click event. Cancels any pending action events since
+     * double-click supersedes them
+     */
+    void onDoubleClick(const DoubleClickEvent& event) override;
+
+    /** Handles action events triggered by the button. Sets the quantity to
+     * proper value 
+     */
+    void onAction(const ActionEvent& event) override;
 
    private:
+    /** Draws the button based on its state of default, hovered, or being
+     * dragged */
     void draw(const DrawArgs& args) override;
 
-    void onButton(const ButtonEvent& event) override;
+    /** Triggers the action event for the button, either immediately or delayed.
+     * The delay is for if a button press should wait to see if superseded by
+     * another event, such as a double-click.
+     */
+    void triggerActionEvent(const ButtonEvent& buttonEvent);
 
     //void onDragStart(const DragStartEvent& e) override;
     /** @deprecated only reason kept around is because if modules

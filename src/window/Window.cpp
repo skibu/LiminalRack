@@ -514,6 +514,9 @@ void Window::mainLoop() {
         // Process touch events if using Wayland
         WaylandTouch::processEvents();
 
+        // Process any events that needed to be delayed until now
+        getEvent()->processDelayedEvents();
+
         // Log every 180 frames just to show that app is still running
         static logger::LogCounter frameCounter(3600);
         if (frameCounter.shouldLog()) {

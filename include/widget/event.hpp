@@ -5,8 +5,6 @@
 #include <common.hpp>
 #include <math.hpp>
 
-
-
 /** Remaps Ctrl to Cmd on Mac
 Use this instead of GLFW_MOD_CONTROL, since Cmd should be used on Mac in place of Ctrl on Linux/Windows.
 */
@@ -39,8 +37,9 @@ Example usage:
 namespace rack {
 namespace widget {
 
-// Forward declaration
+// Forward declarations
 class Widget;
+class EventDelayer;
 
 
 /** Returns the name of a GLFW key macro.
@@ -65,14 +64,18 @@ struct EventContext {
 	/** Whether the event has been consumed by an event handler and no more handlers should consume the event. */
 	bool consumed = false;
 	/** The widget that responded to the event. */
-	Widget* target = NULL;
+	Widget* target = nullptr;
 };
 
 
 /** Base class for all events. */
 struct BaseEvent {
-	EventContext* context = NULL;
+	EventContext* context = nullptr;
 
+    EventContext* getContext() const {
+        return context;
+    }
+    
 	/** Prevents the event from being handled by more Widgets.
      * Mostly used by OpaqueWidget to indicate that done with recursive
      * search for target Widget. Typically called along with consuming
@@ -138,7 +141,7 @@ class EventState {
     /** Constructor. Since this is a global per context, this only allocates
      * space. The configuration is done elsewhere for each event. 
      */
-    EventState() {}
+    EventState();
 
    private:
     Widget* rootWidget_ = nullptr;
@@ -171,7 +174,16 @@ class EventState {
     // Any keyboard keys held down when event initiated
     std::set<int> heldKeys_;
 
+    // Using ptr because of header file complications
+    EventDelayer* eventDelayerPtr_ = nullptr;
+
    public:
+    /** Returns the EventDelayer instance, creating it if it doesn't exist. */
+    EventDelayer* getEventDelayer();
+
+    /** Processes any events that were supposed to be delayed */
+    void processDelayedEvents();
+
     /** For setting root widget (to the Scene widget) */
     void setRootWidget(Widget* w) { rootWidget_ = w; }
 

@@ -1,7 +1,9 @@
 #include <widget/event.hpp>
+
 #include <widget/Widget.hpp>
 #include <context.hpp>
 #include <window/Window.hpp>
+#include <widget/EventDelayer.hpp>
 #include <system.hpp>
 #include <settings.hpp>
 #include <string.hpp>
@@ -101,6 +103,21 @@ bool Widget::KeyBaseEvent::isKeyCommand(int key, int mods) const {
 	return this->key == key;
 }
 
+EventState::EventState() {
+    eventDelayerPtr_ = new EventDelayer();
+}
+
+EventDelayer* EventState::getEventDelayer() { 
+    assert(eventDelayerPtr_ != nullptr); 
+
+    return eventDelayerPtr_; 
+} 
+
+void EventState::processDelayedEvents() {
+    assert(eventDelayerPtr_ != nullptr);
+
+    eventDelayerPtr_->processDelayedEvents();
+}
 
 void EventState::setHoveredWidget(widget::Widget* w) {
     // Only do something if actually changing hovered widget
@@ -252,7 +269,6 @@ void EventState::handleButtonForDrag(widget::Widget* clickedWidget,
     }
 }
 
-// FIXME
 bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
     DEBUG(
         "====> handleButton event pos (%.1f, %.1f) button %d (%s) action %d (%s) mods "
@@ -268,15 +284,16 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 	bool cursorLocked = getWindow()->isCursorLocked();
     if (!cursorLocked) {
 		// Dispatch ButtonEvent
-		EventContext cButton;
-		Widget::ButtonEvent eButton;
-		eButton.context = &cButton;
-		eButton.pos = pos;
-		eButton.button = button;
-		eButton.action = action;
-		eButton.mods = mods;
-		rootWidget_->onButton(eButton);
-		clickedWidget = cButton.target;
+		EventContext eventContext;
+		Widget::ButtonEvent buttonEvent;
+		buttonEvent.context = &eventContext;
+		buttonEvent.pos = pos;
+		buttonEvent.button = button;
+		buttonEvent.action = action;
+		buttonEvent.mods = mods;
+		rootWidget_->onButton(buttonEvent);
+        // When event consumed, target is widget clicked
+		clickedWidget = eventContext.target; 
         DEBUG("Generated onButton() event clickedWidget: %s",
               clickedWidget ? clickedWidget->getName().c_str() : "NULL");
 	}
@@ -298,7 +315,7 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 
         // Handle double-click detection
         if (action == GLFW_PRESS) {
-            const double doubleClickDuration = 0.3;
+            const double doubleClickDuration = settings::doubleClickMaxDuration;
             double clickTime = system::getTime();
             if (clickedWidget &&
                 clickTime - lastClickTime_ <= doubleClickDuration &&
@@ -311,7 +328,10 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 
                 // Reset double click
                 lastClickTime_ = -INFINITY;
-                lastClickedWidget_ = NULL;
+                lastClickedWidget_ = nullptr;
+
+                // Return true since clicked on a widget. 
+                return true;
             } else {
                 lastClickTime_ = clickTime;
                 lastClickedWidget_ = clickedWidget;

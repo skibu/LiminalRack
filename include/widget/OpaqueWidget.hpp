@@ -72,8 +72,8 @@ struct OpaqueWidget : Widget {
 	}
 
 	void onDragHover(const DragHoverEvent& event) override {
-        TRACE("OpaqueWidget.onDragHover called for widget %s",
-              getName().c_str());
+        // TRACE("OpaqueWidget.onDragHover called for widget %s",
+        //       getName().c_str());
 		Widget::onDragHover(event);
 		event.stopPropagating();
 		// Consume if not consumed by child

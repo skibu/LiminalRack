@@ -188,5 +188,6 @@ class WaylandTouch {
     static math::Vec lastTouchPos_[NUM_TOUCHPOINTS];
 };
 
+
 }  // namespace window
 }  // namespace rack
