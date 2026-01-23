@@ -104,6 +104,9 @@ extern float spotlightRadius;
 extern float haloBrightness;
 /** Allows rack to hide and lock the cursor position when dragging knobs etc. */
 extern bool allowCursorLock;
+/** Max duration between clicks for double click in seconds */
+extern float doubleClickMaxDuration;
+
 enum KnobMode {
 	KNOB_MODE_LINEAR,
 	KNOB_MODE_SCALED_LINEAR,

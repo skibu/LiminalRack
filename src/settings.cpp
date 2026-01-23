@@ -76,6 +76,7 @@ float spotlightBrightness = 0.2;
 float spotlightRadius = 300.0;
 float haloBrightness = 0.2;
 bool allowCursorLock = true;
+float doubleClickMaxDuration = 0.3f;
 KnobMode knobMode = KNOB_MODE_LINEAR;
 bool knobScroll = false;
 float knobLinearSensitivity = 0.001f;
@@ -263,12 +264,16 @@ json_t* toJson() {
 	json_object_set_new(rootJ, "spotlightBrightness", json_real(spotlightBrightness));
 
 	json_object_set_new(rootJ, "spotlightRadius", json_real(spotlightRadius));
+
     json_object_set_new(rootJ, "rackBrightness", json_real(rackBrightness));
 
     json_object_set_new(rootJ, "haloBrightness", json_real(haloBrightness));
 
     json_object_set_new(rootJ, "allowCursorLock",
                         json_boolean(allowCursorLock));
+    
+    json_object_set_new(rootJ, "doubleClickMaxDuration",
+                        json_real(doubleClickMaxDuration));
 
     json_object_set_new(rootJ, "knobMode", json_integer((int)knobMode));
 
@@ -555,6 +560,10 @@ void fromJson(json_t* rootJ) {
     if (allowCursorLockJ)
         allowCursorLock = json_boolean_value(allowCursorLockJ);
 
+    json_t* doubleClickMaxDurationJ = json_object_get(rootJ, "doubleClickMaxDuration");
+    if (doubleClickMaxDurationJ)
+        doubleClickMaxDuration = json_number_value(doubleClickMaxDurationJ);
+        
     json_t* knobModeJ = json_object_get(rootJ, "knobMode");
     if (knobModeJ) knobMode = (KnobMode)json_integer_value(knobModeJ);
 
