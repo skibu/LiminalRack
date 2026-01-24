@@ -183,21 +183,38 @@ void Scene::draw(const DrawArgs& args) {
 	Widget::draw(args);
 }
 
-
 void Scene::onHover(const HoverEvent& e) {
-	mousePos_ = e.pos;
-	if (mousePos_.getY() < menuBar_->getHeight()) {
-		menuBar_->show();
-	}
-	OpaqueWidget::onHover(e);
+    // Make menu bar visible if mouse near top of screen where menu bar normally
+    // displayed. This is how menu bar is made visible when in fullscreen mode.
+    if (getWindow()->isFullScreen() && !getMenuBar()->isVisible()) {
+        // If mouse Y position less than height of menu bar then show menu bar
+        if (e.pos.getY() < menuBar_->getHeight()) {
+            DEBUG("Scene::onHover() showing menu bar in fullscreen");
+            getMenuBar()->show();
+        }
+    }
+
+    // Call base class onHover() in case it handles onHover events
+    OpaqueWidget::onHover(e);
 }
 
+void Scene::onButton(const event::Button& e) {
+    // Make menu bar visible if mouse button pressed while in fullscreen mode
+    if (getWindow()->isFullScreen() && !getMenuBar()->isVisible()) {
+        if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+            DEBUG("Scene::onButton() showing menu bar in fullscreen");
+            getMenuBar()->show();
+        }
+    }
+
+    // Call base class onButton() in case it handles onButton events
+    OpaqueWidget::onButton(e);
+}
 
 void Scene::onDragHover(const DragHoverEvent& e) {
-	mousePos_ = e.pos;
+    mousePos_ = e.pos;
 	OpaqueWidget::onDragHover(e);
 }
-
 
 void Scene::onHoverKey(const HoverKeyEvent& e) {
 	// Key commands that override children

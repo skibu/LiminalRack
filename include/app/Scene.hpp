@@ -79,7 +79,16 @@ class Scene : public widget::OpaqueWidget {
     widget::Widget* browserOverlay_;
     SplashWidget* splashWidget_;
 
+    /** Used to make sure the menu bar is made visible if mouse cursor near top
+     * of display. This is how MenuBar is made visible when in full screen
+     * mode.*/
     void onHover(const HoverEvent& e) override;
+
+    /** Handles button events. Handles situation where in full screen and user uses touch input
+     * to show the hidden menu bar.
+     */
+    void onButton(const event::Button& e) override;
+
     void onDragHover(const DragHoverEvent& e) override;
     void onHoverKey(const HoverKeyEvent& e) override;
     void onPathDrop(const PathDropEvent& e) override;
