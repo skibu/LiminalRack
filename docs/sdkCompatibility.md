@@ -7,8 +7,13 @@ to the Liminal software. That means the changes to the Rack SDK have to be compa
 Rack SDK. 
 
 There are four potential issues with modifying classes. Need to only be concerned about classes 
-that are used by plugin software. The most important classes are Widget and its subclasses. If a
-class is instead just for internal use and won't be accessed directly by a plugin 
+that are used by plugin software. The most important classes are Widget and its subclasses. 
+
+These restrictions unfortunately make it improper to convert a class to the Pimpl idiom, where 
+a structure that is only available in the class' .cpp file contains internal data for the class. The reason cannot add to a class even a pointer to an internal structure is because that would change the size of the class, and therefore break the ABI/SDK. But good news: if you need to convert a class to Pimpl idiom then see the class PimplAdder described below.
+
+If a
+class is just for internal use and won't be accessed directly by a plugin then it is okay to modify it. 
 
 ## Class names
 - CANNOT change class names. The linker uses them to link the plugin software to the Rack SDK.
@@ -53,4 +58,42 @@ class is instead just for internal use and won't be accessed directly by a plugi
   there won't be any subclass data members to get screwed up.
 - CANNOT change type of data members since that affects their size which in turn affects their
   location relative to the beginning of the object. So don't change floats to doubles for example.
+
+# PimplAdder class #
+ For adding internal structures to Widget classes as needed, without
+ breaking ABI compatibility. Adding a Internal pointer as a class member
+ would change the size of the class, creating potential issues for modules
+ compiled against the legacy Rack SDK. Instead, this PimplAdder class
+ provides a way to add internal data without affecting the class size. The
+ Internal data is instead held in a global map.
   
+ Example usage:
+```
+#include <widget/PimplAdder.hpp>
+
+struct InternalsStruct {
+   int someInternalData;
+   float someOtherInternalData;
+ };
+ 
+ Widget:Widget() {
+   // Make internal struct accessible via PimplAdder class
+   PimplAdder<Widget, InternalsStruct>::create(this);
+ }
+ 
+ Widget::~Widget() {
+   PimplAdder<Widget, InternalsStruct>::cleanup(this);
+ }
+  
+ void Widget::setSomeData(int data) {
+   InternalsStruct* internal = 
+       PimplAdder<Widget, InternalsStruct>::get(this);
+   internal->someInternalData = data;
+ }
+ 
+ int Widget::getSomeData() {
+   InternalsStruct* internal = 
+        PimplAdder<Widget, InternalsStruct>::get(this);
+   return internal->someInternalData;
+ }
+```
