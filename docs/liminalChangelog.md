@@ -1,5 +1,9 @@
 # Liminal Rack Change Log
 
+- 1/23/26
+  - Added class PimplAdder so can make Widget classes follow the Pimpl idiom without breaking the ABI.
+  - Significant progress on handling touch press/release events.
+   
 - 1/3/26
   - Fixed determination of number of cores on raspberry pi.
   - Improved logging by adding stack trace to ERROR messages. This way can better see context of error.
