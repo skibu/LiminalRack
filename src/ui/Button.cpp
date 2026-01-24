@@ -9,7 +9,12 @@ namespace rack {
 namespace ui {
 
 struct ButtonInternals {
-    bool doubleClickTakesPrecedence = true;
+    // Whether single-click action events are delayed to see if superseded by a
+    // double-click. If true, then single clicks are delayed in order to first
+    // see if part of a double-click. If false, then single clicks are
+    // immediate. Default is false sincee double-clicks are relatively rare and
+    // want single clicks to be responsive.
+    bool doubleClickTakesPrecedence = false;
 };
 
 /** Default constructor needs to be declared here instead of inlined
@@ -31,9 +36,6 @@ Button::Button(const std::string& text, const std::string& name)
     // Do other initialization that default constructor does
     setHeight(settings::bndWidgetHeight);
     widget::PimplAdder<Button, ButtonInternals>::create(this);
-
-    // FIXME just a test
-    bool dblClickTakesPrecedence = getDoubleClickTakesPrecedence();
 }
 
 Button::~Button() {
@@ -71,7 +73,7 @@ void Button::triggerActionEvent(const ButtonEvent& buttonEvent) {
     actionEvent.context = &eventContext;
 
     // If button press then delay processing the event
-    bool shouldDelayEventProcessing = true;
+    bool shouldDelayEventProcessing = getDoubleClickTakesPrecedence();
     if (shouldDelayEventProcessing && buttonEvent.action == GLFW_PRESS) {
         DEBUG("Button.onButton() delaying onAction processing for widget=%s ",
               getName().c_str());
