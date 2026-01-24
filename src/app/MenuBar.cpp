@@ -1584,7 +1584,7 @@ struct MenuBar : widget::OpaqueWidget {
 		layout->setMinSpacing(math::Vec(15.0, 0));
 		addChild(layout);
 
-		FileButton* fileButton = new FileButton();
+		FileButton* fileButton = new FileButton(); 
 		layout->addChild(fileButton);
 
 		EditButton* editButton = new EditButton();

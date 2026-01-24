@@ -3,9 +3,14 @@
 #include <settings.hpp>
 #include <widget/EventDelayer.hpp>
 #include <widget/event.hpp>
+#include <widget/PimplAdder.hpp>
 
 namespace rack {
 namespace ui {
+
+struct ButtonInternals {
+    bool doubleClickTakesPrecedence = true;
+};
 
 /** Default constructor needs to be declared here instead of inlined
  * so that modules that use it, like 4ms, can link against it.
@@ -16,6 +21,36 @@ namespace ui {
  */
 Button::Button() {
     setHeight(settings::bndWidgetHeight);
+    widget::PimplAdder<Button, ButtonInternals>::create(this);
+}
+
+Button::Button(const std::string& text, const std::string& name)
+    : OpaqueWidget(name) {
+    setText(text);
+
+    // Do other initialization that default constructor does
+    setHeight(settings::bndWidgetHeight);
+    widget::PimplAdder<Button, ButtonInternals>::create(this);
+
+    // FIXME just a test
+    bool dblClickTakesPrecedence = getDoubleClickTakesPrecedence();
+}
+
+Button::~Button() {
+    // Clean up internal struct
+    widget::PimplAdder<Button, ButtonInternals>::cleanup(this);
+}
+
+void Button::setDoubleClickTakesPrecedence(bool takePrecedence) {
+    ButtonInternals* internals =
+        widget::PimplAdder<Button, ButtonInternals>::get(this);
+    internals->doubleClickTakesPrecedence = takePrecedence;
+}
+
+double Button::getDoubleClickTakesPrecedence() {
+    ButtonInternals* internals =
+        widget::PimplAdder<Button, ButtonInternals>::get(this);
+    return internals->doubleClickTakesPrecedence;
 }
 
 void Button::draw(const DrawArgs& args) {

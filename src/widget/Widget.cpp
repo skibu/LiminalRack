@@ -2,19 +2,23 @@
 #include <cxxabi.h> // For demangling on GCC/Clang
 
 #include <widget/Widget.hpp>
+#include <widget/PimplAdder.hpp>
 #include <context.hpp>
 
 
 namespace rack {
 namespace widget {
 
-// Global for keeping track of widget names, but without changing the Widget
-// class itself (to avoid breaking ABI). 
-static std::map<Widget*, std::string> widgetNames_g;
+struct WidgetInternals {
+    std::string name;
+};
+
 
 Widget::Widget(const std::string& name) {
     // Store the name of the widget
-    widgetNames_g[this] = name;
+    PimplAdder<Widget, WidgetInternals>::create(this);
+    WidgetInternals* internal = PimplAdder<Widget, WidgetInternals>::get(this);
+    internal->name = name;
 }
 
 Widget::Widget() : Widget("") {}
@@ -25,14 +29,13 @@ Widget::~Widget() {
 	clearChildren();
 
     // Remove from widget names map
-    widgetNames_g.erase(this);
+    PimplAdder<Widget, WidgetInternals>::cleanup(this);
 }
 
 std::string Widget::getName() {
-    auto it = widgetNames_g.find(this);
-    if (it != widgetNames_g.end() && !it->second.empty()) {
-        // Name was set so return it
-        return it->second;
+    WidgetInternals* internal = PimplAdder<Widget, WidgetInternals>::get(this);
+    if (internal && !internal->name.empty()) {
+        return internal->name;
     } else {
 		// Name was not set so return class name
 		const char* className = typeid(*this).name();

@@ -16,19 +16,16 @@ If text is not set, the quantity label is used.
 class Button : public widget::OpaqueWidget {
    public:
     /** Constructor with param for initialing text to a value. */
-    Button(const std::string& text, const std::string& name = "")
-        : OpaqueWidget(name) {
-        setText(text);
-
-        // Do other initialization that default constructor does
-        setHeight(settings::bndWidgetHeight);
-    }
+    Button(const std::string& text, const std::string& name = "");
 
     /** Need default constructor since module libraries might have used it, like
      * for 4ms. Having default values for constructor parameters does not count
      * as a default constructor.
      */
     Button();
+
+    /* Cleanup */
+    ~Button();
 
     void setText(const std::string& text) {
         this->text_ = text;
@@ -41,6 +38,10 @@ class Button : public widget::OpaqueWidget {
     Quantity* getQuantity() {
         return quantity_;
     }
+
+    void setDoubleClickTakesPrecedence(bool takePrecedence);
+
+    double getDoubleClickTakesPrecedence();
 
    protected:
     /** The text label of the button. If empty, the quantity label is used. */
