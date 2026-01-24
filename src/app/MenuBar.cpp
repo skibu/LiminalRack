@@ -1470,18 +1470,21 @@ class HelpButton : public MenuButton {
         }
 	}
 
-	void step() override {
-		// For VCV Rack make getting updates easy. But this doesn't work for forks like Liminal
-		if (!settings::isNotVCVRack) {
-			// Light up red notification dot on Help button if an update is available
-			notification->setPos(math::Vec(0, 0));
-			notification->setVisible(library::isAppUpdateAvailable());
-		} else {
-			// Not VCV rack so always hide notification since can't update app in usual way
-			notification->setVisible(false);
-		}
-		MenuButton::step();
-	}
+    void step() override {
+        // For VCV Rack make getting updates easy. But this doesn't work for
+        // forks like Liminal
+        if (!settings::isNotVCVRack) {
+            // Light up red notification dot on Help button if an update is
+            // available
+            notification->setPos(math::Vec(0, 0));
+            notification->setVisible(library::isAppUpdateAvailable());
+        } else {
+            // Not VCV rack so always hide notification since can't update app
+            // in usual way
+            notification->setVisible(false);
+        }
+        MenuButton::step();
+    }
 };
 
 ////////////////////

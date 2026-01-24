@@ -128,17 +128,17 @@ void EventState::setHoveredWidget(widget::Widget* w) {
 	if (hoveredWidget_) {
 		// Dispatch LeaveEvent
 		Widget::LeaveEvent eLeave;
-        TRACE("Widget no longer hovered so dispatching LeaveEvent to widget: %s",
-              hoveredWidget_ ? hoveredWidget_->getName().c_str() : "NULL");
+        // TRACE("Widget no longer hovered so dispatching LeaveEvent to widget: %s",
+        //       hoveredWidget_ ? hoveredWidget_->getName().c_str() : "NULL");
 		hoveredWidget_->onLeave(eLeave);
-		hoveredWidget_ = NULL;
+		hoveredWidget_ = nullptr;
 	}
 
     // Dispatch EnterEvent on new hovered widget
 	if (w) {
 		// Dispatch EnterEvent
-        TRACE("New widget being hovered over so dispatching EnterEvent to widget: %s",
-              w ? w->getName().c_str() : "NULL");
+        // TRACE("New widget being hovered over so dispatching EnterEvent to widget: %s",
+        //       w ? w->getName().c_str() : "NULL");
 		EventContext cEnter;
 		cEnter.target = w;
 		Widget::EnterEvent eEnter;
@@ -310,7 +310,7 @@ bool EventState::handleButton(math::Vec pos, int button, int action, int mods) {
 
     // Handle double-click detection for left mouse button
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
-		DEBUG("Investigating double clicking for widget: %s",
+		TRACE("Investigating double clicking for widget: %s",
               clickedWidget ? clickedWidget->getName().c_str() : "NULL");
 
         // Handle double-click detection
@@ -404,7 +404,7 @@ bool EventState::handleHover(math::Vec pos, math::Vec mouseDelta) {
 }
 
 bool EventState::handleLeave() {
-	DEBUG("Left main window event");
+	TRACE("Left main window event");
 
 	heldKeys_.clear();
 	// When leaving the window, don't un-hover widgets because the mouse might be dragging.
@@ -414,7 +414,7 @@ bool EventState::handleLeave() {
 }
 
 bool EventState::handleScroll(math::Vec pos, math::Vec scrollDelta) {
-	DEBUG("handle scroll event pos (%.1f, %.1f) scrollDelta (%.1f, %.1f)", 
+	TRACE("handle scroll event pos (%.1f, %.1f) scrollDelta (%.1f, %.1f)", 
 		pos.getX(), pos.getY(), scrollDelta.getX(), scrollDelta.getY());
 
 	// Dispatch HoverScrollEvent
@@ -429,7 +429,7 @@ bool EventState::handleScroll(math::Vec pos, math::Vec scrollDelta) {
 }
 
 bool EventState::handleDrop(math::Vec pos, const std::vector<std::string>& paths) {
-	DEBUG("handleDrop event pos (%.1f, %.1f) %zu paths", 
+	TRACE("handleDrop event pos (%.1f, %.1f) %zu paths", 
 		pos.getX(), pos.getY(), paths.size());
 
 	// Dispatch PathDropEvent

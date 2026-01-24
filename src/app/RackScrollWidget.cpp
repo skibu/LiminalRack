@@ -195,16 +195,15 @@ void RackScrollWidget::onHoverScroll(const HoverScrollEvent& e) {
 	ScrollWidget::onHoverScroll(e);
 }
 
-
 void RackScrollWidget::onHover(const HoverEvent& e) {
-	ScrollWidget::onHover(e);
+    ScrollWidget::onHover(e);
 
-	// Hide menu bar if fullscreen and moving mouse over the RackScrollWidget
-	if (getWindow()->isFullScreen()) {
-		getScene()->getMenuBar()->hide();
-	}
+    // Hide menu bar if fullscreen and moving mouse over the RackScrollWidget
+    if (getWindow()->isFullScreen() && getScene()->getMenuBar()->isVisible()) {
+        DEBUG("RackScrollWidget::onHover() hiding menu bar in fullscreen");
+        getScene()->getMenuBar()->hide();
+    }
 }
-
 
 void RackScrollWidget::onButton(const ButtonEvent& e) {
 	ScrollWidget::onButton(e);

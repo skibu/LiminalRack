@@ -10,7 +10,7 @@ Menu::Menu() {
 }
 
 Menu::~Menu() {
-    DEBUG("~Menu() called for menu %s", getName().c_str());
+    TRACE("~Menu() called for menu %s", getName().c_str());
 	setChildMenu(nullptr);
     clearChildren();
 }

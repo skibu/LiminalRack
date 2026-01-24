@@ -320,7 +320,7 @@ void Widget::step() {
 		Widget* child = *it;
 		// Delete children if a delete is requested
 		if (child->requestedDelete_) {
-            DEBUG("step(): Starting of deleting child widget %s from parent %s",
+            TRACE("Widget::step(): Starting of deleting child widget %s from parent %s",
                   child->getName().c_str(), getName().c_str());
 
 			// Dispatch Remove event
@@ -334,7 +334,7 @@ void Widget::step() {
 			it = children_.erase(it);
 
             // Actually delete the child
-            DEBUG("Widget::step(): Deleting child widget %s from parent %s",
+            TRACE("Widget::step(): Deleting child widget %s from parent %s",
                   child->getName().c_str(), getName().c_str());
             child->parent_ = nullptr;
             delete child;

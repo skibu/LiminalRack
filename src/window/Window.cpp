@@ -242,7 +242,7 @@ static void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
 }
 
 static void cursorEnterWindowCallback(GLFWwindow* win, int entered) {
-    DEBUG("cursorEnterWindowCallback() for main Window entered=%d", entered);
+    TRACE("cursorEnterWindowCallback() for main Window entered=%d", entered);
 
     contextSet((Context*)glfwGetWindowUserPointer(win));
     if (!entered) {
