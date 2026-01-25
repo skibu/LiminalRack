@@ -133,7 +133,7 @@ class Window {
     int getMods();
 
     /** Puts main window into full screen or non full screen mode depending on
-     * the fullScreen parameter
+     * the fullScreen parameter. Also shows or hides the menu bar as appropriate.
      */
     void setFullScreen(bool fullScreen);
 

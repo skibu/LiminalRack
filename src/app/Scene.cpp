@@ -187,10 +187,14 @@ void Scene::onHover(const HoverEvent& e) {
     // Make menu bar visible if mouse near top of screen where menu bar normally
     // displayed. This is how menu bar is made visible when in fullscreen mode.
     if (getWindow()->isFullScreen() && !getMenuBar()->isVisible()) {
-        // If mouse Y position less than height of menu bar then show menu bar
-        if (e.pos.getY() < menuBar_->getHeight()) {
-            DEBUG("Scene::onHover() showing menu bar in fullscreen");
-            getMenuBar()->show();
+        // Ignore a 0,0 position since can get one at start up of application
+        if (e.pos.getX() != 0.0f || e.pos.getY() != 0.0f) {
+            // If mouse Y position less than height of menu bar then show menu
+            // bar
+            if (e.pos.getY() < menuBar_->getHeight()) {
+                DEBUG("Scene::onHover() showing menu bar in fullscreen");
+                getMenuBar()->show();
+            }
         }
     }
 

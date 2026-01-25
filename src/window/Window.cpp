@@ -792,18 +792,31 @@ void Window::setFullScreen(bool fullScreen) {
     settings::windowMaximized = fullScreen;
 
     if (!fullScreen) {
-        // Put window into non-full screen mode
+        // Put window into regular non-full screen mode
         INFO("Taking main window out of full screen mode");
-        glfwSetWindowMonitor(glfWin_, NULL, internal_->lastWindowX_, internal_->lastWindowY_,
-                             internal_->lastWindowWidth_, internal_->lastWindowHeight_, GLFW_DONT_CARE);
+        glfwSetWindowMonitor(glfWin_, NULL, internal_->lastWindowX_,
+                             internal_->lastWindowY_,
+                             internal_->lastWindowWidth_,
+                             internal_->lastWindowHeight_, GLFW_DONT_CARE);
+
+        // Show menu bar
+        DEBUG("setFullScreen(false) so showing menu bar");
+        getScene()->getMenuBar()->show();
     } else {
         // Put window into full screen mode
         INFO("Putting main window into full screen mode");
-        glfwGetWindowPos(glfWin_, &internal_->lastWindowX_, &internal_->lastWindowY_);
-        glfwGetWindowSize(glfWin_, &internal_->lastWindowWidth_, &internal_->lastWindowHeight_);
+        glfwGetWindowPos(glfWin_, &internal_->lastWindowX_,
+                         &internal_->lastWindowY_);
+        glfwGetWindowSize(glfWin_, &internal_->lastWindowWidth_,
+                          &internal_->lastWindowHeight_);
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-        glfwSetWindowMonitor(glfWin_, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        glfwSetWindowMonitor(glfWin_, monitor, 0, 0, mode->width, mode->height,
+                             mode->refreshRate);
+
+        // Hide menu bar
+        DEBUG("setFullScreen(true) so hiding menu bar");
+        getScene()->getMenuBar()->hide();
     }
 }
 
