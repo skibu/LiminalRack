@@ -39,7 +39,7 @@ void WaylandTouch::processEvents() {
                   static_cast<int>(event.eventType_), event.getSerialNumber(), event.getTimeStamp());
 
             // Handle the touch event by type
-            // FIXME - Make sure fully working. And currently only handles single point.
+            // FIXME - currently only handles single point.
             if (event.getEventType() == WaylandTouchEvent::TOUCH_DOWN) {
                 DEBUG("Wayland touch down event at (%d, %d)", event.getX(),
                       event.getY());
@@ -50,7 +50,7 @@ void WaylandTouch::processEvents() {
                 getEvent()->handleButton(math::Vec(event.getX(), event.getY()),
                                          GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
             } else if (event.getEventType() == WaylandTouchEvent::TOUCH_MOTION) {
-                DEBUG("FIXME Wayland touch motion event at (%d, %d)", event.getX(),
+                DEBUG("Wayland touch motion event at (%d, %d)", event.getX(),
                       event.getY());
                 getEvent()->handleHover(
                     math::Vec(event.getX(), event.getY()), math::Vec(0, 0));
