@@ -377,13 +377,16 @@ Window::Window() {
 
 	// Set up GLEW
     glewExperimental = GL_TRUE;
-	err = glewInit();
-	if (err != GLEW_OK) {
-		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, "Could not initialize GLEW. Does your graphics card support OpenGL 2.0 or greater? If so, make sure you have the latest graphics drivers installed.");
-		throw Exception("Could not initialize GLEW");
-	}
+    err = glewInit();
+    if (err != GLEW_OK) {
+        osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK,
+                         "Could not initialize GLEW. Does your graphics card "
+                         "support OpenGL 2.0 or greater? If so, make sure you "
+                         "have the latest graphics drivers installed.");
+        throw Exception("Could not initialize GLEW");
+    }
 
-	const GLubyte* vendor = glGetString(GL_VENDOR);
+    const GLubyte* vendor = glGetString(GL_VENDOR);
 	const GLubyte* renderer = glGetString(GL_RENDERER);
 	const GLubyte* version = glGetString(GL_VERSION);
 	INFO("Renderer: %s %s", vendor, renderer);
@@ -402,12 +405,15 @@ Window::Window() {
 #elif defined NANOVG_GLES2
 	vg = nvgCreateGLES2(nvgFlags);
 #endif
-	if (!vg_) {
-		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, "Could not initialize NanoVG. Does your graphics card support OpenGL 2.0 or greater? If so, make sure you have the latest graphics drivers installed.");
-		throw Exception("Could not initialize NanoVG");
-	}
+    if (!vg_) {
+        osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK,
+                         "Could not initialize NanoVG. Does your graphics card "
+                         "support OpenGL 2.0 or greater? If so, make sure you "
+                         "have the latest graphics drivers installed.");
+        throw Exception("Could not initialize NanoVG");
+    }
 
-	// Load and set the main font to be used
+    // Load and set the main font to be used
 	uiFont_ = loadFont(asset::system(settings::systemFontFileName));
 	if (uiFont_)
 		bndSetFont(uiFont_->handle);
@@ -730,9 +736,10 @@ void Window::cursorLock() {
 	if (isCursorLocked())
 		return;
 
-	// GLFW_CURSOR_DISABLED is buggy.
-	// https://github.com/glfw/glfw/issues/2523
-	// So instead, hide the cursor, move cursor to center of window, and reset mouse position every frame in cursorPosCallback().
+    // GLFW_CURSOR_DISABLED is buggy.
+    // https://github.com/glfw/glfw/issues/2523
+    // So instead, hide the cursor, move cursor to center of window, and reset
+    // mouse position every frame in cursorPosCallback().
     double xpos, ypos;
 	glfwGetCursorPos(glfWin_, &xpos, &ypos);
     internal_->cursorLockedPos_ = math::Vec(xpos, ypos); 
@@ -863,34 +870,32 @@ double Window::getPotentialFrameRate() const {
 }
 
 std::shared_ptr<Font> Window::loadFont(const std::string& filename) {
-	// If font is already cached, no need to add fallback fonts again.
-	const auto& it = internal_->fontCache_.find(filename);
-	if (it != internal_->fontCache_.end())
-		return it->second;
+    // If font is already cached, no need to add fallback fonts again.
+    const auto& it = internal_->fontCache_.find(filename);
+    if (it != internal_->fontCache_.end()) return it->second;
 
     // This redundantly searches the font cache, but it's not a performance
     // issue because it only happens when font is first loaded.
     std::shared_ptr<Font> font = loadFontWithoutFallbacks(filename);
-    if (!font)
-		return NULL;
+    if (!font) return NULL;
 
     // Load fallback fonts for CJK and emoji characters
-	std::shared_ptr<Font> jpFont = loadFontWithoutFallbacks(asset::system("res/fonts/NotoSansJP-Medium.otf"));
-	if (jpFont)
-		nvgAddFallbackFontId(vg_, font->handle, jpFont->handle);
-	std::shared_ptr<Font> scFont = loadFontWithoutFallbacks(asset::system("res/fonts/NotoSansSC-Medium.otf"));
-	if (scFont)
-		nvgAddFallbackFontId(vg_, font->handle, scFont->handle);
-	std::shared_ptr<Font> emojiFont = loadFontWithoutFallbacks(asset::system("res/fonts/NotoEmoji-Medium.ttf"));
-	if (emojiFont)
-		nvgAddFallbackFontId(vg_, font->handle, emojiFont->handle);
+    std::shared_ptr<Font> jpFont = loadFontWithoutFallbacks(
+        asset::system("res/fonts/NotoSansJP-Medium.otf"));
+    if (jpFont) nvgAddFallbackFontId(vg_, font->handle, jpFont->handle);
+    std::shared_ptr<Font> scFont = loadFontWithoutFallbacks(
+        asset::system("res/fonts/NotoSansSC-Medium.otf"));
+    if (scFont) nvgAddFallbackFontId(vg_, font->handle, scFont->handle);
+    std::shared_ptr<Font> emojiFont = loadFontWithoutFallbacks(
+        asset::system("res/fonts/NotoEmoji-Medium.ttf"));
+    if (emojiFont) nvgAddFallbackFontId(vg_, font->handle, emojiFont->handle);
 
-	return font;
+    return font;
 }
 
-
-std::shared_ptr<Font> Window::loadFontWithoutFallbacks(const std::string& filename) {
-	// Return cached font, even if null
+std::shared_ptr<Font> Window::loadFontWithoutFallbacks(
+    const std::string& filename) {
+    // Return cached font, even if null
 	const auto& it = internal_->fontCache_.find(filename);
 	if (it != internal_->fontCache_.end())
 		return it->second;
@@ -907,7 +912,6 @@ std::shared_ptr<Font> Window::loadFontWithoutFallbacks(const std::string& filena
 	internal_->fontCache_[filename] = font;
 	return font;
 }
-
 
 void Window::overrideFontFace(const std::string& filename) {
     std::shared_ptr<Font> font = loadFontWithoutFallbacks(filename);
@@ -960,10 +964,11 @@ void Window::init() {
 
 	glfwSetErrorCallback(errorCallback);
 	int err = glfwInit();
-	if (err != GLFW_TRUE) {
-		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, "Could not initialize GLFW.");
-		throw Exception("Could not initialize GLFW");
-	}
+    if (err != GLFW_TRUE) {
+        osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK,
+                         "Could not initialize GLFW.");
+        throw Exception("Could not initialize GLFW");
+    }
 
     // Initialize touch screen support if available
     window::WaylandTouch::init();
