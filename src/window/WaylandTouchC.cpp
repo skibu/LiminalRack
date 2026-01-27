@@ -2,7 +2,7 @@
  * it only works on Linux. */
 #ifdef __linux__
 
-// Special Waayland includes
+// Special Wayland includes
 extern "C" {
 #include "internal.h"
 #include "wayland-client-protocol.h"
