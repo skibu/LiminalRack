@@ -6,6 +6,10 @@
 extern "C" {
 #include "internal.h"
 #include "wayland-client-protocol.h"
+
+// For text input support
+#include <wayland-client.h>
+#include "wayland-text-input-unstable-v2-client-protocol.h"
 }
 
 #include <logger.hpp>
@@ -131,6 +135,45 @@ static const struct wl_touch_listener wl_touch_listener = {
     .orientation = wl_touch_orientation,
 };
 
+/////////// TEXT INPUT STUFF ///////////
+
+/** Listen for enter event to know which surface is focused
+ */
+void text_input_enter(void *data, struct zwp_text_input_v2 *text_input,
+                      struct wl_surface *surface) {
+    TRACE("Wayland text input enter event");
+
+    // Enable text input for this surface
+    zwp_text_input_v2_enable(text_input, surface);
+    
+    // Set content type/purpose (e.g., normal text)
+    zwp_text_input_v2_set_content_type(text_input,
+                                       ZWP_TEXT_INPUT_V2_CONTENT_HINT_NONE,
+                                       ZWP_TEXT_INPUT_V2_CONTENT_PURPOSE_NORMAL);
+    
+    // Update state to apply changes
+    zwp_text_input_v2_update_state(text_input,
+                                   ZWP_TEXT_INPUT_V2_UPDATE_STATE_CHANGE_CAUSE_INPUT_METHOD);
+    
+    // Commit changes to compositor
+    wl_display_flush(reinterpret_cast<wl_display*>(data));
+}
+
+/** Listen for leave event to know when surface is unfocused 
+ */
+void text_input_leave(void *data, struct zwp_text_input_v2 *text_input,
+                      struct wl_surface *surface) {
+    TRACE("Wayland text input leave event");
+
+    // Disable text input for this surface
+    zwp_text_input_v2_disable(text_input);  
+}
+
+static const struct zwp_text_input_v2_listener text_input_listener = {
+    .enter = text_input_enter,
+    .leave = text_input_leave
+};
+
 /////////// SEAT STUFF ///////////
 
 /** Called when seat capabilities change. Used to determine if should
@@ -202,7 +245,6 @@ extern "C" {
 void waylandMultitouchInit() {
     INFO("Initializing Wayland touch support...");
 
-    // FIXME need capabilities, state, and wl_touch_listener
     // Get access to Wayland registry
     static struct client_state state = {};
     state.wl_display = _glfw.wl.display;
@@ -210,8 +252,22 @@ void waylandMultitouchInit() {
     wl_registry_add_listener(state.wl_registry, &wl_registry_listener, &state);
     wl_display_roundtrip(state.wl_display);
 
+    // FIXME
+    // Set up text input manager
+    struct zwp_text_input_manager_v2* text_input_manager =
+        (struct zwp_text_input_manager_v2*)wl_registry_bind(
+            state.wl_registry, 1, &zwp_text_input_manager_v2_interface, 1);
+
+    // Create text input object and add listener
+    struct zwp_text_input_v2* text_input =
+        zwp_text_input_manager_v2_get_text_input(text_input_manager,
+                                                 state.wl_seat);
+    zwp_text_input_v2_add_listener(text_input, &text_input_listener,
+                                   state.wl_display);
+
     DEBUG("Done initializing Wayland touch support.");
 }
+
 }  // extern "C"
 
 #endif // __linux__
