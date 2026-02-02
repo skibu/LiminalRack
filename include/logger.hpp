@@ -52,6 +52,11 @@ void logLogLevel();
 PRIVATE bool init();
 PRIVATE void destroy();
 
+/** Archives old log file if in debug mode. This way can easily
+ * see and compare with old logs to see what changed.
+ */
+PRIVATE void archiveOldLogIfNeeded();
+
 /** Do not use this function directly. Use the macros above.
 Thread-safe, meaning messages cannot overlap each other in the log.
 */

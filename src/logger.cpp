@@ -48,6 +48,47 @@ static bool isTruncated() {
 	return true;
 }
 
+void archiveOldLogIfNeeded() {
+    // If no log file, nothing to do
+    if (!system::exists(logPath)) return;
+
+    // If not in debug mode, nothing to do
+    if (getLogLevel() > DEBUG_LEVEL) return;
+
+    // Can't handle windows for now
+    if (APP_OS == "win") return;
+
+    // Create log archive directory (if needed)
+    const std::string oldLogsDir = system::getDirectory(logPath) + "/oldLogs";
+    system::createDirectory(oldLogsDir);
+
+    // Archive old log file.
+    // Determine new log filename, appending create timestamp of file
+    const std::string logFilename = system::getFilename(logPath);
+    std::string getCreateDateTimeCommand;
+    if (APP_OS == "mac") {
+        // The -f %SB outputs create date in a custom format specified by -t
+        getCreateDateTimeCommand =
+            "stat -t \"Date_%F_Time_%H-%M-%S\" -f \"%SB\" \"" + logPath + "\"";
+    } else {
+        // Assume Linux. Use %w to get birth time (creation time)
+        getCreateDateTimeCommand =
+            "echo \"Date_\""  // Prefix with "Date_"
+            "`stat -c %w \"" +
+            logPath +
+            "\" | "
+            "sed 's/[:]/-/g' | "       // Replace : with -
+            "sed 's/[ ]/_Time_/g' | "  // Replace space with _Time_
+            "cut -c1-24`";             // Trim to seconds
+    }
+    const std::string createTime = system::executeCommand(
+        getCreateDateTimeCommand);  // Trim to milliseconds
+    std::string archiveLogFilename =
+        oldLogsDir + "/" + logFilename + "_" + createTime;
+
+    // Actually move the old log file
+    system::rename(logPath, archiveLogFilename);
+}
 
 bool init() {
 	if (outputFile)
@@ -63,38 +104,10 @@ bool init() {
 	else {
 		truncated = isTruncated();
 
-        // Archive old log if needed
-        if (APP_OS != "win" && system::exists(logPath)) {
-            // Create log archive directory (if needed)
-            const std::string oldLogsDir =
-                system::getDirectory(logPath) + "/oldLogs";
-            system::createDirectory(oldLogsDir);
+        // First archive old log if needed
+        archiveOldLogIfNeeded();
 
-            // Determine new log filename, appending create timestamp of file
-            const std::string logFilename = system::getFilename(logPath);
-            std::string getCreateDateTimeCommand;
-            if (APP_OS == "mac") {
-                // The -f %SB outputs create date in a custom format specified by -t
-                getCreateDateTimeCommand =
-                    "stat -t \"Date_%F_Time_%H-%M-%S\" -f \"%SB\" \"" + logPath + "\"";
-            }
-            else {
-                // Assume Linux. Use %w to get birth time (creation time)
-                getCreateDateTimeCommand =
-                    "echo \"Date_\""           // Prefix with "Date_"
-                    "`stat -c %w \"" + logPath + "\" | "
-                    "sed 's/[:]/-/g' | "       // Replace : with -
-                    "sed 's/[ ]/_Time_/g' | "  // Replace space with _Time_
-                    "cut -c1-24`";             // Trim to seconds
-            }
-            const std::string createTime = system::executeCommand(getCreateDateTimeCommand);        // Trim to milliseconds
-            std::string archiveLogFilename =
-                oldLogsDir + "/" + logFilename + "_" + createTime;
-
-            // Actually move the old log file
-            system::rename(logPath, archiveLogFilename);
-        }
-
+        // Open log file for writing
         outputFile = std::fopen(logPath.c_str(), "w");
 		if (!outputFile) {
 			std::fprintf(stderr, "Could not open log at %s\n", logPath.c_str());
