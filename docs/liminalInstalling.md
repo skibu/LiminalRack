@@ -29,6 +29,9 @@ sudo apt install -y libpulse-dev
 # For Wayland which is used for touchscreen. Probably only needed for development
 sudo apt install libwayland-dev libxkbcommon-dev wayland-protocols xorg-dev
 
+# For Wayland keyboard stuff, including handling virtual keyboard
+sudo apt install fcitx5
+
 # For GLEW EGL which is used for touchscreen. Needed for egl library for running system.
 sudo apt install libegl1-mesa-dev
 ```
