@@ -49,7 +49,7 @@ struct client_state {
 
 
 /** Callback that is called as soon as a touch down event occurs */
-static void wl_touch_down(void* data, struct wl_touch* wl_touch,
+static void wlTouchDownClbk(void* data, struct wl_touch* wl_touch,
                           uint32_t serial, uint32_t time,
                           struct wl_surface* surface, int32_t id, wl_fixed_t x,
                           wl_fixed_t y) {
@@ -61,7 +61,7 @@ static void wl_touch_down(void* data, struct wl_touch* wl_touch,
 }
 
 /** Callback that is called as soon as a touch up event occurs */
-static void wl_touch_up(void* data, struct wl_touch* wl_touch, uint32_t serial,
+static void wlTouchUpClbk(void* data, struct wl_touch* wl_touch, uint32_t serial,
                         uint32_t time, int32_t id) {
     TRACE("Wayland touch up event: id=%d", id);
 
@@ -71,7 +71,7 @@ static void wl_touch_up(void* data, struct wl_touch* wl_touch, uint32_t serial,
 /** Callback that is called as soon as a touch motion event occurs. Get
  * a separate event for each finger touching and moving on the screen.
  */
-static void wl_touch_motion(void* data, struct wl_touch* wl_touch,
+static void wlTouchMotionClbk(void* data, struct wl_touch* wl_touch,
                             uint32_t time, int32_t id, wl_fixed_t x,
                             wl_fixed_t y) {
     TRACE("Wayland touch motion event: id=%d, x=%f, y=%f", id, wl_fixed_to_double(x),
@@ -84,7 +84,7 @@ static void wl_touch_motion(void* data, struct wl_touch* wl_touch,
 /** Callback that is called as soon as a touch cancel event occurs.
  * Not sure when this actually happens.
 */
-static void wl_touch_cancel(void* data, struct wl_touch* wl_touch) {
+static void wlTouchCancelClbk(void* data, struct wl_touch* wl_touch) {
     TRACE("Wayland touch cancel event");
 }
 
@@ -92,7 +92,7 @@ static void wl_touch_cancel(void* data, struct wl_touch* wl_touch) {
  * Unfortunately don't seem to ever receive this kind of event. If did could
  * use it to implement pressure sensitivity.
  */
-static void wl_touch_shape(void* data, struct wl_touch* wl_touch, int32_t id,
+static void wlTouchShapeClbk(void* data, struct wl_touch* wl_touch, int32_t id,
                            wl_fixed_t major, wl_fixed_t minor) {
     TRACE("Wayland touch shape event: id=%d, major=%f, minor=%f", id,
           wl_fixed_to_double(major), wl_fixed_to_double(minor));
@@ -105,7 +105,7 @@ static void wl_touch_shape(void* data, struct wl_touch* wl_touch, int32_t id,
  * Unfortunately don't seem to ever receive this kind of event. If did could
  * possibly use it to implement something fancy, but doesn't seem that important.
  */
-static void wl_touch_orientation(void* data, struct wl_touch* wl_touch,
+static void wlTouchOrientationClbk(void* data, struct wl_touch* wl_touch,
                                  int32_t id, wl_fixed_t orientation) {
     TRACE("Wayland touch orientation event: id=%d, orientation=%f", id,
           wl_fixed_to_double(orientation));
@@ -117,7 +117,7 @@ static void wl_touch_orientation(void* data, struct wl_touch* wl_touch,
  * is supposed to be when there are multiple touch events aggregated together
  * and that can be processed at once. 
  */
-static void wl_touch_frame(void* data, struct wl_touch* wl_touch) {
+static void wlTouchFrameClbk(void* data, struct wl_touch* wl_touch) {
     struct client_state* client_state = (struct client_state*)data;
     struct touch_event* touchEvent = &client_state->touch_event;
     TRACE("Wayland touch frame event: @ %d", touchEvent->time);
@@ -126,78 +126,65 @@ static void wl_touch_frame(void* data, struct wl_touch* wl_touch) {
 }
 
 static const struct wl_touch_listener wl_touch_listener = {
-    .down = wl_touch_down,
-    .up = wl_touch_up,
-    .motion = wl_touch_motion,
-    .frame = wl_touch_frame,
-    .cancel = wl_touch_cancel,
-    .shape = wl_touch_shape,
-    .orientation = wl_touch_orientation,
+    .down = wlTouchDownClbk,
+    .up = wlTouchUpClbk,
+    .motion = wlTouchMotionClbk,
+    .frame = wlTouchFrameClbk,
+    .cancel = wlTouchCancelClbk,
+    .shape = wlTouchShapeClbk,
+    .orientation = wlTouchOrientationClbk,
 };
 
 /////////// TEXT INPUT STUFF ///////////
 
-/** Listen for enter event to know which surface is focused
+/** To in theory listen for enter event to know which surface is focused,
+ * but never really worked.
  */
-void text_input_enter(void *data, struct zwp_text_input_v3 *text_input,
+void textInputEnterClbk(void *data, struct zwp_text_input_v3 *text_input,
                       struct wl_surface *surface) {
-    TRACE("xxxxxxxxxxxxxxxxxxx Wayland text input enter event");
-
-    // Enable text input for this surface
-    zwp_text_input_v3_enable(text_input);
-    zwp_text_input_v3_commit(text_input);
-
-    // // FIXME
-    // // Set content type/purpose (e.g., normal text)
-    // zwp_text_input_v3_set_content_type(text_input,
-    //                                    ZWP_TEXT_INPUT_V3_CONTENT_HINT_NONE,
-    //                                    ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_NORMAL);
-    
-    // // Update state to apply changes
-    // zwp_text_input_v3_update_state(text_input,
-    //                                ZWP_TEXT_INPUT_V3_UPDATE_STATE_CHANGE_CAUSE_INPUT_METHOD);
-    
-    // // Commit changes to compositor
-    // wl_display_flush(reinterpret_cast<wl_display*>(data));
+    TRACE("Wayland text input enter event");
 }
 
-/** Listen for leave event to know when surface is unfocused 
+/** To in theory listen for leave event to know when surface is unfocused,
+* but never really worked.
  */
-void text_input_leave(void *data, struct zwp_text_input_v3 *text_input,
-                      struct wl_surface *surface) {
-    TRACE("zzzzzzzzzzzzzzzzzzzz Wayland text input leave event");
-
-    // Disable text input for this surface
-    zwp_text_input_v3_disable(text_input);  
+void textInputLeaveClbk(void *data, struct zwp_text_input_v3 *text_input,
+                        struct wl_surface *surface) {
+    TRACE("Wayland text input leave event");
 }
 
-/*
-	void (*commit_string)(void *data,
-			      struct zwp_text_input_v3 *zwp_text_input_v3,
-			      const char *text);
-*/
-void text_input_commit_string(void *data, struct zwp_text_input_v3 *text_input,
-                      const char *text) {
+/* Don't need to use this but need to define it in case it is called */
+void preeditStringClbk(void *data,
+			       struct zwp_text_input_v3 *zwp_text_input_v3,
+			       const char *text,
+			       int32_t cursor_begin,
+			       int32_t cursor_end) {}
+
+/** For when key hit on virtual keyboard */
+void textInputCommitStringClbk(void *data, struct zwp_text_input_v3 *text_input,
+                               const char *text) {
     TRACE("zzzzzzzzzzzzzzzzzzzz Wayland text input commit string event char='%s'", text);
 }
 
-/*
-	void (*done)(void *data,
-		     struct zwp_text_input_v3 *zwp_text_input_v3,
-		     uint32_t serial);
-*/
-void text_input_done(void *data, struct zwp_text_input_v3 *text_input,
-                      uint32_t serial) {
-    TRACE("zzzzzzzzzzzzzzzzzzzz Wayland text input done event");
+/* Don't need to use this but need to define it in case it is called */
+	void deleteSurroundingTextClbk(void *data,
+					struct zwp_text_input_v3 *zwp_text_input_v3,
+					uint32_t before_length,
+					uint32_t after_length){}
+
+/* Don't need to use this but need to define it since it is called */
+void textInputDoneClbk(void *data, struct zwp_text_input_v3 *text_input,
+                       uint32_t serial) {
+    TRACE("Wayland text input done event");
 }
 
 static const struct zwp_text_input_v3_listener text_input_listener = {
-    .enter = text_input_enter,
-    .leave = text_input_leave,
-    .preedit_string = nullptr,
-    .commit_string = text_input_commit_string,
-    .delete_surrounding_text = nullptr,
-    .done = text_input_done
+    .enter = textInputEnterClbk,
+    .leave = textInputLeaveClbk,
+    .preedit_string = preeditStringClbk,
+    .commit_string = textInputCommitStringClbk,
+    .delete_surrounding_text = deleteSurroundingTextClbk,
+    .done = textInputDoneClbk
 };
 
 /////////// SEAT STUFF ///////////
@@ -205,7 +192,7 @@ static const struct zwp_text_input_v3_listener text_input_listener = {
 /** Called when seat capabilities change. Used to determine if should
  * acquire touch interface.
  */
-static void wl_seat_capabilities(void* data, struct wl_seat* wl_seat,
+static void wlSeatCapabilitiesClbk(void* data, struct wl_seat* wl_seat,
                                  uint32_t capabilities) {
     // capabilities indicates if seat has keyboard, pointer, or touch
     TRACE("Setting Wayland seat capabilities: %d", capabilities);
@@ -225,20 +212,20 @@ static void wl_seat_capabilities(void* data, struct wl_seat* wl_seat,
 }
 
 /** Called when seat name is set. Dont need to do anything here */
-static void wl_seat_name(void* data, struct wl_seat* wl_seat,
-                         const char* name) {
+static void wlSeatNameClbk(void* data, struct wl_seat* wl_seat,
+                           const char* name) {
     TRACE("Seat name: %s\n", name);
 }
 
 static const struct wl_seat_listener wl_seat_listener = {
-    .capabilities = wl_seat_capabilities,
-    .name = wl_seat_name,
+    .capabilities = wlSeatCapabilitiesClbk,
+    .name = wlSeatNameClbk,
 };
 
 //////////// REGISTRY STUFF ///////////
 
 // Registry code is copied from https://wayland-book.com/xdg-shell-basics/example-code.html
-static void registry_global(void* data, struct wl_registry* wl_registry,
+static void registryGlobalClbk(void* data, struct wl_registry* wl_registry,
                             uint32_t name, const char* interface,
                             uint32_t version) {
     TRACE("===== Adding Wayland registry global: interface %s (version %d) name %d",
@@ -255,8 +242,7 @@ static void registry_global(void* data, struct wl_registry* wl_registry,
         wl_seat_add_listener(state->wl_seat, &wl_seat_listener, data);
 
         // FIXME Try to get text input manager here too, now that have seat
-        TRACE(
-            "Binding to zwp_text_input_manager_v3 interface");
+        TRACE("Binding to zwp_text_input_manager_v3 interface");
 
         // Set up text input manager
         struct zwp_text_input_manager_v3* text_input_manager =
@@ -277,8 +263,7 @@ static void registry_global(void* data, struct wl_registry* wl_registry,
     // Look for zwp_text_input_manager_v3 interface to get text input support
     // so that can use virtual keyboard on touch devices
     if (strcmp(interface, zwp_text_input_manager_v3_interface.name) == 999) {
-        TRACE(
-            "Binding to zwp_text_input_manager_v3 interface");
+        TRACE("Binding to zwp_text_input_manager_v3 interface");
 
         // Set up text input manager
         struct zwp_text_input_manager_v3* text_input_manager =
@@ -297,14 +282,14 @@ static void registry_global(void* data, struct wl_registry* wl_registry,
 }
 
 /** For when removing something from registry. Don't need to do anything here */
-static void registry_global_remove(void* data, struct wl_registry* wl_registry,
+static void registryGlobalRemoveClbk(void* data, struct wl_registry* wl_registry,
                                    uint32_t name) {
     TRACE("Removing Wayland registry global: %d\n", name);
 }
 
 static const struct wl_registry_listener wl_registry_listener = {
-    .global = registry_global,
-    .global_remove = registry_global_remove,
+    .global = registryGlobalClbk,
+    .global_remove = registryGlobalRemoveClbk,
 };
 
 
