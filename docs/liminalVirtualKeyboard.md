@@ -22,7 +22,7 @@ plus `/` for file names, can start with the email version at
 and `/` next to the `@` key. Also, made the default key width 47.76 instead of 53.76 so that
 the space bar isn't shrunk down too much.
 The following is the resulting yaml file to be stored at 
-`/usr/share/misc/squeekboard/keyboards/us_wide.yaml`:
+`/usr/share/misc/squeekboard/keyboards/us_wide.yaml`. It is also available in the repo at `LiminalRack/res/LiminalRack/us_wide.yaml` .
 
 ```
 ---
