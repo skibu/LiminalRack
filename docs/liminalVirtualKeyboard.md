@@ -19,13 +19,15 @@ See https://world.pages.gitlab.gnome.org/Phosh/squeekboard/tutorial.html
 Since main desire is to have the keys `@` & `.` for email address for VCV Rack login, 
 plus `/` for file names, can start with the email version at 
 `/usr/share/misc/squeekboard/keyboards/email/us_wide.yaml` and modify it to add the `.`
-and `/` next to the `@` key. The following is the resulting yaml file to be stored at 
+and `/` next to the `@` key. Also, made the default key width 47.76 instead of 53.76 so that
+the space bar isn't shrunk down too much.
+The following is the resulting yaml file to be stored at 
 `/usr/share/misc/squeekboard/keyboards/us_wide.yaml`:
 
 ```
 ---
 outlines:
-    default:       { width: 53.76,  height: 42 }
+    default:       { width: 47.76,  height: 42 }
     change-view:   { width: 80.64,  height: 42 }
     change-view-2: { width: 94.08,  height: 42 }
     spaceline:     { width: 188.16, height: 42 }
