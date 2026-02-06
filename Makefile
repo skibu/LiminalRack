@@ -42,7 +42,9 @@ ifdef ARCH_LIN
 
 	LDFLAGS += -Wl,--whole-archive
 	LDFLAGS += -static-libstdc++ -static-libgcc
-	LDFLAGS += dep/lib/libGLEW.a dep/lib/libglfw3.a dep/lib/libjansson.a dep/lib/libcurl.a dep/lib/libssl.a
+	LDFLAGS += dep/lib/libcpptrace.a -lz
+	LDFLAGS += dep/lib/libdwarf.a dep/lib/libGLEW.a dep/lib/libglfw3.a 
+	LDFLAGS += dep/lib/libjansson.a dep/lib/libcurl.a dep/lib/libssl.a
 	LDFLAGS += dep/lib/libcrypto.a dep/lib/libarchive.a dep/lib/libzstd.a dep/lib/libspeexdsp.a
 	LDFLAGS += dep/lib/libsamplerate.a dep/lib/librtmidi.a dep/lib/librtaudio.a
 	LDFLAGS += -Wl,--no-whole-archive
@@ -61,7 +63,13 @@ ifdef ARCH_MAC
 	LDFLAGS += -lpthread -ldl
 	LDFLAGS += -framework SystemConfiguration -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo -framework CoreAudio -framework CoreMIDI -framework AVFoundation
 	LDFLAGS += -Wl,-all_load
-	LDFLAGS += dep/lib/libGLEW.a dep/lib/libglfw3.a dep/lib/libjansson.a dep/lib/libcurl.a dep/lib/libssl.a dep/lib/libcrypto.a -Wl,-load_hidden,dep/lib/libarchive.a -Wl,-load_hidden,dep/lib/libzstd.a dep/lib/libspeexdsp.a dep/lib/libsamplerate.a -Wl,-load_hidden,dep/lib/librtmidi.a -Wl,-load_hidden,dep/lib/librtaudio.a
+	LDFLAGS += dep/lib/libcpptrace.a -lz
+	LDFLAGS += dep/lib/libdwarf.a dep/lib/libGLEW.a dep/lib/libglfw3.a 
+	LDFLAGS += dep/lib/libjansson.a dep/lib/libcurl.a dep/lib/libssl.a 
+	LDFLAGS += dep/lib/libcrypto.a -Wl,-load_hidden,dep/lib/libarchive.a 
+	LDFLAGS += -Wl,-load_hidden,dep/lib/libzstd.a dep/lib/libspeexdsp.a 
+	LDFLAGS += dep/lib/libsamplerate.a -Wl,-load_hidden,dep/lib/librtmidi.a 
+	LDFLAGS += -Wl,-load_hidden,dep/lib/librtaudio.a
 endif
 
 ifdef ARCH_WIN
@@ -73,7 +81,11 @@ ifdef ARCH_WIN
 	LDFLAGS += -Wl,--export-all-symbols
 	LDFLAGS += -Wl,--out-implib,$(TARGET).a
 	LDFLAGS += -Wl,-Bstatic -Wl,--whole-archive
-	LDFLAGS += dep/lib/libglew32.a dep/lib/libglfw3.a dep/lib/libjansson.a dep/lib/libspeexdsp.a dep/lib/libsamplerate.a dep/lib/libarchive.a dep/lib/libzstd.a dep/lib/libcurl.a dep/lib/libssl.a dep/lib/libcrypto.a dep/lib/librtaudio.a dep/lib/librtmidi.a
+	LDFLAGS += dep/lib/libcpptrace.a -lz
+	LDFLAGS += dep/lib/libglew32.a dep/lib/libglfw3.a 
+	LDFLAGS += dep/lib/libjansson.a dep/lib/libspeexdsp.a dep/lib/libsamplerate.a 
+	LDFLAGS += dep/lib/libarchive.a dep/lib/libzstd.a dep/lib/libcurl.a 
+	LDFLAGS += dep/lib/libssl.a dep/lib/libcrypto.a dep/lib/librtaudio.a dep/lib/librtmidi.a
 	LDFLAGS += -Wl,-Bdynamic -Wl,--no-whole-archive
 	LDFLAGS += -lpthread -lopengl32 -lgdi32 -lws2_32 -lcomdlg32 -lole32 -ldsound -lwinmm -lksuser -lshlwapi -lmfplat -lmfuuid -lwmcodecdspuuid -ldbghelp -lcrypt32 -lbcrypt
 endif

@@ -48,6 +48,6 @@
 [submodule "dep/simde"]
 	path = dep/simde
 	url = https://github.com/simd-everywhere/simde.git
-[submodule "dep/boost"]
-	path = dep/boost
-	url = https://github.com/boostorg/boost.git
+[submodule "dep/cpptrace"]
+	path = dep/cpptrace
+	url = https://github.com/jeremy-rifkin/cpptrace.git

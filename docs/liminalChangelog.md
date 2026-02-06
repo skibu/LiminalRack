@@ -1,5 +1,8 @@
 # Liminal Rack Change Log
 
+- 2/5/26
+  - Added lib cpptrace so that logging now outputs really nice and useful stack traces for warnings and errors.
+  
 - 1/23/26
   - Added class PimplAdder so can make Widget classes follow the Pimpl idiom without breaking the ABI.
   - Significant progress on handling touch press/release events.

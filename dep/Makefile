@@ -7,6 +7,7 @@ RACK_DIR ?= ..
 include $(RACK_DIR)/arch.mk
 
 ifdef ARCH_LIN
+	cpptrace = lib/libcpptrace.a
 	glew = lib/libGLEW.a
 	glfw = lib/libglfw3.a
 	jansson = lib/libjansson.a
@@ -21,6 +22,7 @@ ifdef ARCH_LIN
 endif
 
 ifdef ARCH_MAC
+	cpptrace = lib/libcpptrace.a
 	glew = lib/libGLEW.a
 	glfw = lib/libglfw3.a
 	jansson = lib/libjansson.a
@@ -35,6 +37,7 @@ ifdef ARCH_MAC
 endif
 
 ifdef ARCH_WIN
+	cpptrace = lib/libcpptrace.a
 	glew = lib/libglew32.a
 	glfw = lib/libglfw3.a
 	jansson = lib/libjansson.a
@@ -50,7 +53,6 @@ endif
 
 nanovg = include/nanovg.h
 nanosvg = include/nanosvg.h
-boost = include/boost/stacktrace.hpp
 oui-blendish = include/blendish.h
 osdialog = include/osdialog.h
 pffft = include/pffft.h
@@ -59,6 +61,7 @@ ghcfilesystem = include/ghc/filesystem.hpp
 tinyexpr = include/tinyexpr.h
 simde = include/simde
 
+DEPS += $(cpptrace)
 DEPS += $(glew)
 DEPS += $(glfw)
 DEPS += $(jansson)
@@ -70,7 +73,6 @@ DEPS += $(rtmidi)
 DEPS += $(rtaudio)
 DEPS += $(nanovg)
 DEPS += $(nanosvg)
-DEPS += $(boost)
 DEPS += $(oui-blendish)
 DEPS += $(osdialog)
 DEPS += $(pffft)
@@ -87,6 +89,25 @@ include $(RACK_DIR)/dep.mk
 # Targets
 # These targets are all order-only "|" because we usually don't care if a library was built before or after other libraries.
 
+REPO_URL := https://github.com/jeremy-rifkin/cpptrace.git
+REPO_DIR := cpptrace
+
+cpptrace-1.0.4:
+	@if [ ! -d "$(REPO_DIR)" ]; then \
+		echo "Cloning $(REPO_URL) into $(REPO_DIR)..."; \
+		git clone "$(REPO_URL)" "$(REPO_DIR)"; \
+		cd "$(REPO_DIR)"; \
+		git checkout v1.0.4; \
+		mkdir build; \
+		cd ..; \
+	fi
+
+$(cpptrace): | cpptrace-1.0.4
+	mkdir -p cpptrace/build
+	cd cpptrace/build && $(CMAKE) -DCMAKE_BUILD_TYPE=Release ..
+	cd cpptrace/build && $(MAKE)
+	cd cpptrace/build && $(MAKE) install
+
 glew-2.2.0:
 	$(WGET) "https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.tgz"
 	$(SHA256) glew-2.2.0.tgz d4fc82893cfb00109578d0a1a2337fb8ca335b3ceccf97b97e5cc7f08e4353e1
@@ -96,7 +117,11 @@ glew-2.2.0:
 $(glew): | glew-2.2.0
 	cd glew-2.2.0 && mkdir -p build
 	# Increase policy version to support building with Cmake 4
+ifdef ARCH_LIN
 	cd glew-2.2.0/build && $(CMAKE) -DGLEW_EGL=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 cmake
+else
+	cd glew-2.2.0/build && $(CMAKE) -DCMAKE_POLICY_VERSION_MINIMUM=3.5 cmake
+endif
 	$(MAKE) -C glew-2.2.0/build
 	$(MAKE) -C glew-2.2.0/build install
 
@@ -251,10 +276,6 @@ $(nanosvg): $(wildcard nanosvg/src/*.h)
 	mkdir -p include
 	cp $^ include/
 
-$(boost): $(wildcard boost/libs/stacktrace/include/boost/*.h)
-	mkdir -p include/boost
-	cp -R boost/libs/stacktrace/include/boost/stacktrace/ include/boost/
-
 $(oui-blendish): $(wildcard oui-blendish/*.h)
 	mkdir -p include
 	cp $^ include/
@@ -285,7 +306,7 @@ $(simde): simde/simde
 
 # Helpers
 
-src: glew-2.2.0 glfw jansson-2.12 libsamplerate-0.2.1 openssl-3.3.2 curl-8.10.0 zstd-1.5.6 libarchive-3.7.7 rtaudio nanovg nanosvg boost oui-blendish osdialog
+src: cpptrace glew-2.2.0 glfw jansson-2.12 libsamplerate-0.2.1 openssl-3.3.2 curl-8.10.0 zstd-1.5.6 libarchive-3.7.7 rtaudio nanovg nanosvg oui-blendish osdialog
 
 clean:
 	git clean -fdx

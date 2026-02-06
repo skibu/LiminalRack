@@ -7,6 +7,8 @@
 #include <string>
 #include <sched.h>
 #include <thread>
+#include <cpptrace/cpptrace.hpp>
+#include <cpptrace/formatting.hpp>
 
 namespace rack {
 namespace logger {
@@ -175,6 +177,19 @@ static const char* threadColor() { return enableColors ? CYAN : ""; }
 static const char* fileColor() { return enableColors ? MAGENTA : ""; }
 static const char* resetColor() { return enableColors ? RESET_COLOR : ""; }
 
+// This is where the stack trace formatter is configured. The
+// stack trace is logged for WARN or higher level logs.
+// See https://github.com/jeremy-rifkin/cpptrace?tab=readme-ov-file#formatting
+const auto loggingStackTraceFormatter =
+    cpptrace::formatter{}
+        .paths(cpptrace::formatter::path_mode::basename) // Only show filename
+        .symbols(cpptrace::formatter::symbol_mode::pretty)  // Function names
+        .addresses(cpptrace::formatter::address_mode::none) // Ugly so eliminate
+        .colors(cpptrace::formatter::color_mode::always) // Always use colors
+        .snippets(true) // Show source code snippets for each frame
+        .snippet_context(1) // Show 1 line above and below the line in the frame
+        .header("Stack trace:");  // Add a header before stack trace
+
 static void logVa(Level level, const char* filename, int line, const char* func,
                   const char* format, va_list args) {
     if (!outputFile) return;
@@ -226,8 +241,9 @@ static void logVa(Level level, const char* filename, int line, const char* func,
     // If WARN or higher level then also output stack trace so that can
     // understand context of the warning/error
     if (level >= WARN_LEVEL) {
-        std::string stackTrace = system::getStackTrace();
-        std::fprintf(outputFile, "Stack trace:\n%s", stackTrace.c_str());
+        auto stackTraceStr =
+            loggingStackTraceFormatter.format(cpptrace::generate_trace(1));
+        std::fprintf(outputFile, "%s\n-----\n", stackTraceStr.c_str());
     }
 
     // Note: This adds around 10us, but it's important for logging to finish
