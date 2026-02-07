@@ -42,8 +42,8 @@ ifdef ARCH_LIN
 
 	LDFLAGS += -Wl,--whole-archive
 	LDFLAGS += -static-libstdc++ -static-libgcc
-	LDFLAGS += dep/lib/libcpptrace.a -lz
-	LDFLAGS += dep/lib/libdwarf.a dep/lib/libGLEW.a dep/lib/libglfw3.a 
+	LDFLAGS += dep/lib/libcpptrace.a dep/lib/libdwarf.a -lz
+	LDFLAGS += dep/lib/libGLEW.a dep/lib/libglfw3.a 
 	LDFLAGS += dep/lib/libjansson.a dep/lib/libcurl.a dep/lib/libssl.a
 	LDFLAGS += dep/lib/libcrypto.a dep/lib/libarchive.a dep/lib/libzstd.a dep/lib/libspeexdsp.a
 	LDFLAGS += dep/lib/libsamplerate.a dep/lib/librtmidi.a dep/lib/librtaudio.a
@@ -63,8 +63,8 @@ ifdef ARCH_MAC
 	LDFLAGS += -lpthread -ldl
 	LDFLAGS += -framework SystemConfiguration -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo -framework CoreAudio -framework CoreMIDI -framework AVFoundation
 	LDFLAGS += -Wl,-all_load
-	LDFLAGS += dep/lib/libcpptrace.a -lz
-	LDFLAGS += dep/lib/libdwarf.a dep/lib/libGLEW.a dep/lib/libglfw3.a 
+	LDFLAGS += dep/lib/libcpptrace.a dep/lib/libdwarf.a -lz
+	LDFLAGS += dep/lib/libGLEW.a dep/lib/libglfw3.a 
 	LDFLAGS += dep/lib/libjansson.a dep/lib/libcurl.a dep/lib/libssl.a 
 	LDFLAGS += dep/lib/libcrypto.a -Wl,-load_hidden,dep/lib/libarchive.a 
 	LDFLAGS += -Wl,-load_hidden,dep/lib/libzstd.a dep/lib/libspeexdsp.a 
@@ -81,7 +81,7 @@ ifdef ARCH_WIN
 	LDFLAGS += -Wl,--export-all-symbols
 	LDFLAGS += -Wl,--out-implib,$(TARGET).a
 	LDFLAGS += -Wl,-Bstatic -Wl,--whole-archive
-	LDFLAGS += dep/lib/libcpptrace.a -lz
+	LDFLAGS += dep/lib/libcpptrace.a dep/lib/libdwarf.a -lz
 	LDFLAGS += dep/lib/libglew32.a dep/lib/libglfw3.a 
 	LDFLAGS += dep/lib/libjansson.a dep/lib/libspeexdsp.a dep/lib/libsamplerate.a 
 	LDFLAGS += dep/lib/libarchive.a dep/lib/libzstd.a dep/lib/libcurl.a 
