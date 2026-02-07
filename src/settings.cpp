@@ -823,8 +823,6 @@ int getWidgetHeight() {
 }
 
 void initBlendish() {
-    WARN("FIXME - just a test");
-    
     if (isNotVCVRack) {
         setLabelFontSize(bndLabelFontSize);
         setWidgetHeight(bndWidgetHeight);
