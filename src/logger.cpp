@@ -241,8 +241,12 @@ static void logVa(Level level, const char* filename, int line, const char* func,
     // If WARN or higher level then also output stack trace so that can
     // understand context of the warning/error
     if (level >= WARN_LEVEL) {
-        auto stackTraceStr =
-            loggingStackTraceFormatter.format(cpptrace::generate_trace(2));
+        // Skip extra level on Linux due to extra stack frame from
+        // __logging_hook
+        int levelsSkip =
+            (APP_OS == "lin") ? 2 : 1;
+        auto stackTraceStr = loggingStackTraceFormatter.format(
+            cpptrace::generate_trace(levelsSkip));
         std::fprintf(outputFile, "%s\n-----\n", stackTraceStr.c_str());
     }
 
