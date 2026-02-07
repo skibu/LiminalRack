@@ -187,7 +187,7 @@ const auto loggingStackTraceFormatter =
         .addresses(cpptrace::formatter::address_mode::none) // Ugly so eliminate
         .colors(cpptrace::formatter::color_mode::always) // Always use colors
         .snippets(true) // Show source code snippets for each frame
-        .snippet_context(1) // Show 1 line above and below the line in the frame
+        .snippet_context(2) // Show 2 lines above and below the line in the frame
         .header("Stack trace:");  // Add a header before stack trace
 
 static void logVa(Level level, const char* filename, int line, const char* func,
@@ -242,7 +242,7 @@ static void logVa(Level level, const char* filename, int line, const char* func,
     // understand context of the warning/error
     if (level >= WARN_LEVEL) {
         auto stackTraceStr =
-            loggingStackTraceFormatter.format(cpptrace::generate_trace(1));
+            loggingStackTraceFormatter.format(cpptrace::generate_trace(2));
         std::fprintf(outputFile, "%s\n-----\n", stackTraceStr.c_str());
     }
 
