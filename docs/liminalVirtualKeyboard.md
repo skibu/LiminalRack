@@ -60,6 +60,9 @@ you cannot change an existing css specification, like `mix(@theme_base_color, @t
 but you can change the gtk colors such as `@theme_base_color` and `@theme_fg_color`. This will get
 you quite far.
 
+### Cannot change fonts
+At least I could not figure out a way to change the font. It seems to be hardcoded.
+
 ## Specifying keyboard layout via yaml file
 Since main desire is to have the keys `@` & `.` for email address for VCV Rack login, 
 plus `/` for file names, can start with the email version at 
