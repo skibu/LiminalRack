@@ -269,12 +269,11 @@ extern const std::string APP_CPU_NAME;
 extern const std::string API_URL;
 
 
-bool isWindows() { return APP_OS == "win"; }
-bool isMac() { return APP_OS == "mac"; }
-bool isLinux() { return APP_OS == "lin"; }
-bool isX64() { return APP_CPU == "x64"; }
-bool isArm64() { return APP_CPU == "arm64"; }
-
+extern bool isWindows();
+extern bool isMac();
+extern bool isLinux();
+extern bool isX64();
+extern bool isArm64();
 } // namespace rack
 
 

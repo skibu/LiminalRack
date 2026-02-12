@@ -47,5 +47,10 @@ Exception::Exception(const char* format, ...) {
 	va_end(args);
 }
 
+bool isWindows() { return APP_OS == "win"; }
+bool isMac() { return APP_OS == "mac"; }
+bool isLinux() { return APP_OS == "lin"; }
+bool isX64() { return APP_CPU == "x64"; }
+bool isArm64() { return APP_CPU == "arm64"; }
 
 } // namespace rack
