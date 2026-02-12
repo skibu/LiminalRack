@@ -1,10 +1,6 @@
 /* For sq_button font color. Also effects sq_button background.  */
 @define-color theme_fg_color white;
 
-/* For the Return key background color */
-@define-color theme_selected_bg_color #00ff00;
-
-
 sq_view {
     /* Make background a dark wood */
     background-image: url('/home/liminal/vscode-projects/LiminalRack/res/keyboard/wood2.jpg');
@@ -57,13 +53,3 @@ sq_button:active {
 #underbar {
     border-color: #555555;
 }
-
-/* Can't actually seem to change Return key color for unknown reason */
-#Return {
-    /* border-color: #ff0000; */
-}
-
-#Return:active {
-    /* border-color: #00ff00; */
-}
-
