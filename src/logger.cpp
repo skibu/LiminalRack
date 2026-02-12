@@ -58,7 +58,7 @@ void archiveOldLogIfNeeded() {
     if (getLogLevel() > DEBUG_LEVEL) return;
 
     // Can't handle windows for now
-    if (APP_OS == "win") return;
+    if (isWindows()) return;
 
     // Create log archive directory (if needed)
     const std::string oldLogsDir = system::getDirectory(logPath) + "/oldLogs";
@@ -68,7 +68,7 @@ void archiveOldLogIfNeeded() {
     // Determine new log filename, appending create timestamp of file
     const std::string logFilename = system::getFilename(logPath);
     std::string getCreateDateTimeCommand;
-    if (APP_OS == "mac") {
+    if (isMac()) {
         // The -f %SB outputs create date in a custom format specified by -t
         getCreateDateTimeCommand =
             "stat -t \"Date_%F_Time_%H-%M-%S\" -f \"%SB\" \"" + logPath + "\"";
@@ -243,8 +243,7 @@ static void logVa(Level level, const char* filename, int line, const char* func,
     if (level >= WARN_LEVEL) {
         // Skip extra level on Linux due to extra stack frame from
         // __logging_hook
-        int levelsSkip =
-            (APP_OS == "lin") ? 2 : 1;
+        int levelsSkip = isLinux() ? 2 : 1;
         auto stackTraceStr = loggingStackTraceFormatter.format(
             cpptrace::generate_trace(levelsSkip));
         std::fprintf(outputFile, "%s\n-----\n", stackTraceStr.c_str());

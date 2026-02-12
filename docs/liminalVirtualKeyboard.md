@@ -15,7 +15,55 @@ be used in landscape mode. Using `us.yaml` will not work!
 ## Tutorial
 See https://world.pages.gitlab.gnome.org/Phosh/squeekboard/tutorial.html
 
-## Recommended
+## Customizing Squeekboard 
+
+One can really customize the look of Squeekboard keyboard. Was quite hard to figure out 
+how to do so, but with these instructions it is easy to do.
+
+There are two components of configuring the keyboard: 1) the css for visual details like colors; 
+and 2) the yaml file for specifying keyboard layout.
+
+## Setting look via css
+This is the most complicated part. The css has a default, and you cannot override the defaults. 
+But you can override colors, well, sort of.
+
+Since you cannot override default css you need to know where the default is. The style.css file is 
+actually compiled into the squeekboard application. But you can see the source file at
+https://github.com/raspberrypi-ui/squeekboard/blob/master/data/style.css .
+
+### Creating your own css file
+First thing to note is that putting a css file into `~/.config/gtk-3.0/`, contrary to what 
+Mr Google says. Turns out that gtk wipes out that directory on bootup and your css file would 
+simply be erased.
+
+Instead, you need to modify the `/usr/share/themes/<THEME>/gtk-3.0/gtk.css` file to also include your
+custom css file. The way you determine the name of your theme is to use:
+```
+gsettings get org.gnome.desktop.interface gtk-theme
+```
+For my Raspberry Pi the theme turns out to be `PiXonyx` so the include file I needed to edit was 
+`/usr/share/themes/PiXonyx/gtk-3.0/gtk.css`. You should add a line at the end like:
+```
+@import url("~/LiminalRack/res/squeekboardCusomtization.css");
+```
+
+Next you need to create a customized `squeekboardCusomtization.css` file. In that file you
+can override gtk colors (the ones that start with an '@'). You can also specify css directly
+for css elements that were not already set in the compiled in `styles.css` file.
+
+### Changing colors
+If you want to change a color that has already been defined, such as:
+```
+background-color: mix(@theme_base_color, @theme_fg_color, 0.1);
+```
+you cannot change an existing css specification, like `mix(@theme_base_color, @theme_fg_color, 0.1)` 
+but you can change the gtk colors such as `@theme_base_color` and `@theme_fg_color`. This will get
+you quite far.
+
+### Cannot change fonts
+At least I could not figure out a way to change the font. It seems to be hardcoded.
+
+## Specifying keyboard layout via yaml file
 Since main desire is to have the keys `@` & `.` for email address for VCV Rack login, 
 plus `/` for file names, can start with the email version at 
 `/usr/share/misc/squeekboard/keyboards/email/us_wide.yaml` and modify it to add the `.`
@@ -100,3 +148,8 @@ buttons:
         icon: "key-enter"
         keysym: "Return"
 ```
+
+## Testing/Iterating
+You will likely need to make many iterations in order to get the look exactly as you want it.
+To test out your configuration you can using a terminal window kill the `/usr/bin/squeekboard` 
+process and then start it up again using `/usr/bin/squeekboard &`
