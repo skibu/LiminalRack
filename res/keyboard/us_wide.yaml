@@ -12,23 +12,23 @@ outlines:
 
 views:
     base:
-        - "q w e r t y u i o p sp sp sp BackSpace sp"
-        - "a s d f g h j k l sp sp sp sp sp sp left_arrow right_arrow"
-        - "show_upper z x c v b n m sp sp sp sp dash underbar slash at dot"
+        - "sp q w e r t y u i o p sp sp BackSpace sp"
+        - "sp sp sp a s d f g h j k l sp sp sp sp sp sp sp sp sp sp sp left_arrow right_arrow"
+        - "show_upper z x c v b n m sp sp sp sp dash underbar slash at dot sp sp"
         - "show_numbers preferences sp sp sp sp space sp sp sp sp return sp sp"
     upper:
-        - "Q W E R T Y U I O P sp sp sp BackSpace sp"
-        - "A S D F G H J K L sp sp sp sp sp sp left_arrow right_arrow"
-        - "show_upper Z X C V B N M sp sp sp sp dash underbar slash at dot"
+        - "sp Q W E R T Y U I O P sp sp BackSpace sp"
+        - "sp sp sp A S D F G H J K L sp sp sp sp sp sp sp sp sp sp sp left_arrow right_arrow"
+        - "show_upper Z X C V B N M sp sp sp sp dash underbar slash at dot sp sp"
         - "show_numbers preferences sp sp sp sp space sp sp sp sp return sp sp"
     numbers:
-        - "1 2 3 4 5 6 7 8 9 0 sp sp sp BackSpace sp"
-        - "@ # $ % & - _ + ( ) sp sp sp sp sp sp left_arrow right_arrow"
-        - "show_symbols , \" ' : ; ! ? sp sp sp sp dash underbar slash at dot"
+        - "sp 1 2 3 4 5 6 7 8 9 0 sp sp sp BackSpace"
+        - "sp sp sp @ # $ % & - _ + ( ) sp sp left_arrow right_arrow"
+        - "show_symbols , \" ' : ; ! ? sp sp sp sp dash underbar slash at dot sp sp"
         - "show_letters preferences sp sp sp sp space sp sp sp sp return sp sp"
     symbols:
-        - "~ ` | · √ π τ ÷ × ¶ sp sp sp BackSpace sp"
-        - "© ® £ € ¥ ^ ° * { } sp sp sp sp sp sp left_arrow right_arrow"
+        - "sp ~ ` | · √ π τ ÷ × ¶ sp sp BackSpace"
+        - "sp sp sp © ® £ € ¥ ^ ° * { } sp sp left_arrow right_arrow"
         - "show_numbers_from_symbols \\ / < > = [ ]"
         - "show_letters preferences sp sp sp sp space sp sp sp sp return sp sp"
 
