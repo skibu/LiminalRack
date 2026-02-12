@@ -1,0 +1,55 @@
+/* For sq_button font color. Also effects sq_button background.  */
+@define-color theme_fg_color white;
+
+sq_view {
+    /* Make background a dark wood */
+    background-image: url('/home/liminal/vscode-projects/LiminalRack/res/keyboard/wood2.jpg');
+}
+
+sq_view.wide sq_button {
+    /* Font size for all buttons */
+    font-size: 22px;
+
+    /* border for all buttons */
+    border-style: solid;
+    border-width: 1px;
+    border-color: #999999;
+
+    /* Doesn't work 
+    border-radius: 6px;
+    */
+}
+
+/* Border color when button pressed */
+sq_button:active,
+sq_button.altline:active,
+sq_button.special:active,
+sq_button.return:active,
+sq_button:active {
+    border-color: #ff0000;
+}
+
+/* Minimize visibility of spacers */
+#spacer {
+    border-width: 0px;
+}
+
+/* For change keyboard state buttons use a dimmer border to deemphasize button */
+#show_upper,
+#show_numbers,
+#show_letters,
+#show_symbols,
+#show_numbers_from_symbols,
+#preferences,
+#left_arrow,
+#right_arrow,
+#up_arrow,
+#down_arrow,
+#BackSpace,
+#at,
+#dot,
+#slash,
+#dash,
+#underbar {
+    border-color: #555555;
+}
