@@ -1,0 +1,108 @@
+---
+outlines:
+    default:       { width:  48.0, height: 40 }
+    shift:         { width:  50.0, height: 40 }
+    show-numbers:  { width:  60.0, height: 40 }
+    spacebar:      { width: 280.0, height: 40 }
+    preferences:   { width:  35.0, height: 40 }
+    return:        { width:  94.0, height: 40 }
+    backspace:     { width:  56.0, height: 40 }
+    secondary-key: { width:  32.0, height: 40 }
+    spacer:        { width:   4.0, height: 40 }
+
+views:
+    base:
+        - "q w e r t y u i o p sp sp sp BackSpace sp"
+        - "a s d f g h j k l sp sp sp sp sp sp left_arrow right_arrow"
+        - "show_upper z x c v b n m sp sp sp sp dash underbar slash at dot"
+        - "show_numbers preferences sp sp sp sp space sp sp sp sp Return sp sp"
+    upper:
+        - "Q W E R T Y U I O P sp sp sp BackSpace sp"
+        - "A S D F G H J K L sp sp sp sp sp sp left_arrow right_arrow"
+        - "show_upper Z X C V B N M sp sp sp sp dash underbar slash at dot"
+        - "show_numbers preferences sp sp sp sp space sp sp sp sp Return sp sp"
+    numbers:
+        - "1 2 3 4 5 6 7 8 9 0 sp sp sp BackSpace sp"
+        - "@ # $ % & - _ + ( ) sp sp sp sp sp sp left_arrow right_arrow"
+        - "show_symbols , \" ' : ; ! ? sp sp sp sp dash underbar slash at dot"
+        - "show_letters preferences sp sp sp sp space sp sp sp sp Return sp sp"
+    symbols:
+        - "~ ` | · √ π τ ÷ × ¶ sp sp sp BackSpace sp"
+        - "© ® £ € ¥ ^ ° * { } sp sp sp sp sp sp left_arrow right_arrow"
+        - "show_numbers_from_symbols \\ / < > = [ ]"
+        - "show_letters preferences sp sp sp sp space sp sp sp sp Return sp sp"
+
+buttons:
+    show_upper:
+        action:
+            locking:
+                lock_view: "upper"
+                unlock_view: "base"
+        outline: "shift"
+        icon: "key-shift"
+    BackSpace:
+        outline: "backspace"
+        icon: "edit-clear-symbolic"
+        action: "erase"
+    # The world
+    preferences:
+        action: "show_prefs"
+        outline: "preferences"
+        icon: "keyboard-mode-symbolic"
+    show_numbers:
+        action:
+            set_view: "numbers"
+        outline: "show-numbers"
+        label: "123"
+    show_numbers_from_symbols:
+        action:
+            set_view: "numbers"
+        outline: "show-numbers"
+        label: "123"
+    show_letters:
+        action:
+            set_view: "base"
+        outline: "show-numbers"
+        label: "ABC"
+    show_symbols:
+        action:
+            set_view: "symbols"
+        outline: "show-numbers"
+        label: "*/="
+    space:
+        outline: "spacebar"
+        text: " "
+    Return:
+        outline: "return"
+        icon: "key-enter"
+        keysym: "Return"
+    up_arrow:
+        outline: "secondary-key"
+        text: "↑"
+    down_arrow:
+        outline: "secondary-key"
+        text: "↓"
+    left_arrow:
+        outline: "secondary-key"
+        text: "←"
+    right_arrow:
+        outline: "secondary-key"
+        text: "→"
+    at:
+        outline: "secondary-key"
+        text: "@"
+    dot:
+        outline: "secondary-key"
+        text: "."
+    underbar:
+        outline: "secondary-key"
+        text: "_"
+    dash:
+        outline: "secondary-key"
+        text: "-"
+    slash:
+        outline: "secondary-key"
+        text: "/"
+    sp:
+        outline: "spacer"
+        text: ""
