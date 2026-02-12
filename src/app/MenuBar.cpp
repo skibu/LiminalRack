@@ -1609,7 +1609,7 @@ struct MenuBar : widget::OpaqueWidget {
 		infoLabel = new InfoLabel();
 		infoLabel->setWidth(600);
 		infoLabel->setAlignment(ui::Label::RIGHT_ALIGNMENT);
-        infoLabel->setFontSize(16);
+        infoLabel->setFontSize(settings::bndLabelFontSize * 0.65);
         infoLabel->setFontFaceOverride(settings::systemMonospacedFontFileName);
         // Lower a bit so alignts vertically with menu buttons
         infoLabel->setYOffset(7);
