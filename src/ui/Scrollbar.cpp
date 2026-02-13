@@ -2,6 +2,7 @@
 #include <ui/ScrollWidget.hpp>
 #include <context.hpp>
 #include <window/Window.hpp>
+#include <settings.hpp>
 
 
 namespace rack {
@@ -19,7 +20,12 @@ struct Scrollbar::Internal {
 
 Scrollbar::Scrollbar() {
     internal_ = new Internal;
-	setSize(BND_SCROLLBAR_WIDTH, BND_SCROLLBAR_HEIGHT);
+    if (settings::hasTouchscreen) {
+        // For touch screens use wider scrollbar handles so easier to touch
+        setSize(BND_SCROLLBAR_WIDTH * 1.4, BND_SCROLLBAR_HEIGHT * 1.4);
+    } else {
+        setSize(BND_SCROLLBAR_WIDTH, BND_SCROLLBAR_HEIGHT);
+    }
 }
 
 
