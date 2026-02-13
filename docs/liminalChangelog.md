@@ -1,5 +1,10 @@
 # Liminal Rack Change Log
 
+- 2/12/26
+  - For touchscreens wider easier to grab scrollbars.
+  - Scrollbars are color green when active
+  - Really nice squeekboard virtual keyboard for touch screens
+
 - 2/5/26
   - Added lib cpptrace so that logging now outputs really nice and useful stack traces for warnings and errors.
   
