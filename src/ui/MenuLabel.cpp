@@ -24,10 +24,10 @@ void MenuLabel::draw(const DrawArgs& args) {
             color::brightness(theme_bg) > 0.2
                 ?
                 // Theme bg is dark so make label background lighter
-                color::plus(theme_bg, nvgRGB(45, 45, 45))
+                color::plus(theme_bg, nvgRGB(30, 30, 30))
                 :
                 // Theme bg is reasonably light so make label background darker
-                color::minus(theme_bg, nvgRGB(45, 45, 45));
+                color::minus(theme_bg, nvgRGB(30, 30, 30));
 
         // Determine the box for drawing background of label
         float width = getWidth();
