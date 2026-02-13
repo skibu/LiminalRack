@@ -64,3 +64,10 @@ git push
 # If push failed due to detached head then do:
 git push origin HEAD:master
 ```
+
+## Updating dependencies to latest commits
+If one makes a change in a dependency file and check it in one still has to update all checked out versions.
+```
+cd LiminalRack
+git submodule update --remote --recursive
+```
