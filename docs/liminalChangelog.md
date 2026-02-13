@@ -2,7 +2,7 @@
 
 - 2/12/26
   - For touchscreens wider easier to grab scrollbars.
-  - Scrollbars are color green when active
+  - Scrollbars, text fields, and sliders now colored green when active. This way it is easier to see what is being modified.
   - Really nice squeekboard virtual keyboard for touch screens
 
 - 2/5/26
