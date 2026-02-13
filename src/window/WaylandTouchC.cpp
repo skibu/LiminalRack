@@ -141,40 +141,40 @@ static const struct wl_touch_listener wl_touch_listener = {
 /** To in theory listen for enter event to know which surface is focused,
  * but never really worked.
  */
-void textInputEnterClbk(void* data, struct zwp_text_input_v3* text_input,
-                        struct wl_surface* surface) {
+static void textInputEnterClbk(void* data, struct zwp_text_input_v3* text_input,
+                               struct wl_surface* surface) {
     TRACE("Wayland text input enter event");
 }
 
 /** To in theory listen for leave event to know when surface is unfocused,
  * but never really worked.
  */
-void textInputLeaveClbk(void* data, struct zwp_text_input_v3* text_input,
-                        struct wl_surface* surface) {
+static void textInputLeaveClbk(void* data, struct zwp_text_input_v3* text_input,
+                               struct wl_surface* surface) {
     TRACE("Wayland text input leave event");
 }
 
 /* Don't need to use this but need to define it in case it is called */
-void preeditStringClbk(void* data, struct zwp_text_input_v3* zwp_text_input_v3,
-                       const char* text, int32_t cursor_begin,
-                       int32_t cursor_end) {}
+static void preeditStringClbk(void* data, struct zwp_text_input_v3* zwp_text_input_v3,
+                              const char* text, int32_t cursor_begin,
+                              int32_t cursor_end) {}
 
 /** For when key hit on virtual keyboard */
-void textInputCommitStringClbk(void* data, struct zwp_text_input_v3* text_input,
-                               const char* text) {
+static void textInputCommitStringClbk(void* data, struct zwp_text_input_v3* text_input,
+                                      const char* text) {
     TRACE(
         "zzzzzzzzzzzzzzzzzzzz Wayland text input commit string event char='%s'",
         text);
 }
 
 /* Don't need to use this but need to define it in case it is called */
-void deleteSurroundingTextClbk(void* data,
-                               struct zwp_text_input_v3* zwp_text_input_v3,
-                               uint32_t before_length, uint32_t after_length) {}
+static void deleteSurroundingTextClbk(void* data,
+                                      struct zwp_text_input_v3* zwp_text_input_v3,
+                                      uint32_t before_length, uint32_t after_length) {}
 
 /* Don't need to use this but need to define it since it is called */
-void textInputDoneClbk(void* data, struct zwp_text_input_v3* text_input,
-                       uint32_t serial) {
+static void textInputDoneClbk(void* data, struct zwp_text_input_v3* text_input,
+                              uint32_t serial) {
     TRACE("Wayland text input done event");
 }
 
@@ -213,7 +213,7 @@ static void wlSeatCapabilitiesClbk(void* data, struct wl_seat* wl_seat,
 /** Called when seat name is set. Dont need to do anything here */
 static void wlSeatNameClbk(void* data, struct wl_seat* wl_seat,
                            const char* name) {
-    TRACE("Seat name: %s\n", name);
+    TRACE("Seat name: %s", name);
 }
 
 static const struct wl_seat_listener wl_seat_listener = {
@@ -223,13 +223,14 @@ static const struct wl_seat_listener wl_seat_listener = {
 
 //////////// REGISTRY STUFF ///////////
 
-// Registry code is copied from
-// https://wayland-book.com/xdg-shell-basics/example-code.html
+static uint32_t zwp_text_input_manager_v3_interface_name_g;
+static uint32_t zwp_text_input_manager_v3_interface_version_g;
+
 static void registryGlobalClbk(void* data, struct wl_registry* wl_registry,
                                uint32_t name, const char* interface,
                                uint32_t version) {
     TRACE(
-        "===== Adding Wayland registry global: interface %s (version %d) name "
+        "======== Adding Wayland registry global: interface %s (version %d) name "
         "%d",
         interface, version, name);
 
@@ -243,43 +244,16 @@ static void registryGlobalClbk(void* data, struct wl_registry* wl_registry,
               interface, version);
         wl_seat_add_listener(state->wl_seat, &wl_seat_listener, data);
 
-        // FIXME Try to get text input manager here too, now that have seat
-        TRACE("Binding to zwp_text_input_manager_v3 interface");
-
-        // Set up text input manager
-        struct zwp_text_input_manager_v3* text_input_manager =
-            (struct zwp_text_input_manager_v3*)wl_registry_bind(
-                state->wl_registry, 14 /*name*/,
-                &zwp_text_input_manager_v3_interface, 1 /*version*/);
-
-        // Create text input object and add listener
-        struct zwp_text_input_v3* text_input =
-            zwp_text_input_manager_v3_get_text_input(text_input_manager,
-                                                     state->wl_seat);
-        zwp_text_input_v3_add_listener(text_input, &text_input_listener,
-                                       state->wl_display);
-
         return;
     }
 
     // Look for zwp_text_input_manager_v3 interface to get text input support
     // so that can use virtual keyboard on touch devices
-    if (strcmp(interface, zwp_text_input_manager_v3_interface.name) == 999) {
-        TRACE("Binding to zwp_text_input_manager_v3 interface");
+    if (strcmp(interface, zwp_text_input_manager_v3_interface.name) == 0) {
+        TRACE("Storing zwp_text_input_manager_v3 interface info");
 
-        // Set up text input manager
-        struct zwp_text_input_manager_v3* text_input_manager =
-            (struct zwp_text_input_manager_v3*)wl_registry_bind(
-                state->wl_registry, name, &zwp_text_input_manager_v3_interface,
-                version);
-
-        // Create text input object and add listener
-        struct zwp_text_input_v3* text_input =
-            zwp_text_input_manager_v3_get_text_input(text_input_manager,
-                                                     state->wl_seat);
-        zwp_text_input_v3_add_listener(text_input, &text_input_listener,
-                                       state->wl_display);
-
+        zwp_text_input_manager_v3_interface_name_g = name;
+        zwp_text_input_manager_v3_interface_version_g = version;
         return;
     }
 }
@@ -308,8 +282,27 @@ void waylandMultitouchInit() {
     static struct client_state state = {};
     state.wl_display = _glfw.wl.display;
     state.wl_registry = wl_display_get_registry(state.wl_display);
+
+    // Add listener to get seat info
     wl_registry_add_listener(state.wl_registry, &wl_registry_listener, &state);
     wl_display_roundtrip(state.wl_display);
+
+    // Get text input manager, now that have seat
+    TRACE("Binding to zwp_text_input_manager_v3 interface");
+
+    // Set up text input manager
+    struct zwp_text_input_manager_v3* text_input_manager =
+        (struct zwp_text_input_manager_v3*)wl_registry_bind(
+            state.wl_registry, zwp_text_input_manager_v3_interface_name_g,
+            &zwp_text_input_manager_v3_interface, 
+            zwp_text_input_manager_v3_interface_version_g);
+
+    // Create text input object and add listener
+    struct zwp_text_input_v3* text_input =
+        zwp_text_input_manager_v3_get_text_input(text_input_manager,
+                                                    state.wl_seat);
+    zwp_text_input_v3_add_listener(text_input, &text_input_listener,
+                                    state.wl_display);
 
     DEBUG("Done initializing Wayland touch support.");
 }

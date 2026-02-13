@@ -78,16 +78,20 @@ buttons:
         keysym: "Return"
     up_arrow:
         outline: "secondary-key"
-        text: "↑"
+        label: "↑"
+        keysym: "Up"
     down_arrow:
         outline: "secondary-key"
-        text: "↓"
+        label: "↓"
+        keysym: "Down"
     left_arrow:
         outline: "secondary-key"
-        text: "←"
+        label: "←"
+        keysym: "Left"
     right_arrow:
         outline: "secondary-key"
-        text: "→"
+        label: "→"
+        keysym: "Right"
     at:
         outline: "secondary-key"
         text: "@"

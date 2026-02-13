@@ -26,8 +26,8 @@ void Liminal::configAsLiminal() {
     // rack::settings::windowMaximized = true;
 
     // So that menus are bigger and easier tp use with touch screen
-    rack::settings::bndLabelFontSize = 26; // Increase font size for touch screen
-    rack::settings::bndWidgetHeight = rack::settings::bndLabelFontSize + 8; // Increase widget height for touch screen
+    rack::settings::bndLabelFontSize = 34; // Increase font size for touch screen
+    rack::settings::bndWidgetHeight = rack::settings::bndLabelFontSize + 6; // Increase widget height for touch screen
 }
 
 
