@@ -102,7 +102,6 @@ class FileButton : public MenuButton {
         ui::Menu* menu = createMenu();
         menu->setCornerFlags(BND_CORNER_TOP);
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
-        menu->addChild(new ui::MenuSeparator);
 
         menu->addChild(
             createMenuItem(string::translate("MenuBar.file.open"),
@@ -189,8 +188,6 @@ class EditButton : public MenuButton {
         menu->setCornerFlags(BND_CORNER_TOP);
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
 
-		menu->addChild(new ui::MenuSeparator);
-
         class UndoItem : public ui::MenuItem {
            public:
             UndoItem(const std::string& text, const std::string& name = "")
@@ -220,39 +217,46 @@ class EditButton : public MenuButton {
                 : ui::MenuItem(text, name) {}
 
             private:
-			void step() override {
-				bool canRedo = getHistory()->canRedo();
-				setText(canRedo ? string::f(string::translate("MenuBar.edit.redoAction"), getHistory()->getRedoName()) : string::translate("MenuBar.edit.redo"));
-				setDisabled(!canRedo);
-				MenuItem::step();
-			}
-			void onAction(const ActionEvent& e) override {
+             void step() override {
+                 bool canRedo = getHistory()->canRedo();
+                 setText(canRedo ? string::f(string::translate(
+                                                 "MenuBar.edit.redoAction"),
+                                             getHistory()->getRedoName())
+                                 : string::translate("MenuBar.edit.redo"));
+                 setDisabled(!canRedo);
+                 MenuItem::step();
+             }
+            void onAction(const ActionEvent& e) override {
 				getHistory()->redo();
 			}
 		};
-		menu->addChild(createMenuItem<RedoItem>("", widget::getKeyCommandName(GLFW_KEY_Z, RACK_MOD_CTRL | GLFW_MOD_SHIFT)));
+        menu->addChild(createMenuItem<RedoItem>(
+            "", widget::getKeyCommandName(GLFW_KEY_Z,
+                                          RACK_MOD_CTRL | GLFW_MOD_SHIFT)));
 
-		menu->addChild(createMenuItem(string::translate("MenuBar.edit.clearCables"), "", [=]() {
-			getPatch()->disconnectDialog();
-		}));
+        menu->addChild(
+            createMenuItem(string::translate("MenuBar.edit.clearCables"), "",
+                           [=]() { getPatch()->disconnectDialog(); }));
 
+        menu->addChild(new ui::MenuSeparator);
+
+        // Add button for adding a module by opening up the local module browser
+        menu->addChild(createMenuItem(
+            string::translate("MenuBar.library.addModuleToRack"), "",
+            [=]() { getScene()->getBrowserOverlay()->show(); }));
+
+        // Add select all modules button
+        menu->addChild(createMenuItem(
+            string::translate("RackWidget.selectAll"),
+            widget::getKeyCommandName(GLFW_KEY_A, RACK_MOD_CTRL),
+            [=]() { getRack()->selectAll(); }, false, true));
+
+        // Add module related menu items
 		menu->addChild(new ui::MenuSeparator);
+        menu->addChild(createMenuLabel(
+            string::translate("MenuBar.edit.moduleContextMenuHeader")));
 
-		// Add button for adding a module by opening up the local module browser
-		menu->addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "", [=]() {
-			getScene()->getBrowserOverlay()->show();
-		}));
-
-		// Add select all modules button
-    	menu->addChild(createMenuItem(
-        string::translate("RackWidget.selectAll"),
-        widget::getKeyCommandName(GLFW_KEY_A, RACK_MOD_CTRL), [=]() { getRack()->selectAll(); }, false, true));
-
-		// Add module related menu items
-		menu->addChild(new ui::MenuSeparator);
-		menu->addChild(createMenuLabel(string::translate("MenuBar.edit.moduleContextMenuHeader")));
-
-		// Append context menu for the module so user can affect it
+        // Append context menu for the module so user can affect it
 		getRack()->appendSelectionContextMenu(menu);
 	}
 };
@@ -560,7 +564,6 @@ class ViewButton : public MenuButton {
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
 
         // Add Window category menu label (inactive)
-        menu->addChild(new ui::MenuSeparator);
         menu->addChild(
             createMenuLabel(string::translate("MenuBar.view.window")));
 
@@ -1012,8 +1015,6 @@ class EngineButton : public MenuButton {
         menu->setCornerFlags(BND_CORNER_TOP);
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
 
-        menu->addChild(new ui::MenuSeparator);
-
         std::string cpuMeterText =
             widget::getKeyCommandName(GLFW_KEY_F3, 0);
         if (settings::cpuMeter) cpuMeterText += " " CHECKMARK_STRING;
@@ -1157,18 +1158,20 @@ struct SyncUpdateItem : ui::MenuItem {
 
 		ui::Menu* menu = new ui::Menu;
 
-		if (update.minRackVersion != "") {
-			menu->addChild(createMenuLabel(string::f(string::translate("MenuBar.library.requiresRack"), update.minRackVersion)));
-		}
+        if (update.minRackVersion != "") {
+            menu->addChild(createMenuLabel(
+                string::f(string::translate("MenuBar.library.requiresRack"),
+                          update.minRackVersion)));
+        }
 
-		if (update.changelogUrl != "") {
-			std::string changelogUrl = update.changelogUrl;
-			menu->addChild(createMenuItem(string::translate("MenuBar.library.changelog"), "", [=]() {
-				system::openBrowser(changelogUrl);
-			}));
-		}
+        if (update.changelogUrl != "") {
+            std::string changelogUrl = update.changelogUrl;
+            menu->addChild(createMenuItem(
+                string::translate("MenuBar.library.changelog"), "",
+                [=]() { system::openBrowser(changelogUrl); }));
+        }
 
-		if (menu->getChildren().empty()) {
+        if (menu->getChildren().empty()) {
 			delete menu;
 			return NULL;
 		}
@@ -1197,18 +1200,18 @@ struct SyncUpdateItem : ui::MenuItem {
 				isDisabled = true;
 			}
 			else if (slug == library::getUpdateSlug()) {
-				setRightText(string::f("%.0f%%", library::getUpdateProgress() * 100.f));
-			}
-			else {
-				std::string rt = "";
+                setRightText(
+                    string::f("%.0f%%", library::getUpdateProgress() * 100.f));
+            } else {
+                std::string rt = "";
 				plugin::Plugin* p = plugin::getPlugin(slug);
 				if (p) {
 					rt += p->version + " → ";
 				}
 				rt += update.version;
 				setRightText(rt);
-			}
-		}
+            }
+        }
 
 		setDisabled(isDisabled);
 
@@ -1252,9 +1255,9 @@ struct LibraryMenu : ui::Menu {
 		// If user not logged in to VCV then they need to log in first
 		else if (!library::isLoggedIn()) {
             // Create menu item for registering a new account on VCV website
-			addChild(createMenuItem(string::translate("MenuBar.library.register"), "", [=]() {
-				system::openBrowser("https://vcvrack.com/login");
-			}));
+            addChild(createMenuItem(
+                string::translate("MenuBar.library.register"), "",
+                [=]() { system::openBrowser("https://vcvrack.com/login"); }));
 
             // Create separator before email and password fields
             addChild(new ui::MenuSeparator);
@@ -1268,9 +1271,10 @@ struct LibraryMenu : ui::Menu {
 
             // Create password field
 			AccountPasswordField* passwordField = new AccountPasswordField();
-			passwordField->setPlaceholder(string::translate("MenuBar.library.password"));
-			passwordField->setWidth(390.0);
-			passwordField->setNextField(emailField);
+            passwordField->setPlaceholder(
+                string::translate("MenuBar.library.password"));
+            passwordField->setWidth(390.0);
+            passwordField->setNextField(emailField);
 			emailField->setNextField(passwordField);
 			addChild(passwordField);
 
@@ -1283,25 +1287,25 @@ struct LibraryMenu : ui::Menu {
 		}
 		// The regular module library options for when user is logged in
 		else {
-			addChild(createMenuItem(string::translate("MenuBar.library.addModuleToRack"), "", [=]() {
-				getScene()->getBrowserOverlay()->show();
-			}));
+            addChild(createMenuItem(
+                string::translate("MenuBar.library.addModuleToRack"), "",
+                [=]() { getScene()->getBrowserOverlay()->show(); }));
 
-			addChild(new ui::MenuSeparator);
+            addChild(new ui::MenuSeparator);
 
-			addChild(createMenuItem(string::translate("MenuBar.library.browse"), "", [=]() {
-				system::openBrowser("https://library.vcvrack.com/");
-			}));
+            addChild(createMenuItem(
+                string::translate("MenuBar.library.browse"), "", [=]() {
+                    system::openBrowser("https://library.vcvrack.com/");
+                }));
 
-			addChild(createMenuItem(string::translate("MenuBar.library.account"), "", [=]() {
-				system::openBrowser("https://vcvrack.com/account");
-			}));
+            addChild(createMenuItem(
+                string::translate("MenuBar.library.account"), "",
+                [=]() { system::openBrowser("https://vcvrack.com/account"); }));
 
-			addChild(createMenuItem(string::translate("MenuBar.library.logOut"), "", [=]() {
-				library::logOut();
-			}));
+            addChild(createMenuItem(string::translate("MenuBar.library.logOut"),
+                                    "", [=]() { library::logOut(); }));
 
-			addChild(new ui::MenuSeparator);
+            addChild(new ui::MenuSeparator);
 
 			// Add menu item to sync updates from VCV Rack library
 			SyncUpdatesItem* syncItem = new SyncUpdatesItem;
@@ -1310,10 +1314,11 @@ struct LibraryMenu : ui::Menu {
 
 			// Add buttons for updating individual collections of modules
 			if (!library::getUpdateInfos().empty()) {
-				addChild(new ui::MenuSeparator);
-				addChild(createMenuLabel(string::translate("MenuBar.library.updates")));
+                addChild(new ui::MenuSeparator);
+                addChild(createMenuLabel(
+                    string::translate("MenuBar.library.updates")));
 
-				for (auto& pair : library::getUpdateInfos()) {
+                for (auto& pair : library::getUpdateInfos()) {
 					SyncUpdateItem* updateItem = new SyncUpdateItem;
 					updateItem->setUpdate(pair.first);
 					addChild(updateItem);
@@ -1343,8 +1348,6 @@ class LibraryButton : public MenuButton {
 		menu->setCornerFlags(BND_CORNER_TOP);
 		menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
 
-		menu->addChild(new ui::MenuSeparator);
-
 		// Check for updates when menu is opened
 		if (!settings::devMode) {
 			std::thread t([&]() {
@@ -1362,13 +1365,15 @@ class LibraryButton : public MenuButton {
 		// Popup when updates finish downloading
 		if (library::isRestartRequested()) {
 			library::clearRestartRequest();
-			if (osdialog_message(OSDIALOG_INFO, OSDIALOG_OK_CANCEL, string::translate("MenuBar.library.restart").c_str())) {
-				getWindow()->close();
-				settings::restart = true;
-			}
-		}
+            if (osdialog_message(
+                    OSDIALOG_INFO, OSDIALOG_OK_CANCEL,
+                    string::translate("MenuBar.library.restart").c_str())) {
+                getWindow()->close();
+                settings::restart = true;
+            }
+        }
 
-		MenuButton::step();
+        MenuButton::step();
 	}
 };
 
@@ -1395,8 +1400,6 @@ class HelpButton : public MenuButton {
         ui::Menu* menu = createMenu();
         menu->setCornerFlags(BND_CORNER_TOP);
         menu->setPos(getInSceneCoords(math::Vec(0, getHeight())));
-
-        menu->addChild(new ui::MenuSeparator);
 
         menu->addChild(createSubmenuItem(
             "🌐 " + string::translate("MenuBar.help.language"), "",
