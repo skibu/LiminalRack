@@ -344,7 +344,9 @@ Window::Window() {
 		glfwSetWindowPos(glfWin_, settings::windowPos.getX(), settings::windowPos.getY());
 	}
 	if (settings::windowMaximized) {
-		glfwMaximizeWindow(glfWin_);
+        // Note: this does not put window into full screen mode. It only
+        // maximizes its size.
+		// FIXME glfwMaximizeWindow(glfWin_);
 	}
 	glfwShowWindow(glfWin_);
 
@@ -792,38 +794,75 @@ void Window::setFullScreen(bool fullScreen) {
     settings::windowMaximized = fullScreen;
 
     if (!fullScreen) {
-        // Put window into regular non-full screen mode
-        INFO("Taking main window out of full screen mode");
+        // Take window out of full screen mode
+        if (settings::hasTouchscreen) {
+            DEBUG("Adding back window decorations");
+            glfwSetWindowAttrib(glfWin_, GLFW_DECORATED, GLFW_TRUE);
+            glfwSetWindowAttrib(glfWin_, GLFW_RESIZABLE, GLFW_TRUE);
+        }
+
+        // Put window into regular non-full screen mode and restore to its
+        // previous position and size.
+        INFO("Taking main window out of full screen/maximize mode");
         glfwSetWindowMonitor(glfWin_, NULL, internal_->lastWindowX_,
                              internal_->lastWindowY_,
                              internal_->lastWindowWidth_,
                              internal_->lastWindowHeight_, GLFW_DONT_CARE);
 
         // Show menu bar
-        DEBUG("setFullScreen(false) so showing menu bar");
         getScene()->getMenuBar()->show();
     } else {
-        // Put window into full screen mode
-        INFO("Putting main window into full screen mode");
+        // Store current position and size of window so can be restored to later
         glfwGetWindowPos(glfWin_, &internal_->lastWindowX_,
                          &internal_->lastWindowY_);
         glfwGetWindowSize(glfWin_, &internal_->lastWindowWidth_,
                           &internal_->lastWindowHeight_);
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-        glfwSetWindowMonitor(glfWin_, monitor, 0, 0, mode->width, mode->height,
-                             mode->refreshRate);
+
+        // Put window into full screen mode
+        if (settings::hasTouchscreen) {
+            // With touchscreen need a virtual keyboard. But the Squeekboard
+            // keyboard is displayed at a lower level than a full screen window.
+            // Therefore for the virtual keyboard to be visible need to put the
+            // window into maximize mode instead of full screen mode. Also
+            // need to first remove window decorations so actually looks 
+            // full screen.
+            INFO("Put main window into maximize mode since has touchscreen");
+            glfwSetWindowAttrib(glfWin_, GLFW_DECORATED, GLFW_FALSE);
+            glfwSetWindowAttrib(glfWin_, GLFW_RESIZABLE, GLFW_FALSE);
+            // FIXME following needed?
+            glfwSetWindowAttrib(glfWin_, GLFW_MAXIMIZED, GLFW_FALSE);
+            glfwSetWindowAttrib(glfWin_, GLFW_FLOATING, GLFW_FALSE);
+
+            // Get size of monitor
+            GLFWmonitor* monitor = glfwGetWindowMonitor(glfWin_);
+            if (!monitor)
+                monitor = glfwGetPrimaryMonitor();
+            const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
+            glfwSetWindowMonitor(glfWin_, NULL, 0, 0, vidmode->width, vidmode->height, GLFW_DONT_CARE);
+
+            //glfwMaximizeWindow(glfWin_);
+        } else {
+            INFO("Putting main window into full screen mode");
+            GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+            const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+            glfwSetWindowMonitor(glfWin_, monitor, 0, 0, mode->width,
+                                 mode->height, mode->refreshRate);
+        }
 
         // Hide menu bar
-        DEBUG("setFullScreen(true) so hiding menu bar");
         getScene()->getMenuBar()->hide();
     }
 }
 
 bool Window::isFullScreen() {
-	// Return whether main window is in full screen mode
-	GLFWmonitor* monitor = glfwGetWindowMonitor(glfWin_);
-	return monitor != NULL;
+    if (settings::hasTouchscreen) {
+        // When have touchscreen then use maximized instead of full screen mode
+        return settings::windowMaximized;
+    } else {
+        // Return whether main window is in full screen mode
+        GLFWmonitor* monitor = glfwGetWindowMonitor(glfWin_);
+        return monitor != NULL;
+    }
 }
 
 math::Vec Window::getLastMousePos() {
