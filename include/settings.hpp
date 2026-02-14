@@ -58,7 +58,7 @@ extern NVGcolor selectModuleFillColor;
 /** Color for when selecting modules. Not stored in json file. */
 extern NVGcolor selectModuleStrokeColor;
 
-/** Whether the window is maximized */
+/** Whether the window is in full screen/maximized mode */
 extern bool windowMaximized;
 
 /** True if a fork of VCV Rack and things need to be done differently */
