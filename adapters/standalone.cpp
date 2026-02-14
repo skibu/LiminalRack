@@ -89,7 +89,7 @@ static void initUI() {
 
     // If was in full screen mode previously go right into full screen mode
     if (settings::windowMaximized) {
-        INFO("Putting window into full screen mode");
+        INFO("Putting window into full screen as part of UI initialization");
         getWindow()->setFullScreen(true);
     }
 }
