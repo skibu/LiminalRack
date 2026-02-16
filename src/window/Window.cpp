@@ -325,14 +325,13 @@ Window::Window() {
 	glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
 #endif
 
-    // Determine monitor to use for creating the window. If window to be in full
-    // screen mode then need to set the monitor.
-    GLFWmonitor* monitor = nullptr;
-    if (settings::windowMaximized) {
-        monitor = getMonitorToUse();
-    }
+    // Determine monitor to use for creating the window
+    GLFWmonitor* monitor = getMonitorToUse();
 
-    // Create the window
+    // Create the window. Specify the monitor so window displayed on proper
+    // monitor. Note: specifying the monitor also means that the window will be
+    // created in full screen mode, but we will change it to windowed mode later
+    // if not starting in full screen mode.
     glfWin_ = glfwCreateWindow(settings::windowSize.getX(),
                                settings::windowSize.getY(), "Temporary title",
                                monitor, nullptr /* share */);
@@ -352,23 +351,24 @@ Window::Window() {
                             WINDOW_SIZE_MIN.getY(), GLFW_DONT_CARE,
                             GLFW_DONT_CARE);
 
-    // Restore window position. But if Linux then using Wayland and cannot do so. Also, don't need
-    // to restore position if window is maximized/full screen.
-    if (!isLinux() && !isFullScreen() &&
+    // Restore window position. But if using Wayland and cannot do so. Also,
+    // don't need to restore position if window is maximized/full screen.
+    if (!isWayland() && !isFullScreen() &&
         settings::windowPos.getX() > -32000 &&
         settings::windowPos.getY() > -32000) {
         glfwSetWindowPos(glfWin_, settings::windowPos.getX(),
                          settings::windowPos.getY());
     }
 
-    if (settings::windowMaximized) {
-        // Note: this does not put window into full screen mode. It only
-        // maximizes its size.
-        DEBUG("Maximizing window at startup");
-		glfwMaximizeWindow(glfWin_);
-	}
+    // Created window in full screen mode since specified monitor when
+    // creating window, but if not starting in full screen mode then take
+    // window out of full screen mode.
+    if (!settings::windowMaximized) {
+        INFO("Taking window out of full screen mode at startup");
+        setFullScreen(false);
+    }
 
-	glfwShowWindow(glfWin_);
+    glfwShowWindow(glfWin_);
 
 	glfwSetWindowUserPointer(glfWin_, contextGet());
 	glfwSetInputMode(glfWin_, GLFW_LOCK_KEY_MODS, 1);
@@ -482,13 +482,12 @@ Window::~Window() {
 
 GLFWmonitor* Window::getMonitorToUse() {
     GLFWmonitor* monitor = getMonitorToUse_();
-    // FIXME Should be DEBUG, but for now want stack traces to see how things work
-    WARN("Using monitor: %s", glfwGetMonitorName(monitor));
+    DEBUG("Using monitor: %s", glfwGetMonitorName(monitor));
     return monitor;
 }
 
 GLFWmonitor* Window::getMonitorToUse_() {
-    if (!settings::monitorName.empty()) {
+    if (settings::monitorName.empty()) {
         // There is no previously used monitor. Therefore determine most
         // appropriate monitor to use.
         int monitorCount;
@@ -870,12 +869,14 @@ void Window::setFullScreen(bool fullScreen) {
     // Remember full screen state
     settings::windowMaximized = fullScreen;
 
-    if (!fullScreen) { // Take window out of full screen mode
-        // If have touchscreen then need to add back window decorations that
+    if (!fullScreen) { // Take window out of full screen 
+        INFO("Taking main window out of full screen/maximize mode...");
+
+        // If usomg Wayland & touchscreen then need to add back window decorations that
         // were removed to make it look full screen, since with touchscreen we
         // use maximize mode instead of full screen mode.
-        if (settings::hasTouchscreen) {
-            DEBUG("Adding back window decorations");
+        if (isWayland()) {
+            INFO("Adding back window decorations");
             glfwSetWindowAttrib(glfWin_, GLFW_DECORATED, GLFW_TRUE);
             glfwSetWindowAttrib(glfWin_, GLFW_RESIZABLE, GLFW_TRUE);
         }
@@ -891,22 +892,22 @@ void Window::setFullScreen(bool fullScreen) {
         // Show menu bar
         getScene()->getMenuBar()->show();
     } else { // Put window into full screen mode
-        // Store current position and size of window so can be restored to later
-        glfwGetWindowPos(glfWin_, &internal_->lastWindowX_,
-                         &internal_->lastWindowY_);
+        // Store current size of window so can be restored to later
         glfwGetWindowSize(glfWin_, &internal_->lastWindowWidth_,
                           &internal_->lastWindowHeight_);
 
         // Put window into full screen mode
-        if (settings::hasTouchscreen) {
-            // With touchscreen need a virtual keyboard. But the Squeekboard
-            // keyboard is displayed at a lower level than a full screen window.
-            // Therefore for the virtual keyboard to be visible need to put the
-            // window into maximize mode instead of full screen mode. 
-            INFO("Put main window into maximize mode since has touchscreen");
+        if (isWayland()) {
+            // With Wayland & touchscreen need a virtual keyboard. But the
+            // Squeekboard keyboard is displayed at a lower level than a full
+            // screen window. Therefore for the virtual keyboard to be visible
+            // need to put the window into maximize mode instead of full screen
+            // mode.
+            INFO("Put main window into maximize mode since usng Wayland");
             // Remove window decorations to make it look full screen
             glfwSetWindowAttrib(glfWin_, GLFW_DECORATED, GLFW_FALSE);
             glfwSetWindowAttrib(glfWin_, GLFW_RESIZABLE, GLFW_FALSE);
+
             // FIXME following needed?
             // glfwSetWindowAttrib(glfWin_, GLFW_MAXIMIZED, GLFW_FALSE);
             // glfwSetWindowAttrib(glfWin_, GLFW_FLOATING, GLFW_FALSE);
@@ -916,20 +917,26 @@ void Window::setFullScreen(bool fullScreen) {
             if (!monitor)
                 monitor = getMonitorToUse();
             const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
-            int width = vidmode->width;
-            int height = vidmode->height;
-
+            int monitorWidth = vidmode->width;
+            int monitorHeight = vidmode->height;
+            
             // Put window into maximize mode by resizing it to the size of the
             // monitor, but setting monitor to null so that it doesn't actually
             // go into full screen mode. This is a workaround to get a maximize
             // mode that works with the Squeekboard virtual keyboard on Wayland,
             // since GLFW's built in maximize mode doesn't work with it.
-            glfwSetWindowMonitor(glfWin_, nullptr, 0, 0, width, height,
-                                 GLFW_DONT_CARE);
+            glfwSetWindowMonitor(glfWin_, nullptr, 0, 0, monitorWidth,
+                                 monitorHeight, GLFW_DONT_CARE);
 
             glfwMaximizeWindow(glfWin_);
         } else {
             INFO("Putting main window into full screen mode");
+
+            // Store current position of window so can be restored to later.
+            // Note: on Linux with Wayland, glfwGetWindowPos() doesn't work and always returns 0,0, so don't bother trying to store the position in that case.
+                    glfwGetWindowPos(glfWin_, &internal_->lastWindowX_,
+                         &internal_->lastWindowY_);
+
             GLFWmonitor* monitor = getMonitorToUse();
             const GLFWvidmode* mode = glfwGetVideoMode(monitor);
             glfwSetWindowMonitor(glfWin_, monitor, 0, 0, mode->width,
