@@ -77,6 +77,7 @@ Throws std::runtime_error if string is invalid.
 */
 std::vector<uint8_t> fromBase64(const std::string& str);
 
+/** Case-insensitive string comparison. Returns 0 if they are equal. */
 int strcasecmp(const char* s1, const char* s2);
 
 struct CaseInsensitiveCompare {
@@ -84,11 +85,16 @@ struct CaseInsensitiveCompare {
 	bool operator()(const std::string& a, const std::string& b) const;
 };
 
-/** Joins an container (vector, list, etc) of std::strings with an optional separator string.
-*/
+/** Returns true if `str` contains `substr`, using case-insensitive comparison.
+ */
+bool containsI(const std::string& str, const std::string& substr);
+
+/** Joins an container (vector, list, etc) of std::strings with an optional
+ * separator string.
+ */
 template <typename TContainer>
 std::string join(const TContainer& container, std::string seperator = "") {
-	std::string s;
+    std::string s;
 	bool first = true;
 	for (const auto& c : container) {
 		if (!first)

@@ -303,6 +303,8 @@ int strcasecmp(const char* s1, const char* s2) {
 		if (c1 != c2)
 			return c1 - c2;
 	}
+
+    // Strings are equal
 	return 0;
 }
 
@@ -311,6 +313,14 @@ bool CaseInsensitiveCompare::operator()(const std::string& a, const std::string&
 	return strcasecmp(a.c_str(), b.c_str()) < 0;
 }
 
+
+bool containsI(const std::string& str, const std::string& substr) {
+    auto it = std::search(str.begin(), str.end(), substr.begin(), substr.end(),
+                          [](unsigned char ch1, unsigned char ch2) {
+                              return std::toupper(ch1) == std::toupper(ch2);
+                          });
+    return (it != str.end());
+}
 
 std::vector<std::string> split(const std::string& s, const std::string& separator, size_t maxTokens) {
 	if (separator.empty())
