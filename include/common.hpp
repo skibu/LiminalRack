@@ -274,6 +274,7 @@ extern bool isMac();
 extern bool isLinux();
 extern bool isX64();
 extern bool isArm64();
+extern bool isWayland();
 } // namespace rack
 
 

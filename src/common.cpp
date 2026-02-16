@@ -1,6 +1,6 @@
 #include <common.hpp>
 #include <string.hpp>
-
+#include <GLFW/glfw3.h>
 
 #if defined ARCH_WIN
 #include <windows.h>
@@ -52,5 +52,5 @@ bool isMac() { return APP_OS == "mac"; }
 bool isLinux() { return APP_OS == "lin"; }
 bool isX64() { return APP_CPU == "x64"; }
 bool isArm64() { return APP_CPU == "arm64"; }
-
-} // namespace rack
+bool isWayland() { return glfwGetPlatform() == GLFW_PLATFORM_WAYLAND; }
+} // namespace rack 
