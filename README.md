@@ -18,9 +18,9 @@ Therefore the idea is to hide a general purpose computer in a Eurorack module, l
 
 ### Contributions
 
-While VCV cannot accept free contributions to Rack itself, contributions can be accepted to the Liminal Rack fork.
+While VCV Rack cannot accept free contributions to Rack itself, contributions gladly accepted to the Liminal Rack fork.
 
-# Rack
+# Original VCV Rack
 
 *Rack* is the host application for the VCV virtual Eurorack modular synthesizer platform.
 
@@ -33,7 +33,7 @@ While VCV cannot accept free contributions to Rack itself, contributions can be 
 - [Communities](https://vcvrack.com/manual/Communities)
 - [Licenses](LICENSE.md) ([HTML](LICENSE.html))
 
-## Acknowledgments
+## VCV Rack Acknowledgments
 
 - [Andrew Belt](https://github.com/AndrewBelt): Lead Rack developer
 - [Pyer](https://www.pyer.be/): Module design, component graphics
