@@ -62,6 +62,10 @@ NVGcolor selectModuleStrokeColor = nvgRGBAf(0.0f, 1.0f, 0.0f, 0.4f); // semi-tra
 
 // Whether in full screen mode
 bool windowMaximized = false;
+
+// Name of the monitor being used by the main window
+std::string monitorName = "";
+
 math::Vec windowSize = math::Vec(1024, 720);
 math::Vec windowPos = math::Vec(NAN, NAN);
 bool invertZoom = false;
@@ -236,6 +240,9 @@ json_t* toJson() {
 
     json_object_set_new(rootJ, "windowMaximized",
                         json_boolean(windowMaximized));
+
+    json_object_set_new(rootJ, "monitorName",
+                        json_string(monitorName.c_str()));
 
     json_t* windowSizeJ =
         json_pack("[f, f]", windowSize.getX(), windowSize.getY());
@@ -504,6 +511,9 @@ void fromJson(json_t* rootJ) {
     json_t* windowMaximizedJ = json_object_get(rootJ, "windowMaximized");
     if (windowMaximizedJ)
         windowMaximized = json_boolean_value(windowMaximizedJ);
+
+    json_t* monitorNameJ = json_object_get(rootJ, "monitorName");
+    if (monitorNameJ) monitorName = json_string_value(monitorNameJ);
 
     json_t* windowSizeJ = json_object_get(rootJ, "windowSize");
     if (windowSizeJ) {

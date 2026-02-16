@@ -224,6 +224,15 @@ class Window {
 
     /** Destroys the window system */
     static void destroy();
+
+   private:
+    /** Returns the monitor to use when creating a window. If there is a
+     * previously used monitor, it will try to find and use it. Otherwise, it
+     * will use the first available monitor that is appropriate.   */
+    GLFWmonitor* getMonitorToUse();
+
+    /** Does the actual work of finding the appropriate monitor. */
+    GLFWmonitor* getMonitorToUse_();
 };
 
 } // namespace window

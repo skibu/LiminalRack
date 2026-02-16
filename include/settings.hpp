@@ -61,6 +61,9 @@ extern NVGcolor selectModuleStrokeColor;
 /** Whether the window is in full screen/maximized mode */
 extern bool windowMaximized;
 
+/** Name of the monitor being used by the main window */
+extern std::string monitorName;
+
 /** True if a fork of VCV Rack and things need to be done differently */
 extern bool isNotVCVRack;
 /** Whether this is Liminal version of Rack */

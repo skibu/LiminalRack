@@ -325,29 +325,49 @@ Window::Window() {
 	glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
 #endif
 
-	// Create window
-	glfWin_ = glfwCreateWindow(1024, 720, "", NULL, NULL);
-	if (!glfWin_) {
-		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, "Could not open GLFW window. Does your graphics card support OpenGL 2.0 or greater? If so, make sure you have the latest graphics drivers installed.");
-		throw Exception("Could not create Window");
-	}
+    // Determine monitor to use for creating the window. If window to be in full
+    // screen mode then need to set the monitor.
+    GLFWmonitor* monitor = nullptr;
+    if (settings::windowMaximized) {
+        monitor = getMonitorToUse();
+    }
 
-	float contentScale;
+    // Create the window
+    glfWin_ = glfwCreateWindow(settings::windowSize.getX(),
+                               settings::windowSize.getY(), "Temporary title",
+                               monitor, nullptr /* share */);
+    if (!glfWin_) {
+        osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK,
+                         "Could not open GLFW window. Does your graphics card "
+                         "support OpenGL 2.0 or greater? If so, make sure you "
+                         "have the latest graphics drivers installed.");
+        throw Exception("Could not create Window");
+    }
+
+    float contentScale;
 	glfwGetWindowContentScale(glfWin_, &contentScale, NULL);
 	DEBUG("Window content scale: %f", contentScale);
 
-	glfwSetWindowSizeLimits(glfWin_, WINDOW_SIZE_MIN.getX(), WINDOW_SIZE_MIN.getY(), GLFW_DONT_CARE, GLFW_DONT_CARE);
-	if (settings::windowSize.getX() > 0 && settings::windowSize.getY() > 0) {
-		glfwSetWindowSize(glfWin_, settings::windowSize.getX(), settings::windowSize.getY());
-	}
-	if (settings::windowPos.getX() > -32000 && settings::windowPos.getY() > -32000) {
-		glfwSetWindowPos(glfWin_, settings::windowPos.getX(), settings::windowPos.getY());
-	}
-	if (settings::windowMaximized) {
+    glfwSetWindowSizeLimits(glfWin_, WINDOW_SIZE_MIN.getX(),
+                            WINDOW_SIZE_MIN.getY(), GLFW_DONT_CARE,
+                            GLFW_DONT_CARE);
+
+    // Restore window position. But if Linux then using Wayland and cannot do so. Also, don't need
+    // to restore position if window is maximized/full screen.
+    if (!isLinux() && !isFullScreen() &&
+        settings::windowPos.getX() > -32000 &&
+        settings::windowPos.getY() > -32000) {
+        glfwSetWindowPos(glfWin_, settings::windowPos.getX(),
+                         settings::windowPos.getY());
+    }
+
+    if (settings::windowMaximized) {
         // Note: this does not put window into full screen mode. It only
         // maximizes its size.
-		// FIXME glfwMaximizeWindow(glfWin_);
+        DEBUG("Maximizing window at startup");
+		glfwMaximizeWindow(glfWin_);
 	}
+
 	glfwShowWindow(glfWin_);
 
 	glfwSetWindowUserPointer(glfWin_, contextGet());
@@ -356,22 +376,23 @@ Window::Window() {
 	glfwMakeContextCurrent(glfWin_);
 	glfwSwapInterval(0);
 	const GLFWvidmode* monitorMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-	if (monitorMode->refreshRate > 0) {
-		internal_->monitorRefreshRate_ = monitorMode->refreshRate;
-	}
-	else {
-		// Some monitors report 0Hz refresh rate for some reason, so as a workaround, assume 60Hz.
-		internal_->monitorRefreshRate_ = 60;
-	}
+    if (monitorMode->refreshRate > 0) {
+        internal_->monitorRefreshRate_ = monitorMode->refreshRate;
+    } else {
+        // Some monitors report 0Hz refresh rate for some reason, so as a
+        // workaround, assume 60Hz.
+        internal_->monitorRefreshRate_ = 60;
+    }
 
-	// Set window callbacks
+    // Set window callbacks
 	glfwSetWindowPosCallback(glfWin_, windowPosCallback);
 	glfwSetWindowSizeCallback(glfWin_, windowSizeCallback);
 	glfwSetWindowMaximizeCallback(glfWin_, windowMaximizeCallback);
 	glfwSetMouseButtonCallback(glfWin_, mouseButtonCallback);
- 	// Now calling cursorPosCallback ourselves, but on every frame instead of only when the mouse moves
-	// glfwSetCursorPosCallback(win, cursorPosCallback);
-	glfwSetCursorEnterCallback(glfWin_, cursorEnterWindowCallback);
+    // Now calling cursorPosCallback ourselves, but on every frame instead of
+    // only when the mouse moves glfwSetCursorPosCallback(win,
+    // cursorPosCallback);
+    glfwSetCursorEnterCallback(glfWin_, cursorEnterWindowCallback);
 	glfwSetScrollCallback(glfWin_, scrollCallback);
 	glfwSetCharCallback(glfWin_, charCallback);
 	glfwSetKeyCallback(glfWin_, keyCallback);
@@ -394,8 +415,9 @@ Window::Window() {
 	INFO("Renderer: %s %s", vendor, renderer);
 	INFO("OpenGL: %s", version);
 
-	// GLEW generates GL error because it calls glGetString(GL_EXTENSIONS), we'll consume it here.
-	glGetError();
+    // GLEW generates GL error because it calls glGetString(GL_EXTENSIONS),
+    // we'll consume it here.
+    glGetError();
 
 	// Set up NanoVG
 	int nvgFlags = NVG_ANTIALIAS;
@@ -438,9 +460,10 @@ Window::~Window() {
 		getScene()->onContextDestroy(e);
 	}
 
-	// Fonts and Images in the cache must be deleted before the NanoVG context is deleted
-	internal_->fontCache_.clear();
-	internal_->imageCache_.clear();
+    // Fonts and Images in the cache must be deleted before the NanoVG context
+    // is deleted
+    internal_->fontCache_.clear();
+    internal_->imageCache_.clear();
 
 	// nvgDeleteClone(fbVg);
 
@@ -457,6 +480,60 @@ Window::~Window() {
 	delete internal_;
 }
 
+GLFWmonitor* Window::getMonitorToUse() {
+    GLFWmonitor* monitor = getMonitorToUse_();
+    // FIXME Should be DEBUG, but for now want stack traces to see how things work
+    WARN("Using monitor: %s", glfwGetMonitorName(monitor));
+    return monitor;
+}
+
+GLFWmonitor* Window::getMonitorToUse_() {
+    if (!settings::monitorName.empty()) {
+        // There is no previously used monitor. Therefore determine most
+        // appropriate monitor to use.
+        int monitorCount;
+        GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+
+        // If only one monitor then obviously just use that one
+        if (monitorCount == 1) {
+            DEBUG("Only one monitor detected, using that one");
+            settings::monitorName = glfwGetMonitorName(monitors[0]);
+            return monitors[0];
+        }
+
+        // There are multiple monitors. 
+        // If there are non-HDMI monitors then use first (likely touch screen).
+        // Otherwise use first HDMI monitor, since likely main monitor.
+        for (int i = 0; i < monitorCount; i++) {
+            const char* name = glfwGetMonitorName(monitors[i]);
+
+            // If monitor name doesn't contain "HDMI" then likely a touch screen
+            // monitor, so use that one.
+            if (!string::containsI(name, "HDMI")) {
+                settings::monitorName = name;
+                return monitors[i];
+            }
+        }
+
+        // All monitors contain "HDMI" in their name, so just use the first one.
+        settings::monitorName = glfwGetMonitorName(monitors[0]);
+        return monitors[0];
+    } else {
+        // There is a previously used monitor. Try to find it and use it.
+        int monitorCount;
+        GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+        for (int i = 0; i < monitorCount; i++) {
+            const char* name = glfwGetMonitorName(monitors[i]);
+            if (name == settings::monitorName) {
+                return monitors[i];
+            }
+        }
+
+        // Couldn't find previously used monitor, so just use the first one.
+        settings::monitorName = glfwGetMonitorName(monitors[0]);
+        return monitors[0];
+    }
+}
 
 math::Vec Window::getSize() {
 	int width, height;
@@ -793,25 +870,27 @@ void Window::setFullScreen(bool fullScreen) {
     // Remember full screen state
     settings::windowMaximized = fullScreen;
 
-    if (!fullScreen) {
-        // Take window out of full screen mode
+    if (!fullScreen) { // Take window out of full screen mode
+        // If have touchscreen then need to add back window decorations that
+        // were removed to make it look full screen, since with touchscreen we
+        // use maximize mode instead of full screen mode.
         if (settings::hasTouchscreen) {
             DEBUG("Adding back window decorations");
             glfwSetWindowAttrib(glfWin_, GLFW_DECORATED, GLFW_TRUE);
             glfwSetWindowAttrib(glfWin_, GLFW_RESIZABLE, GLFW_TRUE);
         }
 
-        // Put window into regular non-full screen mode and restore to its
-        // previous position and size.
+        // Put window into regular non-full screen mode by setting monitor to
+        // null. And restore to its previous position and size.
         INFO("Taking main window out of full screen/maximize mode");
-        glfwSetWindowMonitor(glfWin_, NULL, internal_->lastWindowX_,
+        glfwSetWindowMonitor(glfWin_, nullptr, internal_->lastWindowX_,
                              internal_->lastWindowY_,
                              internal_->lastWindowWidth_,
                              internal_->lastWindowHeight_, GLFW_DONT_CARE);
 
         // Show menu bar
         getScene()->getMenuBar()->show();
-    } else {
+    } else { // Put window into full screen mode
         // Store current position and size of window so can be restored to later
         glfwGetWindowPos(glfWin_, &internal_->lastWindowX_,
                          &internal_->lastWindowY_);
@@ -823,27 +902,35 @@ void Window::setFullScreen(bool fullScreen) {
             // With touchscreen need a virtual keyboard. But the Squeekboard
             // keyboard is displayed at a lower level than a full screen window.
             // Therefore for the virtual keyboard to be visible need to put the
-            // window into maximize mode instead of full screen mode. Also
-            // need to first remove window decorations so actually looks 
-            // full screen.
+            // window into maximize mode instead of full screen mode. 
             INFO("Put main window into maximize mode since has touchscreen");
+            // Remove window decorations to make it look full screen
             glfwSetWindowAttrib(glfWin_, GLFW_DECORATED, GLFW_FALSE);
             glfwSetWindowAttrib(glfWin_, GLFW_RESIZABLE, GLFW_FALSE);
             // FIXME following needed?
-            glfwSetWindowAttrib(glfWin_, GLFW_MAXIMIZED, GLFW_FALSE);
-            glfwSetWindowAttrib(glfWin_, GLFW_FLOATING, GLFW_FALSE);
+            // glfwSetWindowAttrib(glfWin_, GLFW_MAXIMIZED, GLFW_FALSE);
+            // glfwSetWindowAttrib(glfWin_, GLFW_FLOATING, GLFW_FALSE);
 
             // Get size of monitor
             GLFWmonitor* monitor = glfwGetWindowMonitor(glfWin_);
             if (!monitor)
-                monitor = glfwGetPrimaryMonitor();
+                monitor = getMonitorToUse();
             const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
-            glfwSetWindowMonitor(glfWin_, NULL, 0, 0, vidmode->width, vidmode->height, GLFW_DONT_CARE);
+            int width = vidmode->width;
+            int height = vidmode->height;
 
-            //glfwMaximizeWindow(glfWin_);
+            // Put window into maximize mode by resizing it to the size of the
+            // monitor, but setting monitor to null so that it doesn't actually
+            // go into full screen mode. This is a workaround to get a maximize
+            // mode that works with the Squeekboard virtual keyboard on Wayland,
+            // since GLFW's built in maximize mode doesn't work with it.
+            glfwSetWindowMonitor(glfWin_, nullptr, 0, 0, width, height,
+                                 GLFW_DONT_CARE);
+
+            glfwMaximizeWindow(glfWin_);
         } else {
             INFO("Putting main window into full screen mode");
-            GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+            GLFWmonitor* monitor = getMonitorToUse();
             const GLFWvidmode* mode = glfwGetVideoMode(monitor);
             glfwSetWindowMonitor(glfWin_, monitor, 0, 0, mode->width,
                                  mode->height, mode->refreshRate);
