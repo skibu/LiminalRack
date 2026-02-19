@@ -67,42 +67,44 @@ At least I could not figure out a way to change the font. It seems to be hardcod
 Since main desire is to have the keys `@` & `.` for email address for VCV Rack login, 
 plus `/` for file names, can start with the email version at 
 `/usr/share/misc/squeekboard/keyboards/email/us_wide.yaml` and modify it to add the `.`
-and `/` next to the `@` key. Also, made the default key width 47.76 instead of 53.76 so that
-the space bar isn't shrunk down too much.
+and `/` next to the `@` key. Also, added left and right arrow keys and a few other things.
 The following is the resulting yaml file to be stored at 
-`/usr/share/misc/squeekboard/keyboards/us_wide.yaml`. It is also available in the repo at `LiminalRack/res/Liminal/us_wide.yaml` .
+`/usr/share/misc/squeekboard/keyboards/us_wide.yaml`. It is also available in the repo at `LiminalRack/res/keyboard/us_wide.yaml` .
 
 ```
 ---
 outlines:
-    default:       { width: 47.76,  height: 42 }
-    change-view:   { width: 80.64,  height: 42 }
-    change-view-2: { width: 94.08,  height: 42 }
-    spaceline:     { width: 188.16, height: 42 }
-    special:       { width: 53.76,  height: 42 }
-    special-2:     { width: 94.08,  height: 42 }
+    default:       { width:  48.0, height: 40 }
+    shift:         { width:  50.0, height: 40 }
+    show-numbers:  { width:  60.0, height: 40 }
+    spacebar:      { width: 280.0, height: 40 }
+    preferences:   { width:  35.0, height: 40 }
+    return:        { width:  94.0, height: 40 }
+    backspace:     { width:  56.0, height: 40 }
+    secondary-key: { width:  32.0, height: 40 }
+    spacer:        { width:   4.0, height: 40 }
 
 views:
     base:
-        - "q w e r t y u i o p"
-        - "a s d f g h j k l"
-        - "show_upper z x c v b n m BackSpace"
-        - "show_numbers preferences space @ . / Return"
+        - "sp q w e r t y u i o p sp sp BackSpace sp"
+        - "sp sp sp a s d f g h j k l sp sp sp sp sp sp sp sp sp sp sp left_arrow right_arrow"
+        - "show_upper z x c v b n m sp sp sp sp dash underbar slash at dot sp sp"
+        - "show_numbers preferences sp sp sp sp space sp sp sp sp return sp sp"
     upper:
-        - "Q W E R T Y U I O P"
-        - "A S D F G H J K L"
-        - "show_upper Z X C V B N M BackSpace"
-        - "show_numbers preferences space @ . / Return"
+        - "sp Q W E R T Y U I O P sp sp BackSpace sp"
+        - "sp sp sp A S D F G H J K L sp sp sp sp sp sp sp sp sp sp sp left_arrow right_arrow"
+        - "show_upper Z X C V B N M sp sp sp sp dash underbar slash at dot sp sp"
+        - "show_numbers preferences sp sp sp sp space sp sp sp sp return sp sp"
     numbers:
-        - "1 2 3 4 5 6 7 8 9 0"
-        - "@ # $ % & - _ + ( )"
-        - "show_symbols , \" ' : ; ! ? BackSpace"
-        - "show_letters preferences space @ . / Return"
+        - "sp 1 2 3 4 5 6 7 8 9 0 sp sp sp BackSpace"
+        - "sp sp sp @ # $ % & - _ + ( ) sp sp left_arrow right_arrow"
+        - "show_symbols , \" ' : ; ! ? sp sp sp sp dash underbar slash at dot sp sp"
+        - "show_letters preferences sp sp sp sp space sp sp sp sp return sp sp"
     symbols:
-        - "~ ` | · √ π τ ÷ × ¶"
-        - "© ® £ € ¥ ^ ° * { }"
-        - "show_numbers_from_symbols \\ / < > = [ ] BackSpace"
-        - "show_letters preferences space @ . / Return"
+        - "sp ~ ` | · √ π τ ÷ × ¶ sp sp BackSpace"
+        - "sp sp sp © ® £ € ¥ ^ ° * { } sp sp left_arrow right_arrow"
+        - "show_numbers_from_symbols \\ / < > = [ ]"
+        - "show_letters preferences sp sp sp sp space sp sp sp sp return sp sp"
 
 buttons:
     show_upper:
@@ -110,43 +112,78 @@ buttons:
             locking:
                 lock_view: "upper"
                 unlock_view: "base"
-        outline: "change-view"
+        outline: "shift"
         icon: "key-shift"
     BackSpace:
-        outline: "special-2"
+        outline: "backspace"
         icon: "edit-clear-symbolic"
         action: "erase"
+    # The world
     preferences:
         action: "show_prefs"
-        outline: "special"
+        outline: "preferences"
         icon: "keyboard-mode-symbolic"
     show_numbers:
         action:
             set_view: "numbers"
-        outline: "change-view-2"
+        outline: "show-numbers"
         label: "123"
     show_numbers_from_symbols:
         action:
             set_view: "numbers"
-        outline: "change-view"
+        outline: "show-numbers"
         label: "123"
     show_letters:
         action:
             set_view: "base"
-        outline: "change-view-2"
+        outline: "show-numbers"
         label: "ABC"
     show_symbols:
         action:
             set_view: "symbols"
-        outline: "change-view"
+        outline: "show-numbers"
         label: "*/="
     space:
-        outline: "spaceline"
+        outline: "spacebar"
         text: " "
-    Return:
-        outline: "special-2"
+    return:
+        outline: "return"
         icon: "key-enter"
         keysym: "Return"
+    up_arrow:
+        outline: "secondary-key"
+        label: "↑"
+        keysym: "Up"
+    down_arrow:
+        outline: "secondary-key"
+        label: "↓"
+        keysym: "Down"
+    left_arrow:
+        outline: "secondary-key"
+        label: "←"
+        keysym: "Left"
+    right_arrow:
+        outline: "secondary-key"
+        label: "→"
+        keysym: "Right"
+    at:
+        outline: "secondary-key"
+        text: "@"
+    dot:
+        outline: "secondary-key"
+        text: "."
+    underbar:
+        outline: "secondary-key"
+        text: "_"
+    dash:
+        outline: "secondary-key"
+        text: "-"
+    slash:
+        outline: "secondary-key"
+        text: "/"
+    sp:
+        outline: "spacer"
+        text: ""
 ```
 
 ## Testing/Iterating
