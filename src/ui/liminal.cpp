@@ -16,14 +16,16 @@ void Liminal::configAsLiminal() {
 
     // When in liminal mode then set other params as appropriate
     rack::settings::hasTouchscreen = true;
-    rack::settings::hasKeyboard = false; 
+    rack::settings::hasKeyboard = false;
 
     // Maximize screen since want Liminal to not seem like a computer
-    // with a whole windowing system.
-    // FIXME commented out setting windowMaximized to true so that can bring
-    // up Liminal Rack without full screen. Important since when debugging
-    // full screen mode makes it hard to switch to other applications, including debugger.
-    // rack::settings::windowMaximized = true;
+    // with a whole windowing system. But only do this for Wayland since
+    // on other machines like Macs most likely full screen mode would
+    // interfere with other applications on the monitor, include IDE when
+    // debugging.
+    if (isWayland()) {
+        rack::settings::windowMaximized = true;
+    }
 
     // So that menus are bigger and easier tp use with touch screen
     rack::settings::bndLabelFontSize = 34; // Increase font size for touch screen
