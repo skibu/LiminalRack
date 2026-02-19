@@ -86,12 +86,6 @@ static void initUI() {
     // Step window to make splash screen appear
     INFO("Making splash screen visible...");
     getWindow()->step(); 
-
-    // If was in full screen mode previously go right into full screen mode
-    if (settings::windowMaximized) {
-        INFO("Putting window into full screen as part of UI initialization");
-        getWindow()->setFullScreen(true);
-    }
 }
 
 /** Prints command line usage to stderr */

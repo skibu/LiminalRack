@@ -73,25 +73,25 @@ Image::~Image() {
 		nvgDeleteImage(vg, handle);
 }
 
-
 void Image::loadFile(const std::string& filename, NVGcontext* vg) {
-	this->vg = vg;
-	std::vector<uint8_t> data = system::readFile(filename);
-	// Don't use nvgCreateImage because it doesn't properly handle UTF-8 filenames on Windows.
-	handle = nvgCreateImageMem(vg, NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY, data.data(), data.size());
-	if (handle <= 0)
-		throw Exception("Failed to load image %s", filename.c_str());
-	INFO("Loaded image %s", filename.c_str());
+    this->vg = vg;
+    std::vector<uint8_t> data = system::readFile(filename);
+    // Don't use nvgCreateImage because it doesn't properly handle UTF-8
+    // filenames on Windows.
+    handle = nvgCreateImageMem(vg, NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY,
+                               data.data(), data.size());
+    if (handle <= 0)
+        throw Exception("Failed to load image %s", filename.c_str());
+    INFO("Loaded image %s", filename.c_str());
 }
-
 
 std::shared_ptr<Image> Image::load(const std::string& filename) {
 	return getWindow()->loadImage(filename);
 }
 
 /** Note: since Window is used by the custom modules out there, definition
- * of Internal must remain stable. This is because those modules are compiled against
- * the standard VCVRack version of this file, and so the members in this
+ * of Internal must remain stable. This is because those modules are compiled
+ * against the standard VCVRack version of this file, and so the members in this
  * header must remain exactly the same for binary compatibility.
  */
 struct Window::Internal {
@@ -303,7 +303,7 @@ static void errorCallback(int error, const char* description) {
 
 
 Window::Window() {
-    INFO("Constructing Window...");
+    INFO("Constructing Main Window...");
 
 	internal_ = new Internal();
 	int err;
@@ -333,7 +333,7 @@ Window::Window() {
     // created in full screen mode, but we will change it to windowed mode later
     // if not starting in full screen mode.
     glfWin_ = glfwCreateWindow(settings::windowSize.getX(),
-                               settings::windowSize.getY(), "Temporary title",
+                               settings::windowSize.getY(), "" /* title */,
                                monitor, nullptr /* share */);
     if (!glfWin_) {
         osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK,
@@ -360,14 +360,15 @@ Window::Window() {
                          settings::windowPos.getY());
     }
 
-    // Created window in full screen mode since specified monitor when
-    // creating window, but if not starting in full screen mode then take
-    // window out of full screen mode.
-    if (!settings::windowMaximized) {
-        INFO("Taking window out of full screen mode at startup");
-        setFullScreen(false);
-    }
+    // Remember non-full screen size of window so can restore to it later if starting in full screen mode. 
+    internal_->lastWindowWidth_ = settings::windowSize.getWidth();
+    internal_->lastWindowHeight_ = settings::windowSize.getHeight();
 
+    // Officially put window into full screen or non-full screen mode. This is
+    // needed to deal with things like the menu bar.
+    setFullScreen(settings::windowMaximized);
+
+    // Actually make window visible
     glfwShowWindow(glfWin_);
 
 	glfwSetWindowUserPointer(glfWin_, contextGet());
@@ -425,9 +426,9 @@ Window::Window() {
 	vg_ = nvgCreateGL2(nvgFlags);
 	fbVg_ = nvgCreateSharedGL2(vg_, nvgFlags);
 #elif defined NANOVG_GL3
-	vg = nvgCreateGL3(nvgFlags);
+	vg_ = nvgCreateGL3(nvgFlags);
 #elif defined NANOVG_GLES2
-	vg = nvgCreateGLES2(nvgFlags);
+	vg_ = nvgCreateGLES2(nvgFlags);
 #endif
     if (!vg_) {
         osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK,
@@ -471,9 +472,9 @@ Window::~Window() {
 	nvgDeleteGL2(vg_);
 	nvgDeleteGL2(fbVg_);
 #elif defined NANOVG_GL3
-	nvgDeleteGL3(vg);
+	nvgDeleteGL3(vg_);
 #elif defined NANOVG_GLES2
-	nvgDeleteGLES2(vg);
+	nvgDeleteGLES2(vg_);
 #endif
 
 	glfwDestroyWindow(glfWin_);
@@ -869,21 +870,11 @@ void Window::setFullScreen(bool fullScreen) {
     // Remember full screen state
     settings::windowMaximized = fullScreen;
 
-    if (!fullScreen) { // Take window out of full screen 
+    if (!fullScreen) { // Take window out of full screen mode
         INFO("Taking main window out of full screen/maximize mode...");
-
-        // If usomg Wayland & touchscreen then need to add back window decorations that
-        // were removed to make it look full screen, since with touchscreen we
-        // use maximize mode instead of full screen mode.
-        if (isWayland()) {
-            INFO("Adding back window decorations");
-            glfwSetWindowAttrib(glfWin_, GLFW_DECORATED, GLFW_TRUE);
-            glfwSetWindowAttrib(glfWin_, GLFW_RESIZABLE, GLFW_TRUE);
-        }
 
         // Put window into regular non-full screen mode by setting monitor to
         // null. And restore to its previous position and size.
-        INFO("Taking main window out of full screen/maximize mode");
         glfwSetWindowMonitor(glfWin_, nullptr, internal_->lastWindowX_,
                              internal_->lastWindowY_,
                              internal_->lastWindowWidth_,
@@ -892,56 +883,31 @@ void Window::setFullScreen(bool fullScreen) {
         // Show menu bar
         getScene()->getMenuBar()->show();
     } else { // Put window into full screen mode
-        // Store current size of window so can be restored to later
-        glfwGetWindowSize(glfWin_, &internal_->lastWindowWidth_,
-                          &internal_->lastWindowHeight_);
+        INFO("Putting main window into maximize mode since usng Wayland");
 
-        // Put window into full screen mode
-        if (isWayland()) {
-            // With Wayland & touchscreen need a virtual keyboard. But the
-            // Squeekboard keyboard is displayed at a lower level than a full
-            // screen window. Therefore for the virtual keyboard to be visible
-            // need to put the window into maximize mode instead of full screen
-            // mode.
-            INFO("Put main window into maximize mode since usng Wayland");
-            // Remove window decorations to make it look full screen
-            glfwSetWindowAttrib(glfWin_, GLFW_DECORATED, GLFW_FALSE);
-            glfwSetWindowAttrib(glfWin_, GLFW_RESIZABLE, GLFW_FALSE);
-
-            // FIXME following needed?
-            // glfwSetWindowAttrib(glfWin_, GLFW_MAXIMIZED, GLFW_FALSE);
-            // glfwSetWindowAttrib(glfWin_, GLFW_FLOATING, GLFW_FALSE);
-
-            // Get size of monitor
-            GLFWmonitor* monitor = glfwGetWindowMonitor(glfWin_);
-            if (!monitor)
-                monitor = getMonitorToUse();
-            const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
-            int monitorWidth = vidmode->width;
-            int monitorHeight = vidmode->height;
-            
-            // Put window into maximize mode by resizing it to the size of the
-            // monitor, but setting monitor to null so that it doesn't actually
-            // go into full screen mode. This is a workaround to get a maximize
-            // mode that works with the Squeekboard virtual keyboard on Wayland,
-            // since GLFW's built in maximize mode doesn't work with it.
-            glfwSetWindowMonitor(glfWin_, nullptr, 0, 0, monitorWidth,
-                                 monitorHeight, GLFW_DONT_CARE);
-
-            glfwMaximizeWindow(glfWin_);
-        } else {
-            INFO("Putting main window into full screen mode");
-
-            // Store current position of window so can be restored to later.
-            // Note: on Linux with Wayland, glfwGetWindowPos() doesn't work and always returns 0,0, so don't bother trying to store the position in that case.
-                    glfwGetWindowPos(glfWin_, &internal_->lastWindowX_,
-                         &internal_->lastWindowY_);
-
-            GLFWmonitor* monitor = getMonitorToUse();
-            const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-            glfwSetWindowMonitor(glfWin_, monitor, 0, 0, mode->width,
-                                 mode->height, mode->refreshRate);
+        // Store current size of window so can be restored to later.
+        // On Linux with Wayland, glfwGetWindowSize() doesn't work and always
+        // returns the size of the monitor, so don't bother trying to store the
+        // size in that case.
+        if (!isWayland()) {
+            glfwGetWindowSize(glfWin_, &internal_->lastWindowWidth_,
+                              &internal_->lastWindowHeight_);
         }
+
+        // Get size of monitor being used
+        GLFWmonitor* monitor = glfwGetWindowMonitor(glfWin_);
+        if (!monitor) monitor = getMonitorToUse();
+        const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
+        int monitorWidth = vidmode->width;
+        int monitorHeight = vidmode->height;
+
+        // Put window into maximize mode by resizing it to the size of the
+        // monitor, but setting monitor to null so that it doesn't actually
+        // go into full screen mode. This is a workaround to get a maximize
+        // mode that works with the Squeekboard virtual keyboard on Wayland,
+        // since GLFW's built in maximize mode doesn't work with it.
+        glfwSetWindowMonitor(glfWin_, monitor, 0, 0, monitorWidth,
+                             monitorHeight, GLFW_DONT_CARE);
 
         // Hide menu bar
         getScene()->getMenuBar()->hide();
