@@ -88,8 +88,12 @@ mkdir vscode-projects
 cd vscode-projects
 git checkout https://github.com/skibu/LiminalRack.git
 
-# Load in virtual keyboard
-sudo cp ~/vscode-projects/LiminalRack/res/us_wide.yaml /usr/share/misc/squeekboard/keyboards/
+# Load in special virtual keyboard design
+sudo cp ~/vscode-projects/LiminalRack/res/keyboard/us_wide.yaml /usr/share/misc/squeekboard/keyboards/
+
+# Make keyboard css file available (assuming theme is PiXonyx)
+sudo cp ~/vscode-projects/LiminalRack/res/keyboard/squeekboardCusomtization.css /usr/share/themes/
+printf "\n@import url(\"../../squeekboardCusomtization.css\");\n" | sudo tee -a /usr/share/themes/PiXonyx/gtk-3.0/gtk.css
 
 # Need to reboot to have everything take effect
 sudo reboot
