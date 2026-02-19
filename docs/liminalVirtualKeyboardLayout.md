@@ -1,4 +1,4 @@
-# Liminal Virtual Keyboard
+# Liminal Virtual Keyboard Layout
 
 Need a touch input virtual keyboard for Liminal so that user can easily type info. 
 That way can have clear way to save/load settings, filter modules, and so much more.
