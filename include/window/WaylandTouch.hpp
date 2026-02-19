@@ -114,6 +114,9 @@ class WaylandTouch {
      */
     static void processEvents();
 
+    /** Shows or hides the virtual keyboard if using Wayland. */
+    static void showVirtualKeyboard(bool show);
+
     /** Callback for when get a down touch event. To be called by Wayland code.
      * Simply creates the raw event and adds it to the event queue. Important
      * to not block processing here.

@@ -19,6 +19,15 @@ void WaylandTouch::init() {
 #endif
 }
 
+void WaylandTouch::showVirtualKeyboard(bool show) {
+    // Only show virtual keyboard if using Wayland since that's the only time it
+    // would be relevant
+    if (!isWayland()) return;
+
+    DEBUG("showing Virtual Keyboard: %s", show ? "true" : "false");
+    //exec();
+}
+
 void WaylandTouch::processEvents() {
     //TRACE("Processing Wayland touch events...");
     
