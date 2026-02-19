@@ -24,8 +24,19 @@ void WaylandTouch::showVirtualKeyboard(bool show) {
     // would be relevant
     if (!isWayland()) return;
 
-    DEBUG("showing Virtual Keyboard: %s", show ? "true" : "false");
-    //exec();
+    DEBUG("Showing virtual keyboard: %s", show ? "true" : "false");
+    
+    // Use gsettings to show/hide the virtual keyboard on GNOME. 
+    std::string command = 
+        "gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled " +
+        std::string(show ? "true" : "false");
+
+    // Execute the command to show/hide the virtual keyboard
+    int result = system::execCommand(command);
+    if (result != 0) {
+        ERROR("Failed to execute command to show/hide virtual keyboard: %s", 
+            command.c_str());
+    }
 }
 
 void WaylandTouch::processEvents() {
