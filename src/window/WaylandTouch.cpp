@@ -33,7 +33,7 @@ void WaylandTouch::showVirtualKeyboard(bool show) {
     // former is more standard but it didn't work for me.
     std::string command =
         "busctl call --user sm.puri.OSK0 /sm/puri/OSK0 sm.puri.OSK0 SetVisible "
-        "b" + std::string(show ? "true" : "false");
+        "b " + std::string(show ? "true" : "false");
         //"gsettings set org.gnome.desktop.a11y.applications
         //screen-keyboard-enabled " + std::string(show ? "true" : "false");
         
