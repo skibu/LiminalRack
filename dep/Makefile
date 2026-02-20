@@ -89,20 +89,8 @@ include $(RACK_DIR)/dep.mk
 # Targets
 # These targets are all order-only "|" because we usually don't care if a library was built before or after other libraries.
 
-CPPTRACE_REPO_URL := https://github.com/jeremy-rifkin/cpptrace.git
-CPPTRACE_REPO_DIR := cpptrace
-
-$(CPPTRACE_REPO_DIR)/build:
-	@if [ ! -d "$(CPPTRACE_REPO_DIR)/build" ]; then \
-		echo "Cloning $(CPPTRACE_REPO_URL) into $(CPPTRACE_REPO_DIR)..."; \
-		git clone "$(CPPTRACE_REPO_URL)" "$(CPPTRACE_REPO_DIR)"; \
-		cd "$(CPPTRACE_REPO_DIR)"; \
-		git checkout v1.0.4; \
-		mkdir build; \
-		cd ..; \
-	fi
-
-$(cpptrace): | $(CPPTRACE_REPO_DIR)/build
+$(cpptrace): | cpptrace
+	mkdir -p cpptrace/build
 	cd cpptrace/build && $(CMAKE) -DCMAKE_BUILD_TYPE=Release ..
 	cd cpptrace/build && $(MAKE)
 	cd cpptrace/build && $(MAKE) install
