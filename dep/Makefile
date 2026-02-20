@@ -92,8 +92,8 @@ include $(RACK_DIR)/dep.mk
 CPPTRACE_REPO_URL := https://github.com/jeremy-rifkin/cpptrace.git
 CPPTRACE_REPO_DIR := cpptrace
 
-$(CPPTRACE_REPO_DIR):
-	@if [ ! -d "$(CPPTRACE_REPO_DIR)" ]; then \
+$(CPPTRACE_REPO_DIR)/build:
+	@if [ ! -d "$(CPPTRACE_REPO_DIR)/build" ]; then \
 		echo "Cloning $(CPPTRACE_REPO_URL) into $(CPPTRACE_REPO_DIR)..."; \
 		git clone "$(CPPTRACE_REPO_URL)" "$(CPPTRACE_REPO_DIR)"; \
 		cd "$(CPPTRACE_REPO_DIR)"; \
@@ -102,8 +102,7 @@ $(CPPTRACE_REPO_DIR):
 		cd ..; \
 	fi
 
-$(cpptrace): | $(CPPTRACE_REPO_DIR)
-	mkdir -p cpptrace/build
+$(cpptrace): | $(CPPTRACE_REPO_DIR)/build
 	cd cpptrace/build && $(CMAKE) -DCMAKE_BUILD_TYPE=Release ..
 	cd cpptrace/build && $(MAKE)
 	cd cpptrace/build && $(MAKE) install
