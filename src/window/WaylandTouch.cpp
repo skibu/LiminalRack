@@ -26,12 +26,17 @@ void WaylandTouch::showVirtualKeyboard(bool show) {
     if (!isWayland()) return;
 
     DEBUG("Showing virtual keyboard: %s", show ? "true" : "false");
-    
-    // Use gsettings to show/hide the virtual keyboard on GNOME. 
-    std::string command = 
-        "gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled " +
-        std::string(show ? "true" : "false");
 
+    // Use gsettings to show/hide the virtual keyboard on GNOME. There are
+    // two ways to do this, either by setting the "screen-keyboard-enabled" key
+    // or by calling the SetVisible method on the OSK0 D-Bus interface. The
+    // former is more standard but it didn't work for me.
+    std::string command =
+        "busctl call --user sm.puri.OSK0 /sm/puri/OSK0 sm.puri.OSK0 SetVisible "
+        "b" + std::string(show ? "true" : "false");
+        //"gsettings set org.gnome.desktop.a11y.applications
+        //screen-keyboard-enabled " + std::string(show ? "true" : "false");
+        
     // Execute the command to show/hide the virtual keyboard
     system::executeCommand(command);
 }
