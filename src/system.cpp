@@ -1023,6 +1023,8 @@ void runProcessDetached(const std::string& path) {
 
 
 std::string executeCommand(const std::string& command) {
+    DEBUG("Executing command: %s", command.c_str());
+
     std::array<char, 128> buffer;
     std::string result;
     FILE* pipe = popen(command.c_str(), "r"); // "r" for reading output
@@ -1056,6 +1058,7 @@ std::string executeCommand(const std::string& command) {
     }
 
     // Return the output without trailing newlines
+    DEBUG("Command output: %s", result.c_str());
     return result;
 }
 
