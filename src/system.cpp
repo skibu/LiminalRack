@@ -1023,7 +1023,9 @@ void runProcessDetached(const std::string& path) {
 
 
 std::string executeCommand(const std::string& command) {
-    DEBUG("Executing command: %s", command.c_str());
+    // Note: Don't log the command being executed because execute so many
+    // commands for things like getting cpu level
+    // DEBUG("Executing command: %s", command.c_str());
 
     std::array<char, 128> buffer;
     std::string result;
