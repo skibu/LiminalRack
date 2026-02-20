@@ -1057,8 +1057,12 @@ std::string executeCommand(const std::string& command) {
         result.pop_back();
     }
 
+    // Note: Don't log the command output because it can be very long and is not
+    // necessarily useful for debugging. If you want to log it, you can
+    // uncomment the line below.
+    // DEBUG("Command output: %s", result.c_str());
+
     // Return the output without trailing newlines
-    DEBUG("Command output: %s", result.c_str());
     return result;
 }
 
