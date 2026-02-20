@@ -111,6 +111,12 @@ private:
     /** Called when user types a regular character. */
     void onSelectText(const SelectTextEvent& e) override;
 
+    /** Called when the text field is selected. Shows the virtual keyboard. */
+    void onSelect(const SelectEvent& e) override;
+ 
+    /** Called when the text field is deselected. Hides the virtual keyboard. */
+    void onDeselect(const DeselectEvent& e) override;
+
     /** Returns the text position corresponding to the given mouse position. 
      * Useful for setting the cursor position when the user clicks.
      */

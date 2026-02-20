@@ -1,5 +1,6 @@
 #include <ui/TextField.hpp>
 #include <ui/MenuItem.hpp>
+#include <window/WaylandTouch.hpp>
 #include <helpers.hpp>
 #include <context.hpp>
 
@@ -99,8 +100,8 @@ void TextField::draw(const DrawArgs& args) {
 
     // Draw the text field and associated text if any
     int font_size = settings::getLabelFontSize();
-    bndTextField(args.vg, 0.0, 0.0, getWidth(), getHeight() - 4.0, BND_CORNER_NONE, state, -1,
-                    drawText.c_str(), begin, end);
+    bndTextField(args.vg, 0.0, 0.0, getWidth(), getHeight() - 4.0,
+                 BND_CORNER_NONE, state, -1, drawText.c_str(), begin, end);
 
     // Draw dimmed placeholder text if no text entered
     if (text.empty()) {
@@ -127,6 +128,8 @@ void TextField::onDragHover(const DragHoverEvent& e) {
 }
 
 void TextField::onButton(const ButtonEvent& e) {
+    TRACE("---------- FIXME TextField::onButton for %s", getName().c_str());
+
 	OpaqueWidget::onButton(e);
 
 	if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
@@ -144,6 +147,14 @@ void TextField::onSelectText(const SelectTextEvent& e) {
 	std::string s8 = string::UTF32toUTF8(s32);
 	insertText(s8);
 	e.consume(this);
+}
+
+void TextField::onSelect(const SelectEvent& e) {
+    window::WaylandTouch::showVirtualKeyboard(true);
+}
+
+void TextField::onDeselect(const DeselectEvent& e) {
+    window::WaylandTouch::showVirtualKeyboard(false);
 }
 
 void TextField::onSelectKey(const SelectKeyEvent& e) {
