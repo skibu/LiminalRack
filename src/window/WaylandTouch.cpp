@@ -1,5 +1,6 @@
 #include <context.hpp>
 #include <common.hpp>
+#include <system.hpp>
 #include <window/WaylandTouch.hpp>
 #include <chrono>
 
@@ -32,11 +33,7 @@ void WaylandTouch::showVirtualKeyboard(bool show) {
         std::string(show ? "true" : "false");
 
     // Execute the command to show/hide the virtual keyboard
-    int result = system::execCommand(command);
-    if (result != 0) {
-        ERROR("Failed to execute command to show/hide virtual keyboard: %s", 
-            command.c_str());
-    }
+    system::executeCommand(command);
 }
 
 void WaylandTouch::processEvents() {
