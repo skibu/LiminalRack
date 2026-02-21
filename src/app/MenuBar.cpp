@@ -567,13 +567,17 @@ class ViewButton : public MenuButton {
         menu->addChild(
             createMenuLabel(string::translate("MenuBar.view.window")));
 
-        // Add fullscreen menu item
-        bool fullscreen = getWindow()->isFullScreen();
-        std::string fullscreenText = widget::getKeyCommandName(GLFW_KEY_F11, 0);
-        if (fullscreen) fullscreenText += " " CHECKMARK_STRING;
-        menu->addChild(createMenuItem(
-            string::translate("MenuBar.view.fullscreen"), fullscreenText,
-            [=]() { getWindow()->setFullScreen(!fullscreen); }));
+        // Add fullscreen menu item, unless in Liminal mode and has touchscreen
+        // since only want fullscreen in that case
+        if (!settings::isLiminal || !settings::hasTouchscreen) {
+            bool fullscreen = getWindow()->isFullScreen();
+            std::string fullscreenText =
+                widget::getKeyCommandName(GLFW_KEY_F11, 0);
+            if (fullscreen) fullscreenText += " " CHECKMARK_STRING;
+            menu->addChild(createMenuItem(
+                string::translate("MenuBar.view.fullscreen"), fullscreenText,
+                [=]() { getWindow()->setFullScreen(!fullscreen); }));
+        }
 
         // Only provide frame rate option if not VCV rack because it is a
         // obscure feature
