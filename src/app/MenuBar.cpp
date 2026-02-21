@@ -569,7 +569,7 @@ class ViewButton : public MenuButton {
 
         // Add fullscreen menu item, unless in Liminal mode and has touchscreen
         // since only want fullscreen in that case
-        if (!settings::isLiminal || !settings::hasTouchscreen) {
+        if (!settings::isLiminal || !isWayland()) {
             bool fullscreen = getWindow()->isFullScreen();
             std::string fullscreenText =
                 widget::getKeyCommandName(GLFW_KEY_F11, 0);
@@ -1559,7 +1559,7 @@ class InfoLabel : public ui::Label {
 
         // Add in app and OS name, but remove double spaces from appAndOsName
         std::string appAndOsName = APP_NAME + " " + APP_EDITION_NAME + " " + APP_VERSION +
-                       " " + APP_OS_NAME + " " + APP_CPU_NAME;
+                       " " + APP_OS_NAME + " " + APP_CPU_NAME + " ";
         string::replaceAll(appAndOsName, "  ", " ");
         label += appAndOsName;
 
