@@ -155,7 +155,12 @@ int main(int argc, char* argv[]) {
 	int c;
 	opterr = 0;
 
-	while ((c = getopt_long(argc, argv, "lbradht:s:u:vp:", longOptions, NULL)) != -1) {
+    // Note: the ':' in the getopt options string means that these options
+    // require an argument. So if the user passes in -s or -s without an
+    // argument then getopt will return '?' and print an error message to
+    // stderr.
+    while ((c = getopt_long(argc, argv, "lbradht:s:u:vp:", longOptions,
+                            NULL)) != -1) {
         switch (c) {
             case 'l':
                 rack::ui::Liminal::configAsLiminal();
@@ -204,7 +209,7 @@ int main(int argc, char* argv[]) {
                 break;
         }
     }
-	if (optind < argc) {
+    if (optind < argc) {
 		patchPath = argv[optind];
 	}
 
