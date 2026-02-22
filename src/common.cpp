@@ -60,11 +60,11 @@ bool isWayland() {
     // glfwGetPlatform() to check if Wayland is being used since some Linux
     // machines use X11 instead of Wayland.
     auto platform = glfwGetPlatform();
-    if (platform != GLFW_PLATFORM_NULL) {
+    if (platform != 0) { 
         // GLFW initialized so platform is valid
         return platform == GLFW_PLATFORM_WAYLAND;
     } else {
-        // Before GLFW initialized, so using isLinux() as a proxy for Wayland
+        // GLFW not yet initialized so using isLinux() as a proxy for Wayland
         return isLinux();
     }
 }
