@@ -52,5 +52,21 @@ bool isMac() { return APP_OS == "mac"; }
 bool isLinux() { return APP_OS == "lin"; }
 bool isX64() { return APP_CPU == "x64"; }
 bool isArm64() { return APP_CPU == "arm64"; }
-bool isWayland() { return glfwGetPlatform() == GLFW_PLATFORM_WAYLAND; }
+
+bool isWayland() {
+    // Note: glfwGetPlatform() can only return proper platform once GLFW is
+    // inialized. Before that need to use isLinux() as a proxy for Wayland since
+    // Wayland is only used on Linux. But after GLFW is initialized then can use
+    // glfwGetPlatform() to check if Wayland is being used since some Linux
+    // machines use X11 instead of Wayland.
+    auto platform = glfwGetPlatform();
+    if (platform != GLFW_PLATFORM_NULL) {
+        // GLFW initialized so platform is valid
+        return platform == GLFW_PLATFORM_WAYLAND;
+    } else {
+        // Before GLFW initialized, so using isLinux() as a proxy for Wayland
+        return isLinux();
+    }
+}
+
 } // namespace rack 
