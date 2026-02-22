@@ -154,7 +154,7 @@ static void windowPosCallback(GLFWwindow* win, int x, int y) {
 	if (glfwGetWindowMonitor(win))
 		return;
 	settings::windowPos = math::Vec(x, y);
-	TRACE("XXXXXXXXXXXXXXXXX windowPosCallback %d %d", x, y);
+	TRACE("windowPosCallback %d %d", x, y);
 }
 
 static void windowSizeCallback(GLFWwindow* win, int width, int height) {
@@ -165,7 +165,7 @@ static void windowSizeCallback(GLFWwindow* win, int width, int height) {
 	if (glfwGetWindowMonitor(win))
 		return;
 	settings::windowSize = math::Vec(width, height);
-	TRACE("XXXXXXXXXXXXXXXX windowSizeCallback(%d, %d)", width, height);
+	TRACE("windowSizeCallback(%d, %d)", width, height);
 }
 
 
@@ -180,7 +180,7 @@ static void windowSizeCallback(GLFWwindow* win, int width, int height) {
  * mode it can't be relied on to determine if in full screen mode or not.
  */
 static void windowMaximizeCallback(GLFWwindow* win, int maximized) {
-    TRACE("XXXXXXXXXXXXXXXXX windowMaximizeCallback maximized=%d", maximized);
+    TRACE("windowMaximizeCallback maximized=%d", maximized);
 }
 
 
