@@ -99,8 +99,6 @@ struct Window::Internal {
 
 	int lastWindowX_ = 0;
 	int lastWindowY_ = 0;
-	int lastWindowWidth_ = 0;
-	int lastWindowHeight_ = 0;
 
 	int frameCount_ = 0;
 
@@ -330,21 +328,15 @@ Window::Window() {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor(); //getMonitorToUse();
 
     const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
-    DEBUG("------------- At startup monitor %s size is %d %d", glfwGetMonitorName(monitor), vidmode->width, vidmode->height);
+    DEBUG("At startup monitor %s size is %d %d", glfwGetMonitorName(monitor), vidmode->width, vidmode->height);
 
     // Create the window. Specify the monitor so window displayed on proper
     // monitor. Note: specifying the monitor also means that the window will be
     // created in full screen mode, but we will change it to windowed mode later
     // if not starting in full screen mode.
-    // FIXME Figure out what window size should be
-    INFO("WINDOW TO BE MAXIMIZED? %d", settings::windowMaximized);
-    INFO("settings windowSize: %f %f", settings::windowSize.getWidth(),
-         settings::windowSize.getHeight());
-
     int width = settings::windowMaximized ? (int) vidmode->width : (int) settings::windowSize.getWidth();
     int height = settings::windowMaximized ? (int) vidmode->height : (int) settings::windowSize.getHeight();
-    INFO("CREATING WINDOW with size %d %d", width, height);
-
+    DEBUG("Creating window with size %d %d", width, height);
     glfWin_ = glfwCreateWindow(width, height, "" /* title */,
                                monitor, nullptr /* share */);
     if (!glfWin_) {
@@ -363,7 +355,7 @@ Window::Window() {
                             WINDOW_SIZE_MIN.getY(), GLFW_DONT_CARE,
                             GLFW_DONT_CARE);
 
-    // Restore window position. But if using Wayland and cannot do so. Also,
+    // Restore window position. But if using Wayland cannot do so. Also,
     // don't need to restore position if window is maximized/full screen.
     if (!isWayland() && !isFullScreen() &&
         settings::windowPos.getX() > -32000 &&
@@ -371,10 +363,6 @@ Window::Window() {
         glfwSetWindowPos(glfWin_, settings::windowPos.getX(),
                          settings::windowPos.getY());
     }
-
-    // Remember non-full screen size of window so can restore to it later if starting in full screen mode. 
-    internal_->lastWindowWidth_ = settings::windowSize.getWidth();
-    internal_->lastWindowHeight_ = settings::windowSize.getHeight();
 
     // Actually make window visible
     glfwShowWindow(glfWin_);
@@ -407,9 +395,11 @@ Window::Window() {
 	glfwSetKeyCallback(glfWin_, keyCallback);
 	glfwSetDropCallback(glfWin_, dropCallback);
 
-    // FIXME work way down here??
-        // Officially put window into full screen or non-full screen mode. This is
-    // needed to deal with things like the menu bar.
+    // Officially put window into full screen or non-full screen mode. This is
+    // needed to deal with things like the menu bar. But oddly, have found that
+    // on some platforms like MacOS and want to be in fullscreen mode, need to
+    // first put window into non-full screen mode and then back into full screen
+    // mode. Otherwise the drawable area of the window will be too small.
     if (settings::windowMaximized) {
         setFullScreen(false);
         setFullScreen(true);
@@ -895,22 +885,13 @@ void Window::setFullScreen(bool fullScreen) {
         // null. And restore to its previous position and size.
         glfwSetWindowMonitor(glfWin_, nullptr, internal_->lastWindowX_,
                              internal_->lastWindowY_,
-                             settings::windowSize.getWidth(), 
-                             settings::windowSize.getHeight(),
-                            //  internal_->lastWindowWidth_,
-                            //  internal_->lastWindowHeight_, 
-                             GLFW_DONT_CARE);
-
-        // // Remember the new window size so that it can stored in settings
-        // settings::windowSize = math::Vec(internal_->lastWindowWidth_,
-        //                                  internal_->lastWindowHeight_);
-        // DEBUG("Restored window size to %f %f", settings::windowSize.getX(),
-        //       settings::windowSize.getY());
+                             settings::windowSize.getWidth(),
+                             settings::windowSize.getHeight(), GLFW_DONT_CARE);
 
         // Show menu bar
         getScene()->getMenuBar()->show();
     } else { // Put window into full screen mode
-        INFO("====== Putting main window into maximize/fullscreen mode...");
+        INFO("Putting main window into maximize/fullscreen mode...");
 
         // Get size of monitor being used
         GLFWmonitor* monitor = glfwGetWindowMonitor(glfWin_);
@@ -918,17 +899,8 @@ void Window::setFullScreen(bool fullScreen) {
         const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
         int monitorWidth = vidmode->width;
         int monitorHeight = vidmode->height;
-        DEBUG("=========== Monitor size for %s: %d %d",
+        DEBUG("Monitor size for %s: %d %d",
               glfwGetMonitorName(monitor), monitorWidth, monitorHeight);
-
-        // Store current size of window so can be restored to later.
-        // On Linux with Wayland, glfwGetWindowSize() always
-        // returns the size of the monitor.
-        glfwGetWindowSize(glfWin_, &internal_->lastWindowWidth_,
-                          &internal_->lastWindowHeight_);
-        DEBUG(
-            "============ BEFORE maximizing, size to restore to is %d %d",
-            internal_->lastWindowWidth_, internal_->lastWindowHeight_);
 
         // Put window into maximize mode by resizing it to the size of the
         // monitor, FIXME but setting monitor to null so that it doesn't actually
@@ -937,12 +909,6 @@ void Window::setFullScreen(bool fullScreen) {
         // since GLFW's built in maximize mode doesn't work with it.
         glfwSetWindowMonitor(glfWin_, monitor, 0, 0, monitorWidth,
                              monitorHeight, GLFW_DONT_CARE);
-
-        // Remember the new window size so that it can stored in settings
-        //settings::windowSize = math::Vec(monitorWidth, monitorHeight);
-
-        // DEBUG("===== Maximized window size to %f %f", settings::windowSize.getWidth(),
-        //       settings::windowSize.getHeight());
 
         // Hide menu bar
         getScene()->getMenuBar()->hide();
