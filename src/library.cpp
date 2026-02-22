@@ -336,10 +336,18 @@ void checkUpdates() {
                 
         // Check that plugin is available for this arch
         json_t* archesJ = json_object_get(manifestFromVcvRackJ, "arches");
-        if (!archesJ) continue;
+        if (!archesJ) {
+            WARN("Plugin %s has no arches field in manifest so cannot determine if compatible with this platform, skipping update.",
+                 pluginSlug.c_str());
+            continue;
+        }
         std::string arch = APP_OS + "-" + APP_CPU;
         json_t* archJ = json_object_get(archesJ, arch.c_str());
-        if (!json_boolean_value(archJ)) continue;
+        if (!json_boolean_value(archJ)) {
+            INFO("Plugin %s is not available for %s", pluginSlug.c_str(),
+                 arch.c_str());
+            continue;
+        }
         DEBUG("Update available for plugin %s for %s", pluginSlug.c_str(),
               arch.c_str());
 
