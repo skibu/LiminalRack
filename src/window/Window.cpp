@@ -400,12 +400,14 @@ Window::Window() {
     // on some platforms like MacOS and want to be in fullscreen mode, need to
     // first put window into non-full screen mode and then back into full screen
     // mode. Otherwise the drawable area of the window will be too small.
-    if (settings::windowMaximized) {
+    if (settings::windowMaximized && !isWayland()) {
+        // Special case so minimize and then maximize
         setFullScreen(false);
         setFullScreen(true);
-    } else
-        setFullScreen(false);
-
+    } else {
+        // Normal case so just set full screen mode as desired.
+        setFullScreen(settings::windowMaximized);
+    }
 
 	// Set up GLEW
     glewExperimental = GL_TRUE;
