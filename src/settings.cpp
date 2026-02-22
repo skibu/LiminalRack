@@ -66,7 +66,9 @@ bool windowMaximized = false;
 // Name of the monitor being used by the main window
 std::string monitorName = "";
 
+// The default size for a window
 math::Vec windowSize = math::Vec(1024, 720);
+
 math::Vec windowPos = math::Vec(NAN, NAN);
 bool invertZoom = false;
 bool mouseWheelZoom = false;
