@@ -803,8 +803,10 @@ void load(std::string path) {
 
 	INFO("Loading settings %s", path.c_str());
 	FILE* file = std::fopen(path.c_str(), "r");
-	if (!file)
+	if (!file) {
+        INFO("No settings file found at %s so skipping", path.c_str());
 		return;
+    }
 	DEFER({std::fclose(file);});
 
 	json_error_t error;
