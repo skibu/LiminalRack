@@ -323,7 +323,7 @@ void Manager::loadTemplate() {
 		load(templatePath);
 	}
 	catch (Exception& e) {
-        WARN("Caught exception loading user template: %s", e.what());
+        INFO("Caught exception loading user template: %s", e.what());
 
 		// Try loading the system template patch
 		try {
