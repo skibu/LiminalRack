@@ -22,23 +22,27 @@ enum Method {
 
 PRIVATE void init();
 PRIVATE void destroy();
-/** Requests a JSON API URL over HTTP(S), using the data as the query (GET) or the body (POST, etc)
-Caller must json_decref() if return value is non-NULL.
+/** Requests a JSON API URL over HTTP(S), using the data as the query (GET) or
+the body (POST, etc) Caller must json_decref() if return value is non-NULL.
 */
-json_t* requestJson(Method method, const std::string& url, json_t* dataJ = NULL, const CookieMap& cookies = {});
-/** Returns true if downloaded successfully.
+json_t* requestJson(Method method, const std::string& url, json_t* dataJ = NULL,
+                    const CookieMap& cookies = {});
+
+/** Does a URL request and downloads the content to specified filename.
 If `progress` is non-NULL, the value is updated from 0 to 1 while downloading.
 */
-bool requestDownload(const std::string& url, const std::string& filename, float* progress = NULL, const CookieMap& cookies = {});
+bool requestDownload(const std::string& url, const std::string& filename,
+                     float* progress = NULL, const CookieMap& cookies = {});
+
 /** URL-encodes a string. */
 std::string encodeUrl(const std::string& s);
+
 /** Returns the path portion of the URL.
 Example:
 
-	urlPath("https://example.com/foo/index.html") // Returns "/foo/index.html"
+    urlPath("https://example.com/foo/index.html") // Returns "/foo/index.html"
 */
 std::string urlPath(const std::string& url);
-
 
 } // namespace network
 } // namespace rack

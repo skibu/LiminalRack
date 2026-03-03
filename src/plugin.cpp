@@ -222,10 +222,16 @@ static void loadPlugins(std::string path) {
 	}
 }
 
-
+/** Extracts a .vcvplugin package to the specified directory. The
+ * .vcvplugin file contains the license, the code, and the resources
+ * like the SVG files used to render each module. The .vcvplugin file is just a
+ * zip file with a different extension. After extracting, the original
+ * .vcvplugin file is deleted.
+ */
 static void extractPackages(std::string path) {
 	std::string message;
 
+    // For each .vcvplugin file in the plugins directory, extract it and delete
 	for (std::string packagePath : system::getEntries(path)) {
 		if (!system::isFile(packagePath))
 			continue;
@@ -233,16 +239,18 @@ static void extractPackages(std::string path) {
 			continue;
 
 		// Extract package
-		INFO("Extracting package %s", packagePath.c_str());
-		try {
-			system::unarchiveToDirectory(packagePath, path);
-		}
-		catch (Exception& e) {
-			WARN("Plugin package %s failed to extract: %s", packagePath.c_str(), e.what());
-			message += string::f("Could not extract plugin package %s\n", packagePath);
-			continue;
-		}
-		// Remove package
+		INFO("Extracting plugin package %s", packagePath.c_str());
+        try {
+            system::unarchiveToDirectory(packagePath, path);
+        } catch (Exception& e) {
+            WARN("Plugin package %s failed to extract: %s", packagePath.c_str(),
+                 e.what());
+            message +=
+                string::f("Could not extract plugin package %s\n", packagePath);
+            continue;
+        }
+
+        // Delete package file after extracting
 		system::remove(packagePath.c_str());
 	}
 	if (!message.empty()) {
@@ -251,14 +259,17 @@ static void extractPackages(std::string path) {
 }
 
 static std::string getFundamentalPackagePath() {
-	// Recursively search system dir for Fundamental package. By doing
-	// recursive search can find the plugins regardless where installed.
-	for (const std::string& path : system::getEntries(asset::systemDir, -1)) {
-		std::string filename = system::getFilename(path);
-		if (string::startsWith(filename, "Fundamental-") && string::endsWith(filename, APP_OS + "-" + APP_CPU + ".vcvplugin"))
-			return path;
-	}
-	return "";
+    // Recursively search system dir for Fundamental package. By doing
+    // recursive search can find the plugins regardless where installed.
+    for (const std::string& path : system::getEntries(asset::systemDir, -1)) {
+        std::string filename = system::getFilename(path);
+        if (string::startsWith(filename, "Fundamental-") &&
+            string::endsWith(filename, APP_OS + "-" + APP_CPU + ".vcvplugin")) {
+            return path;
+        }
+    }
+
+    return "";
 }
 
 ////////////////////
@@ -295,27 +306,31 @@ void init() {
 	if (settings::safeMode)
 		return;
 
-	// Extract packages and load plugins
-	extractPackages(pluginsPath);
+    // Extract any packages that were downloaded but are still in .vcvplugin
+    // form in the plugins directory.
+    extractPackages(pluginsPath);
+
+    // Load all the plugins
 	loadPlugins(pluginsPath);
 
-	// If Fundamental wasn't loaded, copy the bundled Fundamental package and load it
-	if (!settings::devMode && !getPlugin("Fundamental")) {
-		std::string fundamentalPackage = getFundamentalPackagePath();
-		std::string fundamentalDir = system::join(pluginsPath, "Fundamental");
-		if (fundamentalPackage != "" && system::isFile(fundamentalPackage)) {
-			INFO("Extracting bundled Fundamental package");
-			try {
-				system::unarchiveToDirectory(fundamentalPackage.c_str(), pluginsPath.c_str());
-				loadPlugin(fundamentalDir);
-			}
-			catch (Exception& e) {
-				WARN("Could not extract Fundamental package: %s", e.what());
-			}
-		}
-	}
+    // If Fundamental wasn't loaded, copy the bundled Fundamental package and
+    // load it
+    if (!settings::devMode && !getPlugin("Fundamental")) {
+        std::string fundamentalPackage = getFundamentalPackagePath();
+        std::string fundamentalDir = system::join(pluginsPath, "Fundamental");
+        if (fundamentalPackage != "" && system::isFile(fundamentalPackage)) {
+            INFO("Extracting bundled Fundamental package");
+            try {
+                system::unarchiveToDirectory(fundamentalPackage.c_str(),
+                                             pluginsPath.c_str());
+                loadPlugin(fundamentalDir);
+            } catch (Exception& e) {
+                WARN("Could not extract Fundamental package: %s", e.what());
+            }
+        }
+    }
 
-	// Since plugins updated, update browser
+    // Since plugins updated, update browser
 	getScene()->getBrowser()->updateBrowserPlugins();
 }
 
@@ -338,8 +353,10 @@ static void destroyPlugin(Plugin* plugin) {
 		}
 	}
 
-	// We must delete the Plugin instance *before* freeing the library, because the vtables of Model subclasses are defined in the library, which are needed in the Plugin destructor.
-	delete plugin;
+    // We must delete the Plugin instance *before* freeing the library, because
+    // the vtables of Model subclasses are defined in the library, which are
+    // needed in the Plugin destructor.
+    delete plugin;
 
 	// Free library handle
 	if (handle) {
@@ -365,8 +382,9 @@ void destroy() {
 
 void settingsMergeJson(json_t* rootJ) {
 	for (Plugin* plugin : plugins) {
-		auto settingsToJson = (decltype(&::settingsToJson)) getSymbol(plugin->handle, "settingsToJson");
-		if (settingsToJson) {
+        auto settingsToJson = (decltype(&::settingsToJson))getSymbol(
+            plugin->handle, "settingsToJson");
+        if (settingsToJson) {
 			json_t* settingsJ = settingsToJson();
 			json_object_set_new(rootJ, plugin->slug.c_str(), settingsJ);
 		}
@@ -428,12 +446,14 @@ Correctly handles bidirectional fallbacks.
 To request fallback slugs to be added to this list, open a GitHub issue.
 */
 using PluginModuleSlug = std::tuple<std::string, std::string>;
-static const std::map<PluginModuleSlug, PluginModuleSlug> moduleSlugFallbacks = {
-	{{"MindMeld-ShapeMasterPro", "ShapeMasterPro"}, {"MindMeldModular", "ShapeMaster"}},
-	{{"MindMeldModular", "ShapeMaster"}, {"MindMeld-ShapeMasterPro", "ShapeMasterPro"}},
-	// {{"", ""}, {"", ""}},
+static const std::map<PluginModuleSlug, PluginModuleSlug> moduleSlugFallbacks =
+    {
+        {{"MindMeld-ShapeMasterPro", "ShapeMasterPro"},
+         {"MindMeldModular", "ShapeMaster"}},
+        {{"MindMeldModular", "ShapeMaster"},
+         {"MindMeld-ShapeMasterPro", "ShapeMasterPro"}},
+        // {{"", ""}, {"", ""}},
 };
-
 
 Model* getModel(const std::string& pluginSlug, const std::string& modelSlug) {
 	if (pluginSlug.empty() || modelSlug.empty())
@@ -446,9 +466,9 @@ Model* getModel(const std::string& pluginSlug, const std::string& modelSlug) {
 	return p->getModel(modelSlug);
 }
 
-
-Model* getModelFallback(const std::string& pluginSlug, const std::string& modelSlug) {
-	if (pluginSlug.empty() || modelSlug.empty())
+Model* getModelFallback(const std::string& pluginSlug,
+                        const std::string& modelSlug) {
+    if (pluginSlug.empty() || modelSlug.empty())
 		return NULL;
 
 	// Attempt exact plugin and model
@@ -457,14 +477,13 @@ Model* getModelFallback(const std::string& pluginSlug, const std::string& modelS
 		return m;
 
 	// Attempt fallback module
-	auto it = moduleSlugFallbacks.find(std::make_tuple(pluginSlug, modelSlug));
-	if (it != moduleSlugFallbacks.end()) {
-		Model* m = getModel(std::get<0>(it->second), std::get<1>(it->second));
-		if (m)
-			return m;
-	}
+    auto it = moduleSlugFallbacks.find(std::make_tuple(pluginSlug, modelSlug));
+    if (it != moduleSlugFallbacks.end()) {
+        Model* m = getModel(std::get<0>(it->second), std::get<1>(it->second));
+        if (m) return m;
+    }
 
-	// Attempt fallback plugin
+    // Attempt fallback plugin
 	auto it2 = pluginSlugFallbacks.find(pluginSlug);
 	if (it2 != pluginSlugFallbacks.end()) {
 		Model* m = getModel(it2->second, modelSlug);
@@ -474,7 +493,6 @@ Model* getModelFallback(const std::string& pluginSlug, const std::string& modelS
 
 	return NULL;
 }
-
 
 Model* modelFromJson(json_t* moduleJ) {
 	// Get slugs
@@ -493,8 +511,9 @@ Model* modelFromJson(json_t* moduleJ) {
 	// Get Model
 	Model* model = getModelFallback(pluginSlug, modelSlug);
 	if (!model)
-		throw Exception("Could not find module %s/%s", pluginSlug.c_str(), modelSlug.c_str());
-	return model;
+        throw Exception("Could not find module %s/%s", pluginSlug.c_str(),
+                        modelSlug.c_str());
+    return model;
 }
 
 

@@ -172,9 +172,9 @@ json_t* requestJson(Method method, const std::string& url, json_t* dataJ, const 
 	return rootJ;
 }
 
-
-static int xferInfoCallback(void* clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
-	float* progress = (float*) clientp;
+static int xferInfoCallback(void* clientp, curl_off_t dltotal, curl_off_t dlnow,
+                            curl_off_t ultotal, curl_off_t ulnow) {
+    float* progress = (float*) clientp;
 	if (progress) {
 		if (dltotal <= 0)
 			*progress = 0.f;
@@ -184,11 +184,11 @@ static int xferInfoCallback(void* clientp, curl_off_t dltotal, curl_off_t dlnow,
 	return 0;
 }
 
+bool requestDownload(const std::string& url, const std::string& filename,
+                     float* progress, const CookieMap& cookies) {
+    CURL* curl = createCurl();
 
-bool requestDownload(const std::string& url, const std::string& filename, float* progress, const CookieMap& cookies) {
-	CURL* curl = createCurl();
-
-	FILE* file = std::fopen(filename.c_str(), "wb");
+    FILE* file = std::fopen(filename.c_str(), "wb");
 	if (!file)
 		return false;
 
@@ -220,7 +220,6 @@ bool requestDownload(const std::string& url, const std::string& filename, float*
 
 	return true;
 }
-
 
 std::string encodeUrl(const std::string& s) {
 	CURL* curl = createCurl();

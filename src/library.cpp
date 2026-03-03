@@ -184,7 +184,10 @@ void logOut() {
 	updateInfos_.clear();
 }
 
-
+/**
+ * Gets the login cookie called "token" that is used for authenticating the user
+ * to the VCV Rack API.
+ */
 static network::CookieMap getTokenCookies() {
 	network::CookieMap cookies;
 	cookies["token"] = settings::token;
@@ -337,8 +340,10 @@ void checkUpdates() {
         // Check that plugin is available for this arch
         json_t* archesJ = json_object_get(manifestFromVcvRackJ, "arches");
         if (!archesJ) {
-            WARN("Plugin %s has no arches field in manifest so cannot determine if compatible with this platform, skipping update.",
-                 pluginSlug.c_str());
+            WARN(
+                "Plugin %s has no arches field in manifest so cannot determine "
+                "if compatible with this platform, skipping update.",
+                pluginSlug.c_str());
             continue;
         }
         std::string arch = APP_OS + "-" + APP_CPU;
@@ -370,10 +375,12 @@ void checkUpdates() {
         }
 
         // Add update to updates map
+        DEBUG("Adding update for plugin %s version %s to updates list",
+              pluginSlug.c_str(), update.version.c_str());
         updateInfos_[pluginSlug] = update;
-    }
+    } // End of iterating through each plugin in user's library
 
-    // Merge module whitelist
+    // Merge module whitelist and put it into settings::moduleWhitelist
     {
         // Clone plugin slugs from settings to temporary whitelist.
         // This makes existing plugins entirely hidden if removed from user's
@@ -466,19 +473,23 @@ void syncUpdate(std::string slug) {
 	downloadUrl += "&arch=" + network::encodeUrl(APP_OS + "-" + APP_CPU);
 
 	// Get file path
-	std::string packageFilename = slug + "-" + update.version + "-" + APP_OS + "-" + APP_CPU + ".vcvplugin";
-	std::string packagePath = system::join(plugin::pluginsPath, packageFilename);
+    std::string packageFilename = slug + "-" + update.version + "-" + APP_OS +
+                                  "-" + APP_CPU + ".vcvplugin";
+    std::string packagePath =
+        system::join(plugin::pluginsPath, packageFilename);
 
-	// Download plugin package
+    // Download plugin package
     DEBUG("Requesting download of plugin %s from %s to %s",
         slug.c_str(), downloadUrl.c_str(), packagePath.c_str());
-	if (!network::requestDownload(downloadUrl, packagePath, &updateProgress_, getTokenCookies())) {
-		WARN("Plugin %s download was unsuccessful", slug.c_str());
-		return;
-	}
+    if (!network::requestDownload(downloadUrl, packagePath, &updateProgress_,
+                                  getTokenCookies())) {
+        WARN("Plugin %s download was unsuccessful", slug.c_str());
+        return;
+    }
 
-	// updateInfos could possibly change in the checkUpdates() thread, so re-get the UpdateInfo to modify it.
-	it = updateInfos_.find(slug);
+    // updateInfos could possibly change in the checkUpdates() thread, so re-get
+    // the UpdateInfo to modify it.
+    it = updateInfos_.find(slug);
 	if (it == updateInfos_.end())
 		return;
 	it->second.downloaded = true;
@@ -491,8 +502,10 @@ void syncUpdates() {
 
     DEBUG("Starting sync of all plugin updates...");
 
-	// updateInfos could possibly change in the checkUpdates() thread, but checkUpdates() will not execute if syncUpdate() is running, so the chance of the updateInfos map being modified while iterating is rare.
-	auto updateInfosClone = updateInfos_;
+    // updateInfos could possibly change in the checkUpdates() thread, but
+    // checkUpdates() will not execute if syncUpdate() is running, so the chance
+    // of the updateInfos map being modified while iterating is rare.
+    auto updateInfosClone = updateInfos_;
 	for (auto& pair : updateInfosClone) {
 		syncUpdate(pair.first);
 	}
